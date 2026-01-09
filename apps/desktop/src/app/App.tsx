@@ -180,24 +180,35 @@ function Dashboard() {
 
   return (
     <div className={`app-layout ${sidebarPinned ? 'app-layout--sidebar-pinned' : ''}`}>
-      <Sidebar 
-        currentView={currentView} 
-        onNavigate={setCurrentView} 
-        onPinnedChange={setSidebarPinned}
-      />
+      {/* Titlebar for drag region - spans full width */}
+      <div className="app-titlebar" data-tauri-drag-region>
+        <div className="app-titlebar__spacer" />
+        <span className="app-titlebar__title">Clarity</span>
+        <button 
+          className="app-titlebar__profile"
+          onClick={() => setCurrentView('settings')}
+          title={user?.email}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M20 21a8 8 0 1 0-16 0"/>
+          </svg>
+        </button>
+      </div>
       
-      <main className="app-layout__content">
-        <header className="app-layout__header">
-          <div className="app-layout__brand">
-            <h1 className="app-layout__title">Clarity</h1>
-          </div>
-          <span className="app-layout__email">{user?.email}</span>
-        </header>
+      <div className="app-layout__body">
+        <Sidebar 
+          currentView={currentView} 
+          onNavigate={setCurrentView} 
+          onPinnedChange={setSidebarPinned}
+        />
         
-        <div className="app-layout__view">
-          {renderView()}
-        </div>
-      </main>
+        <main className="app-layout__content">
+          <div className="app-layout__view">
+            {renderView()}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }

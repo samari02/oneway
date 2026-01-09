@@ -20,12 +20,71 @@
 }
 
 /* ========================================
+   App Titlebar (macOS overlay style)
+   ======================================== */
+
+.app-titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-md);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-light);
+  z-index: 200;
+}
+
+/* Spacer to push content past traffic lights */
+.app-titlebar__spacer {
+  width: 70px;
+  flex-shrink: 0;
+  pointer-events: none; /* Allow drag through spacer */
+}
+
+.app-titlebar__title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  background: linear-gradient(135deg, var(--color-mint-dark) 0%, var(--color-mint) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  pointer-events: none; /* Allow drag through title */
+}
+
+.app-titlebar__profile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.app-titlebar__profile:hover {
+  background: rgba(125, 216, 196, 0.15);
+  color: var(--color-mint-dark);
+}
+
+/* ========================================
    App Layout (with Fixed Sidebar)
    ======================================== */
 
 .app-layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
+}
+
+.app-layout__body {
+  display: flex;
+  flex: 1;
+  margin-top: 38px; /* Height of titlebar */
 }
 
 .app-layout__content {
@@ -43,40 +102,8 @@
 }
 
 /* When sidebar is hovered, also increase margin (responsive) */
-.app-layout:has(.sidebar:hover) .app-layout__content {
+.app-layout__body:has(.sidebar:hover) .app-layout__content {
   margin-left: 140px;
-}
-
-.app-layout__header {
-  position: sticky;
-  top: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-sm) var(--space-lg);
-  border-bottom: 1px solid var(--border-light);
-  background: var(--bg-primary);
-  z-index: 50;
-}
-
-.app-layout__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.app-layout__title {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-bold);
-  background: linear-gradient(135deg, var(--color-mint-dark) 0%, var(--color-mint) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.app-layout__email {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
 }
 
 .app-layout__view {
