@@ -1,5 +1,6 @@
 export interface OnboardingData {
-  // Step 1: Problems
+  // Step 1: Name + Problems
+  displayName: string
   problems: string[]
   
   // Step 2: Best Self

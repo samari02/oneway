@@ -1,8 +1,27 @@
+import { useState } from 'react'
 import { useAuth } from '@/features/auth'
+import { supabase } from '@/lib/supabase'
 import './SettingsView.css'
 
 export function SettingsView() {
   const { user, signOut } = useAuth()
+  const [resetting, setResetting] = useState(false)
+
+  const handleResetOnboarding = async () => {
+    if (!user) return
+    setResetting(true)
+    try {
+      await supabase
+        .from('user_settings')
+        .update({ onboarding_completed: false })
+        .eq('user_id', user.id)
+      // Reload the page to trigger onboarding
+      window.location.reload()
+    } catch (e) {
+      console.error('Failed to reset onboarding:', e)
+      setResetting(false)
+    }
+  }
 
   return (
     <div className="settings-view">
@@ -77,6 +96,21 @@ export function SettingsView() {
             <span className="settings-item__value">—</span>
           </div>
         </div>
+      </section>
+
+      {/* Dev Section - Remove before production */}
+      <section className="settings-section settings-section--dev">
+        <h2 className="settings-section__title">
+          🛠️ Dev
+        </h2>
+        
+        <button 
+          className="settings-button settings-button--dev"
+          onClick={handleResetOnboarding}
+          disabled={resetting}
+        >
+          {resetting ? 'Resetting...' : 'Reset Onboarding'}
+        </button>
       </section>
     </div>
   )

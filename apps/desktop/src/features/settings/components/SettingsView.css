@@ -115,3 +115,34 @@
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.3);
 }
+
+/* Dev Section */
+.settings-section--dev {
+  opacity: 0.6;
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-lg);
+  border-top: 1px dashed var(--border-light);
+}
+
+.settings-section--dev .settings-section__title {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.settings-button--dev {
+  background: rgba(167, 139, 250, 0.1);
+  color: rgba(167, 139, 250, 0.8);
+  border: 1px dashed rgba(167, 139, 250, 0.3);
+  font-size: var(--font-size-xs);
+  padding: var(--space-sm);
+}
+
+.settings-button--dev:hover {
+  background: rgba(167, 139, 250, 0.15);
+  border-color: rgba(167, 139, 250, 0.5);
+}
+
+.settings-button--dev:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

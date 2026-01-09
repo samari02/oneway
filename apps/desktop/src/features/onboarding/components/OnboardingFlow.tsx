@@ -13,6 +13,7 @@ interface OnboardingFlowProps {
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [step, setStep] = useState(1)
   const [data, setData] = useState<OnboardingData>({
+    displayName: '',
     problems: [],
     wakeTime: '06:00',
     sleepTime: '22:00',
@@ -54,7 +55,9 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       <div className="onboarding__content">
         {step === 1 && (
           <StepProblems 
+            displayName={data.displayName}
             selected={data.problems}
+            onNameChange={(displayName) => updateData({ displayName })}
             onChange={(problems) => updateData({ problems })}
             onNext={handleNext}
           />

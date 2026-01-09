@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth, LoginForm } from '@/features/auth'
 import { useHabits, useTodayCheckIns, useHabitActions, HabitList, AddHabitForm, EditHabitModal } from '@/features/habits'
-import { OnboardingFlow, useOnboardingStatus, saveOnboardingData } from '@/features/onboarding'
+import { OnboardingFlow, useOnboardingStatus, useUserSettings, saveOnboardingData } from '@/features/onboarding'
 import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
@@ -12,6 +12,7 @@ import './App.css'
 
 function TodayView() {
   const { user } = useAuth()
+  const { settings } = useUserSettings(user?.id)
   const { habits, loading: habitsLoading, refetch: refetchHabits } = useHabits(user?.id)
   const { checkedIds, toggleHabit } = useTodayCheckIns(user?.id)
   const { create, update, remove } = useHabitActions()
@@ -77,25 +78,28 @@ function TodayView() {
   const progress = totalCount > 0 ? completedCount / totalCount : 0
 
   // Determine mascot mood and message based on progress
+  const displayName = settings?.display_name
+  const greeting = displayName ? `Hi ${displayName}!` : 'Hey!'
+
   const getMascotState = (): { mood: MascotMood; message: string } => {
     const hour = new Date().getHours()
     
     if (allDone) {
-      return { mood: 'proud', message: "Amazing! All done! 🎉" }
+      return { mood: 'proud', message: `${greeting} All done! 🎉` }
     }
     if (progress >= 0.7) {
-      return { mood: 'encouraging', message: "Almost there! Keep going!" }
+      return { mood: 'encouraging', message: `${greeting} Almost there!` }
     }
     if (progress >= 0.3) {
-      return { mood: 'happy', message: "Great progress! 💪" }
+      return { mood: 'happy', message: `${greeting} Great progress! 💪` }
     }
     if (hour >= 22 || hour < 5) {
-      return { mood: 'sleepy', message: "Time to rest soon..." }
+      return { mood: 'sleepy', message: `${greeting} Time to rest...` }
     }
     if (totalCount === 0) {
-      return { mood: 'thinking', message: "Add your first habit!" }
+      return { mood: 'thinking', message: `${greeting} Add a habit!` }
     }
-    return { mood: 'encouraging', message: "Let's get started! ✨" }
+    return { mood: 'encouraging', message: `${greeting} Let's go! ✨` }
   }
 
   const mascotState = getMascotState()

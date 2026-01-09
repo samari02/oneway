@@ -4,6 +4,7 @@ import { DEFAULT_HABITS } from '../types'
 
 export interface UserSettings {
   user_id: string
+  display_name?: string
   morning_routine_habits: string[]
   default_blocking_mode: string
   wake_time?: string
@@ -37,6 +38,7 @@ export async function saveOnboardingData(
     .from('user_settings')
     .upsert({
       user_id: userId,
+      display_name: onboardingData.displayName,
       default_blocking_mode: onboardingData.strictness,
       wake_time: onboardingData.wakeTime,
       sleep_time: onboardingData.sleepTime,

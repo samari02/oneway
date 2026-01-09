@@ -35,17 +35,14 @@
 
 /* Speech Bubble */
 .mascot__bubble {
-  background: linear-gradient(
-    135deg,
-    rgba(125, 216, 196, 0.15) 0%,
-    rgba(125, 216, 196, 0.08) 100%
-  );
-  border: 1px solid rgba(125, 216, 196, 0.2);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(167, 139, 250, 0.25);
   border-radius: var(--radius-lg);
   padding: var(--space-xs) var(--space-sm);
   position: relative;
   max-width: 200px;
   text-align: center;
+  transition: all 0.4s ease;
 }
 
 .mascot__bubble::after {
@@ -58,7 +55,7 @@
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 6px solid rgba(125, 216, 196, 0.15);
+  border-top: 6px solid rgba(255, 255, 255, 0.85);
 }
 
 .mascot__message {
@@ -68,116 +65,134 @@
   line-height: 1.3;
 }
 
-/* The Blob */
+/* The Blob - Base violet/lavender color */
 .mascot__blob {
   background: linear-gradient(
     180deg,
-    rgba(125, 216, 196, 0.6) 0%,
-    rgba(125, 216, 196, 0.8) 100%
+    rgba(177, 156, 255, 0.7) 0%,
+    rgba(162, 210, 255, 0.8) 100%
   );
   border-radius: 50% 50% 45% 45%;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: blobBounce 3s ease-in-out infinite;
+  /* Single base animation - no switching */
+  animation: blobFloat 3s ease-in-out infinite;
+  /* Reduced halo/blur */
   box-shadow: 
-    0 4px 12px rgba(125, 216, 196, 0.3),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.05),
-    inset 0 4px 8px rgba(255, 255, 255, 0.5);
-  transition: all var(--transition-normal);
+    0 2px 6px rgba(167, 139, 250, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  /* Smooth transitions */
+  transition: 
+    box-shadow 0.5s ease,
+    filter 0.5s ease;
+  position: relative;
+}
+
+/* Cute little legs */
+.mascot__blob::before,
+.mascot__blob::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  width: 8px;
+  height: 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(147, 197, 253, 0.75) 0%,
+    rgba(147, 197, 253, 0.6) 100%
+  );
+  border-radius: 40% 40% 50% 50%;
+}
+
+.mascot__blob::before {
+  left: 25%;
+  transform: rotate(-5deg);
+  animation: legWiggleLeft 3s ease-in-out infinite;
+}
+
+.mascot__blob::after {
+  right: 25%;
+  transform: rotate(5deg);
+  animation: legWiggleRight 3s ease-in-out infinite;
+}
+
+@keyframes legWiggleLeft {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(-8deg); }
+}
+
+@keyframes legWiggleRight {
+  0%, 100% { transform: rotate(5deg); }
+  50% { transform: rotate(8deg); }
 }
 
 .mascot__blob:hover {
-  transform: scale(1.1);
+  filter: brightness(1.08);
 }
 
-/* Mood variations */
+/* Mood variations - subtle glow changes only */
 .mascot__blob--happy {
-  background: linear-gradient(
-    180deg,
-    rgba(125, 216, 196, 0.6) 0%,
-    rgba(125, 216, 196, 0.8) 100%
-  );
+  box-shadow: 
+    0 2px 6px rgba(167, 139, 250, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
 }
 
 .mascot__blob--proud {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 215, 0, 0.5) 0%,
-    rgba(255, 182, 147, 0.7) 100%
-  );
-  animation: proudPulse 2s ease-in-out infinite;
+  box-shadow: 
+    0 2px 8px rgba(255, 200, 100, 0.25),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  filter: brightness(1.05);
 }
 
 .mascot__blob--encouraging {
-  background: linear-gradient(
-    180deg,
-    rgba(147, 197, 253, 0.6) 0%,
-    rgba(125, 216, 196, 0.8) 100%
-  );
+  box-shadow: 
+    0 2px 8px rgba(125, 216, 196, 0.25),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
 }
 
 .mascot__blob--sleepy {
-  background: linear-gradient(
-    180deg,
-    rgba(167, 139, 250, 0.5) 0%,
-    rgba(147, 197, 253, 0.7) 100%
-  );
-  animation: sleepyFloat 4s ease-in-out infinite;
+  box-shadow: 
+    0 2px 8px rgba(167, 139, 250, 0.25),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  filter: brightness(0.95);
 }
 
 .mascot__blob--thinking {
-  background: linear-gradient(
-    180deg,
-    rgba(253, 230, 138, 0.6) 0%,
-    rgba(125, 216, 196, 0.7) 100%
-  );
+  box-shadow: 
+    0 2px 8px rgba(253, 230, 138, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
 }
 
-@keyframes blobBounce {
-  0%, 100% {
-    transform: translateY(0) scale(1, 1);
-  }
-  25% {
-    transform: translateY(-3px) scale(1.02, 0.98);
-  }
-  50% {
-    transform: translateY(0) scale(0.98, 1.02);
-  }
-  75% {
-    transform: translateY(-2px) scale(1.01, 0.99);
-  }
-}
-
-@keyframes proudPulse {
+/* Single animation for all moods - smooth floating */
+@keyframes blobFloat {
   0%, 100% {
     transform: translateY(0) scale(1);
-    box-shadow: 
-      0 4px 12px rgba(255, 215, 0, 0.3),
-      inset 0 -4px 8px rgba(0, 0, 0, 0.05),
-      inset 0 4px 8px rgba(255, 255, 255, 0.5);
   }
   50% {
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 
-      0 8px 20px rgba(255, 215, 0, 0.4),
-      inset 0 -4px 8px rgba(0, 0, 0, 0.05),
-      inset 0 4px 8px rgba(255, 255, 255, 0.5);
-  }
-}
-
-@keyframes sleepyFloat {
-  0%, 100% {
-    transform: translateY(0) rotate(-2deg);
-  }
-  50% {
-    transform: translateY(-5px) rotate(2deg);
+    transform: translateY(-4px) scale(1.02);
   }
 }
 
 .mascot__face {
   color: var(--text-primary);
-  opacity: 0.8;
+  opacity: 0.75;
   font-family: system-ui, sans-serif;
   user-select: none;
+  transition: opacity 0.3s ease;
+}
+
+/* Subtle face opacity changes */
+.mascot__blob--sleepy .mascot__face {
+  opacity: 0.6;
+}
+
+.mascot__blob--proud .mascot__face {
+  opacity: 0.85;
 }
