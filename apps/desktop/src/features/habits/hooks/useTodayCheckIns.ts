@@ -18,6 +18,13 @@ export function useTodayCheckIns(userId: string | undefined): UseTodayCheckInsRe
   
   // Track in-flight toggles to prevent double-clicks
   const pendingToggles = useRef<Set<string>>(new Set())
+  // Keep current checkIns in ref to avoid stale closures
+  const checkInsRef = useRef<HabitCheckIn[]>([])
+  
+  // Sync ref with state
+  useEffect(() => {
+    checkInsRef.current = checkIns
+  }, [checkIns])
 
   const fetch = useCallback(async () => {
     if (!userId) {
@@ -31,6 +38,7 @@ export function useTodayCheckIns(userId: string | undefined): UseTodayCheckInsRe
     try {
       const data = await getTodayCheckIns(userId)
       setCheckIns(data)
+      checkInsRef.current = data
     } catch (e) {
       setError(e instanceof Error ? e : new Error('Unknown error'))
     } finally {
@@ -44,44 +52,56 @@ export function useTodayCheckIns(userId: string | undefined): UseTodayCheckInsRe
 
   const checkedIds = new Set(checkIns.map(c => c.habit_id))
 
-  // Optimistic toggle with instant UI update
-  const toggleHabit = useCallback(async (habitId: string, userId: string) => {
+  // Toggle with optimistic update
+  const toggleHabit = useCallback(async (habitId: string, visibleUserId: string) => {
     // Prevent double-clicks
     if (pendingToggles.current.has(habitId)) {
       return
     }
     pendingToggles.current.add(habitId)
 
-    // Use current state from setCheckIns to avoid stale closures
-    let wasChecked = false
-    setCheckIns(prev => {
-      wasChecked = prev.some(c => c.habit_id === habitId)
-      
-      if (wasChecked) {
-        return prev.filter(c => c.habit_id !== habitId)
-      } else {
-        const optimisticCheckIn: HabitCheckIn = {
-          id: `temp-${habitId}`,
-          habit_id: habitId,
-          user_id: userId,
-          date: new Date().toISOString().split('T')[0],
-          completed_at: new Date().toISOString(),
-        }
-        return [...prev, optimisticCheckIn]
+    // Read current state from ref (always fresh)
+    const currentCheckIns = checkInsRef.current
+    const isCurrentlyChecked = currentCheckIns.some(c => c.habit_id === habitId)
+    
+    // Optimistic update
+    if (isCurrentlyChecked) {
+      const newCheckIns = currentCheckIns.filter(c => c.habit_id !== habitId)
+      setCheckIns(newCheckIns)
+      checkInsRef.current = newCheckIns
+    } else {
+      const optimisticCheckIn: HabitCheckIn = {
+        id: `temp-${habitId}-${Date.now()}`,
+        habit_id: habitId,
+        user_id: visibleUserId,
+        date: new Date().toISOString().split('T')[0],
+        completed_at: new Date().toISOString(),
       }
-    })
+      const newCheckIns = [...currentCheckIns, optimisticCheckIn]
+      setCheckIns(newCheckIns)
+      checkInsRef.current = newCheckIns
+    }
 
-    // Sync with server in background
+    // Sync with server
     try {
-      if (wasChecked) {
+      if (isCurrentlyChecked) {
         await uncheckHabit(habitId)
+        // Uncheck successful - state is already updated
       } else {
-        await checkHabit(habitId, userId)
+        const realCheckIn = await checkHabit(habitId, visibleUserId)
+        // Replace temp with real check-in
+        setCheckIns(prev => {
+          const updated = prev.map(c => 
+            c.habit_id === habitId && c.id.startsWith('temp-') ? realCheckIn : c
+          )
+          checkInsRef.current = updated
+          return updated
+        })
       }
     } catch (e) {
-      // Revert on error
       console.error('Failed to sync habit:', e)
-      await fetch() // Refetch to get correct state
+      // Revert on error
+      await fetch()
     } finally {
       pendingToggles.current.delete(habitId)
     }
