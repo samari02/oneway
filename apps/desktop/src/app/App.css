@@ -42,6 +42,11 @@
   margin-left: 140px; /* Sidebar expanded width */
 }
 
+/* When sidebar is hovered, also increase margin (responsive) */
+.app-layout:has(.sidebar:hover) .app-layout__content {
+  margin-left: 140px;
+}
+
 .app-layout__header {
   position: sticky;
   top: 0;
