@@ -1,0 +1,117 @@
+/* ========================================
+   Sidebar Navigation
+   ======================================== */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 64px;
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-light);
+  padding: var(--space-md) var(--space-sm);
+  transition: width var(--transition-normal);
+}
+
+.sidebar:hover {
+  width: 160px;
+}
+
+/* Brand / Logo */
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.sidebar__logo {
+  font-size: 24px;
+  transition: transform var(--transition-fast);
+}
+
+.sidebar:hover .sidebar__logo {
+  transform: scale(1.1);
+}
+
+/* Navigation List */
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Nav Item Button */
+.sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-sm);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar__item:hover {
+  background: rgba(125, 216, 196, 0.1);
+  color: var(--text-primary);
+}
+
+.sidebar__item--active {
+  background: rgba(125, 216, 196, 0.15);
+  color: var(--color-mint-dark);
+}
+
+.sidebar__item--active .sidebar__icon {
+  transform: scale(1.1);
+}
+
+/* Icon */
+.sidebar__icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-fast);
+}
+
+/* Label - hidden when collapsed */
+.sidebar__label {
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: all var(--transition-fast);
+}
+
+.sidebar:hover .sidebar__label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Spacer */
+.sidebar__spacer {
+  flex: 1;
+}
+
+/* Footer */
+.sidebar__footer {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-sm);
+}
+
+.sidebar__version {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  opacity: 0.5;
+}

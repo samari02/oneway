@@ -2,11 +2,14 @@ import { useState } from 'react'
 import { useAuth, LoginForm } from '@/features/auth'
 import { useHabits, useTodayCheckIns, useHabitActions, HabitList, AddHabitForm } from '@/features/habits'
 import { OnboardingFlow, useOnboardingStatus, saveOnboardingData } from '@/features/onboarding'
+import { Sidebar, type ViewType } from '@/features/navigation'
+import { StatsView } from '@/features/stats'
+import { SettingsView } from '@/features/settings'
 import type { OnboardingData } from '@/features/onboarding'
 import './App.css'
 
-function Dashboard() {
-  const { user, signOut } = useAuth()
+function TodayView() {
+  const { user } = useAuth()
   const { habits, loading: habitsLoading, refetch: refetchHabits } = useHabits(user?.id)
   const { checkedIds, toggleHabit } = useTodayCheckIns(user?.id)
   const { create } = useHabitActions()
@@ -52,57 +55,78 @@ function Dashboard() {
   const allDone = totalCount > 0 && completedCount === totalCount
 
   return (
-    <div className="dashboard">
-      <header className="dashboard__header">
-        <div className="dashboard__brand">
-          <span className="dashboard__mascot">{allDone ? '✨' : '💧'}</span>
-          <h1 className="dashboard__title">Clarity</h1>
-        </div>
-        <button onClick={signOut} className="dashboard__logout">
-          Logout
-        </button>
-      </header>
-
-      <main className="dashboard__main">
-        <section className="dashboard__today">
-          <h2>Today</h2>
-          <p className="dashboard__date">{today}</p>
-          {allDone && (
-            <p className="dashboard__congrats">🎉 All done! Great job!</p>
-          )}
-        </section>
-
-        {habitsLoading ? (
-          <div className="dashboard__loader">Loading...</div>
-        ) : (
-          <>
-            <HabitList
-              habits={habits}
-              checkedIds={checkedIds}
-              onCheck={handleToggle}
-              onUncheck={handleToggle}
-            />
-
-            {showAddForm ? (
-              <AddHabitForm
-                onAdd={handleAddHabit}
-                onCancel={() => setShowAddForm(false)}
-              />
-            ) : (
-              <button 
-                className="dashboard__add-button"
-                onClick={() => setShowAddForm(true)}
-              >
-                + Add Habit
-              </button>
-            )}
-          </>
+    <div className="today-view">
+      <section className="today-view__header">
+        <h2>Today</h2>
+        <p className="today-view__date">{today}</p>
+        {allDone && (
+          <p className="today-view__congrats">🎉 All done! Great job!</p>
         )}
-      </main>
+      </section>
 
-      <footer className="dashboard__footer">
-        <p>{user?.email}</p>
-      </footer>
+      {habitsLoading ? (
+        <div className="today-view__loader">Loading...</div>
+      ) : (
+        <>
+          <HabitList
+            habits={habits}
+            checkedIds={checkedIds}
+            onCheck={handleToggle}
+            onUncheck={handleToggle}
+          />
+
+          {showAddForm ? (
+            <AddHabitForm
+              onAdd={handleAddHabit}
+              onCancel={() => setShowAddForm(false)}
+            />
+          ) : (
+            <button 
+              className="today-view__add-button"
+              onClick={() => setShowAddForm(true)}
+            >
+              + Add Habit
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function Dashboard() {
+  const { user } = useAuth()
+  const [currentView, setCurrentView] = useState<ViewType>('today')
+
+  const renderView = () => {
+    switch (currentView) {
+      case 'today':
+        return <TodayView />
+      case 'stats':
+        return <StatsView />
+      case 'settings':
+        return <SettingsView />
+      default:
+        return <TodayView />
+    }
+  }
+
+  return (
+    <div className="app-layout">
+      <Sidebar currentView={currentView} onNavigate={setCurrentView} />
+      
+      <main className="app-layout__content">
+        <header className="app-layout__header">
+          <div className="app-layout__brand">
+            <h1 className="app-layout__title">Clarity</h1>
+          </div>
+          <span className="app-layout__email">{user?.email}</span>
+        </header>
+        
+        <div className="app-layout__view">
+          {renderView()}
+        </div>
+      </main>
     </div>
   )
 }

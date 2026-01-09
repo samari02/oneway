@@ -1,0 +1,99 @@
+/* ========================================
+   Stats View
+   ======================================== */
+
+.stats-view {
+  padding: var(--space-lg);
+  max-width: 100%;
+}
+
+.stats-view__header {
+  margin-bottom: var(--space-xl);
+}
+
+.stats-view__header h1 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-xs);
+}
+
+.stats-view__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+/* Placeholder */
+.stats-view__placeholder {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg);
+  background: linear-gradient(135deg, rgba(125, 216, 196, 0.08) 0%, rgba(125, 216, 196, 0.02) 100%);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.stats-view__icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: var(--space-md);
+}
+
+.stats-view__placeholder h2 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.stats-view__placeholder p {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  max-width: 280px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* Preview Cards */
+.stats-view__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.stats-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  opacity: 0.6;
+}
+
+.stats-card__icon {
+  font-size: 24px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.stats-card__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-card__value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.stats-card__label {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
