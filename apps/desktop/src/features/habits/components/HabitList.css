@@ -1,0 +1,71 @@
+.habit-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.habit-list__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.habit-list__progress-text {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.habit-list__progress-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--text-muted);
+}
+
+.habit-list__progress-bar {
+  height: 8px;
+  background: var(--border-light);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.habit-list__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-mint) 0%, var(--color-mint-dark) 100%);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-normal);
+}
+
+.habit-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.habit-list__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  text-align: center;
+}
+
+.habit-list__empty-icon {
+  font-size: 48px;
+  margin-bottom: var(--space-md);
+}
+
+.habit-list__empty p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+}
+
+.habit-list__empty-hint {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-xs);
+}

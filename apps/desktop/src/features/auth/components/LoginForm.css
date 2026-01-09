@@ -1,0 +1,115 @@
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-lg);
+}
+
+.login-form__header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.login-form__mascot {
+  font-size: 64px;
+  margin-bottom: var(--space-sm);
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.login-form__title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-xs);
+}
+
+.login-form__tagline {
+  font-size: var(--font-size-md);
+  color: var(--text-muted);
+}
+
+.login-form__form {
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.login-form__input {
+  width: 100%;
+  padding: var(--space-md);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  transition: border-color var(--transition-fast);
+}
+
+.login-form__input:focus {
+  outline: none;
+  border-color: var(--color-mint);
+}
+
+.login-form__input::placeholder {
+  color: var(--text-muted);
+}
+
+.login-form__button {
+  width: 100%;
+  padding: var(--space-md);
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-mint);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.login-form__button:hover {
+  background: var(--color-mint-dark);
+}
+
+.login-form__button:active {
+  transform: scale(0.98);
+}
+
+.login-form__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-form__switch {
+  margin-top: var(--space-md);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  transition: color var(--transition-fast);
+}
+
+.login-form__switch:hover {
+  color: var(--text-secondary);
+}
+
+.login-form__message {
+  margin-top: var(--space-md);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.login-form__message--success {
+  color: var(--color-success);
+}
+
+.login-form__message--error {
+  color: var(--color-error);
+}

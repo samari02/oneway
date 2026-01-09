@@ -1,0 +1,71 @@
+/* ========================================
+   Clarity Design System
+   ======================================== */
+
+:root {
+  /* Colors - Clarity Palette */
+  --color-mint: #7DD8C4;
+  --color-mint-light: #A8E6D8;
+  --color-mint-dark: #5BC4AD;
+  
+  --color-coral: #FF9B85;
+  --color-yellow: #FFD485;
+  --color-lavender: #B8A9E8;
+  
+  /* Backgrounds */
+  --bg-primary: #FAFBFC;
+  --bg-secondary: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  
+  /* Text */
+  --text-primary: #2D3748;
+  --text-secondary: #718096;
+  --text-muted: #A0AEC0;
+  
+  /* Borders */
+  --border-light: #E2E8F0;
+  --border-default: #CBD5E0;
+  
+  /* Semantic */
+  --color-success: #68D391;
+  --color-warning: #F6AD55;
+  --color-error: #FC8181;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  
+  /* Typography */
+  --font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 32px;
+  
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+}

@@ -11,25 +11,25 @@
 
 ---
 
-## 🚧 Phase 1: Habit Management (Current)
+## ✅ Phase 1: Habit Management (Done)
 
 > Objectif : Pouvoir créer, voir et compléter ses habits quotidiens.
 
 ### 1.1 Backend ready
-- [ ] Vérifier/ajuster schéma Supabase pour habits
-- [ ] Helpers Supabase dans shared (queries)
+- [x] Vérifier/ajuster schéma Supabase pour habits
+- [x] API layer dans features/habits/api
 
 ### 1.2 UI Habits
-- [ ] Liste des habits (fetch depuis Supabase)
-- [ ] Créer un habit (modal/form)
-- [ ] Éditer / Supprimer un habit
-- [ ] Check/uncheck habit du jour
-- [ ] Afficher streak par habit
+- [x] Liste des habits (fetch depuis Supabase)
+- [x] Créer un habit (AddHabitForm)
+- [x] Check/uncheck habit du jour
+- [ ] Éditer / Supprimer un habit (V2)
+- [ ] Afficher streak par habit (V2)
 
 ### 1.3 Design refresh
-- [ ] Passer au nouveau design (Clarity vibes)
-- [ ] Palette mint/pastels
-- [ ] Typo rounded (Nunito/Quicksand)
+- [x] Passer au nouveau design (Clarity vibes)
+- [x] Palette mint/pastels
+- [x] Typo rounded (Nunito)
 
 ---
 
@@ -121,7 +121,7 @@
 ## Current Focus
 
 ```
-Phase 1.2 — UI Habits
+Phase 2 — Chrome Extension
 ```
 
-Prochaine action : Implémenter la liste des habits avec CRUD.
+Prochaine action : Scaffold extension Chrome MV3 avec blocking.

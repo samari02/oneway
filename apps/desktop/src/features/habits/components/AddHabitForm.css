@@ -1,0 +1,113 @@
+.add-habit-form {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.add-habit-form__header h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.add-habit-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.add-habit-form__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+}
+
+.add-habit-form__icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.add-habit-form__icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.add-habit-form__icon:hover {
+  border-color: var(--border-default);
+}
+
+.add-habit-form__icon--selected {
+  border-color: var(--color-mint);
+  background: rgba(125, 216, 196, 0.1);
+}
+
+.add-habit-form__input {
+  padding: var(--space-md);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  transition: border-color var(--transition-fast);
+}
+
+.add-habit-form__input:focus {
+  outline: none;
+  border-color: var(--color-mint);
+}
+
+.add-habit-form__input::placeholder {
+  color: var(--text-muted);
+}
+
+.add-habit-form__actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.add-habit-form__button {
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.add-habit-form__button--secondary {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.add-habit-form__button--secondary:hover {
+  color: var(--text-primary);
+}
+
+.add-habit-form__button--primary {
+  background: var(--color-mint);
+  color: var(--text-primary);
+}
+
+.add-habit-form__button--primary:hover {
+  background: var(--color-mint-dark);
+}
+
+.add-habit-form__button--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
