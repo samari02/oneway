@@ -9,8 +9,8 @@
 
 ## Phase 2: Desktop App
 
-- [ ] Scaffold Tauri + React
-- [ ] Connexion Supabase
+- [x] Scaffold Tauri + React
+- [x] Connexion Supabase
 - [ ] UI habits (list, check, streaks)
 - [ ] Blocking rules manager
 
