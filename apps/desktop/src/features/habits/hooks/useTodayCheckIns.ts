@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { getTodayCheckIns, checkHabit, uncheckHabit } from '../api/habits'
 import type { HabitCheckIn } from '@oneway/shared'
 
@@ -15,6 +15,9 @@ export function useTodayCheckIns(userId: string | undefined): UseTodayCheckInsRe
   const [checkIns, setCheckIns] = useState<HabitCheckIn[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  
+  // Track in-flight toggles to prevent double-clicks
+  const pendingToggles = useRef<Set<string>>(new Set())
 
   const fetch = useCallback(async () => {
     if (!userId) {
@@ -43,25 +46,34 @@ export function useTodayCheckIns(userId: string | undefined): UseTodayCheckInsRe
 
   // Optimistic toggle with instant UI update
   const toggleHabit = useCallback(async (habitId: string, userId: string) => {
-    const isCurrentlyChecked = checkedIds.has(habitId)
-    
-    // Optimistic update - update UI immediately
-    if (isCurrentlyChecked) {
-      setCheckIns(prev => prev.filter(c => c.habit_id !== habitId))
-    } else {
-      const optimisticCheckIn: HabitCheckIn = {
-        id: `temp-${habitId}`,
-        habit_id: habitId,
-        user_id: userId,
-        date: new Date().toISOString().split('T')[0],
-        completed_at: new Date().toISOString(),
-      }
-      setCheckIns(prev => [...prev, optimisticCheckIn])
+    // Prevent double-clicks
+    if (pendingToggles.current.has(habitId)) {
+      return
     }
+    pendingToggles.current.add(habitId)
+
+    // Use current state from setCheckIns to avoid stale closures
+    let wasChecked = false
+    setCheckIns(prev => {
+      wasChecked = prev.some(c => c.habit_id === habitId)
+      
+      if (wasChecked) {
+        return prev.filter(c => c.habit_id !== habitId)
+      } else {
+        const optimisticCheckIn: HabitCheckIn = {
+          id: `temp-${habitId}`,
+          habit_id: habitId,
+          user_id: userId,
+          date: new Date().toISOString().split('T')[0],
+          completed_at: new Date().toISOString(),
+        }
+        return [...prev, optimisticCheckIn]
+      }
+    })
 
     // Sync with server in background
     try {
-      if (isCurrentlyChecked) {
+      if (wasChecked) {
         await uncheckHabit(habitId)
       } else {
         await checkHabit(habitId, userId)
@@ -69,9 +81,11 @@ export function useTodayCheckIns(userId: string | undefined): UseTodayCheckInsRe
     } catch (e) {
       // Revert on error
       console.error('Failed to sync habit:', e)
-      fetch() // Refetch to get correct state
+      await fetch() // Refetch to get correct state
+    } finally {
+      pendingToggles.current.delete(habitId)
     }
-  }, [checkedIds, fetch])
+  }, [fetch])
 
   return { checkIns, checkedIds, loading, error, refetch: fetch, toggleHabit }
 }

@@ -100,13 +100,30 @@ export async function checkHabit(
   
   const { data, error } = await supabase
     .from('habit_check_ins')
-    .upsert({
-      habit_id: habitId,
-      user_id: userId,
-      date: today,
-    })
+    .upsert(
+      {
+        habit_id: habitId,
+        user_id: userId,
+        date: today,
+      },
+      { 
+        onConflict: 'habit_id,date',
+        ignoreDuplicates: true 
+      }
+    )
     .select()
     .single()
+
+  // If ignoreDuplicates returns no data, fetch existing
+  if (error?.code === 'PGRST116') {
+    const { data: existing } = await supabase
+      .from('habit_check_ins')
+      .select('*')
+      .eq('habit_id', habitId)
+      .eq('date', today)
+      .single()
+    return existing!
+  }
 
   if (error) throw new Error(error.message)
   return data
