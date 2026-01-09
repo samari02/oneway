@@ -2,10 +2,12 @@
 export { 
   getHabits, 
   createHabit, 
+  updateHabit,
   checkHabit, 
   uncheckHabit,
   getHabitStreak,
-  type CreateHabitData
+  type CreateHabitData,
+  type UpdateHabitData
 } from './api/habits'
 
 // Hooks
@@ -17,3 +19,4 @@ export { useHabitActions } from './hooks/useHabitActions'
 export { HabitList } from './components/HabitList'
 export { HabitItem } from './components/HabitItem'
 export { AddHabitForm } from './components/AddHabitForm'
+export { EditHabitModal } from './components/EditHabitModal'

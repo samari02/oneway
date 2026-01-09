@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import './Sidebar.css'
 
 export type ViewType = 'today' | 'stats' | 'settings'
@@ -30,6 +31,20 @@ const Icons = {
       <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
     </svg>
   ),
+  pin: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="17" x2="12" y2="22"/>
+      <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
+    </svg>
+  ),
+  unpin: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="2" y1="2" x2="22" y2="22"/>
+      <line x1="12" y1="17" x2="12" y2="22"/>
+      <path d="M9 9v1.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6"/>
+      <path d="M15 6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1"/>
+    </svg>
+  ),
 }
 
 interface NavItem {
@@ -50,8 +65,17 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentView, onNavigate }: SidebarProps) {
+  const [isPinned, setIsPinned] = useState(() => {
+    const saved = localStorage.getItem('sidebar-pinned')
+    return saved === 'true'
+  })
+
+  useEffect(() => {
+    localStorage.setItem('sidebar-pinned', String(isPinned))
+  }, [isPinned])
+
   return (
-    <nav className="sidebar">
+    <nav className={`sidebar ${isPinned ? 'sidebar--pinned' : ''}`}>
       <div className="sidebar__brand">
         <span className="sidebar__logo">{Icons.logo}</span>
       </div>
@@ -74,7 +98,14 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
       <div className="sidebar__spacer" />
       
       <div className="sidebar__footer">
-        <span className="sidebar__version">v0.1</span>
+        <button 
+          className="sidebar__pin-btn"
+          onClick={() => setIsPinned(!isPinned)}
+          title={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
+        >
+          {isPinned ? Icons.unpin : Icons.pin}
+          <span className="sidebar__label">{isPinned ? 'Unpin' : 'Pin'}</span>
+        </button>
       </div>
     </nav>
   )

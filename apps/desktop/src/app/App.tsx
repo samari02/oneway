@@ -1,19 +1,21 @@
 import { useState } from 'react'
 import { useAuth, LoginForm } from '@/features/auth'
-import { useHabits, useTodayCheckIns, useHabitActions, HabitList, AddHabitForm } from '@/features/habits'
+import { useHabits, useTodayCheckIns, useHabitActions, HabitList, AddHabitForm, EditHabitModal } from '@/features/habits'
 import { OnboardingFlow, useOnboardingStatus, saveOnboardingData } from '@/features/onboarding'
 import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
 import type { OnboardingData } from '@/features/onboarding'
+import type { Habit } from '@oneway/shared'
 import './App.css'
 
 function TodayView() {
   const { user } = useAuth()
   const { habits, loading: habitsLoading, refetch: refetchHabits } = useHabits(user?.id)
   const { checkedIds, toggleHabit } = useTodayCheckIns(user?.id)
-  const { create } = useHabitActions()
+  const { create, update, remove } = useHabitActions()
   const [showAddForm, setShowAddForm] = useState(false)
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
 
   const handleToggle = (habitId: string) => {
     if (!user) return
@@ -39,6 +41,18 @@ function TodayView() {
       time_of_day: data.time_of_day,
     })
     setShowAddForm(false)
+    refetchHabits()
+  }
+
+  const handleEditHabit = async (updates: Partial<Habit>) => {
+    if (!editingHabit) return
+    await update(editingHabit.id, updates)
+    setEditingHabit(null)
+    refetchHabits()
+  }
+
+  const handleDeleteHabit = async (habitId: string) => {
+    await remove(habitId)
     refetchHabits()
   }
 
@@ -73,6 +87,8 @@ function TodayView() {
             checkedIds={checkedIds}
             onCheck={handleToggle}
             onUncheck={handleToggle}
+            onEdit={setEditingHabit}
+            onDelete={handleDeleteHabit}
           />
 
           {showAddForm ? (
@@ -89,6 +105,14 @@ function TodayView() {
             </button>
           )}
         </>
+      )}
+
+      {editingHabit && (
+        <EditHabitModal
+          habit={editingHabit}
+          onSave={handleEditHabit}
+          onCancel={() => setEditingHabit(null)}
+        />
       )}
     </div>
   )

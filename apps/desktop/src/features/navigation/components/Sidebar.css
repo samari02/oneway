@@ -17,7 +17,8 @@
   z-index: 100;
 }
 
-.sidebar:hover {
+.sidebar:hover,
+.sidebar--pinned {
   width: 140px;
 }
 
@@ -100,7 +101,8 @@
   transition: all var(--transition-fast);
 }
 
-.sidebar:hover .sidebar__label {
+.sidebar:hover .sidebar__label,
+.sidebar--pinned .sidebar__label {
   opacity: 1;
   transform: translateX(0);
 }
@@ -112,13 +114,29 @@
 
 /* Footer */
 .sidebar__footer {
-  display: flex;
-  justify-content: center;
-  padding: var(--space-sm);
+  padding: var(--space-xs);
 }
 
-.sidebar__version {
-  font-size: var(--font-size-xs);
+/* Pin Button */
+.sidebar__pin-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
   color: var(--text-muted);
-  opacity: 0.5;
+  font-size: var(--font-size-xs);
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar__pin-btn:hover {
+  background: rgba(125, 216, 196, 0.1);
+  color: var(--text-primary);
+}
+
+.sidebar--pinned .sidebar__pin-btn {
+  color: var(--color-mint);
 }

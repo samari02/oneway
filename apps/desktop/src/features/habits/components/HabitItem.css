@@ -1,46 +1,47 @@
 .habit-item {
+  position: relative;
   display: flex;
   align-items: flex-start;
-  gap: var(--space-md);
-  padding: var(--space-md);
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
   background: var(--bg-secondary);
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
-  box-shadow: var(--shadow-sm);
+  cursor: pointer;
 }
 
 .habit-item:hover {
   border-color: var(--border-default);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  background: var(--bg-primary);
 }
 
 .habit-item:active {
-  transform: translateY(0);
+  transform: scale(0.995);
 }
 
 .habit-item--checked {
-  background: linear-gradient(135deg, rgba(125, 216, 196, 0.12) 0%, rgba(125, 216, 196, 0.06) 100%);
+  background: linear-gradient(135deg, rgba(125, 216, 196, 0.08) 0%, rgba(125, 216, 196, 0.04) 100%);
   border-color: var(--color-mint);
 }
 
+/* Checkbox */
 .habit-item__check {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
   border: 2px solid var(--border-default);
   border-radius: var(--radius-full);
   background: transparent;
   color: transparent;
-  font-size: var(--font-size-sm);
+  font-size: 11px;
   font-weight: var(--font-weight-bold);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all var(--transition-fast);
   cursor: pointer;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .habit-item__check:hover {
@@ -62,29 +63,29 @@
 
 @keyframes checkPop {
   0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+  50% { transform: scale(1.15); }
   100% { transform: scale(1); }
 }
 
+/* Content */
 .habit-item__content {
   flex: 1;
-  cursor: pointer;
   min-width: 0;
 }
 
 .habit-item__header {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   flex-wrap: wrap;
 }
 
 .habit-item__icon {
-  font-size: 20px;
+  font-size: 14px;
 }
 
 .habit-item__name {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--text-primary);
 }
@@ -94,8 +95,8 @@
 }
 
 .habit-item__badge {
-  font-size: var(--font-size-xs);
-  padding: 2px 6px;
+  font-size: 10px;
+  padding: 1px 5px;
   border-radius: var(--radius-sm);
   font-weight: var(--font-weight-medium);
 }
@@ -108,12 +109,12 @@
 .habit-item__details {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-sm);
-  margin-top: var(--space-xs);
+  gap: var(--space-xs);
+  margin-top: 2px;
 }
 
 .habit-item__duration {
-  font-size: var(--font-size-xs);
+  font-size: 11px;
   color: var(--text-muted);
   display: flex;
   align-items: center;
@@ -121,10 +122,75 @@
 }
 
 .habit-item__description {
-  font-size: var(--font-size-xs);
+  font-size: 11px;
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 200px;
+  max-width: 180px;
+}
+
+/* Actions Menu */
+.habit-item__actions {
+  position: relative;
+}
+
+.habit-item__menu-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  opacity: 0;
+  transition: all var(--transition-fast);
+}
+
+.habit-item:hover .habit-item__menu-btn {
+  opacity: 1;
+}
+
+.habit-item__menu-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Dropdown */
+.habit-item__dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  min-width: 120px;
+  overflow: hidden;
+}
+
+.habit-item__dropdown button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.habit-item__dropdown button:hover {
+  background: var(--bg-secondary);
+}
+
+.habit-item__dropdown-danger {
+  color: #ef4444 !important;
+}
+
+.habit-item__dropdown-danger:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
 }

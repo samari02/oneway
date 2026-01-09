@@ -44,9 +44,20 @@ export async function createHabit(habit: CreateHabitData): Promise<Habit> {
   return data
 }
 
+export interface UpdateHabitData {
+  name?: string
+  icon?: string
+  description?: string
+  duration_minutes?: number
+  is_required?: boolean
+  time_of_day?: 'morning' | 'evening' | 'anytime'
+  order?: number
+  is_active?: boolean
+}
+
 export async function updateHabit(
   id: string,
-  updates: Partial<Pick<Habit, 'name' | 'icon' | 'order' | 'is_active'>>
+  updates: UpdateHabitData
 ): Promise<Habit> {
   const { data, error } = await supabase
     .from('habits')
