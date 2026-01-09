@@ -1,20 +1,24 @@
 /* ========================================
-   Sidebar Navigation
+   Sidebar Navigation - Fixed Position
    ======================================== */
 
 .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
-  width: 64px;
-  min-height: 100vh;
+  width: 52px;
+  height: 100vh;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-light);
-  padding: var(--space-md) var(--space-sm);
+  padding: var(--space-md) var(--space-xs);
   transition: width var(--transition-normal);
+  z-index: 100;
 }
 
 .sidebar:hover {
-  width: 160px;
+  width: 140px;
 }
 
 /* Brand / Logo */
@@ -27,7 +31,10 @@
 }
 
 .sidebar__logo {
-  font-size: 24px;
+  color: var(--color-mint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: transform var(--transition-fast);
 }
 
@@ -51,7 +58,7 @@
   align-items: center;
   gap: var(--space-sm);
   width: 100%;
-  padding: var(--space-sm) var(--space-sm);
+  padding: var(--space-sm);
   border-radius: var(--radius-md);
   color: var(--text-muted);
   font-size: var(--font-size-sm);
@@ -71,19 +78,19 @@
   color: var(--color-mint-dark);
 }
 
-.sidebar__item--active .sidebar__icon {
-  transform: scale(1.1);
-}
-
 /* Icon */
 .sidebar__icon {
-  font-size: 20px;
   flex-shrink: 0;
   width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform var(--transition-fast);
+}
+
+.sidebar__item--active .sidebar__icon {
+  color: var(--color-mint);
 }
 
 /* Label - hidden when collapsed */
