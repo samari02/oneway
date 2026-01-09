@@ -45,12 +45,21 @@
 
 .dashboard__mascot {
   font-size: 28px;
+  transition: transform 0.3s ease;
+}
+
+.dashboard__brand:hover .dashboard__mascot {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .dashboard__title {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
+  background: linear-gradient(135deg, var(--color-mint-dark) 0%, var(--color-mint) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .dashboard__logout {
@@ -75,11 +84,15 @@
 }
 
 .dashboard__today {
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
+  padding: var(--space-lg);
+  background: linear-gradient(135deg, rgba(125, 216, 196, 0.08) 0%, rgba(125, 216, 196, 0.02) 100%);
+  border-radius: var(--radius-lg);
+  text-align: center;
 }
 
 .dashboard__today h2 {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
 }
@@ -91,10 +104,21 @@
 }
 
 .dashboard__congrats {
-  margin-top: var(--space-sm);
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(125, 216, 196, 0.15);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   color: var(--color-mint-dark);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
+  display: inline-block;
+  animation: celebratePop 0.3s ease-out;
+}
+
+@keyframes celebratePop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .dashboard__loader {

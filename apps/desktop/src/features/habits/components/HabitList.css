@@ -8,13 +8,17 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .habit-list__progress-text {
   display: flex;
   align-items: baseline;
   gap: var(--space-sm);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
 }
@@ -26,7 +30,7 @@
 }
 
 .habit-list__progress-bar {
-  height: 8px;
+  height: 10px;
   background: var(--border-light);
   border-radius: var(--radius-full);
   overflow: hidden;
@@ -36,7 +40,7 @@
   height: 100%;
   background: linear-gradient(90deg, var(--color-mint) 0%, var(--color-mint-dark) 100%);
   border-radius: var(--radius-full);
-  transition: width var(--transition-normal);
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .habit-list__items {

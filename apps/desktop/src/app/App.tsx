@@ -8,19 +8,13 @@ import './App.css'
 function Dashboard() {
   const { user, signOut } = useAuth()
   const { habits, loading: habitsLoading, refetch: refetchHabits } = useHabits(user?.id)
-  const { checkedIds, refetch: refetchCheckIns } = useTodayCheckIns(user?.id)
-  const { check, uncheck, create } = useHabitActions()
+  const { checkedIds, toggleHabit } = useTodayCheckIns(user?.id)
+  const { create } = useHabitActions()
   const [showAddForm, setShowAddForm] = useState(false)
 
-  const handleCheck = async (habitId: string) => {
+  const handleToggle = (habitId: string) => {
     if (!user) return
-    await check(habitId, user.id)
-    refetchCheckIns()
-  }
-
-  const handleUncheck = async (habitId: string) => {
-    await uncheck(habitId)
-    refetchCheckIns()
+    toggleHabit(habitId, user.id)
   }
 
   const handleAddHabit = async (data: {
@@ -85,8 +79,8 @@ function Dashboard() {
             <HabitList
               habits={habits}
               checkedIds={checkedIds}
-              onCheck={handleCheck}
-              onUncheck={handleUncheck}
+              onCheck={handleToggle}
+              onUncheck={handleToggle}
             />
 
             {showAddForm ? (

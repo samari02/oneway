@@ -7,14 +7,21 @@
   border: 2px solid var(--border-light);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
 
 .habit-item:hover {
   border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.habit-item:active {
+  transform: translateY(0);
 }
 
 .habit-item--checked {
-  background: linear-gradient(135deg, rgba(125, 216, 196, 0.1) 0%, rgba(125, 216, 196, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(125, 216, 196, 0.12) 0%, rgba(125, 216, 196, 0.06) 100%);
   border-color: var(--color-mint);
 }
 
@@ -45,11 +52,18 @@
   background: var(--color-mint);
   border-color: var(--color-mint);
   color: white;
+  animation: checkPop 0.2s ease-out;
 }
 
 .habit-item__check--checked:hover {
   background: var(--color-mint-dark);
   border-color: var(--color-mint-dark);
+}
+
+@keyframes checkPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 .habit-item__content {
