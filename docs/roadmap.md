@@ -82,8 +82,12 @@
 - [ ] Config heures de notification
 
 ### 4.2 Stats basiques
-- [ ] Streak global
-- [ ] Weekly summary (X/7 jours)
+- [x] Streak global (basé sur required habits)
+- [x] Best streak (record)
+- [x] Weekly summary (X/7 jours)
+- [x] Monthly summary (X/30 jours)
+- [x] Per-habit stats (14 jours)
+- [x] Mascotte avec message encourageant
 
 ### 4.3 Onboarding
 - [ ] Flow onboarding (problèmes → goals → mode)
@@ -121,7 +125,7 @@
 ## Current Focus
 
 ```
-Phase 2 — Chrome Extension
+Phase 4 — Polish V1
 ```
 
-Prochaine action : Scaffold extension Chrome MV3 avec blocking.
+Stats basiques ✅ → Prochaine action : Tasks / Calendar view / Chrome Extension.

@@ -1,0 +1,127 @@
+.streak-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 248, 245, 0.9) 100%
+  );
+  border: 1px solid rgba(255, 182, 147, 0.3);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle glow effect */
+.streak-card::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 107, 74, 0.15) 0%,
+    transparent 70%
+  );
+  animation: streakGlow 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes streakGlow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+.streak-card__main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  position: relative;
+  z-index: 1;
+}
+
+.streak-card__fire {
+  font-size: 40px;
+  animation: fireWiggle 2s ease-in-out infinite;
+}
+
+@keyframes fireWiggle {
+  0%, 100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+.streak-card__number {
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.streak-card__label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+}
+
+.streak-card__dots {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 200px;
+  position: relative;
+  z-index: 1;
+}
+
+.streak-card__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 182, 147, 0.3);
+  transition: all var(--transition-fast);
+}
+
+.streak-card__dot--filled {
+  background: linear-gradient(135deg, #FF8A65 0%, #FF6B4A 100%);
+  box-shadow: 0 0 6px rgba(255, 107, 74, 0.4);
+}
+
+.streak-card__best {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: var(--radius-full);
+  position: relative;
+  z-index: 1;
+}
+
+.streak-card__best-icon {
+  font-size: 14px;
+}
+
+.streak-card__best-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}

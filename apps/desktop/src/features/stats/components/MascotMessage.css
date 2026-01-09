@@ -1,0 +1,88 @@
+.mascot-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+}
+
+.mascot-message__bubble {
+  background: linear-gradient(
+    135deg,
+    rgba(125, 216, 196, 0.15) 0%,
+    rgba(125, 216, 196, 0.08) 100%
+  );
+  border: 1px solid rgba(125, 216, 196, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  position: relative;
+  max-width: 280px;
+}
+
+/* Speech bubble tail */
+.mascot-message__bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(125, 216, 196, 0.15);
+}
+
+.mascot-message__text {
+  font-size: 14px;
+  color: var(--text-primary);
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.mascot-message__mascot {
+  display: flex;
+  justify-content: center;
+}
+
+.mascot-message__blob {
+  width: 60px;
+  height: 50px;
+  background: linear-gradient(
+    180deg,
+    rgba(125, 216, 196, 0.6) 0%,
+    rgba(125, 216, 196, 0.8) 100%
+  );
+  border-radius: 50% 50% 45% 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: blobBounce 3s ease-in-out infinite;
+  box-shadow: 
+    0 4px 12px rgba(125, 216, 196, 0.3),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.05),
+    inset 0 4px 8px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes blobBounce {
+  0%, 100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  25% {
+    transform: translateY(-3px) scale(1.02, 0.98);
+  }
+  50% {
+    transform: translateY(0) scale(0.98, 1.02);
+  }
+  75% {
+    transform: translateY(-2px) scale(1.01, 0.99);
+  }
+}
+
+.mascot-message__face {
+  font-size: 16px;
+  color: var(--text-primary);
+  opacity: 0.8;
+  font-family: system-ui, sans-serif;
+}

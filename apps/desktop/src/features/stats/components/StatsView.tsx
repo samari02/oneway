@@ -1,6 +1,46 @@
+import { useAuth } from '../../auth'
+import { useStats } from '../hooks/useStats'
+import { StreakCard } from './StreakCard'
+import { CompletionBar } from './CompletionBar'
+import { HabitStatsCard } from './HabitStatsCard'
+import { MascotMessage } from './MascotMessage'
 import './StatsView.css'
 
 export function StatsView() {
+  const { user } = useAuth()
+  const { stats, loading, error } = useStats(user?.id)
+
+  if (loading) {
+    return (
+      <div className="stats-view">
+        <div className="stats-view__loading">
+          <div className="stats-view__loading-spinner" />
+          <p>Loading your stats...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="stats-view">
+        <div className="stats-view__error">
+          <p>Failed to load stats. Please try again.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!stats) {
+    return (
+      <div className="stats-view">
+        <div className="stats-view__empty">
+          <p>No data yet. Start tracking your habits!</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="stats-view">
       <header className="stats-view__header">
@@ -8,39 +48,42 @@ export function StatsView() {
         <p className="stats-view__subtitle">Track your progress</p>
       </header>
 
-      <section className="stats-view__placeholder">
-        <span className="stats-view__icon">📊</span>
-        <h2>Coming Soon</h2>
-        <p>
-          Streaks, weekly reviews, and pattern insights
-          will appear here.
-        </p>
-      </section>
+      <div className="stats-view__content">
+        {/* Streak Card - Main Hero */}
+        <section className="stats-view__section stats-view__section--streak">
+          <StreakCard
+            currentStreak={stats.currentStreak}
+            bestStreak={stats.bestStreak}
+          />
+        </section>
 
-      <div className="stats-view__preview">
-        <div className="stats-card">
-          <span className="stats-card__icon">🔥</span>
-          <div className="stats-card__content">
-            <span className="stats-card__value">—</span>
-            <span className="stats-card__label">Current Streak</span>
+        {/* Completion Rates */}
+        <section className="stats-view__section stats-view__section--completion">
+          <div className="stats-view__completion-grid">
+            <CompletionBar
+              label="This Week"
+              rate={stats.weekCompletion.rate}
+              completed={stats.weekCompletion.completed}
+              total={stats.weekCompletion.total}
+            />
+            <CompletionBar
+              label="This Month"
+              rate={stats.monthCompletion.rate}
+              completed={stats.monthCompletion.completed}
+              total={stats.monthCompletion.total}
+            />
           </div>
-        </div>
+        </section>
 
-        <div className="stats-card">
-          <span className="stats-card__icon">✅</span>
-          <div className="stats-card__content">
-            <span className="stats-card__value">—</span>
-            <span className="stats-card__label">This Week</span>
-          </div>
-        </div>
+        {/* Per Habit Stats */}
+        <section className="stats-view__section stats-view__section--habits">
+          <HabitStatsCard habitStats={stats.perHabit} />
+        </section>
 
-        <div className="stats-card">
-          <span className="stats-card__icon">⭐</span>
-          <div className="stats-card__content">
-            <span className="stats-card__value">—</span>
-            <span className="stats-card__label">Best Streak</span>
-          </div>
-        </div>
+        {/* Mascot Message */}
+        <section className="stats-view__section stats-view__section--mascot">
+          <MascotMessage message={stats.encouragingMessage} />
+        </section>
       </div>
     </div>
   )

@@ -1,1 +1,7 @@
 export { StatsView } from './components/StatsView'
+export { StreakCard } from './components/StreakCard'
+export { CompletionBar } from './components/CompletionBar'
+export { HabitStatsCard } from './components/HabitStatsCard'
+export { MascotMessage } from './components/MascotMessage'
+export { useStats } from './hooks/useStats'
+export type { Stats, HabitStat } from './hooks/useStats'
