@@ -43,6 +43,23 @@
   border-color: var(--color-mint);
 }
 
+/* Current habit - subtle glow effect */
+.habit-item--current {
+  background: linear-gradient(135deg, rgba(125, 216, 196, 0.12) 0%, rgba(125, 216, 196, 0.06) 100%);
+  border-color: var(--color-mint);
+  box-shadow: 0 0 20px rgba(125, 216, 196, 0.15);
+  animation: currentGlow 3s ease-in-out infinite;
+}
+
+@keyframes currentGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(125, 216, 196, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(125, 216, 196, 0.25);
+  }
+}
+
 /* Checkbox */
 .habit-item__check {
   width: 22px;

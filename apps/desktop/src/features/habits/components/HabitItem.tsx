@@ -5,12 +5,13 @@ import './HabitItem.css'
 interface HabitItemProps {
   habit: Habit
   isChecked: boolean
+  isCurrent?: boolean
   onToggle: () => void
   onEdit?: (habit: Habit) => void
   onDelete?: (habitId: string) => void
 }
 
-export function HabitItem({ habit, isChecked, onToggle, onEdit, onDelete }: HabitItemProps) {
+export function HabitItem({ habit, isChecked, isCurrent, onToggle, onEdit, onDelete }: HabitItemProps) {
   const [showActions, setShowActions] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -70,7 +71,7 @@ export function HabitItem({ habit, isChecked, onToggle, onEdit, onDelete }: Habi
 
   return (
     <div 
-      className={`habit-item ${isChecked ? 'habit-item--checked' : ''} ${showActions ? 'habit-item--menu-open' : ''}`}
+      className={`habit-item ${isChecked ? 'habit-item--checked' : ''} ${isCurrent ? 'habit-item--current' : ''} ${showActions ? 'habit-item--menu-open' : ''}`}
       onClick={handleContentClick}
     >
       <button 

@@ -9,6 +9,7 @@ export interface Habit {
   duration_minutes?: number
   is_required: boolean
   time_of_day: TimeOfDay
+  scheduled_time?: string // HH:MM format, e.g. "05:30", "14:00"
   order: number
   is_active: boolean
   created_at: string

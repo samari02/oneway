@@ -7,6 +7,7 @@ interface HabitFormData {
   icon: string
   description: string
   duration_minutes: number | null
+  scheduled_time: string
   is_required: boolean
   time_of_day: TimeOfDay
 }
@@ -32,6 +33,7 @@ export function AddHabitForm({ onAdd, onCancel }: AddHabitFormProps) {
     icon: '✨',
     description: '',
     duration_minutes: null,
+    scheduled_time: '',
     is_required: false,
     time_of_day: 'morning',
   })
@@ -90,21 +92,31 @@ export function AddHabitForm({ onAdd, onCancel }: AddHabitFormProps) {
         />
       </div>
 
-      {/* Time of Day */}
-      <div className="add-habit-form__field">
-        <label className="add-habit-form__label">When</label>
-        <div className="add-habit-form__time-options">
-          {TIME_OPTIONS.map(option => (
-            <button
-              key={option.value}
-              type="button"
-              className={`add-habit-form__time-option ${data.time_of_day === option.value ? 'add-habit-form__time-option--selected' : ''}`}
-              onClick={() => updateData({ time_of_day: option.value })}
-            >
-              <span>{option.icon}</span>
-              <span>{option.label}</span>
-            </button>
-          ))}
+      {/* Scheduled Time + Time of Day */}
+      <div className="add-habit-form__row">
+        <div className="add-habit-form__field add-habit-form__field--time">
+          <label className="add-habit-form__label">Scheduled time</label>
+          <input
+            type="time"
+            className="add-habit-form__input"
+            value={data.scheduled_time}
+            onChange={(e) => updateData({ scheduled_time: e.target.value })}
+          />
+        </div>
+        <div className="add-habit-form__field add-habit-form__field--when">
+          <label className="add-habit-form__label">When</label>
+          <div className="add-habit-form__time-options">
+            {TIME_OPTIONS.map(option => (
+              <button
+                key={option.value}
+                type="button"
+                className={`add-habit-form__time-option ${data.time_of_day === option.value ? 'add-habit-form__time-option--selected' : ''}`}
+                onClick={() => updateData({ time_of_day: option.value })}
+              >
+                <span>{option.icon}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

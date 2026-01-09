@@ -20,6 +20,19 @@
   gap: var(--space-sm);
 }
 
+.add-habit-form__row {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.add-habit-form__field--time {
+  flex: 0 0 120px;
+}
+
+.add-habit-form__field--when {
+  flex: 1;
+}
+
 .add-habit-form__label {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);

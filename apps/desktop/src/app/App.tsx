@@ -27,6 +27,7 @@ function TodayView() {
     icon: string
     description: string
     duration_minutes: number | null
+    scheduled_time: string
     is_required: boolean
     time_of_day: 'morning' | 'evening' | 'anytime'
   }) => {
@@ -37,6 +38,7 @@ function TodayView() {
       icon: data.icon,
       description: data.description || undefined,
       duration_minutes: data.duration_minutes,
+      scheduled_time: data.scheduled_time || undefined,
       is_required: data.is_required,
       time_of_day: data.time_of_day,
     })

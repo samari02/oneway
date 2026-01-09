@@ -13,6 +13,7 @@ export function EditHabitModal({ habit, onSave, onCancel }: EditHabitModalProps)
   const [icon, setIcon] = useState(habit.icon || '✨')
   const [description, setDescription] = useState(habit.description || '')
   const [durationMinutes, setDurationMinutes] = useState(habit.duration_minutes?.toString() || '')
+  const [scheduledTime, setScheduledTime] = useState(habit.scheduled_time || '')
   const [isRequired, setIsRequired] = useState(habit.is_required || false)
   const [timeOfDay, setTimeOfDay] = useState<'morning' | 'evening' | 'anytime'>(habit.time_of_day || 'anytime')
 
@@ -25,6 +26,7 @@ export function EditHabitModal({ habit, onSave, onCancel }: EditHabitModalProps)
       icon,
       description: description.trim() || undefined,
       duration_minutes: durationMinutes ? parseInt(durationMinutes) : undefined,
+      scheduled_time: scheduledTime || undefined,
       is_required: isRequired,
       time_of_day: timeOfDay,
     })
@@ -73,6 +75,14 @@ export function EditHabitModal({ habit, onSave, onCancel }: EditHabitModalProps)
 
           <div className="edit-modal__row">
             <div className="edit-modal__field">
+              <label>Scheduled time</label>
+              <input
+                type="time"
+                value={scheduledTime}
+                onChange={e => setScheduledTime(e.target.value)}
+              />
+            </div>
+            <div className="edit-modal__field">
               <label>Duration (min)</label>
               <input
                 type="number"
@@ -82,6 +92,9 @@ export function EditHabitModal({ habit, onSave, onCancel }: EditHabitModalProps)
                 min="1"
               />
             </div>
+          </div>
+
+          <div className="edit-modal__row">
             <div className="edit-modal__field">
               <label>Time of day</label>
               <select value={timeOfDay} onChange={e => setTimeOfDay(e.target.value as typeof timeOfDay)}>

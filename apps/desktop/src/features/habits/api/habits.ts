@@ -19,6 +19,7 @@ export interface CreateHabitData {
   icon?: string
   description?: string
   duration_minutes?: number | null
+  scheduled_time?: string
   is_required?: boolean
   time_of_day?: 'morning' | 'evening' | 'anytime'
 }
@@ -32,6 +33,7 @@ export async function createHabit(habit: CreateHabitData): Promise<Habit> {
       icon: habit.icon || '✨',
       description: habit.description || null,
       duration_minutes: habit.duration_minutes || null,
+      scheduled_time: habit.scheduled_time || null,
       is_required: habit.is_required || false,
       time_of_day: habit.time_of_day || 'anytime',
       order: 0,
@@ -49,6 +51,7 @@ export interface UpdateHabitData {
   icon?: string
   description?: string
   duration_minutes?: number
+  scheduled_time?: string
   is_required?: boolean
   time_of_day?: 'morning' | 'evening' | 'anytime'
   order?: number
