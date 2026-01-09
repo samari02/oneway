@@ -9,6 +9,7 @@
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
   cursor: pointer;
+  z-index: 1;
 }
 
 .habit-item:hover {
@@ -18,6 +19,11 @@
 
 .habit-item:active {
   transform: scale(0.995);
+}
+
+/* When menu is open, raise z-index above other items */
+.habit-item--menu-open {
+  z-index: 50;
 }
 
 .habit-item--checked {
@@ -133,6 +139,7 @@
 /* Actions Menu */
 .habit-item__actions {
   position: relative;
+  z-index: 10;
 }
 
 .habit-item__menu-btn {
@@ -147,11 +154,13 @@
   transition: all var(--transition-fast);
 }
 
-.habit-item:hover .habit-item__menu-btn {
+.habit-item:hover .habit-item__menu-btn,
+.habit-item__menu-btn--active {
   opacity: 1;
 }
 
-.habit-item__menu-btn:hover {
+.habit-item__menu-btn:hover,
+.habit-item__menu-btn--active {
   background: var(--bg-secondary);
   color: var(--text-primary);
 }
@@ -159,16 +168,27 @@
 /* Dropdown */
 .habit-item__dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   right: 0;
-  margin-top: 4px;
   background: var(--bg-primary);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  z-index: 100;
-  min-width: 120px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 130px;
   overflow: hidden;
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .habit-item__dropdown button {

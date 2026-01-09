@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { Habit } from '@oneway/shared'
 import './HabitItem.css'
 
@@ -12,6 +12,21 @@ interface HabitItemProps {
 
 export function HabitItem({ habit, isChecked, onToggle, onEdit, onDelete }: HabitItemProps) {
   const [showActions, setShowActions] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!showActions) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowActions(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showActions])
 
   const formatDuration = (minutes?: number) => {
     if (!minutes) return null
@@ -29,21 +44,28 @@ export function HabitItem({ habit, isChecked, onToggle, onEdit, onDelete }: Habi
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation()
+    e.preventDefault()
     setShowActions(false)
-    onEdit?.(habit)
+    // Small delay to ensure dropdown closes before modal opens
+    setTimeout(() => {
+      onEdit?.(habit)
+    }, 10)
   }
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
+    e.preventDefault()
     setShowActions(false)
-    if (confirm(`Delete "${habit.name}"?`)) {
-      onDelete?.(habit.id)
-    }
+    setTimeout(() => {
+      if (confirm(`Delete "${habit.name}"?`)) {
+        onDelete?.(habit.id)
+      }
+    }, 10)
   }
 
   return (
     <div 
-      className={`habit-item ${isChecked ? 'habit-item--checked' : ''}`}
+      className={`habit-item ${isChecked ? 'habit-item--checked' : ''} ${showActions ? 'habit-item--menu-open' : ''}`}
       onClick={handleContentClick}
     >
       <button 
@@ -78,9 +100,9 @@ export function HabitItem({ habit, isChecked, onToggle, onEdit, onDelete }: Habi
       </div>
 
       {/* Actions Menu */}
-      <div className="habit-item__actions">
+      <div className="habit-item__actions" ref={dropdownRef}>
         <button 
-          className="habit-item__menu-btn"
+          className={`habit-item__menu-btn ${showActions ? 'habit-item__menu-btn--active' : ''}`}
           onClick={(e) => { e.stopPropagation(); setShowActions(!showActions) }}
           aria-label="Actions"
         >
