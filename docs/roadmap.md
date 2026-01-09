@@ -2,9 +2,9 @@
 
 ## Phase 1: Foundations
 
-- [ ] Monorepo setup (pnpm workspace)
-- [ ] `packages/shared` — types de base
-- [ ] Supabase project + tables + RLS
+- [x] Monorepo setup (pnpm workspace)
+- [x] `packages/shared` — types de base
+- [x] Supabase project + tables + RLS
 - [ ] Auth setup (magic link)
 
 ## Phase 2: Desktop App
