@@ -6,17 +6,17 @@ import './App.css'
 function App() {
   const [user, setUser] = useState<User | null>(null)
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(true)
-  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
 
   useEffect(() => {
-    // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
     })
@@ -24,22 +24,23 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setMessage('')
-    
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: window.location.origin,
-      },
-    })
+    setError('')
 
-    if (error) {
-      setMessage(error.message)
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({ email, password })
+      if (error) {
+        setError(error.message)
+      } else {
+        setError('Check your email to confirm your account!')
+      }
     } else {
-      setMessage('Check your email for the magic link!')
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        setError(error.message)
+      }
     }
     setLoading(false)
   }
@@ -48,9 +49,9 @@ function App() {
     await supabase.auth.signOut()
   }
 
-  if (loading) {
+  if (loading && !error) {
     return (
-      <div className="container">
+      <div className="container center">
         <div className="loader" />
       </div>
     )
@@ -58,25 +59,40 @@ function App() {
 
   if (!user) {
     return (
-      <div className="container">
+      <div className="container center">
         <div className="logo">⚡</div>
         <h1>oneway</h1>
         <p className="tagline">One path. No distractions.</p>
         
-        <form onSubmit={handleLogin} className="auth-form">
+        <form onSubmit={handleAuth} className="auth-form">
           <input
             type="email"
-            placeholder="your@email.com"
+            placeholder="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+          <input
+            type="password"
+            placeholder="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+          />
           <button type="submit" disabled={loading}>
-            {loading ? 'Sending...' : 'Send Magic Link'}
+            {loading ? '...' : isSignUp ? 'Sign Up' : 'Login'}
           </button>
         </form>
+
+        <button 
+          className="switch-auth" 
+          onClick={() => { setIsSignUp(!isSignUp); setError('') }}
+        >
+          {isSignUp ? 'Already have an account? Login' : "Don't have an account? Sign Up"}
+        </button>
         
-        {message && <p className="message">{message}</p>}
+        {error && <p className={error.includes('Check') ? 'message success' : 'message error'}>{error}</p>}
       </div>
     )
   }
