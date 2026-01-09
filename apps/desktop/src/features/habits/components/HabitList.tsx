@@ -7,10 +7,12 @@ interface HabitListProps {
   checkedIds: Set<string>
   onCheck: (habitId: string) => void
   onUncheck: (habitId: string) => void
+  onEdit?: (habit: Habit) => void
 }
 
-export function HabitList({ habits, checkedIds, onCheck, onUncheck }: HabitListProps) {
-  const completedCount = checkedIds.size
+export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit }: HabitListProps) {
+  // Count only habits that are in the current list
+  const completedCount = habits.filter(h => checkedIds.has(h.id)).length
   const totalCount = habits.length
 
   if (habits.length === 0) {
@@ -51,6 +53,7 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck }: HabitListP
                 onCheck(habit.id)
               }
             }}
+            onEdit={onEdit ? () => onEdit(habit) : undefined}
           />
         ))}
       </div>

@@ -1,8 +1,14 @@
+export type TimeOfDay = 'morning' | 'evening' | 'anytime'
+
 export interface Habit {
   id: string
   user_id: string
   name: string
   icon?: string
+  description?: string
+  duration_minutes?: number
+  is_required: boolean
+  time_of_day: TimeOfDay
   order: number
   is_active: boolean
   created_at: string

@@ -4,7 +4,8 @@ export {
   createHabit, 
   checkHabit, 
   uncheckHabit,
-  getHabitStreak 
+  getHabitStreak,
+  type CreateHabitData
 } from './api/habits'
 
 // Hooks

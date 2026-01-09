@@ -19,11 +19,16 @@ export function StepSetup({ data, onComplete, onBack }: StepSetupProps) {
 
   const strictnessOption = STRICTNESS_OPTIONS.find(o => o.id === data.strictness)
 
+  const [error, setError] = useState<string | null>(null)
+
   const handleComplete = async () => {
     setLoading(true)
+    setError(null)
     try {
       await onComplete()
-    } finally {
+    } catch (e) {
+      console.error('Onboarding error:', e)
+      setError(e instanceof Error ? e.message : 'Une erreur est survenue')
       setLoading(false)
     }
   }
@@ -81,6 +86,12 @@ export function StepSetup({ data, onComplete, onBack }: StepSetupProps) {
           </div>
         </div>
       </div>
+
+      {error && (
+        <div className="setup-error">
+          <p>❌ {error}</p>
+        </div>
+      )}
 
       <div className="onboarding-step__actions">
         <button

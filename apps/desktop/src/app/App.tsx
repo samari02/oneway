@@ -23,9 +23,24 @@ function Dashboard() {
     refetchCheckIns()
   }
 
-  const handleAddHabit = async (name: string, icon: string) => {
+  const handleAddHabit = async (data: {
+    name: string
+    icon: string
+    description: string
+    duration_minutes: number | null
+    is_required: boolean
+    time_of_day: 'morning' | 'evening' | 'anytime'
+  }) => {
     if (!user) return
-    await create({ user_id: user.id, name, icon })
+    await create({
+      user_id: user.id,
+      name: data.name,
+      icon: data.icon,
+      description: data.description || undefined,
+      duration_minutes: data.duration_minutes,
+      is_required: data.is_required,
+      time_of_day: data.time_of_day,
+    })
     setShowAddForm(false)
     refetchHabits()
   }

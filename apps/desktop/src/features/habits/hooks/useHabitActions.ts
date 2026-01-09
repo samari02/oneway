@@ -3,14 +3,15 @@ import {
   checkHabit as checkHabitApi, 
   uncheckHabit as uncheckHabitApi,
   createHabit as createHabitApi,
-  deleteHabit as deleteHabitApi
+  deleteHabit as deleteHabitApi,
+  type CreateHabitData
 } from '../api/habits'
 import type { Habit } from '@oneway/shared'
 
 interface UseHabitActionsResult {
   check: (habitId: string, userId: string) => Promise<void>
   uncheck: (habitId: string) => Promise<void>
-  create: (habit: Pick<Habit, 'user_id' | 'name' | 'icon'>) => Promise<Habit>
+  create: (habit: CreateHabitData) => Promise<Habit>
   remove: (habitId: string) => Promise<void>
   loading: boolean
   error: Error | null
@@ -46,7 +47,7 @@ export function useHabitActions(): UseHabitActionsResult {
     }
   }
 
-  const create = async (habit: Pick<Habit, 'user_id' | 'name' | 'icon'>) => {
+  const create = async (habit: CreateHabitData) => {
     setLoading(true)
     setError(null)
     try {

@@ -13,15 +13,27 @@ export async function getHabits(userId: string): Promise<Habit[]> {
   return data ?? []
 }
 
-export async function createHabit(
-  habit: Pick<Habit, 'user_id' | 'name' | 'icon'>
-): Promise<Habit> {
+export interface CreateHabitData {
+  user_id: string
+  name: string
+  icon?: string
+  description?: string
+  duration_minutes?: number | null
+  is_required?: boolean
+  time_of_day?: 'morning' | 'evening' | 'anytime'
+}
+
+export async function createHabit(habit: CreateHabitData): Promise<Habit> {
   const { data, error } = await supabase
     .from('habits')
     .insert({
       user_id: habit.user_id,
       name: habit.name,
-      icon: habit.icon,
+      icon: habit.icon || '✨',
+      description: habit.description || null,
+      duration_minutes: habit.duration_minutes || null,
+      is_required: habit.is_required || false,
+      time_of_day: habit.time_of_day || 'anytime',
       order: 0,
       is_active: true,
     })
