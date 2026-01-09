@@ -125,6 +125,7 @@ function TodayView() {
 function Dashboard() {
   const { user } = useAuth()
   const [currentView, setCurrentView] = useState<ViewType>('today')
+  const [sidebarPinned, setSidebarPinned] = useState(false)
 
   const renderView = () => {
     switch (currentView) {
@@ -140,8 +141,12 @@ function Dashboard() {
   }
 
   return (
-    <div className="app-layout">
-      <Sidebar currentView={currentView} onNavigate={setCurrentView} />
+    <div className={`app-layout ${sidebarPinned ? 'app-layout--sidebar-pinned' : ''}`}>
+      <Sidebar 
+        currentView={currentView} 
+        onNavigate={setCurrentView} 
+        onPinnedChange={setSidebarPinned}
+      />
       
       <main className="app-layout__content">
         <header className="app-layout__header">

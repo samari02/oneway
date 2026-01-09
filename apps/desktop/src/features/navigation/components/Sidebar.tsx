@@ -62,9 +62,10 @@ const NAV_ITEMS: NavItem[] = [
 interface SidebarProps {
   currentView: ViewType
   onNavigate: (view: ViewType) => void
+  onPinnedChange?: (isPinned: boolean) => void
 }
 
-export function Sidebar({ currentView, onNavigate }: SidebarProps) {
+export function Sidebar({ currentView, onNavigate, onPinnedChange }: SidebarProps) {
   const [isPinned, setIsPinned] = useState(() => {
     const saved = localStorage.getItem('sidebar-pinned')
     return saved === 'true'
@@ -72,7 +73,13 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
 
   useEffect(() => {
     localStorage.setItem('sidebar-pinned', String(isPinned))
-  }, [isPinned])
+    onPinnedChange?.(isPinned)
+  }, [isPinned, onPinnedChange])
+
+  // Notify parent of initial state
+  useEffect(() => {
+    onPinnedChange?.(isPinned)
+  }, [])
 
   return (
     <nav className={`sidebar ${isPinned ? 'sidebar--pinned' : ''}`}>

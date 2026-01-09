@@ -13,9 +13,9 @@
     "windows": [
       {
         "title": "Clarity",
-        "width": 1100,
-        "height": 820,
-        "minWidth": 700,
+        "width": 1280,
+        "height": 860,
+        "minWidth": 800,
         "minHeight": 600,
         "resizable": true,
         "center": true
