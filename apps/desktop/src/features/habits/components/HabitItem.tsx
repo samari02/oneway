@@ -52,15 +52,22 @@ export function HabitItem({ habit, isChecked, onToggle, onEdit, onDelete }: Habi
     }, 10)
   }
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
     setShowActions(false)
-    setTimeout(() => {
-      if (confirm(`Delete "${habit.name}"?`)) {
-        onDelete?.(habit.id)
+    
+    // Use window.confirm with a small delay to let dropdown close
+    setTimeout(async () => {
+      const confirmed = window.confirm(`Delete "${habit.name}"?`)
+      if (confirmed && onDelete) {
+        try {
+          await onDelete(habit.id)
+        } catch (err) {
+          console.error('Failed to delete habit:', err)
+        }
       }
-    }, 10)
+    }, 50)
   }
 
   return (
