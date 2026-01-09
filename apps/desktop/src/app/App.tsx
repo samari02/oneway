@@ -103,11 +103,17 @@ function TodayView() {
   return (
     <div className="today-view">
       <section className="today-view__header">
-        <h2>Today</h2>
-        <p className="today-view__date">{today}</p>
-        {allDone && (
-          <p className="today-view__congrats">🎉 All done! Great job!</p>
-        )}
+        <div className="today-view__hero-mascot">
+          <Mascot 
+            mood={mascotState.mood} 
+            message={mascotState.message}
+            size="large"
+          />
+        </div>
+        <div className="today-view__header-text">
+          <h2>Today</h2>
+          <p className="today-view__date">{today}</p>
+        </div>
       </section>
 
       {habitsLoading ? (
@@ -146,14 +152,6 @@ function TodayView() {
           onCancel={() => setEditingHabit(null)}
         />
       )}
-
-      <div className="today-view__mascot">
-        <Mascot 
-          mood={mascotState.mood} 
-          message={mascotState.message}
-          size="medium"
-        />
-      </div>
     </div>
   )
 }

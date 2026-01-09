@@ -25,12 +25,12 @@
 }
 
 .mascot--large .mascot__blob {
-  width: 80px;
-  height: 66px;
+  width: 70px;
+  height: 58px;
 }
 
 .mascot--large .mascot__face {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 /* Speech Bubble */

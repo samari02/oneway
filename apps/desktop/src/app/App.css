@@ -99,31 +99,30 @@
   padding: var(--space-lg);
   background: linear-gradient(135deg, rgba(125, 216, 196, 0.08) 0%, rgba(125, 216, 196, 0.02) 100%);
   border-radius: var(--radius-lg);
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.today-view__hero-mascot {
+  flex-shrink: 0;
+}
+
+.today-view__header-text {
+  flex: 1;
 }
 
 .today-view__header h2 {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
+  margin: 0;
 }
 
 .today-view__date {
   font-size: var(--font-size-sm);
   color: var(--text-muted);
   margin-top: var(--space-xs);
-}
-
-.today-view__congrats {
-  margin-top: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(125, 216, 196, 0.15);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  color: var(--color-mint-dark);
-  font-weight: var(--font-weight-semibold);
-  display: inline-block;
-  animation: celebratePop 0.3s ease-out;
 }
 
 @keyframes celebratePop {
@@ -155,11 +154,4 @@
   border-color: var(--color-mint);
   color: var(--color-mint-dark);
   background: rgba(125, 216, 196, 0.05);
-}
-
-.today-view__mascot {
-  display: flex;
-  justify-content: center;
-  padding: var(--space-lg) 0;
-  margin-top: auto;
 }
