@@ -5,6 +5,7 @@ import { OnboardingFlow, useOnboardingStatus, saveOnboardingData } from '@/featu
 import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
+import { Mascot, type MascotMood } from '@/features/mascot'
 import type { OnboardingData } from '@/features/onboarding'
 import type { Habit } from '@oneway/shared'
 import './App.css'
@@ -73,6 +74,31 @@ function TodayView() {
   ).length
   const totalCount = habits.length
   const allDone = totalCount > 0 && completedCount === totalCount
+  const progress = totalCount > 0 ? completedCount / totalCount : 0
+
+  // Determine mascot mood and message based on progress
+  const getMascotState = (): { mood: MascotMood; message: string } => {
+    const hour = new Date().getHours()
+    
+    if (allDone) {
+      return { mood: 'proud', message: "Amazing! All done! 🎉" }
+    }
+    if (progress >= 0.7) {
+      return { mood: 'encouraging', message: "Almost there! Keep going!" }
+    }
+    if (progress >= 0.3) {
+      return { mood: 'happy', message: "Great progress! 💪" }
+    }
+    if (hour >= 22 || hour < 5) {
+      return { mood: 'sleepy', message: "Time to rest soon..." }
+    }
+    if (totalCount === 0) {
+      return { mood: 'thinking', message: "Add your first habit!" }
+    }
+    return { mood: 'encouraging', message: "Let's get started! ✨" }
+  }
+
+  const mascotState = getMascotState()
 
   return (
     <div className="today-view">
@@ -120,6 +146,14 @@ function TodayView() {
           onCancel={() => setEditingHabit(null)}
         />
       )}
+
+      <div className="today-view__mascot">
+        <Mascot 
+          mood={mascotState.mood} 
+          message={mascotState.message}
+          size="medium"
+        />
+      </div>
     </div>
   )
 }

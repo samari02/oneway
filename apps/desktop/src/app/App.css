@@ -156,3 +156,10 @@
   color: var(--color-mint-dark);
   background: rgba(125, 216, 196, 0.05);
 }
+
+.today-view__mascot {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-lg) 0;
+  margin-top: auto;
+}

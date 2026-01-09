@@ -3,7 +3,7 @@ import { useStats } from '../hooks/useStats'
 import { StreakCard } from './StreakCard'
 import { CompletionBar } from './CompletionBar'
 import { HabitStatsCard } from './HabitStatsCard'
-import { MascotMessage } from './MascotMessage'
+import { Mascot, type MascotMood } from '../../mascot'
 import './StatsView.css'
 
 export function StatsView() {
@@ -39,6 +39,14 @@ export function StatsView() {
         </div>
       </div>
     )
+  }
+
+  // Determine mascot mood based on stats
+  const getMascotMood = (): MascotMood => {
+    if (stats.currentStreak >= 7) return 'proud'
+    if (stats.weekCompletion.rate >= 70) return 'happy'
+    if (stats.weekCompletion.rate >= 40) return 'encouraging'
+    return 'thinking'
   }
 
   return (
@@ -82,7 +90,11 @@ export function StatsView() {
 
         {/* Mascot Message */}
         <section className="stats-view__section stats-view__section--mascot">
-          <MascotMessage message={stats.encouragingMessage} />
+          <Mascot 
+            mood={getMascotMood()} 
+            message={stats.encouragingMessage}
+            size="medium"
+          />
         </section>
       </div>
     </div>

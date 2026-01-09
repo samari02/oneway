@@ -1,0 +1,183 @@
+.mascot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Sizes */
+.mascot--small .mascot__blob {
+  width: 40px;
+  height: 34px;
+}
+
+.mascot--small .mascot__face {
+  font-size: 12px;
+}
+
+.mascot--medium .mascot__blob {
+  width: 60px;
+  height: 50px;
+}
+
+.mascot--medium .mascot__face {
+  font-size: 16px;
+}
+
+.mascot--large .mascot__blob {
+  width: 80px;
+  height: 66px;
+}
+
+.mascot--large .mascot__face {
+  font-size: 20px;
+}
+
+/* Speech Bubble */
+.mascot__bubble {
+  background: linear-gradient(
+    135deg,
+    rgba(125, 216, 196, 0.15) 0%,
+    rgba(125, 216, 196, 0.08) 100%
+  );
+  border: 1px solid rgba(125, 216, 196, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xs) var(--space-sm);
+  position: relative;
+  max-width: 200px;
+  text-align: center;
+}
+
+.mascot__bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(125, 216, 196, 0.15);
+}
+
+.mascot__message {
+  font-size: 12px;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* The Blob */
+.mascot__blob {
+  background: linear-gradient(
+    180deg,
+    rgba(125, 216, 196, 0.6) 0%,
+    rgba(125, 216, 196, 0.8) 100%
+  );
+  border-radius: 50% 50% 45% 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: blobBounce 3s ease-in-out infinite;
+  box-shadow: 
+    0 4px 12px rgba(125, 216, 196, 0.3),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.05),
+    inset 0 4px 8px rgba(255, 255, 255, 0.5);
+  transition: all var(--transition-normal);
+}
+
+.mascot__blob:hover {
+  transform: scale(1.1);
+}
+
+/* Mood variations */
+.mascot__blob--happy {
+  background: linear-gradient(
+    180deg,
+    rgba(125, 216, 196, 0.6) 0%,
+    rgba(125, 216, 196, 0.8) 100%
+  );
+}
+
+.mascot__blob--proud {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 215, 0, 0.5) 0%,
+    rgba(255, 182, 147, 0.7) 100%
+  );
+  animation: proudPulse 2s ease-in-out infinite;
+}
+
+.mascot__blob--encouraging {
+  background: linear-gradient(
+    180deg,
+    rgba(147, 197, 253, 0.6) 0%,
+    rgba(125, 216, 196, 0.8) 100%
+  );
+}
+
+.mascot__blob--sleepy {
+  background: linear-gradient(
+    180deg,
+    rgba(167, 139, 250, 0.5) 0%,
+    rgba(147, 197, 253, 0.7) 100%
+  );
+  animation: sleepyFloat 4s ease-in-out infinite;
+}
+
+.mascot__blob--thinking {
+  background: linear-gradient(
+    180deg,
+    rgba(253, 230, 138, 0.6) 0%,
+    rgba(125, 216, 196, 0.7) 100%
+  );
+}
+
+@keyframes blobBounce {
+  0%, 100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  25% {
+    transform: translateY(-3px) scale(1.02, 0.98);
+  }
+  50% {
+    transform: translateY(0) scale(0.98, 1.02);
+  }
+  75% {
+    transform: translateY(-2px) scale(1.01, 0.99);
+  }
+}
+
+@keyframes proudPulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 
+      0 4px 12px rgba(255, 215, 0, 0.3),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.05),
+      inset 0 4px 8px rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 
+      0 8px 20px rgba(255, 215, 0, 0.4),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.05),
+      inset 0 4px 8px rgba(255, 255, 255, 0.5);
+  }
+}
+
+@keyframes sleepyFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(2deg);
+  }
+}
+
+.mascot__face {
+  color: var(--text-primary);
+  opacity: 0.8;
+  font-family: system-ui, sans-serif;
+  user-select: none;
+}
