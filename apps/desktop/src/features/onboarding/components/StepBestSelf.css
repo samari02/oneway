@@ -1,0 +1,47 @@
+.time-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.time-input {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.time-input__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.time-input__icon {
+  font-size: 20px;
+}
+
+.time-input__field {
+  padding: var(--space-md);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family);
+  transition: border-color var(--transition-fast);
+}
+
+.time-input__field:focus {
+  outline: none;
+  border-color: var(--color-mint);
+}
+
+/* Style the time input */
+.time-input__field::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
+}

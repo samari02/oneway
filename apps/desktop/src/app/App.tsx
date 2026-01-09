@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAuth, LoginForm } from '@/features/auth'
 import { useHabits, useTodayCheckIns, useHabitActions, HabitList, AddHabitForm } from '@/features/habits'
+import { OnboardingFlow, useOnboardingStatus, saveOnboardingData } from '@/features/onboarding'
+import type { OnboardingData } from '@/features/onboarding'
 import './App.css'
 
 function Dashboard() {
@@ -34,11 +36,17 @@ function Dashboard() {
     day: 'numeric'
   })
 
+  const completedCount = Array.from(checkedIds).filter(id => 
+    habits.some(h => h.id === id)
+  ).length
+  const totalCount = habits.length
+  const allDone = totalCount > 0 && completedCount === totalCount
+
   return (
     <div className="dashboard">
       <header className="dashboard__header">
         <div className="dashboard__brand">
-          <span className="dashboard__mascot">💧</span>
+          <span className="dashboard__mascot">{allDone ? '✨' : '💧'}</span>
           <h1 className="dashboard__title">Clarity</h1>
         </div>
         <button onClick={signOut} className="dashboard__logout">
@@ -50,6 +58,9 @@ function Dashboard() {
         <section className="dashboard__today">
           <h2>Today</h2>
           <p className="dashboard__date">{today}</p>
+          {allDone && (
+            <p className="dashboard__congrats">🎉 All done! Great job!</p>
+          )}
         </section>
 
         {habitsLoading ? (
@@ -87,6 +98,33 @@ function Dashboard() {
   )
 }
 
+function AuthenticatedApp() {
+  const { user } = useAuth()
+  const { needsOnboarding, loading, refetch } = useOnboardingStatus(user?.id)
+  const { refetch: refetchHabits } = useHabits(user?.id)
+
+  const handleOnboardingComplete = async (data: OnboardingData) => {
+    if (!user) return
+    await saveOnboardingData(user.id, data)
+    refetch()
+    refetchHabits()
+  }
+
+  if (loading) {
+    return (
+      <div className="app-loader">
+        <span className="app-loader__mascot">💧</span>
+      </div>
+    )
+  }
+
+  if (needsOnboarding) {
+    return <OnboardingFlow onComplete={handleOnboardingComplete} />
+  }
+
+  return <Dashboard />
+}
+
 export function App() {
   const { user, loading } = useAuth()
 
@@ -102,5 +140,5 @@ export function App() {
     return <LoginForm />
   }
 
-  return <Dashboard />
+  return <AuthenticatedApp />
 }
