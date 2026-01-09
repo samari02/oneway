@@ -52,8 +52,12 @@ function TodayView() {
   }
 
   const handleDeleteHabit = async (habitId: string) => {
-    await remove(habitId)
-    refetchHabits()
+    try {
+      await remove(habitId)
+      refetchHabits()
+    } catch (err) {
+      console.error('Failed to delete habit:', err)
+    }
   }
 
   const today = new Date().toLocaleDateString('en-US', {

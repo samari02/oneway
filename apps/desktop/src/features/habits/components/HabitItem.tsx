@@ -57,17 +57,15 @@ export function HabitItem({ habit, isChecked, onToggle, onEdit, onDelete }: Habi
     e.preventDefault()
     setShowActions(false)
     
-    // Use window.confirm with a small delay to let dropdown close
-    setTimeout(async () => {
-      const confirmed = window.confirm(`Delete "${habit.name}"?`)
-      if (confirmed && onDelete) {
-        try {
-          await onDelete(habit.id)
-        } catch (err) {
-          console.error('Failed to delete habit:', err)
-        }
+    // Direct delete (Tauri doesn't support window.confirm well)
+    // TODO: Add custom confirmation dialog later
+    if (onDelete) {
+      try {
+        await onDelete(habit.id)
+      } catch (err) {
+        console.error('Failed to delete habit:', err)
       }
-    }, 50)
+    }
   }
 
   return (
