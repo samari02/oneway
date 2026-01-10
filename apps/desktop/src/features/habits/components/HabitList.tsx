@@ -78,16 +78,19 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
 
   return (
     <div className="habit-list">
-      <div className="habit-list__progress">
-        <div className="habit-list__progress-text">
-          <span>{completedCount}/{totalCount}</span>
-          <span className="habit-list__progress-label">completed</span>
-        </div>
-        <div className="habit-list__progress-bar">
-          <div 
-            className="habit-list__progress-fill"
-            style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }}
-          />
+      <div className="habit-list__section-header">
+        <h2 className="habit-list__section-title">Today's Focus</h2>
+        <div className="habit-list__progress">
+          <div className="habit-list__progress-text">
+            <span>{completedCount}/{totalCount}</span>
+            <span className="habit-list__progress-label">completed</span>
+          </div>
+          <div className="habit-list__progress-bar">
+            <div 
+              className="habit-list__progress-fill"
+              style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }}
+            />
+          </div>
         </div>
       </div>
 

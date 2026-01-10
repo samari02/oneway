@@ -138,8 +138,9 @@ function TodayView() {
 
   return (
     <div className="today-view">
+      <h1 className="today-view__title">Home</h1>
+      
       <section className={`today-view__header ${showAiChat ? 'today-view__header--chat-open' : ''}`}>
-        <h1 className="today-view__title">Home</h1>
         <div className="today-view__header-main">
           <div className="today-view__hero-mascot">
             <Mascot 

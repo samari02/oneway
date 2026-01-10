@@ -4,33 +4,49 @@
   gap: var(--space-lg);
 }
 
+/* Section header with title and progress */
+.habit-list__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.habit-list__section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
 .habit-list__progress {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-md);
+  padding: var(--space-xs) var(--space-md);
   background: var(--bg-secondary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   box-shadow: var(--shadow-sm);
 }
 
 .habit-list__progress-text {
   display: flex;
   align-items: baseline;
-  gap: var(--space-sm);
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
 }
 
 .habit-list__progress-label {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-normal);
   color: var(--text-muted);
 }
 
 .habit-list__progress-bar {
-  height: 10px;
+  width: 60px;
+  height: 6px;
   background: var(--border-light);
   border-radius: var(--radius-full);
   overflow: hidden;
