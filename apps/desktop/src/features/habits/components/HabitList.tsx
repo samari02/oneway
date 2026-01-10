@@ -10,6 +10,7 @@ interface HabitListProps {
   onUncheck: (habitId: string) => void
   onEdit?: (habit: Habit) => void
   onDelete?: (habitId: string) => void
+  onMarkViolated?: (habitId: string) => void
 }
 
 function getCurrentTime() {
@@ -17,7 +18,7 @@ function getCurrentTime() {
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
-export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDelete }: HabitListProps) {
+export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDelete, onMarkViolated }: HabitListProps) {
   const [currentTime, setCurrentTime] = useState(getCurrentTime)
 
   // Update current time every minute
@@ -28,12 +29,22 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
     return () => clearInterval(interval)
   }, [])
 
-  // Sort habits by scheduled_time (nulls at end)
+  // Get the display time for sorting (scheduled_time for habits, time_start for boundaries)
+  const getDisplayTime = (habit: Habit) => {
+    if (habit.habit_type === 'avoid') {
+      return habit.time_start || null
+    }
+    return habit.scheduled_time || null
+  }
+
+  // Sort habits by scheduled_time/time_start (nulls at end)
   const sortedHabits = [...habits].sort((a, b) => {
-    if (!a.scheduled_time && !b.scheduled_time) return 0
-    if (!a.scheduled_time) return 1
-    if (!b.scheduled_time) return -1
-    return a.scheduled_time.localeCompare(b.scheduled_time)
+    const timeA = getDisplayTime(a)
+    const timeB = getDisplayTime(b)
+    if (!timeA && !timeB) return 0
+    if (!timeA) return 1
+    if (!timeB) return -1
+    return timeA.localeCompare(timeB)
   })
 
   // Find where to insert the "now" marker
@@ -106,7 +117,7 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
 
               {/* Time label */}
               <div className="habit-list__timeline-time">
-                {habit.scheduled_time || '—'}
+                {getDisplayTime(habit) || '—'}
               </div>
 
               {/* Habit card */}
@@ -124,6 +135,7 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
                   }}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onMarkViolated={onMarkViolated}
                 />
               </div>
             </div>

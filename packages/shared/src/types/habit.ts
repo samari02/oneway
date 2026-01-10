@@ -1,4 +1,6 @@
 export type TimeOfDay = 'morning' | 'evening' | 'anytime'
+export type HabitType = 'do' | 'avoid'
+export type AvoidCategory = 'digital' | 'physical'
 
 export interface Habit {
   id: string
@@ -13,6 +15,14 @@ export interface Habit {
   order: number
   is_active: boolean
   created_at: string
+  
+  // Boundary support (unified Do/Avoid system)
+  habit_type: HabitType
+  avoid_category?: AvoidCategory  // For 'avoid' type only
+  time_start?: string             // HH:MM - boundary period start
+  time_end?: string               // HH:MM - boundary period end
+  blocked_sites?: string[]        // For digital boundaries
+  days_of_week?: number[]         // 1=Mon, 7=Sun. null = every day
 }
 
 export interface HabitCheckIn {
@@ -21,6 +31,11 @@ export interface HabitCheckIn {
   user_id: string
   date: string // YYYY-MM-DD
   completed_at: string
+  
+  // Boundary tracking
+  completed: boolean              // For boundaries: respected (true) or violated (false)
+  violation_count?: number        // Number of bypass/violations
+  bypass_timestamps?: string[]    // When violations occurred
 }
 
 export interface HabitStreak {

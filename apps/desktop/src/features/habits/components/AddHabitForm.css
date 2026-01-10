@@ -231,3 +231,169 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Type Selector (Do vs Avoid) */
+.add-habit-form__type-selector {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.add-habit-form__type-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  background: var(--bg-primary);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.add-habit-form__type-option:hover {
+  border-color: var(--border-default);
+}
+
+.add-habit-form__type-option--selected {
+  border-color: var(--color-mint);
+  background: rgba(125, 216, 196, 0.08);
+}
+
+.add-habit-form__type-option--selected.add-habit-form__type-option--avoid {
+  border-color: var(--color-lavender);
+  background: rgba(184, 169, 232, 0.08);
+}
+
+.add-habit-form__type-icon {
+  font-size: 24px;
+}
+
+.add-habit-form__type-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.add-habit-form__type-example {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* Category Selector (Digital vs Physical) */
+.add-habit-form__category-selector {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.add-habit-form__category-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-sm);
+  background: var(--bg-primary);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.add-habit-form__category-option:hover {
+  border-color: var(--border-default);
+}
+
+.add-habit-form__category-option--selected {
+  border-color: var(--color-lavender);
+  background: rgba(184, 169, 232, 0.08);
+}
+
+.add-habit-form__category-option span:first-child {
+  font-size: 20px;
+}
+
+.add-habit-form__category-option span:nth-child(2) {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.add-habit-form__category-option small {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* Time Range */
+.add-habit-form__time-range {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.add-habit-form__time-separator {
+  font-size: var(--font-size-lg);
+  color: var(--text-muted);
+}
+
+/* Days of Week */
+.add-habit-form__days {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.add-habit-form__day {
+  width: 40px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  background: var(--bg-primary);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--text-secondary);
+}
+
+.add-habit-form__day:hover {
+  border-color: var(--border-default);
+}
+
+.add-habit-form__day--selected {
+  border-color: var(--color-lavender);
+  background: rgba(184, 169, 232, 0.15);
+  color: var(--text-primary);
+}
+
+/* Blocked Sites */
+.add-habit-form__sites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.add-habit-form__site {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  background: var(--bg-primary);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--text-secondary);
+}
+
+.add-habit-form__site:hover {
+  border-color: var(--border-default);
+}
+
+.add-habit-form__site--selected {
+  border-color: var(--color-coral);
+  background: rgba(255, 155, 133, 0.1);
+  color: var(--text-primary);
+}

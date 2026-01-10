@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useAuth, LoginForm } from '@/features/auth'
-import { useHabits, useTodayCheckIns, useHabitActions, HabitList, AddHabitForm, EditHabitModal } from '@/features/habits'
+import { useHabits, useTodayCheckIns, useHabitActions, HabitList, AddHabitModal, EditHabitModal } from '@/features/habits'
 import { OnboardingFlow, useOnboardingStatus, useUserSettings, saveOnboardingData } from '@/features/onboarding'
 import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
@@ -33,6 +33,13 @@ function TodayView() {
     scheduled_time: string
     is_required: boolean
     time_of_day: 'morning' | 'evening' | 'anytime'
+    // Boundary fields
+    habit_type: 'do' | 'avoid'
+    avoid_category?: 'digital' | 'physical'
+    time_start?: string
+    time_end?: string
+    blocked_sites?: string[]
+    days_of_week?: number[]
   }) => {
     if (!user) return
     await create({
@@ -44,6 +51,13 @@ function TodayView() {
       scheduled_time: data.scheduled_time || undefined,
       is_required: data.is_required,
       time_of_day: data.time_of_day,
+      // Boundary fields
+      habit_type: data.habit_type,
+      avoid_category: data.avoid_category,
+      time_start: data.time_start,
+      time_end: data.time_end,
+      blocked_sites: data.blocked_sites,
+      days_of_week: data.days_of_week,
     })
     setShowAddForm(false)
     refetchHabits()
@@ -63,6 +77,15 @@ function TodayView() {
     } catch (err) {
       console.error('Failed to delete habit:', err)
     }
+  }
+
+  // Mark a boundary as violated (user declares they didn't hold)
+  const handleMarkViolated = async (habitId: string) => {
+    if (!user) return
+    // For now, we just toggle it like a regular habit check
+    // but with completed: false semantics for boundaries
+    // In the future, this should create a check-in with completed: false
+    toggleHabit(habitId, user.id)
   }
 
   const today = new Date().toLocaleDateString('en-US', {
@@ -132,20 +155,21 @@ function TodayView() {
             onUncheck={handleToggle}
             onEdit={setEditingHabit}
             onDelete={handleDeleteHabit}
+            onMarkViolated={handleMarkViolated}
           />
 
-          {showAddForm ? (
-            <AddHabitForm
+          <button 
+            className="today-view__add-button"
+            onClick={() => setShowAddForm(true)}
+          >
+            + Add Habit
+          </button>
+
+          {showAddForm && (
+            <AddHabitModal
               onAdd={handleAddHabit}
               onCancel={() => setShowAddForm(false)}
             />
-          ) : (
-            <button 
-              className="today-view__add-button"
-              onClick={() => setShowAddForm(true)}
-            >
-              + Add Habit
-            </button>
           )}
         </>
       )}

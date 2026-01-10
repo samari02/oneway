@@ -22,6 +22,13 @@ export interface CreateHabitData {
   scheduled_time?: string
   is_required?: boolean
   time_of_day?: 'morning' | 'evening' | 'anytime'
+  // Boundary fields
+  habit_type?: 'do' | 'avoid'
+  avoid_category?: 'digital' | 'physical'
+  time_start?: string
+  time_end?: string
+  blocked_sites?: string[]
+  days_of_week?: number[]
 }
 
 export async function createHabit(habit: CreateHabitData): Promise<Habit> {
@@ -30,7 +37,7 @@ export async function createHabit(habit: CreateHabitData): Promise<Habit> {
     .insert({
       user_id: habit.user_id,
       name: habit.name,
-      icon: habit.icon || '✨',
+      icon: habit.icon || (habit.habit_type === 'avoid' ? '🛡️' : '✨'),
       description: habit.description || null,
       duration_minutes: habit.duration_minutes || null,
       scheduled_time: habit.scheduled_time || null,
@@ -38,6 +45,13 @@ export async function createHabit(habit: CreateHabitData): Promise<Habit> {
       time_of_day: habit.time_of_day || 'anytime',
       order: 0,
       is_active: true,
+      // Boundary fields
+      habit_type: habit.habit_type || 'do',
+      avoid_category: habit.avoid_category || null,
+      time_start: habit.time_start || null,
+      time_end: habit.time_end || null,
+      blocked_sites: habit.blocked_sites?.length ? habit.blocked_sites : null,
+      days_of_week: habit.days_of_week?.length === 7 ? null : habit.days_of_week,
     })
     .select()
     .single()
@@ -56,6 +70,13 @@ export interface UpdateHabitData {
   time_of_day?: 'morning' | 'evening' | 'anytime'
   order?: number
   is_active?: boolean
+  // Boundary fields
+  habit_type?: 'do' | 'avoid'
+  avoid_category?: 'digital' | 'physical' | null
+  time_start?: string | null
+  time_end?: string | null
+  blocked_sites?: string[] | null
+  days_of_week?: number[] | null
 }
 
 export async function updateHabit(

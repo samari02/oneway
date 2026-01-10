@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import type { Habit } from '@oneway/shared'
 import './HabitItem.css'
 
@@ -9,11 +9,39 @@ interface HabitItemProps {
   onToggle: () => void
   onEdit?: (habit: Habit) => void
   onDelete?: (habitId: string) => void
+  onMarkViolated?: (habitId: string) => void  // For boundaries
 }
 
-export function HabitItem({ habit, isChecked, isCurrent, onToggle, onEdit, onDelete }: HabitItemProps) {
+type BoundaryStatus = 'pending' | 'active' | 'respected' | 'violated'
+
+export function HabitItem({ habit, isChecked, isCurrent, onToggle, onEdit, onDelete, onMarkViolated }: HabitItemProps) {
   const [showActions, setShowActions] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Compute boundary status
+  const boundaryStatus = useMemo<BoundaryStatus>(() => {
+    if (habit.habit_type !== 'avoid') return 'pending'
+    if (isChecked) return 'respected'  // Already marked as completed (respected)
+    
+    // Check if within active time window
+    if (habit.time_start && habit.time_end) {
+      const now = new Date()
+      const currentMinutes = now.getHours() * 60 + now.getMinutes()
+      
+      const [startH, startM] = habit.time_start.split(':').map(Number)
+      const [endH, endM] = habit.time_end.split(':').map(Number)
+      const startMinutes = startH * 60 + startM
+      const endMinutes = endH * 60 + endM
+      
+      if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+        return 'active'
+      } else if (currentMinutes >= endMinutes) {
+        return 'respected'  // Period ended, auto-respected
+      }
+    }
+    
+    return 'pending'
+  }, [habit, isChecked])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -37,11 +65,27 @@ export function HabitItem({ habit, isChecked, isCurrent, onToggle, onEdit, onDel
     return mins ? `${hours}h${mins}` : `${hours}h`
   }
 
+  const formatTimeRange = () => {
+    if (!habit.time_start || !habit.time_end) return null
+    return `${habit.time_start} → ${habit.time_end}`
+  }
+
   const handleContentClick = (e: React.MouseEvent) => {
     // If clicking on actions menu, don't toggle
     if ((e.target as HTMLElement).closest('.habit-item__actions')) return
+    // Boundaries can't be manually toggled (except to mark as violated)
+    if (habit.habit_type === 'avoid') return
     onToggle()
   }
+
+  const handleMarkViolated = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    setShowActions(false)
+    onMarkViolated?.(habit.id)
+  }
+  
+  const isBoundary = habit.habit_type === 'avoid'
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -69,40 +113,71 @@ export function HabitItem({ habit, isChecked, isCurrent, onToggle, onEdit, onDel
     }
   }
 
+  // Get boundary status icon
+  const getBoundaryStatusIcon = () => {
+    switch (boundaryStatus) {
+      case 'active': return '⏳'
+      case 'respected': return '✓'
+      case 'violated': return '✗'
+      default: return ''
+    }
+  }
+
   return (
     <div 
-      className={`habit-item ${isChecked ? 'habit-item--checked' : ''} ${isCurrent ? 'habit-item--current' : ''} ${showActions ? 'habit-item--menu-open' : ''}`}
+      className={`habit-item ${isChecked ? 'habit-item--checked' : ''} ${isCurrent ? 'habit-item--current' : ''} ${showActions ? 'habit-item--menu-open' : ''} ${isBoundary ? 'habit-item--boundary' : ''} ${isBoundary && boundaryStatus === 'active' ? 'habit-item--boundary-active' : ''} ${isBoundary && boundaryStatus === 'violated' ? 'habit-item--boundary-violated' : ''}`}
       onClick={handleContentClick}
     >
-      <button 
-        className={`habit-item__check ${isChecked ? 'habit-item__check--checked' : ''}`}
-        onClick={(e) => { e.stopPropagation(); onToggle() }}
-        aria-label={isChecked ? 'Uncheck habit' : 'Check habit'}
-      >
-        {isChecked ? '✓' : ''}
-      </button>
+      {/* Check button for habits, Status indicator for boundaries */}
+      {isBoundary ? (
+        <div className={`habit-item__boundary-status habit-item__boundary-status--${boundaryStatus}`}>
+          {getBoundaryStatusIcon()}
+        </div>
+      ) : (
+        <button 
+          className={`habit-item__check ${isChecked ? 'habit-item__check--checked' : ''}`}
+          onClick={(e) => { e.stopPropagation(); onToggle() }}
+          aria-label={isChecked ? 'Uncheck habit' : 'Check habit'}
+        >
+          {isChecked ? '✓' : ''}
+        </button>
+      )}
 
       <div className="habit-item__content">
         <div className="habit-item__header">
-          <span className="habit-item__icon">{habit.icon || '✨'}</span>
+          <span className="habit-item__icon">{habit.icon || (isBoundary ? '🛡️' : '✨')}</span>
           <span className="habit-item__name">{habit.name}</span>
-          {habit.is_required && (
+          {habit.is_required && !isBoundary && (
             <span className="habit-item__badge habit-item__badge--required">Required</span>
+          )}
+          {isBoundary && (
+            <span className="habit-item__badge habit-item__badge--boundary">
+              {habit.avoid_category === 'digital' ? '📱' : '🍎'}
+            </span>
           )}
         </div>
         
-        {(habit.description || habit.duration_minutes) && (
-          <div className="habit-item__details">
-            {habit.duration_minutes && (
-              <span className="habit-item__duration">
-                ⏱ {formatDuration(habit.duration_minutes)}
-              </span>
-            )}
-            {habit.description && (
-              <span className="habit-item__description">{habit.description}</span>
-            )}
-          </div>
-        )}
+        <div className="habit-item__details">
+          {/* Time range for boundaries */}
+          {isBoundary && formatTimeRange() && (
+            <span className="habit-item__time-range">
+              {formatTimeRange()}
+            </span>
+          )}
+          {/* Duration for habits */}
+          {!isBoundary && habit.duration_minutes && (
+            <span className="habit-item__duration">
+              ⏱ {formatDuration(habit.duration_minutes)}
+            </span>
+          )}
+          {habit.description && (
+            <span className="habit-item__description">{habit.description}</span>
+          )}
+          {/* Status text for boundaries */}
+          {isBoundary && boundaryStatus === 'active' && (
+            <span className="habit-item__status-text">In progress...</span>
+          )}
+        </div>
       </div>
 
       {/* Actions Menu */}
@@ -121,6 +196,17 @@ export function HabitItem({ habit, isChecked, isCurrent, onToggle, onEdit, onDel
         
         {showActions && (
           <div className="habit-item__dropdown">
+            {/* Mark as violated (only for boundaries that are active or pending) */}
+            {isBoundary && (boundaryStatus === 'active' || boundaryStatus === 'pending') && (
+              <button onClick={handleMarkViolated} className="habit-item__dropdown-danger">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+                I didn't hold
+              </button>
+            )}
             <button onClick={handleEdit}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>

@@ -20,10 +20,13 @@
   background: var(--bg-primary);
   border-radius: var(--radius-lg);
   width: 100%;
-  max-width: 500px;
+  max-width: 520px;
+  min-width: 480px;
   margin: var(--space-lg);
   box-shadow: var(--shadow-lg);
   animation: slideUp 0.2s ease-out;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 @keyframes slideUp {
@@ -74,17 +77,18 @@
 .edit-modal__row {
   display: flex;
   gap: var(--space-md);
+  align-items: flex-end;
 }
 
 .edit-modal__field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: 6px;
   flex: 1;
 }
 
 .edit-modal__field--icon {
-  flex: 0 0 60px;
+  flex: 0 0 auto;
 }
 
 .edit-modal__field--name {
@@ -92,14 +96,17 @@
 }
 
 .edit-modal__field label {
-  font-size: var(--font-size-xs);
+  font-size: 11px;
   font-weight: var(--font-weight-medium);
   color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .edit-modal__field input,
 .edit-modal__field select {
-  padding: var(--space-sm);
+  height: 42px;
+  padding: 0 var(--space-sm);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
@@ -117,6 +124,22 @@
 .edit-modal__field--icon input {
   text-align: center;
   font-size: 16px;
+}
+
+/* Icon picker inside edit modal - match input height */
+.edit-modal .emoji-picker__trigger {
+  height: 42px;
+  padding: 0 var(--space-sm);
+  border-width: 1px;
+  min-width: 90px;
+}
+
+.edit-modal .emoji-picker__value {
+  font-size: 20px;
+}
+
+.edit-modal .emoji-picker__label {
+  font-size: 10px;
 }
 
 /* Checkbox */
@@ -170,4 +193,57 @@
 
 .edit-modal__btn--primary:hover {
   background: var(--color-mint-dark);
+}
+
+/* Compact time picker inside edit modal */
+.edit-modal .time-picker {
+  gap: var(--space-sm);
+}
+
+.edit-modal .time-picker__display {
+  gap: var(--space-xs);
+}
+
+/* Hide the icon before time display */
+.edit-modal .time-picker__display > .time-picker__icon {
+  display: none;
+}
+
+.edit-modal .time-picker__time {
+  font-size: var(--font-size-lg);
+  min-width: 60px;
+}
+
+.edit-modal .time-picker__slider-container {
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+}
+
+.edit-modal .time-picker__track {
+  height: 28px;
+  margin-bottom: 4px;
+}
+
+.edit-modal .time-picker__celestial {
+  font-size: 20px;
+}
+
+.edit-modal .time-picker__slider {
+  height: 5px;
+}
+
+.edit-modal .time-picker__slider::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+}
+
+.edit-modal .time-picker__labels {
+  font-size: 9px;
+  margin-top: 4px;
+}
+
+.edit-modal .time-picker__minutes-adjust button {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
 }

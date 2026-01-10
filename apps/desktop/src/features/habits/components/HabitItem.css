@@ -233,3 +233,103 @@
 .habit-item__dropdown-danger:hover {
   background: rgba(239, 68, 68, 0.1) !important;
 }
+
+/* ===========================================
+   BOUNDARY STYLES
+   =========================================== */
+
+.habit-item--boundary {
+  cursor: default;
+  border-left: 3px solid var(--color-lavender);
+}
+
+.habit-item--boundary:hover {
+  transform: none;
+}
+
+.habit-item--boundary-active {
+  background: linear-gradient(135deg, rgba(184, 169, 232, 0.08) 0%, rgba(184, 169, 232, 0.03) 100%);
+  border-color: var(--color-lavender);
+  border-left-color: var(--color-lavender);
+}
+
+.habit-item--boundary.habit-item--checked {
+  background: linear-gradient(135deg, rgba(125, 216, 196, 0.08) 0%, rgba(125, 216, 196, 0.03) 100%);
+  border-color: var(--color-mint);
+  border-left-color: var(--color-mint);
+}
+
+.habit-item--boundary-violated {
+  background: linear-gradient(135deg, rgba(255, 155, 133, 0.08) 0%, rgba(255, 155, 133, 0.03) 100%);
+  border-color: var(--color-coral);
+  border-left-color: var(--color-coral);
+}
+
+/* Boundary status indicator */
+.habit-item__boundary-status {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  margin-top: 1px;
+  transition: all var(--transition-fast);
+}
+
+.habit-item__boundary-status--pending {
+  background: var(--bg-primary);
+  border: 2px solid var(--border-default);
+  color: transparent;
+}
+
+.habit-item__boundary-status--active {
+  background: rgba(184, 169, 232, 0.2);
+  border: 2px solid var(--color-lavender);
+  color: var(--color-lavender);
+  animation: boundaryPulse 2s ease-in-out infinite;
+}
+
+@keyframes boundaryPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.habit-item__boundary-status--respected {
+  background: var(--color-mint);
+  border: 2px solid var(--color-mint);
+  color: white;
+}
+
+.habit-item__boundary-status--violated {
+  background: var(--color-coral);
+  border: 2px solid var(--color-coral);
+  color: white;
+}
+
+/* Time range display */
+.habit-item__time-range {
+  font-size: 11px;
+  color: var(--color-lavender);
+  font-weight: var(--font-weight-medium);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Status text */
+.habit-item__status-text {
+  font-size: 10px;
+  color: var(--color-lavender);
+  font-style: italic;
+}
+
+/* Boundary badge */
+.habit-item__badge--boundary {
+  background: rgba(184, 169, 232, 0.15);
+  font-size: 12px;
+  padding: 0;
+}

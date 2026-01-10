@@ -1,0 +1,384 @@
+/* Modal Overlay */
+.add-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: addModalFadeIn 0.15s ease-out;
+}
+
+@keyframes addModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal */
+.add-modal {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 520px;
+  min-width: 480px;
+  margin: var(--space-lg);
+  box-shadow: var(--shadow-lg);
+  animation: addModalSlideUp 0.2s ease-out;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes addModalSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Header */
+.add-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.add-modal__header h2 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.add-modal__close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.add-modal__close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Form */
+.add-modal__form {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* Type Toggle */
+.add-modal__type-toggle {
+  display: flex;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 4px;
+}
+
+.add-modal__type-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+  border: 2px solid transparent;
+}
+
+.add-modal__type-btn:hover {
+  color: var(--text-secondary);
+}
+
+.add-modal__type-btn--active {
+  background: rgba(125, 216, 196, 0.1);
+  color: var(--color-mint-dark);
+  border-color: var(--color-mint);
+  box-shadow: 0 1px 3px rgba(125, 216, 196, 0.2);
+}
+
+.add-modal__type-btn--avoid.add-modal__type-btn--active {
+  background: rgba(184, 169, 232, 0.1);
+  color: var(--color-lavender);
+  border-color: var(--color-lavender);
+  box-shadow: 0 1px 3px rgba(184, 169, 232, 0.2);
+}
+
+/* Row */
+.add-modal__row {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-end;
+}
+
+/* Field */
+.add-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.add-modal__field--icon {
+  flex: 0 0 auto;
+}
+
+.add-modal__field--name {
+  flex: 1;
+}
+
+.add-modal__field label {
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.add-modal__field input,
+.add-modal__field select {
+  height: 42px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.add-modal__field input:focus,
+.add-modal__field select:focus {
+  outline: none;
+  border-color: var(--color-mint);
+}
+
+/* Icon picker inside modal - match input height */
+.add-modal .emoji-picker__trigger {
+  height: 42px;
+  padding: 0 var(--space-sm);
+  border-width: 1px;
+  min-width: 90px;
+}
+
+.add-modal .emoji-picker__value {
+  font-size: 20px;
+}
+
+.add-modal .emoji-picker__label {
+  font-size: 10px;
+}
+
+/* Category buttons */
+.add-modal__category {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.add-modal__cat-btn {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  transition: all var(--transition-fast);
+}
+
+.add-modal__cat-btn:hover {
+  border-color: var(--border-default);
+}
+
+.add-modal__cat-btn--active {
+  border-color: var(--color-lavender);
+  background: rgba(184, 169, 232, 0.1);
+  color: var(--text-primary);
+}
+
+/* Time Range */
+.add-modal__time-range {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.add-modal__time-range input {
+  flex: 1;
+  height: 42px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.add-modal__time-range span {
+  color: var(--text-muted);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Days */
+.add-modal__days {
+  display: flex;
+  gap: 6px;
+}
+
+.add-modal__day {
+  width: 38px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.add-modal__day:hover {
+  border-color: var(--border-default);
+}
+
+.add-modal__day--active {
+  border-color: var(--color-lavender);
+  background: rgba(184, 169, 232, 0.15);
+  color: var(--text-primary);
+}
+
+/* Sites */
+.add-modal__sites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.add-modal__site {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.add-modal__site:hover {
+  border-color: var(--border-default);
+}
+
+.add-modal__site--active {
+  border-color: var(--color-coral);
+  background: rgba(255, 155, 133, 0.1);
+  color: var(--text-primary);
+}
+
+/* Actions */
+.add-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-light);
+}
+
+.add-modal__btn {
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+.add-modal__btn--secondary {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.add-modal__btn--secondary:hover {
+  background: var(--border-light);
+}
+
+.add-modal__btn--primary {
+  background: var(--color-mint);
+  color: white;
+}
+
+.add-modal__btn--primary:hover {
+  background: var(--color-mint-dark);
+}
+
+.add-modal__btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Compact time picker inside modal */
+.add-modal .time-picker {
+  gap: var(--space-sm);
+}
+
+.add-modal .time-picker__display {
+  gap: var(--space-xs);
+}
+
+/* Hide the icon before time display */
+.add-modal .time-picker__display > .time-picker__icon {
+  display: none;
+}
+
+.add-modal .time-picker__time {
+  font-size: var(--font-size-lg);
+  min-width: 60px;
+}
+
+.add-modal .time-picker__slider-container {
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+}
+
+.add-modal .time-picker__track {
+  height: 28px;
+  margin-bottom: 4px;
+}
+
+.add-modal .time-picker__celestial {
+  font-size: 20px;
+}
+
+.add-modal .time-picker__slider {
+  height: 5px;
+}
+
+.add-modal .time-picker__slider::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+}
+
+.add-modal .time-picker__labels {
+  font-size: 9px;
+  margin-top: 4px;
+}
+
+.add-modal .time-picker__minutes-adjust button {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
