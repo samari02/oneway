@@ -118,7 +118,7 @@
   padding-top: 10px;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
-  color: var(--text-muted);
+  color: var(--text-nav);
   text-align: right;
   flex-shrink: 0;
 }

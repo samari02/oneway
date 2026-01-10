@@ -7,13 +7,15 @@ interface MascotProps {
   message?: string
   size?: 'small' | 'medium' | 'large'
   showMessage?: boolean
+  onMessageClick?: () => void
 }
 
 export function Mascot({ 
   mood = 'happy', 
   message, 
   size = 'medium',
-  showMessage = true 
+  showMessage = true,
+  onMessageClick 
 }: MascotProps) {
   // Eye style based on mood
   const getEyeClass = () => {
@@ -31,8 +33,14 @@ export function Mascot({
   return (
     <div className={`mascot mascot--${size}`}>
       {message && showMessage && (
-        <div className="mascot__bubble">
+        <div 
+          className={`mascot__bubble ${onMessageClick ? 'mascot__bubble--clickable' : ''}`}
+          onClick={onMessageClick}
+          role={onMessageClick ? 'button' : undefined}
+          tabIndex={onMessageClick ? 0 : undefined}
+        >
           <p className="mascot__message">{message}</p>
+          {onMessageClick && <span className="mascot__bubble-hint">✨</span>}
         </div>
       )}
       <div className={`mascot__blob mascot__blob--${mood}`}>

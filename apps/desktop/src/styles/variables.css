@@ -21,7 +21,8 @@
   /* Text */
   --text-primary: #2D3748;
   --text-secondary: #718096;
-  --text-muted: #A0AEC0;
+  --text-muted: #8B9DB5; /* Slightly darker for better readability */
+  --text-nav: #6B7A8F; /* For navigation labels */
   
   /* Borders */
   --border-light: #E2E8F0;

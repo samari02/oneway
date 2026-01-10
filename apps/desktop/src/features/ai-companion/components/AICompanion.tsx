@@ -22,6 +22,10 @@ interface AICompanionProps {
     sleep_time?: string
   }
   onGoalUpdate?: (goal: string) => void
+  // External control props
+  isOpen?: boolean
+  onOpenChange?: (isOpen: boolean) => void
+  hideTrigger?: boolean
 }
 
 interface ChatMessage {
@@ -110,22 +114,35 @@ export function AICompanion({
   habits,
   checkedIds,
   userSettings,
-  onGoalUpdate
+  onGoalUpdate,
+  isOpen: externalIsOpen,
+  onOpenChange,
+  hideTrigger = false
 }: AICompanionProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [internalIsExpanded, setInternalIsExpanded] = useState(false)
+  
+  // Support controlled or uncontrolled mode
+  const isExpanded = externalIsOpen !== undefined ? externalIsOpen : internalIsExpanded
+  const setIsExpanded = (value: boolean) => {
+    setInternalIsExpanded(value)
+    onOpenChange?.(value)
+  }
   const [mode, setMode] = useState<ConversationMode>(null)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [userInput, setUserInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [typingMessageIndex, setTypingMessageIndex] = useState<number | null>(null)
-  const chatEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   
   const hasKey = hasApiKey()
 
-  // Scroll to bottom
+  // Scroll to bottom - only within the messages container
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+    }
   }, [chatMessages, typingMessageIndex])
 
   // Focus input when expanded
@@ -224,8 +241,8 @@ export function AICompanion({
 
   return (
     <div className={`ai-companion ${isExpanded ? 'ai-companion--expanded' : ''}`}>
-      {/* Trigger button */}
-      {!isExpanded && (
+      {/* Trigger button - hidden when controlled externally */}
+      {!isExpanded && !hideTrigger && (
         <button 
           className="ai-companion__trigger"
           onClick={() => setIsExpanded(true)}
@@ -290,7 +307,7 @@ export function AICompanion({
 
             {/* Chat area - always visible */}
             <div className="ai-companion__chat">
-              <div className="ai-companion__messages">
+              <div className="ai-companion__messages" ref={messagesContainerRef}>
                 {chatMessages.length === 0 && !mode && (
                   <div className="ai-companion__placeholder">
                     Choisis un sujet ou écris directement 👆
@@ -327,7 +344,6 @@ export function AICompanion({
                     </span>
                   </div>
                 )}
-                <div ref={chatEndRef} />
               </div>
 
               {/* Input - always visible */}

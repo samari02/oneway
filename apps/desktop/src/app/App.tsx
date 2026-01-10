@@ -21,6 +21,7 @@ function TodayView() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
   const [showNorthStarEdit, setShowNorthStarEdit] = useState(false)
+  const [showAiChat, setShowAiChat] = useState(false)
 
   const handleToggle = (habitId: string) => {
     if (!user) return
@@ -143,6 +144,7 @@ function TodayView() {
             mood={mascotState.mood} 
             message={mascotState.message}
             size="large"
+            onMessageClick={() => setShowAiChat(true)}
           />
         </div>
         <div className="today-view__header-text">
@@ -158,7 +160,7 @@ function TodayView() {
             </button>
           )}
           
-          {/* AI Companion */}
+          {/* AI Companion - controlled by mascot click */}
           {user && (
             <AICompanion
               userId={user.id}
@@ -171,6 +173,9 @@ function TodayView() {
                 sleep_time: settings.sleep_time
               } : undefined}
               onGoalUpdate={() => refetchSettings()}
+              isOpen={showAiChat}
+              onOpenChange={setShowAiChat}
+              hideTrigger={true}
             />
           )}
         </div>

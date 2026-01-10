@@ -61,7 +61,7 @@
   width: 100%;
   padding: var(--space-sm);
   border-radius: var(--radius-md);
-  color: var(--text-muted);
+  color: var(--text-nav);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   transition: all var(--transition-fast);
@@ -70,13 +70,14 @@
 }
 
 .sidebar__item:hover {
-  background: rgba(125, 216, 196, 0.1);
+  background: rgba(125, 216, 196, 0.12);
   color: var(--text-primary);
 }
 
 .sidebar__item--active {
-  background: rgba(125, 216, 196, 0.15);
+  background: rgba(125, 216, 196, 0.18);
   color: var(--color-mint-dark);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* Icon */
@@ -125,7 +126,7 @@
   width: 100%;
   padding: var(--space-sm);
   border-radius: var(--radius-md);
-  color: var(--text-muted);
+  color: var(--text-nav);
   font-size: var(--font-size-xs);
   transition: all var(--transition-fast);
   overflow: hidden;
