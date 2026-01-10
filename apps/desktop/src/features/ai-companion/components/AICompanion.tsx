@@ -3,6 +3,7 @@ import {
   hasApiKey, 
   refineGoal, 
   saveConversation,
+  loadConversation,
   type UserContext,
   type ChatMessage as AIChatMessage
 } from '@/lib/openai'
@@ -208,6 +209,27 @@ export function AICompanion({
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
     }
   }, [chatMessages, typingMessageIndex])
+
+  // Load conversation history when chat opens
+  useEffect(() => {
+    if (isExpanded && userId && chatMessages.length === 0) {
+      loadConversation(userId).then(saved => {
+        if (saved && saved.messages.length > 0) {
+          // Filter out system messages and convert to local format
+          const loadedMessages: ChatMessage[] = saved.messages
+            .filter(m => m.role !== 'system')
+            .map(m => ({
+              role: m.role as 'user' | 'assistant',
+              content: m.content
+            }))
+          
+          if (loadedMessages.length > 0) {
+            setChatMessages(loadedMessages)
+          }
+        }
+      })
+    }
+  }, [isExpanded, userId])
 
   // Focus input when expanded
   useEffect(() => {
