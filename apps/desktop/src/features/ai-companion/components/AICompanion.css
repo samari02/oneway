@@ -1,31 +1,28 @@
 /* ========================================
-   AI Companion — Full-width Drawer
+   AI Companion — Inline in Header
    ======================================== */
 
 .ai-companion {
   width: 100%;
 }
 
-/* Expanded panel - full width drawer */
+/* Panel - inline style within header */
 .ai-companion__panel {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  animation: companionSlideDown 0.25s ease-out;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-md);
+  animation: companionFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(125, 216, 196, 0.2);
 }
 
-@keyframes companionSlideDown {
+@keyframes companionFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-8px);
-    max-height: 0;
+    transform: translateY(-6px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
-    max-height: 400px;
+    transform: translateY(0) scale(1);
   }
 }
 

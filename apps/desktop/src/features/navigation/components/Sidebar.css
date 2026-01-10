@@ -62,7 +62,7 @@
   padding: var(--space-sm);
   border-radius: var(--radius-md);
   color: var(--text-nav);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: var(--font-weight-medium);
   transition: all var(--transition-fast);
   overflow: hidden;

@@ -5,6 +5,28 @@
   gap: var(--space-sm);
 }
 
+/* Interactive state (clickable) */
+.mascot--interactive {
+  cursor: pointer;
+}
+
+.mascot--interactive:hover .mascot__blob {
+  transform: scale(1.08);
+  box-shadow: 
+    0 6px 20px rgba(125, 216, 196, 0.35),
+    inset 0 -4px 8px rgba(150, 130, 220, 0.15),
+    inset 0 4px 8px rgba(255, 255, 255, 0.6);
+}
+
+.mascot--interactive:hover .mascot__bubble {
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(125, 216, 196, 0.4);
+}
+
+.mascot--interactive:active .mascot__blob {
+  transform: scale(1.02);
+}
+
 /* ===== SIZES ===== */
 .mascot--small .mascot__blob {
   width: 40px;
@@ -98,27 +120,6 @@
   line-height: 1.3;
 }
 
-/* ===== CHAT BUTTON ===== */
-.mascot__chat-btn {
-  margin-top: var(--space-xs);
-  padding: 4px 10px;
-  background: linear-gradient(135deg, rgba(125, 216, 196, 0.15) 0%, rgba(167, 139, 250, 0.15) 100%);
-  border: 1px solid rgba(125, 216, 196, 0.3);
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mascot__chat-btn:hover {
-  background: linear-gradient(135deg, rgba(125, 216, 196, 0.25) 0%, rgba(167, 139, 250, 0.25) 100%);
-  border-color: rgba(125, 216, 196, 0.5);
-  transform: scale(1.1);
-  box-shadow: 0 2px 8px rgba(125, 216, 196, 0.2);
-}
 
 /* ===== THE BLOB ===== */
 .mascot__blob {

@@ -150,11 +150,6 @@ export function HabitItem({ habit, isChecked, isCurrent, onToggle, onEdit, onDel
           {habit.is_required && !isBoundary && (
             <span className="habit-item__badge habit-item__badge--required">Required</span>
           )}
-          {isBoundary && (
-            <span className="habit-item__badge habit-item__badge--boundary">
-              {habit.avoid_category === 'digital' ? '📱' : '🍎'}
-            </span>
-          )}
         </div>
         
         <div className="habit-item__details">

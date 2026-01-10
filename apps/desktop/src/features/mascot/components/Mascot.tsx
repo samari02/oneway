@@ -31,7 +31,12 @@ export function Mascot({
   }
 
   return (
-    <div className={`mascot mascot--${size}`}>
+    <div 
+      className={`mascot mascot--${size} ${onChatClick ? 'mascot--interactive' : ''}`}
+      onClick={onChatClick}
+      role={onChatClick ? 'button' : undefined}
+      tabIndex={onChatClick ? 0 : undefined}
+    >
       {message && showMessage && (
         <div className="mascot__bubble">
           <p className="mascot__message">{message}</p>
@@ -55,17 +60,6 @@ export function Mascot({
           <div className="mascot__leg mascot__leg--right" />
         </div>
       </div>
-      
-      {/* Chat button at feet */}
-      {onChatClick && (
-        <button 
-          className="mascot__chat-btn"
-          onClick={onChatClick}
-          title="Parle-moi"
-        >
-          💬
-        </button>
-      )}
     </div>
   )
 }
