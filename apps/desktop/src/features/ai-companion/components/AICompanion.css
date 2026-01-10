@@ -1,61 +1,31 @@
 /* ========================================
-   AI Companion — Chat-first Design
+   AI Companion — Full-width Drawer
    ======================================== */
 
 .ai-companion {
   width: 100%;
 }
 
-/* Trigger button */
-.ai-companion__trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, rgba(167, 139, 250, 0.12) 0%, rgba(125, 216, 196, 0.12) 100%);
-  border: 1px solid rgba(167, 139, 250, 0.2);
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  margin-top: var(--space-sm);
-}
-
-.ai-companion__trigger:hover {
-  background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(125, 216, 196, 0.2) 100%);
-  border-color: rgba(167, 139, 250, 0.35);
-  color: var(--text-primary);
-  transform: translateY(-1px);
-}
-
-.ai-companion__trigger-icon {
-  font-size: 12px;
-}
-
-.ai-companion__trigger-text {
-  font-weight: var(--font-weight-medium);
-}
-
-/* Expanded panel */
+/* Expanded panel - full width drawer */
 .ai-companion__panel {
-  margin-top: var(--space-md);
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  animation: companionExpand 0.2s ease-out;
+  animation: companionSlideDown 0.25s ease-out;
   border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
-@keyframes companionExpand {
+@keyframes companionSlideDown {
   from {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateY(-8px);
+    max-height: 0;
   }
   to {
     opacity: 1;
     transform: translateY(0);
+    max-height: 400px;
   }
 }
 

@@ -144,7 +144,7 @@ function TodayView() {
             mood={mascotState.mood} 
             message={mascotState.message}
             size="large"
-            onMessageClick={() => setShowAiChat(true)}
+            onChatClick={() => setShowAiChat(true)}
           />
         </div>
         <div className="today-view__header-text">
@@ -159,27 +159,27 @@ function TodayView() {
               <span className="today-view__north-star-edit">✏️</span>
             </button>
           )}
-          
-          {/* AI Companion - controlled by mascot click */}
-          {user && (
-            <AICompanion
-              userId={user.id}
-              displayName={settings?.display_name}
-              currentGoal={northStar?.goal}
-              habits={habits}
-              checkedIds={checkedIds}
-              userSettings={settings ? {
-                wake_time: settings.wake_time,
-                sleep_time: settings.sleep_time
-              } : undefined}
-              onGoalUpdate={() => refetchSettings()}
-              isOpen={showAiChat}
-              onOpenChange={setShowAiChat}
-              hideTrigger={true}
-            />
-          )}
         </div>
       </section>
+
+      {/* AI Companion - full width below header */}
+      {user && showAiChat && (
+        <AICompanion
+          userId={user.id}
+          displayName={settings?.display_name}
+          currentGoal={northStar?.goal}
+          habits={habits}
+          checkedIds={checkedIds}
+          userSettings={settings ? {
+            wake_time: settings.wake_time,
+            sleep_time: settings.sleep_time
+          } : undefined}
+          onGoalUpdate={() => refetchSettings()}
+          isOpen={showAiChat}
+          onOpenChange={setShowAiChat}
+          hideTrigger={true}
+        />
+      )}
 
       {habitsLoading ? (
         <div className="today-view__loader">Loading...</div>
