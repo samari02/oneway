@@ -9,20 +9,25 @@ interface MascotProps {
   showMessage?: boolean
 }
 
-const FACES: Record<MascotMood, string> = {
-  happy: '◕‿◕',
-  proud: '◕ᴗ◕',
-  encouraging: '◕◡◕',
-  sleepy: '◡‿◡',
-  thinking: '◕_◕',
-}
-
 export function Mascot({ 
   mood = 'happy', 
   message, 
   size = 'medium',
   showMessage = true 
 }: MascotProps) {
+  // Eye style based on mood
+  const getEyeClass = () => {
+    switch (mood) {
+      case 'happy':
+      case 'proud':
+        return 'mascot__eye--happy' // Curved happy eyes ᵕᵕ
+      case 'sleepy':
+        return 'mascot__eye--sleepy' // Closed —
+      default:
+        return '' // Normal dots ● ●
+    }
+  }
+
   return (
     <div className={`mascot mascot--${size}`}>
       {message && showMessage && (
@@ -31,7 +36,22 @@ export function Mascot({
         </div>
       )}
       <div className={`mascot__blob mascot__blob--${mood}`}>
-        <span className="mascot__face">{FACES[mood]}</span>
+        {/* Kawaii face */}
+        <div className="mascot__face">
+          {/* Cheeks (blush) */}
+          <div className="mascot__cheek mascot__cheek--left" />
+          <div className="mascot__cheek mascot__cheek--right" />
+          
+          {/* Eyes */}
+          <div className={`mascot__eye mascot__eye--left ${getEyeClass()}`} />
+          <div className={`mascot__eye mascot__eye--right ${getEyeClass()}`} />
+        </div>
+        
+        {/* Small legs */}
+        <div className="mascot__legs">
+          <div className="mascot__leg mascot__leg--left" />
+          <div className="mascot__leg mascot__leg--right" />
+        </div>
       </div>
     </div>
   )
