@@ -8,18 +8,18 @@
   left: 0;
   display: flex;
   flex-direction: column;
-  width: 52px;
+  width: 60px;
   height: calc(100vh - 38px); /* Full height minus titlebar */
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-light);
-  padding: var(--space-md) var(--space-xs);
+  padding: var(--space-md) var(--space-sm);
   transition: width var(--transition-normal);
   z-index: 100;
 }
 
 .sidebar:hover,
 .sidebar--pinned {
-  width: 140px;
+  width: 160px;
 }
 
 /* Brand / Logo */
@@ -83,12 +83,17 @@
 /* Icon */
 .sidebar__icon {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform var(--transition-fast);
+}
+
+.sidebar__icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .sidebar__item--active .sidebar__icon {

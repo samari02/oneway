@@ -54,7 +54,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'today', icon: Icons.today, label: 'Today' },
+  { id: 'today', icon: Icons.today, label: 'Home' },
   { id: 'stats', icon: Icons.stats, label: 'Stats' },
   { id: 'settings', icon: Icons.settings, label: 'Settings' },
 ]

@@ -139,6 +139,7 @@ function TodayView() {
   return (
     <div className="today-view">
       <section className={`today-view__header ${showAiChat ? 'today-view__header--chat-open' : ''}`}>
+        <h1 className="today-view__title">Home</h1>
         <div className="today-view__header-main">
           <div className="today-view__hero-mascot">
             <Mascot 
@@ -149,7 +150,6 @@ function TodayView() {
             />
           </div>
           <div className="today-view__header-text">
-            <h2>Today</h2>
             <p className="today-view__date">{today}</p>
             {northStar && (
               <button 
