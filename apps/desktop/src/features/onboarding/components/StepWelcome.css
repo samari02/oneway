@@ -1,0 +1,117 @@
+.step-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-xl) var(--space-lg);
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.step-welcome__header {
+  margin-bottom: var(--space-xl);
+}
+
+.step-welcome__logo {
+  font-size: 56px;
+  display: block;
+  margin-bottom: var(--space-sm);
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.step-welcome__header h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  background: linear-gradient(135deg, var(--color-mint-dark) 0%, var(--color-mint) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+/* Story section */
+.step-welcome__story {
+  margin-bottom: var(--space-xl);
+}
+
+.step-welcome__story p {
+  margin: 0 0 var(--space-md) 0;
+  line-height: 1.7;
+}
+
+.step-welcome__intro {
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.step-welcome__problem {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+}
+
+.step-welcome__solution {
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+}
+
+.step-welcome__solution strong {
+  color: var(--color-mint-dark);
+}
+
+.step-welcome__how {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+}
+
+.step-welcome__how em {
+  color: var(--text-primary);
+  font-style: normal;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Principles - compact */
+.step-welcome__principles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 100%;
+  margin-bottom: var(--space-xl);
+  padding: var(--space-md);
+  background: rgba(125, 216, 196, 0.06);
+  border-radius: var(--radius-md);
+}
+
+.step-welcome__principle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.step-welcome__icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.step-welcome__cta {
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background: linear-gradient(135deg, var(--color-mint) 0%, var(--color-mint-dark) 100%);
+  color: white;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.step-welcome__cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(125, 216, 196, 0.4);
+}

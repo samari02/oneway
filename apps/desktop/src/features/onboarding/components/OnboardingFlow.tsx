@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { StepWelcome } from './StepWelcome'
 import { StepProblems } from './StepProblems'
 import { StepBestSelf } from './StepBestSelf'
 import { StepStrictness } from './StepStrictness'
@@ -9,6 +10,8 @@ import './OnboardingFlow.css'
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>
 }
+
+const TOTAL_STEPS = 5
 
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [step, setStep] = useState(1)
@@ -26,7 +29,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   }
 
   const handleNext = () => {
-    if (step < 4) {
+    if (step < TOTAL_STEPS) {
       setStep(step + 1)
     }
   }
@@ -43,17 +46,24 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   return (
     <div className="onboarding">
-      <div className="onboarding__progress">
-        {[1, 2, 3, 4].map(i => (
-          <div 
-            key={i}
-            className={`onboarding__dot ${i === step ? 'onboarding__dot--active' : ''} ${i < step ? 'onboarding__dot--done' : ''}`}
-          />
-        ))}
-      </div>
+      {/* Hide progress on welcome screen */}
+      {step > 1 && (
+        <div className="onboarding__progress">
+          {[2, 3, 4, 5].map(i => (
+            <div 
+              key={i}
+              className={`onboarding__dot ${i === step ? 'onboarding__dot--active' : ''} ${i < step ? 'onboarding__dot--done' : ''}`}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="onboarding__content">
         {step === 1 && (
+          <StepWelcome onNext={handleNext} />
+        )}
+
+        {step === 2 && (
           <StepProblems 
             displayName={data.displayName}
             selected={data.problems}
@@ -63,7 +73,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           />
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <StepBestSelf
             wakeTime={data.wakeTime}
             sleepTime={data.sleepTime}
@@ -74,7 +84,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           />
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <StepStrictness
             selected={data.strictness}
             onChange={(strictness) => updateData({ strictness })}
@@ -83,7 +93,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           />
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <StepSetup
             data={data}
             onComplete={handleComplete}
