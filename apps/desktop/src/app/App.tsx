@@ -203,6 +203,11 @@ function TodayView() {
           goal={northStar.goal}
           icon={northStar.icon}
           habits={habits}
+          userSettings={settings ? {
+            display_name: settings.display_name,
+            wake_time: settings.wake_time,
+            sleep_time: settings.sleep_time
+          } : undefined}
           onSave={() => {
             setShowNorthStarEdit(false)
             refetchSettings()

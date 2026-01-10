@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { hasApiKey, refineGoal } from '@/lib/openai'
+import { 
+  hasApiKey, 
+  refineGoal, 
+  saveConversation, 
+  loadConversation,
+  getPreviousConversationsSummary,
+  type UserContext,
+  type ChatMessage as AIChatMessage
+} from '@/lib/openai'
 import type { Habit } from '@oneway/shared'
 import './NorthStarEditModal.css'
 
@@ -9,6 +17,11 @@ interface NorthStarEditModalProps {
   goal: string
   icon: string
   habits: Habit[]
+  userSettings?: {
+    display_name?: string
+    wake_time?: string
+    sleep_time?: string
+  }
   onSave: () => void
   onCancel: () => void
   onAddHabits?: (habits: Array<{ name: string; icon: string; scheduled_time?: string; duration_minutes?: number }>) => Promise<void>
@@ -38,6 +51,7 @@ export function NorthStarEditModal({
   goal: initialGoal, 
   icon: initialIcon, 
   habits,
+  userSettings,
   onSave, 
   onCancel,
   onAddHabits
@@ -57,12 +71,43 @@ export function NorthStarEditModal({
   const [aiLoading, setAiLoading] = useState(false)
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestion | null>(null)
   const [selectedSuggestedHabits, setSelectedSuggestedHabits] = useState<Set<number>>(new Set())
+  const [previousConvoSummary, setPreviousConvoSummary] = useState<string | undefined>()
   const chatEndRef = useRef<HTMLDivElement>(null)
   
   const hasAiKey = hasApiKey()
 
+  // Build context for AI
+  const buildContext = (): UserContext => ({
+    displayName: userSettings?.display_name,
+    currentGoal: goal,
+    habits: habits.map(h => ({ name: h.name, icon: h.icon || '✨', type: h.habit_type || 'do' })),
+    wakeTime: userSettings?.wake_time,
+    sleepTime: userSettings?.sleep_time,
+    previousConversations: previousConvoSummary
+  })
+
+  // Load previous conversation on mount
+  useEffect(() => {
+    const loadPrevious = async () => {
+      const summary = await getPreviousConversationsSummary(userId)
+      setPreviousConvoSummary(summary)
+    }
+    loadPrevious()
+  }, [userId])
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages])
+
+  // Save conversation when it changes
+  useEffect(() => {
+    if (chatMessages.length > 0) {
+      const aiMessages: AIChatMessage[] = chatMessages.map(m => ({
+        role: m.role,
+        content: m.content
+      }))
+      saveConversation(userId, aiMessages, buildContext())
+    }
   }, [chatMessages])
 
   const startAiChat = async () => {
@@ -72,7 +117,8 @@ export function NorthStarEditModal({
     setAiSuggestions(null)
     
     try {
-      const { response, suggestions } = await refineGoal(goal, [])
+      const context = buildContext()
+      const { response, suggestions } = await refineGoal(goal, [], context)
       setChatMessages([{ role: 'assistant', content: response }])
       if (suggestions) {
         setAiSuggestions(suggestions)
@@ -80,7 +126,7 @@ export function NorthStarEditModal({
     } catch (err) {
       setChatMessages([{ 
         role: 'assistant', 
-        content: "Oops! I couldn't connect. Check your API key in Settings." 
+        content: "Oops! Je n'arrive pas à me connecter. Vérifie ta clé API dans Settings." 
       }])
     } finally {
       setAiLoading(false)
@@ -96,7 +142,12 @@ export function NorthStarEditModal({
     setAiLoading(true)
     
     try {
-      const { response, suggestions } = await refineGoal(goal, newMessages)
+      const context = buildContext()
+      const aiMessages: AIChatMessage[] = newMessages.map(m => ({
+        role: m.role,
+        content: m.content
+      }))
+      const { response, suggestions } = await refineGoal(goal, aiMessages, context)
       setChatMessages([...newMessages, { role: 'assistant', content: response }])
       if (suggestions) {
         setAiSuggestions(suggestions)
@@ -104,7 +155,7 @@ export function NorthStarEditModal({
     } catch (err) {
       setChatMessages([...newMessages, { 
         role: 'assistant', 
-        content: "Oops! Something went wrong. Try again?" 
+        content: "Oops! Quelque chose s'est mal passé. On réessaie ?" 
       }])
     } finally {
       setAiLoading(false)
