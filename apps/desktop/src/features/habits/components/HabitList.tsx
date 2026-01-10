@@ -93,10 +93,12 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
                   <div className={`habit-list__timeline-line ${checkedIds.has(habit.id) ? 'habit-list__timeline-line--done' : ''}`}>
                     {/* Now marker on the line if next habit is after current time */}
                     {index + 1 === nowIndex && (
-                      <div className="habit-list__now-inline">
-                        <div className="habit-list__now-dot" />
+                      <>
+                        <div className="habit-list__now-inline">
+                          <div className="habit-list__now-dot" />
+                        </div>
                         <span className="habit-list__now-time">{currentTime}</span>
-                      </div>
+                      </>
                     )}
                   </div>
                 )}
@@ -131,7 +133,9 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
         {/* Now marker at the end if all habits are before current time */}
         {nowIndex === -1 && sortedHabits.length > 0 && (
           <div className="habit-list__now-end">
-            <div className="habit-list__now-dot" />
+            <div className="habit-list__now-end-track">
+              <div className="habit-list__now-dot" />
+            </div>
             <span className="habit-list__now-time">{currentTime}</span>
           </div>
         )}

@@ -46,8 +46,8 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
             onEmojiClick={handleSelect}
             theme={Theme.LIGHT}
             searchPlaceHolder="Search emoji..."
-            width={300}
-            height={350}
+            width={280}
+            height={320}
             previewConfig={{ showPreview: false }}
             skinTonesDisabled
             lazyLoadEmojis
