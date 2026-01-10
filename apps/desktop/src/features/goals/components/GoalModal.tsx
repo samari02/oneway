@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import type { Goal } from '@oneway/shared'
+import type { Goal, Habit } from '@oneway/shared'
 import './GoalModal.css'
 
 interface GoalModalProps {
   goal: Goal | null
+  habits?: Habit[]  // All habits to show which are linked
   onSave: (data: { name: string; icon: string; progress: number; target_date?: string }) => Promise<void>
   onDelete?: () => Promise<void>
   onClose: () => void
@@ -43,12 +44,15 @@ export function GoalIcon({ iconId, size = 16, className = '' }: { iconId: string
   )
 }
 
-export function GoalModal({ goal, onSave, onDelete, onClose }: GoalModalProps) {
+export function GoalModal({ goal, habits = [], onSave, onDelete, onClose }: GoalModalProps) {
   const [name, setName] = useState(goal?.name || '')
   const [icon, setIcon] = useState(goal?.icon || 'target')
   const [progress, setProgress] = useState(goal?.progress || 0)
   const [targetDate, setTargetDate] = useState(goal?.target_date || '')
   const [saving, setSaving] = useState(false)
+
+  // Filter habits linked to this goal
+  const linkedHabits = goal ? habits.filter(h => h.goal_id === goal.id) : []
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -140,6 +144,28 @@ export function GoalModal({ goal, onSave, onDelete, onClose }: GoalModalProps) {
               onChange={e => setTargetDate(e.target.value)}
             />
           </div>
+
+          {/* Linked habits */}
+          {goal && linkedHabits.length > 0 && (
+            <div className="goal-modal__field">
+              <label>Linked habits</label>
+              <div className="goal-modal__linked-habits">
+                {linkedHabits.map(habit => (
+                  <div key={habit.id} className="goal-modal__linked-habit">
+                    <span className="goal-modal__linked-habit-icon">{habit.icon || '✨'}</span>
+                    <span className="goal-modal__linked-habit-name">{habit.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {goal && linkedHabits.length === 0 && (
+            <div className="goal-modal__field">
+              <label>Linked habits</label>
+              <p className="goal-modal__no-habits">No habits linked yet. Link habits when creating or editing them.</p>
+            </div>
+          )}
 
           <div className="goal-modal__actions">
             {goal && onDelete && (

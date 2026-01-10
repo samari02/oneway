@@ -1,17 +1,18 @@
 import { useState } from 'react'
-import type { Goal } from '@oneway/shared'
+import type { Goal, Habit } from '@oneway/shared'
 import { GoalModal, GoalIcon } from './GoalModal'
 import './GoalsBar.css'
 
 interface GoalsBarProps {
   goals: Goal[]
+  habits?: Habit[]
   onCreateGoal: (goal: Omit<Goal, 'id' | 'created_at' | 'updated_at'>) => Promise<Goal>
   onUpdateGoal: (goalId: string, updates: Partial<Goal>) => Promise<Goal>
   onDeleteGoal: (goalId: string) => Promise<void>
   userId: string
 }
 
-export function GoalsBar({ goals, onCreateGoal, onUpdateGoal, onDeleteGoal, userId }: GoalsBarProps) {
+export function GoalsBar({ goals, habits = [], onCreateGoal, onUpdateGoal, onDeleteGoal, userId }: GoalsBarProps) {
   const [showModal, setShowModal] = useState(false)
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
 
@@ -77,6 +78,7 @@ export function GoalsBar({ goals, onCreateGoal, onUpdateGoal, onDeleteGoal, user
       {showModal && (
         <GoalModal
           goal={editingGoal}
+          habits={habits}
           onSave={handleSave}
           onDelete={editingGoal ? handleDelete : undefined}
           onClose={() => {

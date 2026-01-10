@@ -18,8 +18,7 @@
   background: var(--bg-primary);
   border-radius: var(--radius-lg);
   width: 100%;
-  max-width: 520px;
-  min-height: 400px;
+  max-width: 480px;
   margin: var(--space-lg);
   box-shadow: var(--shadow-lg);
   animation: nsModalSlideUp 0.2s ease-out;

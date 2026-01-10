@@ -174,12 +174,26 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* Section with label */
+.today-view__section {
+  margin-top: var(--space-md);
+}
+
+.today-view__section-label {
+  display: block;
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: var(--space-xs);
+}
+
 /* North Star - prominent display */
 .today-view__north-star {
   display: inline-flex;
   align-items: flex-start;
   gap: var(--space-xs);
-  margin-top: var(--space-sm);
   padding: 0;
   background: none;
   border: none;
@@ -220,9 +234,9 @@
   opacity: 0.6;
 }
 
-/* Goals Bar container */
-.today-view__header-text .goals-bar {
-  margin-top: var(--space-sm);
+/* Goals Bar container - no extra margin needed, section handles it */
+.today-view__section .goals-bar {
+  margin-top: 0;
 }
 
 @keyframes celebratePop {

@@ -157,23 +157,34 @@ function TodayView() {
           </div>
           <div className="today-view__header-text">
             <p className="today-view__date">{today}</p>
+            
+            {/* North Star section */}
             {northStar && (
-              <button 
-                className="today-view__north-star"
-                onClick={() => setShowNorthStarEdit(true)}
-              >
-                <span className="today-view__north-star-text">{northStar.goal}</span>
-                <span className="today-view__north-star-edit">✏️</span>
-              </button>
+              <div className="today-view__section">
+                <span className="today-view__section-label">North Star</span>
+                <button 
+                  className="today-view__north-star"
+                  onClick={() => setShowNorthStarEdit(true)}
+                >
+                  <span className="today-view__north-star-text">{northStar.goal}</span>
+                  <span className="today-view__north-star-edit">✏️</span>
+                </button>
+              </div>
             )}
+            
+            {/* Goals section */}
             {user && (
-              <GoalsBar
-                goals={goals}
-                onCreateGoal={createGoal}
-                onUpdateGoal={updateGoal}
-                onDeleteGoal={removeGoal}
-                userId={user.id}
-              />
+              <div className="today-view__section">
+                <span className="today-view__section-label">Goals</span>
+                <GoalsBar
+                  goals={goals}
+                  onCreateGoal={createGoal}
+                  onUpdateGoal={updateGoal}
+                  onDeleteGoal={removeGoal}
+                  userId={user.id}
+                  habits={habits}
+                />
+              </div>
             )}
           </div>
         </div>

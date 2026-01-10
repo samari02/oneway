@@ -238,3 +238,35 @@
 .goal-modal__btn--delete:hover {
   background: rgba(var(--color-coral-rgb), 0.1);
 }
+
+/* Linked habits */
+.goal-modal__linked-habits {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.goal-modal__linked-habit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-muted);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.goal-modal__linked-habit-icon {
+  font-size: 14px;
+}
+
+.goal-modal__linked-habit-name {
+  color: var(--text-primary);
+}
+
+.goal-modal__no-habits {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
