@@ -196,12 +196,39 @@ function TodayView() {
             displayName={settings?.display_name}
             currentGoal={northStar?.goal}
             habits={habits}
+            goals={goals}
             checkedIds={checkedIds}
             userSettings={settings ? {
               wake_time: settings.wake_time,
               sleep_time: settings.sleep_time
             } : undefined}
             onGoalUpdate={() => refetchSettings()}
+            onCreateGoal={async (goal) => {
+              const newGoal = await createGoal({
+                user_id: user.id,
+                name: goal.name,
+                icon: goal.icon,
+                progress: 0,
+                target_date: goal.target_date
+              })
+              return newGoal
+            }}
+            onCreateHabits={async (habitsToCreate) => {
+              for (const habit of habitsToCreate) {
+                await create({
+                  user_id: user.id,
+                  name: habit.name,
+                  icon: habit.icon,
+                  scheduled_time: habit.scheduled_time,
+                  duration_minutes: habit.duration_minutes || null,
+                  habit_type: 'do',
+                  is_required: false,
+                  time_of_day: 'morning',
+                  goal_id: habit.goal_id,
+                })
+              }
+              refetchHabits()
+            }}
             isOpen={showAiChat}
             onOpenChange={setShowAiChat}
             hideTrigger={true}

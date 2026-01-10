@@ -6,22 +6,41 @@ import {
   type UserContext,
   type ChatMessage as AIChatMessage
 } from '@/lib/openai'
-import type { Habit } from '@oneway/shared'
+import type { Habit, Goal } from '@oneway/shared'
 import './AICompanion.css'
 
-type ConversationMode = 'north_star' | 'habits' | 'progress' | 'tasks' | null
+type ConversationMode = 'north_star' | 'goals' | 'habits' | 'progress' | 'tasks' | null
+
+// Structured suggestion from AI
+interface AISuggestion {
+  type: 'goal' | 'habits' | 'goal_with_habits'
+  goal?: {
+    name: string
+    icon: string
+    target_date?: string
+  }
+  habits?: Array<{
+    name: string
+    icon: string
+    scheduled_time?: string
+    duration_minutes?: number
+  }>
+}
 
 interface AICompanionProps {
   userId: string
   displayName?: string
   currentGoal?: string
   habits: Habit[]
+  goals?: Goal[]
   checkedIds: Set<string>
   userSettings?: {
     wake_time?: string
     sleep_time?: string
   }
   onGoalUpdate?: (goal: string) => void
+  onCreateGoal?: (goal: { name: string; icon: string; target_date?: string }) => Promise<Goal>
+  onCreateHabits?: (habits: Array<{ name: string; icon: string; scheduled_time?: string; duration_minutes?: number; goal_id?: string }>) => Promise<void>
   // External control props
   isOpen?: boolean
   onOpenChange?: (isOpen: boolean) => void
@@ -36,9 +55,33 @@ interface ChatMessage {
 
 const MODE_CONFIG = {
   north_star: {
-    icon: '🎯',
+    icon: '⭐',
     label: 'North Star',
     systemContext: 'L\'utilisateur veut travailler sur son objectif principal (North Star). Aide-le à le définir, le clarifier ou le décomposer en sous-objectifs.'
+  },
+  goals: {
+    icon: '🎯',
+    label: 'Goals',
+    systemContext: `L'utilisateur veut créer ou définir des objectifs (goals) qui contribuent à sa North Star.
+    
+Ton rôle:
+1. Comprendre ce qu'il veut accomplir
+2. Poser des questions pour clarifier (deadline? mesure de succès?)
+3. Proposer un goal structuré avec des habits associés
+
+Quand tu proposes un goal, utilise ce format EXACT:
+---SUGGESTION---
+{
+  "type": "goal_with_habits",
+  "goal": { "name": "Nom du goal", "icon": "target|star|heart|bolt|flag|trophy|mountain|book" },
+  "habits": [
+    { "name": "Habit 1", "icon": "🏃", "scheduled_time": "06:30", "duration_minutes": 30 },
+    { "name": "Habit 2", "icon": "🧘", "scheduled_time": "22:00", "duration_minutes": 10 }
+  ]
+}
+---END---
+
+Inclus ce bloc JSON seulement quand tu proposes quelque chose de concret, pas avant.`
   },
   habits: {
     icon: '🔧',
@@ -112,9 +155,12 @@ export function AICompanion({
   displayName,
   currentGoal,
   habits,
+  goals = [],
   checkedIds,
   userSettings,
   onGoalUpdate,
+  onCreateGoal,
+  onCreateHabits,
   isOpen: externalIsOpen,
   onOpenChange,
   hideTrigger = false
@@ -132,6 +178,8 @@ export function AICompanion({
   const [userInput, setUserInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [typingMessageIndex, setTypingMessageIndex] = useState<number | null>(null)
+  const [pendingSuggestion, setPendingSuggestion] = useState<AISuggestion | null>(null)
+  const [creatingFromSuggestion, setCreatingFromSuggestion] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   
   const hasKey = hasApiKey()
@@ -177,10 +225,76 @@ export function AICompanion({
         icon: h.icon || '✨', 
         type: h.habit_type || 'do' 
       })),
+      goals: goals.map(g => ({
+        name: g.name,
+        icon: g.icon || 'target',
+        progress: g.progress
+      })),
       wakeTime: userSettings?.wake_time,
       sleepTime: userSettings?.sleep_time,
     }
-  }, [displayName, currentGoal, habits, userSettings])
+  }, [displayName, currentGoal, habits, goals, userSettings])
+
+  // Parse AI suggestion from response
+  const parseSuggestion = (response: string): { cleanResponse: string; suggestion: AISuggestion | null } => {
+    const suggestionMatch = response.match(/---SUGGESTION---\s*([\s\S]*?)\s*---END---/)
+    
+    if (!suggestionMatch) {
+      return { cleanResponse: response, suggestion: null }
+    }
+    
+    try {
+      const suggestion = JSON.parse(suggestionMatch[1]) as AISuggestion
+      const cleanResponse = response.replace(/---SUGGESTION---[\s\S]*?---END---/, '').trim()
+      return { cleanResponse, suggestion }
+    } catch {
+      return { cleanResponse: response, suggestion: null }
+    }
+  }
+
+  // Create goal and habits from suggestion
+  const handleCreateFromSuggestion = async () => {
+    if (!pendingSuggestion || !onCreateGoal) return
+    
+    setCreatingFromSuggestion(true)
+    
+    try {
+      let goalId: string | undefined
+      
+      // Create goal if present
+      if (pendingSuggestion.goal) {
+        const newGoal = await onCreateGoal({
+          name: pendingSuggestion.goal.name,
+          icon: pendingSuggestion.goal.icon,
+          target_date: pendingSuggestion.goal.target_date
+        })
+        goalId = newGoal.id
+      }
+      
+      // Create habits if present
+      if (pendingSuggestion.habits && pendingSuggestion.habits.length > 0 && onCreateHabits) {
+        await onCreateHabits(pendingSuggestion.habits.map(h => ({
+          ...h,
+          goal_id: goalId
+        })))
+      }
+      
+      // Success message
+      const successMsg = { 
+        role: 'assistant' as const, 
+        content: `✅ C'est fait ! J'ai créé ${pendingSuggestion.goal ? `le goal "${pendingSuggestion.goal.name}"` : ''}${pendingSuggestion.habits?.length ? ` et ${pendingSuggestion.habits.length} habitude(s)` : ''}. Tu peux les voir dans ton dashboard !`
+      }
+      setChatMessages(prev => [...prev, successMsg])
+      setTypingMessageIndex(chatMessages.length)
+      setPendingSuggestion(null)
+    } catch (err) {
+      console.error('Failed to create from suggestion:', err)
+      const errorMsg = { role: 'assistant' as const, content: "Oops ! J'ai pas réussi à créer ça. On réessaie ?" }
+      setChatMessages(prev => [...prev, errorMsg])
+    } finally {
+      setCreatingFromSuggestion(false)
+    }
+  }
 
   const selectMode = (selectedMode: ConversationMode) => {
     setMode(selectedMode)
@@ -200,6 +314,7 @@ export function AICompanion({
 
     const userMessage = userInput.trim()
     setUserInput('')
+    setPendingSuggestion(null) // Clear any pending suggestion
     
     // Add user message
     const newMessages = [...chatMessages, { role: 'user' as const, content: userMessage }]
@@ -221,8 +336,15 @@ export function AICompanion({
         { ...context, previousConversations: modeContext }
       )
 
-      // Add assistant message with typing animation
-      const updatedMessages = [...newMessages, { role: 'assistant' as const, content: response }]
+      // Parse any suggestion from the response
+      const { cleanResponse, suggestion } = parseSuggestion(response)
+      
+      if (suggestion) {
+        setPendingSuggestion(suggestion)
+      }
+
+      // Add assistant message with typing animation (cleaned of JSON)
+      const updatedMessages = [...newMessages, { role: 'assistant' as const, content: cleanResponse }]
       setChatMessages(updatedMessages)
       setTypingMessageIndex(updatedMessages.length - 1)
 
@@ -245,6 +367,7 @@ export function AICompanion({
     setMode(null)
     setChatMessages([])
     setTypingMessageIndex(null)
+    setPendingSuggestion(null)
   }
 
   const closeCompanion = () => {
@@ -351,6 +474,37 @@ export function AICompanion({
                     <span className="ai-companion__typing-dots">
                       <span>●</span><span>●</span><span>●</span>
                     </span>
+                  </div>
+                )}
+
+                {/* Suggestion card */}
+                {pendingSuggestion && !loading && (
+                  <div className="ai-companion__suggestion">
+                    {pendingSuggestion.goal && (
+                      <div className="ai-companion__suggestion-goal">
+                        <span className="ai-companion__suggestion-label">🎯 Goal</span>
+                        <span className="ai-companion__suggestion-name">{pendingSuggestion.goal.name}</span>
+                      </div>
+                    )}
+                    {pendingSuggestion.habits && pendingSuggestion.habits.length > 0 && (
+                      <div className="ai-companion__suggestion-habits">
+                        <span className="ai-companion__suggestion-label">💡 Habitudes</span>
+                        {pendingSuggestion.habits.map((h, i) => (
+                          <div key={i} className="ai-companion__suggestion-habit">
+                            <span>{h.icon}</span>
+                            <span>{h.name}</span>
+                            {h.scheduled_time && <span className="ai-companion__suggestion-time">{h.scheduled_time}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      className="ai-companion__suggestion-create"
+                      onClick={handleCreateFromSuggestion}
+                      disabled={creatingFromSuggestion}
+                    >
+                      {creatingFromSuggestion ? 'Création...' : '✨ Créer tout ça'}
+                    </button>
                   </div>
                 )}
               </div>

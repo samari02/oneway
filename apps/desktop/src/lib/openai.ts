@@ -50,6 +50,7 @@ export interface UserContext {
   displayName?: string
   currentGoal?: string
   habits?: Array<{ name: string; icon: string; type: string }>
+  goals?: Array<{ name: string; icon: string; progress: number }>
   wakeTime?: string
   sleepTime?: string
   problems?: string[]
@@ -75,7 +76,8 @@ ${context.displayName ? `Tu parles à ${context.displayName}.` : ''}
 4. **Seulement ensuite** — Proposer des actions concrètes
 
 ## Ce que tu sais sur cette personne
-${context.currentGoal ? `- Son objectif actuel : "${context.currentGoal}"` : ''}
+${context.currentGoal ? `- Sa North Star (vision long terme) : "${context.currentGoal}"` : ''}
+${context.goals && context.goals.length > 0 ? `- Ses goals actuels : ${context.goals.map(g => `${g.name} (${g.progress}%)`).join(', ')}` : ''}
 ${context.wakeTime ? `- Se réveille à ${context.wakeTime}` : ''}
 ${context.sleepTime ? `- Se couche à ${context.sleepTime}` : ''}
 ${context.habits && context.habits.length > 0 ? `- Ses habitudes actuelles : ${context.habits.map(h => `${h.icon} ${h.name}`).join(', ')}` : ''}

@@ -295,6 +295,93 @@
   cursor: not-allowed;
 }
 
+/* Suggestion card */
+.ai-companion__suggestion {
+  background: linear-gradient(135deg, rgba(125, 216, 196, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
+  border: 1px solid rgba(125, 216, 196, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  margin-top: var(--space-xs);
+  animation: suggestionAppear 0.3s ease-out;
+}
+
+@keyframes suggestionAppear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-companion__suggestion-goal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-sm);
+}
+
+.ai-companion__suggestion-label {
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-companion__suggestion-name {
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.ai-companion__suggestion-habits {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-sm);
+}
+
+.ai-companion__suggestion-habit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.ai-companion__suggestion-time {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ai-companion__suggestion-create {
+  width: 100%;
+  padding: 10px;
+  background: var(--color-mint);
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.ai-companion__suggestion-create:hover:not(:disabled) {
+  background: var(--color-mint-dark);
+}
+
+.ai-companion__suggestion-create:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Responsive */
 @media (max-width: 400px) {
   .ai-companion__messages {
