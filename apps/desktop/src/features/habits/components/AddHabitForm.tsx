@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { TimeOfDay } from '@oneway/shared'
+import { EmojiPicker } from './EmojiPicker'
+import { TimePicker } from './TimePicker'
 import './AddHabitForm.css'
 
 interface HabitFormData {
@@ -16,14 +18,6 @@ interface AddHabitFormProps {
   onAdd: (data: HabitFormData) => Promise<void>
   onCancel: () => void
 }
-
-const EMOJI_SUGGESTIONS = ['☀️', '💧', '🏃', '🧘', '📚', '💪', '🥗', '😴', '✍️', '🎯', '📵', '🧠']
-
-const TIME_OPTIONS: { value: TimeOfDay; label: string; icon: string }[] = [
-  { value: 'morning', label: 'Matin', icon: '🌅' },
-  { value: 'evening', label: 'Soir', icon: '🌙' },
-  { value: 'anytime', label: 'Anytime', icon: '⏰' },
-]
 
 const DURATION_PRESETS = [5, 10, 15, 20, 30, 45, 60]
 
@@ -65,18 +59,10 @@ export function AddHabitForm({ onAdd, onCancel }: AddHabitFormProps) {
       {/* Icon Selection */}
       <div className="add-habit-form__field">
         <label className="add-habit-form__label">Icon</label>
-        <div className="add-habit-form__icons">
-          {EMOJI_SUGGESTIONS.map(emoji => (
-            <button
-              key={emoji}
-              type="button"
-              className={`add-habit-form__icon ${data.icon === emoji ? 'add-habit-form__icon--selected' : ''}`}
-              onClick={() => updateData({ icon: emoji })}
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
+        <EmojiPicker 
+          value={data.icon} 
+          onChange={(icon) => updateData({ icon })} 
+        />
       </div>
 
       {/* Name */}
@@ -92,32 +78,13 @@ export function AddHabitForm({ onAdd, onCancel }: AddHabitFormProps) {
         />
       </div>
 
-      {/* Scheduled Time + Time of Day */}
-      <div className="add-habit-form__row">
-        <div className="add-habit-form__field add-habit-form__field--time">
-          <label className="add-habit-form__label">Scheduled time</label>
-          <input
-            type="time"
-            className="add-habit-form__input"
-            value={data.scheduled_time}
-            onChange={(e) => updateData({ scheduled_time: e.target.value })}
-          />
-        </div>
-        <div className="add-habit-form__field add-habit-form__field--when">
-          <label className="add-habit-form__label">When</label>
-          <div className="add-habit-form__time-options">
-            {TIME_OPTIONS.map(option => (
-              <button
-                key={option.value}
-                type="button"
-                className={`add-habit-form__time-option ${data.time_of_day === option.value ? 'add-habit-form__time-option--selected' : ''}`}
-                onClick={() => updateData({ time_of_day: option.value })}
-              >
-                <span>{option.icon}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* Scheduled Time */}
+      <div className="add-habit-form__field">
+        <label className="add-habit-form__label">Scheduled time</label>
+        <TimePicker
+          value={data.scheduled_time}
+          onChange={(scheduled_time) => updateData({ scheduled_time })}
+        />
       </div>
 
       {/* Toggle Advanced */}

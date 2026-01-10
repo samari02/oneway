@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { Habit } from '@oneway/shared'
+import { EmojiPicker } from './EmojiPicker'
+import { TimePicker } from './TimePicker'
 import './EditHabitModal.css'
 
 interface EditHabitModalProps {
@@ -44,12 +46,7 @@ export function EditHabitModal({ habit, onSave, onCancel }: EditHabitModalProps)
           <div className="edit-modal__row">
             <div className="edit-modal__field edit-modal__field--icon">
               <label>Icon</label>
-              <input
-                type="text"
-                value={icon}
-                onChange={e => setIcon(e.target.value)}
-                maxLength={2}
-              />
+              <EmojiPicker value={icon} onChange={setIcon} />
             </div>
             <div className="edit-modal__field edit-modal__field--name">
               <label>Name</label>
@@ -73,25 +70,20 @@ export function EditHabitModal({ habit, onSave, onCancel }: EditHabitModalProps)
             />
           </div>
 
-          <div className="edit-modal__row">
-            <div className="edit-modal__field">
-              <label>Scheduled time</label>
-              <input
-                type="time"
-                value={scheduledTime}
-                onChange={e => setScheduledTime(e.target.value)}
-              />
-            </div>
-            <div className="edit-modal__field">
-              <label>Duration (min)</label>
-              <input
-                type="number"
-                value={durationMinutes}
-                onChange={e => setDurationMinutes(e.target.value)}
-                placeholder="e.g. 30"
-                min="1"
-              />
-            </div>
+          <div className="edit-modal__field">
+            <label>Scheduled time</label>
+            <TimePicker value={scheduledTime} onChange={setScheduledTime} />
+          </div>
+
+          <div className="edit-modal__field">
+            <label>Duration (min)</label>
+            <input
+              type="number"
+              value={durationMinutes}
+              onChange={e => setDurationMinutes(e.target.value)}
+              placeholder="e.g. 30"
+              min="1"
+            />
           </div>
 
           <div className="edit-modal__row">

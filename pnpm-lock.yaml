@@ -26,6 +26,9 @@ importers:
       '@tauri-apps/plugin-opener':
         specifier: ^2
         version: 2.5.3
+      emoji-picker-react:
+        specifier: ^4.16.1
+        version: 4.16.1(react@19.2.3)
       react:
         specifier: ^19.1.0
         version: 19.2.3
@@ -612,6 +615,12 @@ packages:
   electron-to-chromium@1.5.267:
     resolution: {integrity: sha512-0Drusm6MVRXSOJpGbaSVgcQsuB4hEkMpHXaVstcPmhu5LIedxs1xNK/nIxmQIU/RPC0+1/o0AVZfBTkTNJOdUw==}
 
+  emoji-picker-react@4.16.1:
+    resolution: {integrity: sha512-MrPX0tOCfRL3uYI4of/2GRZ7S6qS7YlacKiF78uFH84/C62vcuHE2DZyv5b4ZJMk0e06es1jjB4e31Bb+YSM8w==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: '>=16'
+
   esbuild@0.27.2:
     resolution: {integrity: sha512-HyNQImnsOC7X9PMNaCIeAm4ISCQXs5a5YasTXVliKv4uuBo1dKrG0A+uQS8M5eXjVMnLg3WgXaKvprHlFJQffw==}
     engines: {node: '>=18'}
@@ -629,6 +638,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  flairup@1.0.0:
+    resolution: {integrity: sha512-IKlE+pNvL2R+kVL1kEhUYqRxVqeFnjiIvHWDMLFXNaqyUdFXQM2wte44EfMYJNHkW16X991t2Zg8apKkhv7OBA==}
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -1245,6 +1257,11 @@ snapshots:
 
   electron-to-chromium@1.5.267: {}
 
+  emoji-picker-react@4.16.1(react@19.2.3):
+    dependencies:
+      flairup: 1.0.0
+      react: 19.2.3
+
   esbuild@0.27.2:
     optionalDependencies:
       '@esbuild/aix-ppc64': 0.27.2
@@ -1279,6 +1296,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.3):
     optionalDependencies:
       picomatch: 4.0.3
+
+  flairup@1.0.0: {}
 
   fsevents@2.3.3:
     optional: true

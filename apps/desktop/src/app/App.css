@@ -176,18 +176,24 @@
 }
 
 .today-view__add-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
   width: 100%;
-  padding: var(--space-md);
-  border: 2px dashed var(--border-light);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
   border-radius: var(--radius-md);
   color: var(--text-muted);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   transition: all var(--transition-fast);
+  opacity: 0.7;
 }
 
 .today-view__add-button:hover {
-  border-color: var(--color-mint);
   color: var(--color-mint-dark);
-  background: rgba(125, 216, 196, 0.05);
+  background: rgba(125, 216, 196, 0.08);
+  opacity: 1;
 }

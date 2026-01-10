@@ -155,3 +155,56 @@
   font-size: var(--font-size-sm);
   margin-top: var(--space-xs);
 }
+
+/* ========================================
+   Now Marker (inline on timeline)
+   ======================================== */
+
+.habit-list__timeline-line {
+  position: relative;
+}
+
+.habit-list__now-inline {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  z-index: 1;
+}
+
+.habit-list__now-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-coral);
+  box-shadow: 0 0 0 3px rgba(255, 155, 133, 0.25);
+  animation: nowPulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes nowPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(255, 155, 133, 0.25); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 155, 133, 0.15); }
+}
+
+.habit-list__now-time {
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-coral);
+  background: var(--bg-secondary);
+  padding: 1px 4px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Now marker at end of timeline */
+.habit-list__now-end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding-left: 2px;
+  margin-top: var(--space-xs);
+}
