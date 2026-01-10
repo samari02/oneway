@@ -1,5 +1,6 @@
 // Components
 export { OnboardingFlow } from './components/OnboardingFlow'
+export { NorthStarEditModal } from './components/NorthStarEditModal'
 
 // Hooks
 export { useOnboardingStatus } from './hooks/useOnboardingStatus'

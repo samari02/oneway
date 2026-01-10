@@ -12,6 +12,10 @@ export interface UserSettings {
   screen_off_time?: string
   onboarding_completed: boolean
   updated_at: string
+  // North Star
+  north_star_goal?: string
+  north_star_icon?: string
+  north_star_created_at?: string
 }
 
 export async function getUserSettings(userId: string): Promise<UserSettings | null> {
@@ -43,6 +47,10 @@ export async function saveOnboardingData(
       wake_time: onboardingData.wakeTime,
       sleep_time: onboardingData.sleepTime,
       screen_off_time: onboardingData.screenOffTime,
+      // North Star
+      north_star_goal: onboardingData.northStarGoal || null,
+      north_star_icon: onboardingData.northStarIcon || '🎯',
+      north_star_created_at: onboardingData.northStarGoal ? new Date().toISOString() : null,
       onboarding_completed: true,
       morning_routine_habits: [],
       updated_at: new Date().toISOString(),

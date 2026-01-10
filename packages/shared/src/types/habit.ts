@@ -23,6 +23,9 @@ export interface Habit {
   time_end?: string               // HH:MM - boundary period end
   blocked_sites?: string[]        // For digital boundaries
   days_of_week?: number[]         // 1=Mon, 7=Sun. null = every day
+  
+  // North Star
+  linked_to_north_star?: boolean  // Whether this habit contributes to the main goal
 }
 
 export interface HabitCheckIn {

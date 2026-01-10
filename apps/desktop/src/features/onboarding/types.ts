@@ -3,12 +3,16 @@ export interface OnboardingData {
   displayName: string
   problems: string[]
   
-  // Step 2: Best Self
+  // Step 2: North Star
+  northStarGoal: string
+  northStarIcon: string
+  
+  // Step 3: Best Self
   wakeTime: string      // e.g., "05:30"
   sleepTime: string     // e.g., "21:30"
   screenOffTime: string // e.g., "20:30"
   
-  // Step 3: Strictness
+  // Step 4: Strictness
   strictness: 'gentle' | 'guided' | 'strict'
 }
 

@@ -158,7 +158,57 @@
 .today-view__date {
   font-size: var(--font-size-sm);
   color: var(--text-muted);
+}
+
+.today-view__date-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
   margin-top: var(--space-xs);
+}
+
+/* North Star inline */
+.today-view__north-star {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 4px 10px;
+  background: rgba(253, 230, 138, 0.15);
+  border: 1px solid rgba(253, 230, 138, 0.3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  max-width: 200px;
+}
+
+.today-view__north-star:hover {
+  background: rgba(253, 230, 138, 0.25);
+  border-color: rgba(253, 230, 138, 0.5);
+}
+
+.today-view__north-star-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.today-view__north-star-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-weight-medium);
+}
+
+.today-view__north-star-edit {
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.today-view__north-star:hover .today-view__north-star-edit {
+  opacity: 1;
 }
 
 @keyframes celebratePop {

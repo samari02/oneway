@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useAuth, LoginForm } from '@/features/auth'
 import { useHabits, useTodayCheckIns, useHabitActions, HabitList, AddHabitModal, EditHabitModal } from '@/features/habits'
-import { OnboardingFlow, useOnboardingStatus, useUserSettings, saveOnboardingData } from '@/features/onboarding'
+import { OnboardingFlow, useOnboardingStatus, useUserSettings, saveOnboardingData, NorthStarEditModal } from '@/features/onboarding'
 import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
@@ -13,12 +13,13 @@ import './App.css'
 
 function TodayView() {
   const { user } = useAuth()
-  const { settings } = useUserSettings(user?.id)
+  const { settings, refetch: refetchSettings } = useUserSettings(user?.id)
   const { habits, loading: habitsLoading, refetch: refetchHabits } = useHabits(user?.id)
   const { checkedIds, toggleHabit } = useTodayCheckIns(user?.id)
   const { create, update, remove } = useHabitActions()
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
+  const [showNorthStarEdit, setShowNorthStarEdit] = useState(false)
 
   const handleToggle = (habitId: string) => {
     if (!user) return
@@ -128,6 +129,11 @@ function TodayView() {
 
   const mascotState = getMascotState()
 
+  const northStar = settings?.north_star_goal ? {
+    goal: settings.north_star_goal,
+    icon: settings.north_star_icon || '🎯'
+  } : null
+
   return (
     <div className="today-view">
       <section className="today-view__header">
@@ -140,7 +146,20 @@ function TodayView() {
         </div>
         <div className="today-view__header-text">
           <h2>Today</h2>
-          <p className="today-view__date">{today}</p>
+          <div className="today-view__date-row">
+            <p className="today-view__date">{today}</p>
+            {northStar && (
+              <button 
+                className="today-view__north-star"
+                onClick={() => setShowNorthStarEdit(true)}
+                title={northStar.goal}
+              >
+                <span className="today-view__north-star-icon">{northStar.icon}</span>
+                <span className="today-view__north-star-text">{northStar.goal}</span>
+                <span className="today-view__north-star-edit">✏️</span>
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
@@ -179,6 +198,21 @@ function TodayView() {
           habit={editingHabit}
           onSave={handleEditHabit}
           onCancel={() => setEditingHabit(null)}
+        />
+      )}
+
+      {showNorthStarEdit && user && northStar && (
+        <NorthStarEditModal
+          userId={user.id}
+          goal={northStar.goal}
+          icon={northStar.icon}
+          habits={habits}
+          onSave={() => {
+            setShowNorthStarEdit(false)
+            refetchSettings()
+            refetchHabits()
+          }}
+          onCancel={() => setShowNorthStarEdit(false)}
         />
       )}
     </div>
