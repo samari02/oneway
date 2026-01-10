@@ -91,27 +91,87 @@ On est un **copilote**, pas un surveillant.
 ## ✨ La vision
 
 > Clarity n'est pas une app de productivité.  
-> C'est un **miroir** qui montre ta vie digitale telle qu'elle est.  
-> Et un **guide** qui t'aide à la vivre comme tu le veux vraiment.
+> C'est un **guide** qui t'aide à savoir où tu vas, puis transforme le monde digital d'un obstacle en allié.
 
-### La mission centrale
+---
 
-> **"Clarity connecte ta vie digitale et ta vie personnelle pour les aligner vers ce qui compte vraiment pour toi."**
+## 🌍 Le problème
 
-Aujourd'hui, on vit deux vies parallèles :
-- **La vie réelle** : nos rêves, nos relations, notre santé
-- **La vie digitale** : nos écrans, nos apps, nos distractions
+On vit dans un monde digital omniprésent. On en a **besoin** pour travailler, apprendre, créer, se connecter. Mais ce même monde est conçu pour nous distraire, nous garder scotchés, nous faire perdre du temps sans qu'on s'en rende compte.
 
-Ces deux vies sont souvent en conflit. On veut être présent mais on scroll. On veut créer mais on consomme. On veut dormir mais on regarde "juste un dernier truc".
+**Résultat :** on finit sa journée sans avoir avancé sur ce qui compte vraiment. On est perdu, submergé, et on culpabilise.
 
-**Clarity est le pont entre ces deux mondes.** Un compagnon qui comprend tes aspirations profondes ET ton comportement digital, pour les aligner.
+---
 
-### Le chemin
+## 💡 Ce que Clarity fait
 
-1. Tu définis qui tu veux être (Best Self / North Star)
-2. Clarity crée le chemin (habits + boundaries)
-3. Tu marches, Clarity t'éclaire
-4. L'AI t'accompagne et t'aide à ajuster
+### 1. CLARIFIER — Savoir où on va
+
+D'abord, Clarity t'aide à clarifier où tu veux aller. Pas juste "être en forme" mais vraiment comprendre ce que tu veux, pourquoi, et comment ça se traduit en objectifs concrets.
+
+- **North Star** = Ta direction de vie, qui tu veux être
+- **Goals** = Objectifs concrets et mesurables qui servent cette direction
+- **Habits** = Actions quotidiennes liées à ces goals
+
+### 2. PROTÉGER — Ne pas être distrait
+
+Une fois que c'est clair, Clarity devient ton garde-fou digital. Il te protège des pièges du monde digital.
+
+- **Boundaries** = Ce que tu veux éviter, quand, et pourquoi
+- **Blocages** = Le digital qui travaille POUR toi, pas contre toi
+- **Awareness** = Voir clairement où va ton temps
+
+### 3. UTILISER À SON AVANTAGE — Le digital comme allié
+
+Clarity va plus loin : il t'aide à utiliser le digital à ton avantage. Pas le subir, le maîtriser.
+
+- **Focus blocks** = Créneaux protégés pour avancer
+- **Planner intelligent** = Organiser sa journée autour de ses priorités
+- **Intégrations** = Connecter les outils qui t'aident (Strava, Oura, etc.)
+
+---
+
+## 🎯 La structure
+
+```
+NORTH STAR (direction unique)
+"Vivre une vie équilibrée et épanouie"
+        │
+        ▼
+GOALS (objectifs concrets, multiples)
+├── 🏃 Marathon Déc 2026
+├── 📱 Screen time < 2h/jour  
+└── 📖 Lire 24 livres/an
+        │
+        ▼
+HABITS (actions quotidiennes)        BOUNDARIES (garde-fous)
+├── Morning run → Marathon           ├── No social 9h-18h
+├── 30min lecture → 24 livres        └── No screens after 22h
+└── Gym 3x/sem → Marathon
+```
+
+Chaque habit a un "pourquoi" clair. Chaque boundary a une raison. Tout est aligné vers la North Star.
+
+---
+
+## 🧭 Le chemin utilisateur
+
+1. **Clarifier** — Tu définis ta North Star et tes Goals
+2. **Structurer** — Tu crées les habits et boundaries qui y mènent
+3. **Vivre** — Tu suis ta journée, Clarity te protège et t'accompagne
+4. **Ajuster** — L'AI t'aide à optimiser basé sur tes résultats
+
+---
+
+## 🤖 Le rôle d'Aoi (AI Companion)
+
+Aoi n'est pas un chatbot générique. C'est un **coach holistique** qui :
+
+- Comprend ta North Star et tes Goals
+- Voit tes patterns (habits checkées, boundaries respectées)
+- Connecte les dots ("tu dors mal → tes habits matinales souffrent")
+- Propose des ajustements concrets
+- Encourage sans juger
 
 ---
 
