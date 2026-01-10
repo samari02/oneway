@@ -35,9 +35,8 @@ export interface Habit {
   blocked_sites?: string[]        // For digital boundaries
   days_of_week?: number[]         // 1=Mon, 7=Sun. null = every day
   
-  // Goal linking
+  // Goal linking (habits → goals → north star)
   goal_id?: string                // Link to a specific goal
-  linked_to_north_star?: boolean  // Whether this habit contributes to the main goal
 }
 
 export interface HabitCheckIn {

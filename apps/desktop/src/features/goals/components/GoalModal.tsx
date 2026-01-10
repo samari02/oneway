@@ -9,7 +9,7 @@ interface GoalModalProps {
   onClose: () => void
 }
 
-const GOAL_ICONS = ['●', '◆', '★', '▲', '■', '◉', '◈', '✦']
+const GOAL_ICONS = ['🎯', '🏃', '💪', '📚', '💰', '🎨', '🧘', '❤️', '⭐', '🚀', '🌱', '🔥', '💡', '🎵']
 
 export function GoalModal({ goal, onSave, onDelete, onClose }: GoalModalProps) {
   const [name, setName] = useState(goal?.name || '')

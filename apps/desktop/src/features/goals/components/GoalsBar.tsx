@@ -55,7 +55,7 @@ export function GoalsBar({ goals, onCreateGoal, onUpdateGoal, onDeleteGoal, user
           onClick={() => handleGoalClick(goal)}
           title={goal.name}
         >
-          <span className="goals-bar__pill-icon">{goal.icon || '●'}</span>
+          <span className="goals-bar__pill-icon">{goal.icon || '🎯'}</span>
           <span className="goals-bar__pill-progress">{goal.progress}%</span>
           <div className="goals-bar__pill-bar">
             <div 

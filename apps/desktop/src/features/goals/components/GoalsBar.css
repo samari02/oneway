@@ -28,9 +28,13 @@
 }
 
 .goals-bar__pill-icon {
-  font-size: 12px;
-  color: var(--color-mint);
-  font-weight: 600;
+  font-size: 14px;
+  filter: grayscale(0.8) opacity(0.7);
+  transition: filter 0.2s ease;
+}
+
+.goals-bar__pill:hover .goals-bar__pill-icon {
+  filter: grayscale(0) opacity(1);
 }
 
 .goals-bar__pill-progress {

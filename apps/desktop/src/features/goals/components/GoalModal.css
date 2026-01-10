@@ -120,24 +120,25 @@
   border: 1px solid var(--border-default);
   background: var(--bg-card);
   border-radius: 8px;
-  font-size: 14px;
-  color: var(--text-secondary);
+  font-size: 16px;
   cursor: pointer;
   transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  filter: grayscale(0.7);
 }
 
 .goal-modal__icon-btn:hover {
   border-color: var(--color-mint);
-  color: var(--color-mint);
+  filter: grayscale(0);
+  transform: scale(1.1);
 }
 
 .goal-modal__icon-btn--selected {
-  background: var(--color-mint);
+  background: rgba(var(--color-mint-rgb), 0.15);
   border-color: var(--color-mint);
-  color: white;
+  filter: grayscale(0);
 }
 
 .goal-modal__progress-row {
