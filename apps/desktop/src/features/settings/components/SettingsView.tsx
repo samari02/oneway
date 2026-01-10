@@ -1,11 +1,36 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/features/auth'
 import { supabase } from '@/lib/supabase'
+import { getApiKey, setApiKey, removeApiKey, hasApiKey } from '@/lib/openai'
 import './SettingsView.css'
 
 export function SettingsView() {
   const { user, signOut } = useAuth()
   const [resetting, setResetting] = useState(false)
+  const [apiKeyInput, setApiKeyInput] = useState('')
+  const [hasKey, setHasKey] = useState(false)
+  const [showApiKey, setShowApiKey] = useState(false)
+
+  useEffect(() => {
+    setHasKey(hasApiKey())
+    const key = getApiKey()
+    if (key) {
+      setApiKeyInput(key)
+    }
+  }, [])
+
+  const handleSaveApiKey = () => {
+    if (apiKeyInput.trim()) {
+      setApiKey(apiKeyInput.trim())
+      setHasKey(true)
+    }
+  }
+
+  const handleRemoveApiKey = () => {
+    removeApiKey()
+    setApiKeyInput('')
+    setHasKey(false)
+  }
 
   const handleResetOnboarding = async () => {
     if (!user) return
@@ -95,6 +120,57 @@ export function SettingsView() {
             <span className="settings-item__label">Screen Off Time</span>
             <span className="settings-item__value">—</span>
           </div>
+        </div>
+      </section>
+
+      {/* AI Features Section */}
+      <section className="settings-section">
+        <h2 className="settings-section__title">
+          ✨ AI Features
+        </h2>
+        
+        <p className="settings-section__description">
+          Use AI to help refine your goals and suggest habits. Requires an OpenAI API key.
+        </p>
+
+        <div className="settings-item settings-item--vertical">
+          <label className="settings-item__label">OpenAI API Key</label>
+          <div className="settings-api-key">
+            <input
+              type={showApiKey ? 'text' : 'password'}
+              className="settings-api-key__input"
+              placeholder="sk-..."
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
+            />
+            <button
+              type="button"
+              className="settings-api-key__toggle"
+              onClick={() => setShowApiKey(!showApiKey)}
+            >
+              {showApiKey ? '🙈' : '👁️'}
+            </button>
+          </div>
+          <div className="settings-api-key__actions">
+            <button
+              className="settings-button settings-button--small"
+              onClick={handleSaveApiKey}
+              disabled={!apiKeyInput.trim()}
+            >
+              {hasKey ? 'Update Key' : 'Save Key'}
+            </button>
+            {hasKey && (
+              <button
+                className="settings-button settings-button--small settings-button--ghost"
+                onClick={handleRemoveApiKey}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+          {hasKey && (
+            <span className="settings-api-key__status">✓ Key configured</span>
+          )}
         </div>
       </section>
 

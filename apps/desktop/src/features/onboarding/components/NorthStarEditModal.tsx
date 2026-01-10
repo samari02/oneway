@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { hasApiKey, refineGoal } from '@/lib/openai'
 import type { Habit } from '@oneway/shared'
 import './NorthStarEditModal.css'
 
@@ -10,6 +11,24 @@ interface NorthStarEditModalProps {
   habits: Habit[]
   onSave: () => void
   onCancel: () => void
+  onAddHabits?: (habits: Array<{ name: string; icon: string; scheduled_time?: string; duration_minutes?: number }>) => Promise<void>
+}
+
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+interface AISuggestion {
+  refined_goal: string
+  habits: Array<{
+    name: string
+    icon: string
+    scheduled_time?: string
+    duration_minutes?: number
+    type: 'do' | 'avoid'
+    avoid_category?: 'digital' | 'physical'
+  }>
 }
 
 const ICONS = ['🎯', '💪', '🧘', '📚', '💼', '❤️', '✨', '🌟', '🏃', '🎨', '💡', '🚀']
@@ -20,7 +39,8 @@ export function NorthStarEditModal({
   icon: initialIcon, 
   habits,
   onSave, 
-  onCancel 
+  onCancel,
+  onAddHabits
 }: NorthStarEditModalProps) {
   const [goal, setGoal] = useState(initialGoal)
   const [icon, setIcon] = useState(initialIcon)
@@ -29,6 +49,86 @@ export function NorthStarEditModal({
   )
   const [showIcons, setShowIcons] = useState(false)
   const [saving, setSaving] = useState(false)
+  
+  // AI Chat state
+  const [showAiChat, setShowAiChat] = useState(false)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [userInput, setUserInput] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiSuggestions, setAiSuggestions] = useState<AISuggestion | null>(null)
+  const [selectedSuggestedHabits, setSelectedSuggestedHabits] = useState<Set<number>>(new Set())
+  const chatEndRef = useRef<HTMLDivElement>(null)
+  
+  const hasAiKey = hasApiKey()
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages])
+
+  const startAiChat = async () => {
+    setShowAiChat(true)
+    setAiLoading(true)
+    setChatMessages([])
+    setAiSuggestions(null)
+    
+    try {
+      const { response, suggestions } = await refineGoal(goal, [])
+      setChatMessages([{ role: 'assistant', content: response }])
+      if (suggestions) {
+        setAiSuggestions(suggestions)
+      }
+    } catch (err) {
+      setChatMessages([{ 
+        role: 'assistant', 
+        content: "Oops! I couldn't connect. Check your API key in Settings." 
+      }])
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const sendMessage = async () => {
+    if (!userInput.trim() || aiLoading) return
+    
+    const newMessages = [...chatMessages, { role: 'user' as const, content: userInput }]
+    setChatMessages(newMessages)
+    setUserInput('')
+    setAiLoading(true)
+    
+    try {
+      const { response, suggestions } = await refineGoal(goal, newMessages)
+      setChatMessages([...newMessages, { role: 'assistant', content: response }])
+      if (suggestions) {
+        setAiSuggestions(suggestions)
+      }
+    } catch (err) {
+      setChatMessages([...newMessages, { 
+        role: 'assistant', 
+        content: "Oops! Something went wrong. Try again?" 
+      }])
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const applySuggestions = () => {
+    if (aiSuggestions) {
+      setGoal(aiSuggestions.refined_goal)
+      setShowAiChat(false)
+    }
+  }
+
+  const toggleSuggestedHabit = (index: number) => {
+    setSelectedSuggestedHabits(prev => {
+      const next = new Set(prev)
+      if (next.has(index)) {
+        next.delete(index)
+      } else {
+        next.add(index)
+      }
+      return next
+    })
+  }
 
   const toggleHabitLink = (habitId: string) => {
     setLinkedHabitIds(prev => {
@@ -121,7 +221,109 @@ export function NorthStarEditModal({
                 ))}
               </div>
             )}
+            
+            {/* AI Refine button */}
+            {hasAiKey && !showAiChat && (
+              <button
+                type="button"
+                className="north-star-modal__ai-btn"
+                onClick={startAiChat}
+                disabled={!goal.trim()}
+              >
+                ✨ Refine with AI
+              </button>
+            )}
           </div>
+
+          {/* AI Chat interface */}
+          {showAiChat && (
+            <div className="north-star-modal__ai-chat">
+              <div className="north-star-modal__ai-header">
+                <span>✨ AI Assistant</span>
+                <button 
+                  type="button" 
+                  className="north-star-modal__ai-close"
+                  onClick={() => setShowAiChat(false)}
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="north-star-modal__ai-messages">
+                {chatMessages.map((msg, i) => (
+                  <div 
+                    key={i} 
+                    className={`north-star-modal__ai-message north-star-modal__ai-message--${msg.role}`}
+                  >
+                    {msg.content}
+                  </div>
+                ))}
+                {aiLoading && (
+                  <div className="north-star-modal__ai-message north-star-modal__ai-message--assistant north-star-modal__ai-message--loading">
+                    <span className="north-star-modal__ai-typing">●●●</span>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* AI Suggestions */}
+              {aiSuggestions && (
+                <div className="north-star-modal__ai-suggestions">
+                  <div className="north-star-modal__ai-suggestion-goal">
+                    <label>✅ Refined goal:</label>
+                    <p>"{aiSuggestions.refined_goal}"</p>
+                  </div>
+                  
+                  {aiSuggestions.habits.length > 0 && (
+                    <div className="north-star-modal__ai-suggestion-habits">
+                      <label>💡 Suggested habits:</label>
+                      {aiSuggestions.habits.map((habit, i) => (
+                        <label key={i} className="north-star-modal__ai-habit">
+                          <input
+                            type="checkbox"
+                            checked={selectedSuggestedHabits.has(i)}
+                            onChange={() => toggleSuggestedHabit(i)}
+                          />
+                          <span>{habit.icon}</span>
+                          <span>{habit.name}</span>
+                          {habit.scheduled_time && <span className="north-star-modal__ai-habit-time">{habit.scheduled_time}</span>}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <button
+                    type="button"
+                    className="north-star-modal__ai-apply"
+                    onClick={applySuggestions}
+                  >
+                    Apply suggestions
+                  </button>
+                </div>
+              )}
+
+              {/* Chat input */}
+              {!aiSuggestions && (
+                <div className="north-star-modal__ai-input">
+                  <input
+                    type="text"
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                    placeholder="Type your answer..."
+                    disabled={aiLoading}
+                  />
+                  <button 
+                    type="button" 
+                    onClick={sendMessage}
+                    disabled={aiLoading || !userInput.trim()}
+                  >
+                    →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Linked habits */}
           {habits.length > 0 && (

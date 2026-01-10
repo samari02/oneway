@@ -146,20 +146,16 @@ function TodayView() {
         </div>
         <div className="today-view__header-text">
           <h2>Today</h2>
-          <div className="today-view__date-row">
-            <p className="today-view__date">{today}</p>
-            {northStar && (
-              <button 
-                className="today-view__north-star"
-                onClick={() => setShowNorthStarEdit(true)}
-                title={northStar.goal}
-              >
-                <span className="today-view__north-star-icon">{northStar.icon}</span>
-                <span className="today-view__north-star-text">{northStar.goal}</span>
-                <span className="today-view__north-star-edit">✏️</span>
-              </button>
-            )}
-          </div>
+          <p className="today-view__date">{today}</p>
+          {northStar && (
+            <button 
+              className="today-view__north-star"
+              onClick={() => setShowNorthStarEdit(true)}
+            >
+              <span className="today-view__north-star-text">{northStar.goal}</span>
+              <span className="today-view__north-star-edit">✏️</span>
+            </button>
+          )}
         </div>
       </section>
 

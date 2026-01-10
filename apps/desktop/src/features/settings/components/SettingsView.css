@@ -146,3 +146,94 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Small button variant */
+.settings-button--small {
+  width: auto;
+  padding: var(--space-xs) var(--space-md);
+  margin-top: 0;
+  background: var(--color-mint);
+  color: white;
+}
+
+.settings-button--small:hover {
+  background: var(--color-mint-dark);
+}
+
+.settings-button--small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-button--ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
+}
+
+.settings-button--ghost:hover {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+/* Vertical settings item */
+.settings-item--vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+/* API Key field */
+.settings-api-key {
+  display: flex;
+  width: 100%;
+  gap: var(--space-xs);
+}
+
+.settings-api-key__input {
+  flex: 1;
+  height: 38px;
+  padding: 0 var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-family: monospace;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+}
+
+.settings-api-key__input:focus {
+  outline: none;
+  border-color: var(--color-mint);
+}
+
+.settings-api-key__input::placeholder {
+  color: var(--text-muted);
+}
+
+.settings-api-key__toggle {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.settings-api-key__toggle:hover {
+  background: var(--bg-secondary);
+}
+
+.settings-api-key__actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.settings-api-key__status {
+  font-size: var(--font-size-xs);
+  color: var(--color-mint);
+}

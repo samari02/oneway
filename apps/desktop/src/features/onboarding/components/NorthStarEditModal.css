@@ -18,11 +18,12 @@
   background: var(--bg-primary);
   border-radius: var(--radius-lg);
   width: 100%;
-  max-width: 440px;
+  max-width: 520px;
+  min-height: 400px;
   margin: var(--space-lg);
   box-shadow: var(--shadow-lg);
   animation: nsModalSlideUp 0.2s ease-out;
-  max-height: 80vh;
+  max-height: 85vh;
   overflow-y: auto;
 }
 
@@ -231,6 +232,255 @@
 }
 
 .north-star-modal__btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* AI Refine Button */
+.north-star-modal__ai-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, rgba(125, 216, 196, 0.15) 100%);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-lavender);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-top: var(--space-xs);
+}
+
+.north-star-modal__ai-btn:hover {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.25) 0%, rgba(125, 216, 196, 0.25) 100%);
+  border-color: rgba(167, 139, 250, 0.5);
+}
+
+.north-star-modal__ai-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* AI Chat Interface */
+.north-star-modal__ai-chat {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.north-star-modal__ai-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(125, 216, 196, 0.2) 100%);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.north-star-modal__ai-close {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.north-star-modal__ai-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-primary);
+}
+
+.north-star-modal__ai-messages {
+  max-height: 280px;
+  min-height: 120px;
+  overflow-y: auto;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.north-star-modal__ai-message {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  max-width: 85%;
+}
+
+.north-star-modal__ai-message--assistant {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  align-self: flex-start;
+  border: 1px solid var(--border-light);
+}
+
+.north-star-modal__ai-message--user {
+  background: var(--color-mint);
+  color: white;
+  align-self: flex-end;
+}
+
+.north-star-modal__ai-message--loading {
+  padding: var(--space-sm) var(--space-lg);
+}
+
+.north-star-modal__ai-typing {
+  display: inline-block;
+  animation: typingPulse 1s ease-in-out infinite;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+}
+
+@keyframes typingPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* AI Suggestions */
+.north-star-modal__ai-suggestions {
+  padding: var(--space-md);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.north-star-modal__ai-suggestion-goal {
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(125, 216, 196, 0.1);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-mint);
+}
+
+.north-star-modal__ai-suggestion-goal label {
+  font-size: var(--font-size-xs);
+  color: var(--color-mint-dark);
+  font-weight: var(--font-weight-medium);
+}
+
+.north-star-modal__ai-suggestion-goal p {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-style: italic;
+  margin-top: var(--space-xs);
+}
+
+.north-star-modal__ai-suggestion-habits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.north-star-modal__ai-suggestion-habits label:first-child {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-xs);
+}
+
+.north-star-modal__ai-habit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: background var(--transition-fast);
+}
+
+.north-star-modal__ai-habit:hover {
+  background: var(--bg-hover);
+}
+
+.north-star-modal__ai-habit input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-mint);
+}
+
+.north-star-modal__ai-habit-time {
+  margin-left: auto;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.north-star-modal__ai-apply {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-mint);
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.north-star-modal__ai-apply:hover {
+  background: var(--color-mint-dark);
+}
+
+/* AI Input */
+.north-star-modal__ai-input {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--border-light);
+}
+
+.north-star-modal__ai-input input {
+  flex: 1;
+  height: 36px;
+  padding: 0 var(--space-sm);
+  font-size: var(--font-size-sm);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+}
+
+.north-star-modal__ai-input input:focus {
+  outline: none;
+  border-color: var(--color-mint);
+}
+
+.north-star-modal__ai-input button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-mint);
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.north-star-modal__ai-input button:hover {
+  background: var(--color-mint-dark);
+}
+
+.north-star-modal__ai-input button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

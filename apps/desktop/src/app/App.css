@@ -158,57 +158,53 @@
 .today-view__date {
   font-size: var(--font-size-sm);
   color: var(--text-muted);
-}
-
-.today-view__date-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
   margin-top: var(--space-xs);
 }
 
-/* North Star inline */
+/* North Star - prominent display */
 .today-view__north-star {
-  display: flex;
-  align-items: center;
+  display: inline-flex;
+  align-items: flex-start;
   gap: var(--space-xs);
-  padding: 4px 10px;
-  background: rgba(253, 230, 138, 0.15);
-  border: 1px solid rgba(253, 230, 138, 0.3);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
+  margin-top: var(--space-sm);
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: var(--font-size-md);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all var(--transition-fast);
-  max-width: 200px;
+  transition: color var(--transition-fast);
+  text-align: left;
+  line-height: 1.4;
 }
 
 .today-view__north-star:hover {
-  background: rgba(253, 230, 138, 0.25);
-  border-color: rgba(253, 230, 138, 0.5);
-}
-
-.today-view__north-star-icon {
-  font-size: 12px;
-  flex-shrink: 0;
+  color: var(--text-primary);
 }
 
 .today-view__north-star-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-weight: var(--font-weight-medium);
+  font-style: italic;
+}
+
+.today-view__north-star-text::before {
+  content: '"';
+}
+
+.today-view__north-star-text::after {
+  content: '"';
 }
 
 .today-view__north-star-edit {
-  font-size: 10px;
+  font-size: 12px;
   opacity: 0;
   transition: opacity var(--transition-fast);
   flex-shrink: 0;
+  margin-left: var(--space-xs);
 }
 
 .today-view__north-star:hover .today-view__north-star-edit {
-  opacity: 1;
+  opacity: 0.6;
 }
 
 @keyframes celebratePop {
