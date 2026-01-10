@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Goal } from '@oneway/shared'
-import { GoalModal } from './GoalModal'
+import { GoalModal, GoalIcon } from './GoalModal'
 import './GoalsBar.css'
 
 interface GoalsBarProps {
@@ -55,7 +55,7 @@ export function GoalsBar({ goals, onCreateGoal, onUpdateGoal, onDeleteGoal, user
           onClick={() => handleGoalClick(goal)}
           title={goal.name}
         >
-          <span className="goals-bar__pill-icon">{goal.icon || '🎯'}</span>
+          <GoalIcon iconId={goal.icon || 'target'} size={14} className="goals-bar__pill-icon" />
           <span className="goals-bar__pill-progress">{goal.progress}%</span>
           <div className="goals-bar__pill-bar">
             <div 

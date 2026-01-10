@@ -29,6 +29,8 @@ export interface CreateHabitData {
   time_end?: string
   blocked_sites?: string[]
   days_of_week?: number[]
+  // Goal link
+  goal_id?: string
 }
 
 export async function createHabit(habit: CreateHabitData): Promise<Habit> {
@@ -52,6 +54,8 @@ export async function createHabit(habit: CreateHabitData): Promise<Habit> {
       time_end: habit.time_end || null,
       blocked_sites: habit.blocked_sites?.length ? habit.blocked_sites : null,
       days_of_week: habit.days_of_week?.length === 7 ? null : habit.days_of_week,
+      // Goal link
+      goal_id: habit.goal_id || null,
     })
     .select()
     .single()
@@ -77,6 +81,8 @@ export interface UpdateHabitData {
   time_end?: string | null
   blocked_sites?: string[] | null
   days_of_week?: number[] | null
+  // Goal link
+  goal_id?: string | null
 }
 
 export async function updateHabit(

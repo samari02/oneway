@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import type { TimeOfDay, HabitType, AvoidCategory } from '@oneway/shared'
+import type { TimeOfDay, HabitType, AvoidCategory, Goal } from '@oneway/shared'
 import { EmojiPicker } from './EmojiPicker'
 import { TimePicker } from './TimePicker'
+import { GoalIcon } from '@/features/goals/components/GoalModal'
 import './AddHabitModal.css'
 
 interface HabitFormData {
@@ -18,11 +19,13 @@ interface HabitFormData {
   time_end?: string
   blocked_sites?: string[]
   days_of_week?: number[]
+  goal_id?: string
 }
 
 interface AddHabitModalProps {
   onAdd: (data: HabitFormData) => Promise<void>
   onCancel: () => void
+  goals?: Goal[]
 }
 
 const DAYS = [
@@ -43,7 +46,7 @@ const COMMON_SITES = [
   { pattern: 'reddit.com', label: 'Reddit' },
 ]
 
-export function AddHabitModal({ onAdd, onCancel }: AddHabitModalProps) {
+export function AddHabitModal({ onAdd, onCancel, goals = [] }: AddHabitModalProps) {
   const [data, setData] = useState<HabitFormData>({
     name: '',
     icon: '✨',
@@ -58,6 +61,7 @@ export function AddHabitModal({ onAdd, onCancel }: AddHabitModalProps) {
     time_end: undefined,
     blocked_sites: [],
     days_of_week: [1, 2, 3, 4, 5, 6, 7],
+    goal_id: undefined,
   })
   const [loading, setLoading] = useState(false)
 
@@ -164,6 +168,33 @@ export function AddHabitModal({ onAdd, onCancel }: AddHabitModalProps) {
                 value={data.scheduled_time}
                 onChange={(scheduled_time) => updateData({ scheduled_time })}
               />
+            </div>
+          )}
+
+          {/* Goal selector */}
+          {goals.length > 0 && (
+            <div className="add-modal__field">
+              <label>Link to goal</label>
+              <div className="add-modal__goals">
+                <button
+                  type="button"
+                  className={`add-modal__goal-btn ${!data.goal_id ? 'add-modal__goal-btn--active' : ''}`}
+                  onClick={() => updateData({ goal_id: undefined })}
+                >
+                  None
+                </button>
+                {goals.map(goal => (
+                  <button
+                    key={goal.id}
+                    type="button"
+                    className={`add-modal__goal-btn ${data.goal_id === goal.id ? 'add-modal__goal-btn--active' : ''}`}
+                    onClick={() => updateData({ goal_id: goal.id })}
+                  >
+                    <GoalIcon iconId={goal.icon || 'target'} size={14} />
+                    <span>{goal.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

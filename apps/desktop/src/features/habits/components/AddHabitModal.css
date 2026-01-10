@@ -382,3 +382,45 @@
   height: 22px;
   font-size: 12px;
 }
+
+/* Goals selector */
+.add-modal__goals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.add-modal__goal-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+  max-width: 150px;
+}
+
+.add-modal__goal-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.add-modal__goal-btn:hover {
+  border-color: var(--color-mint);
+  color: var(--color-mint);
+}
+
+.add-modal__goal-btn--active {
+  background: rgba(var(--color-mint-rgb), 0.15);
+  border-color: var(--color-mint);
+  color: var(--color-mint);
+}
+
+.add-modal__goal-btn svg {
+  flex-shrink: 0;
+}

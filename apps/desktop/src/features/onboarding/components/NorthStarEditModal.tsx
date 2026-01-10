@@ -58,9 +58,6 @@ export function NorthStarEditModal({
 }: NorthStarEditModalProps) {
   const [goal, setGoal] = useState(initialGoal)
   const [icon, setIcon] = useState(initialIcon)
-  const [linkedHabitIds, setLinkedHabitIds] = useState<Set<string>>(
-    new Set(habits.filter(h => h.linked_to_north_star).map(h => h.id))
-  )
   const [showIcons, setShowIcons] = useState(false)
   const [saving, setSaving] = useState(false)
   
@@ -181,24 +178,11 @@ export function NorthStarEditModal({
     })
   }
 
-  const toggleHabitLink = (habitId: string) => {
-    setLinkedHabitIds(prev => {
-      const next = new Set(prev)
-      if (next.has(habitId)) {
-        next.delete(habitId)
-      } else {
-        next.add(habitId)
-      }
-      return next
-    })
-  }
-
   const handleSave = async () => {
     if (!goal.trim()) return
     setSaving(true)
 
     try {
-      // Update user settings
       await supabase
         .from('user_settings')
         .update({
@@ -207,17 +191,6 @@ export function NorthStarEditModal({
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', userId)
-
-      // Update habits linked status
-      for (const habit of habits) {
-        const shouldBeLinked = linkedHabitIds.has(habit.id)
-        if (habit.linked_to_north_star !== shouldBeLinked) {
-          await supabase
-            .from('habits')
-            .update({ linked_to_north_star: shouldBeLinked })
-            .eq('id', habit.id)
-        }
-      }
 
       onSave()
     } catch (err) {
@@ -376,28 +349,6 @@ export function NorthStarEditModal({
             </div>
           )}
 
-          {/* Linked habits */}
-          {habits.length > 0 && (
-            <div className="north-star-modal__field">
-              <label>Linked habits</label>
-              <p className="north-star-modal__hint">
-                Select habits that contribute to this goal
-              </p>
-              <div className="north-star-modal__habits">
-                {habits.filter(h => h.habit_type === 'do').map(habit => (
-                  <label key={habit.id} className="north-star-modal__habit">
-                    <input
-                      type="checkbox"
-                      checked={linkedHabitIds.has(habit.id)}
-                      onChange={() => toggleHabitLink(habit.id)}
-                    />
-                    <span className="north-star-modal__habit-icon">{habit.icon || '✨'}</span>
-                    <span className="north-star-modal__habit-name">{habit.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="north-star-modal__actions">

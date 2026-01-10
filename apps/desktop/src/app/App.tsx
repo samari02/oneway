@@ -45,6 +45,7 @@ function TodayView() {
     time_end?: string
     blocked_sites?: string[]
     days_of_week?: number[]
+    goal_id?: string
   }) => {
     if (!user) return
     await create({
@@ -63,6 +64,8 @@ function TodayView() {
       time_end: data.time_end,
       blocked_sites: data.blocked_sites,
       days_of_week: data.days_of_week,
+      // Goal link
+      goal_id: data.goal_id,
     })
     setShowAddForm(false)
     refetchHabits()
@@ -220,6 +223,7 @@ function TodayView() {
             <AddHabitModal
               onAdd={handleAddHabit}
               onCancel={() => setShowAddForm(false)}
+              goals={goals}
             />
           )}
         </>
