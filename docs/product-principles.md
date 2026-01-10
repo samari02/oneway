@@ -94,10 +94,24 @@ On est un **copilote**, pas un surveillant.
 > C'est un **miroir** qui montre ta vie digitale telle qu'elle est.  
 > Et un **guide** qui t'aide à la vivre comme tu le veux vraiment.
 
-Le chemin est simple :
-1. Tu définis qui tu veux être (Best Self)
+### La mission centrale
+
+> **"Clarity connecte ta vie digitale et ta vie personnelle pour les aligner vers ce qui compte vraiment pour toi."**
+
+Aujourd'hui, on vit deux vies parallèles :
+- **La vie réelle** : nos rêves, nos relations, notre santé
+- **La vie digitale** : nos écrans, nos apps, nos distractions
+
+Ces deux vies sont souvent en conflit. On veut être présent mais on scroll. On veut créer mais on consomme. On veut dormir mais on regarde "juste un dernier truc".
+
+**Clarity est le pont entre ces deux mondes.** Un compagnon qui comprend tes aspirations profondes ET ton comportement digital, pour les aligner.
+
+### Le chemin
+
+1. Tu définis qui tu veux être (Best Self / North Star)
 2. Clarity crée le chemin (habits + boundaries)
 3. Tu marches, Clarity t'éclaire
+4. L'AI t'accompagne et t'aide à ajuster
 
 ---
 

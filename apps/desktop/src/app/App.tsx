@@ -7,6 +7,7 @@ import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
 import { Mascot, type MascotMood } from '@/features/mascot'
+import { AICompanion } from '@/features/ai-companion'
 import type { OnboardingData } from '@/features/onboarding'
 import type { Habit } from '@oneway/shared'
 import './App.css'
@@ -155,6 +156,22 @@ function TodayView() {
               <span className="today-view__north-star-text">{northStar.goal}</span>
               <span className="today-view__north-star-edit">✏️</span>
             </button>
+          )}
+          
+          {/* AI Companion */}
+          {user && (
+            <AICompanion
+              userId={user.id}
+              displayName={settings?.display_name}
+              currentGoal={northStar?.goal}
+              habits={habits}
+              checkedIds={checkedIds}
+              userSettings={settings ? {
+                wake_time: settings.wake_time,
+                sleep_time: settings.sleep_time
+              } : undefined}
+              onGoalUpdate={() => refetchSettings()}
+            />
           )}
         </div>
       </section>
