@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { 
   hasApiKey, 
   refineGoal, 
@@ -27,51 +27,80 @@ interface AICompanionProps {
 interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
+  isTyping?: boolean
 }
 
 const MODE_CONFIG = {
   north_star: {
     icon: '🎯',
-    label: 'Ma North Star',
+    label: 'North Star',
     systemContext: 'L\'utilisateur veut travailler sur son objectif principal (North Star). Aide-le à le définir, le clarifier ou le décomposer en sous-objectifs.'
   },
   habits: {
     icon: '🔧',
-    label: 'Mes habitudes',
+    label: 'Habitudes',
     systemContext: 'L\'utilisateur veut discuter de ses habitudes. Il peut vouloir en créer, ajuster les horaires, en supprimer ou optimiser son setup.'
   },
   progress: {
     icon: '📊',
-    label: 'Mon progrès',
+    label: 'Progrès',
     systemContext: 'L\'utilisateur veut discuter de son progrès. Analyse ses check-ins, identifie les patterns, célèbre les victoires et aide sur les blocages.'
   },
   tasks: {
     icon: '📝',
-    label: 'Mes tâches',
-    systemContext: 'Les tâches quotidiennes arrivent bientôt ! Pour l\'instant, dis à l\'utilisateur que cette fonctionnalité est en cours de développement.'
+    label: 'Tâches',
+    systemContext: 'Les tâches quotidiennes arrivent bientôt !'
   }
 }
 
-function getContextualGreeting(displayName?: string, hour?: number): string {
-  const name = displayName || ''
-  const h = hour ?? new Date().getHours()
+// Typing animation hook
+function useTypingAnimation(text: string, speed: number = 20) {
+  const [displayedText, setDisplayedText] = useState('')
+  const [isComplete, setIsComplete] = useState(false)
+
+  useEffect(() => {
+    if (!text) {
+      setDisplayedText('')
+      setIsComplete(false)
+      return
+    }
+
+    setDisplayedText('')
+    setIsComplete(false)
+    let index = 0
+
+    const interval = setInterval(() => {
+      if (index < text.length) {
+        setDisplayedText(text.slice(0, index + 1))
+        index++
+      } else {
+        setIsComplete(true)
+        clearInterval(interval)
+      }
+    }, speed)
+
+    return () => clearInterval(interval)
+  }, [text, speed])
+
+  return { displayedText, isComplete }
+}
+
+// Single message with typing animation
+function TypingMessage({ content, onComplete }: { content: string; onComplete?: () => void }) {
+  const { displayedText, isComplete } = useTypingAnimation(content, 15)
   
-  const greetings = [
-    `Hey${name ? ` ${name}` : ''} ! Comment je peux t'aider ?`,
-    `Salut${name ? ` ${name}` : ''} ! De quoi tu veux parler aujourd'hui ?`,
-    `${name ? `${name}, ` : ''}qu'est-ce qui te ferait du bien là ?`,
-  ]
-  
-  // Time-based greetings
-  if (h >= 5 && h < 12) {
-    greetings.push(`Bonjour${name ? ` ${name}` : ''} ! Prêt pour ta journée ?`)
-  } else if (h >= 18 && h < 22) {
-    greetings.push(`Bonsoir${name ? ` ${name}` : ''} ! Comment s'est passée ta journée ?`)
-  } else if (h >= 22 || h < 5) {
-    greetings.push(`Encore debout${name ? ` ${name}` : ''} ? On discute avant de dormir ?`)
-  }
-  
-  return greetings[Math.floor(Math.random() * greetings.length)]
+  useEffect(() => {
+    if (isComplete && onComplete) {
+      onComplete()
+    }
+  }, [isComplete, onComplete])
+
+  return (
+    <div className="ai-companion__message ai-companion__message--assistant">
+      {displayedText}
+      {!isComplete && <span className="ai-companion__cursor">|</span>}
+    </div>
+  )
 }
 
 export function AICompanion({
@@ -88,27 +117,25 @@ export function AICompanion({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [userInput, setUserInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [greeting, setGreeting] = useState('')
+  const [typingMessageIndex, setTypingMessageIndex] = useState<number | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   
   const hasKey = hasApiKey()
-
-  // Set greeting when expanded
-  useEffect(() => {
-    if (isExpanded && !greeting) {
-      setGreeting(getContextualGreeting(displayName))
-    }
-  }, [isExpanded, displayName, greeting])
 
   // Scroll to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [chatMessages])
+  }, [chatMessages, typingMessageIndex])
 
-  const buildContext = (): UserContext => {
-    const completedToday = habits.filter(h => checkedIds.has(h.id)).length
-    const totalHabits = habits.length
-    
+  // Focus input when expanded
+  useEffect(() => {
+    if (isExpanded && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 100)
+    }
+  }, [isExpanded])
+
+  const buildContext = useCallback((): UserContext => {
     return {
       displayName,
       currentGoal,
@@ -120,70 +147,36 @@ export function AICompanion({
       wakeTime: userSettings?.wake_time,
       sleepTime: userSettings?.sleep_time,
     }
-  }
+  }, [displayName, currentGoal, habits, userSettings])
 
-  const selectMode = async (selectedMode: ConversationMode) => {
-    if (selectedMode === 'tasks') {
-      // Placeholder for tasks
-      setMode(selectedMode)
-      setChatMessages([{
-        role: 'assistant',
-        content: '📝 Les tâches quotidiennes arrivent bientôt ! Cette fonctionnalité est en cours de développement. En attendant, tu peux me parler de tes habitudes ou de ta North Star !'
-      }])
-      return
-    }
-
+  const selectMode = (selectedMode: ConversationMode) => {
     setMode(selectedMode)
-    setLoading(true)
-    setChatMessages([])
-
-    try {
-      const modeConfig = MODE_CONFIG[selectedMode!]
-      const context = buildContext()
-      
-      // Build a contextual first message based on mode
-      let firstMessage = ''
-      if (selectedMode === 'north_star') {
-        firstMessage = currentGoal 
-          ? `Mon objectif actuel : "${currentGoal}". J'aimerais en discuter.`
-          : `Je n'ai pas encore défini mon objectif principal.`
-      } else if (selectedMode === 'habits') {
-        firstMessage = habits.length > 0
-          ? `J'ai ${habits.length} habitudes. Je voudrais en discuter.`
-          : `Je n'ai pas encore d'habitudes définies.`
-      } else if (selectedMode === 'progress') {
-        const completedToday = habits.filter(h => checkedIds.has(h.id)).length
-        firstMessage = `Aujourd'hui j'ai complété ${completedToday}/${habits.length} habitudes.`
-      }
-
-      const { response } = await refineGoal(
-        currentGoal || 'Pas encore défini',
-        [{ role: 'user', content: firstMessage }],
-        { ...context, previousConversations: modeConfig.systemContext }
-      )
-      
-      setChatMessages([{ role: 'assistant', content: response }])
-    } catch (err) {
-      setChatMessages([{
-        role: 'assistant',
-        content: "Oops ! Je n'arrive pas à me connecter. Vérifie ta clé API dans Settings."
-      }])
-    } finally {
-      setLoading(false)
+    
+    if (selectedMode === 'tasks') {
+      const msg = { role: 'assistant' as const, content: '📝 Les tâches arrivent bientôt ! En attendant, parle-moi de tes habitudes ou de ta North Star.' }
+      setChatMessages([msg])
+      setTypingMessageIndex(0)
     }
+    
+    // Focus input after mode selection
+    setTimeout(() => inputRef.current?.focus(), 100)
   }
 
   const sendMessage = async () => {
-    if (!userInput.trim() || loading || !mode) return
+    if (!userInput.trim() || loading) return
 
-    const newMessages = [...chatMessages, { role: 'user' as const, content: userInput }]
-    setChatMessages(newMessages)
+    const userMessage = userInput.trim()
     setUserInput('')
+    
+    // Add user message
+    const newMessages = [...chatMessages, { role: 'user' as const, content: userMessage }]
+    setChatMessages(newMessages)
     setLoading(true)
 
     try {
       const context = buildContext()
-      const modeConfig = MODE_CONFIG[mode]
+      const modeContext = mode ? MODE_CONFIG[mode].systemContext : ''
+      
       const aiMessages: AIChatMessage[] = newMessages.map(m => ({
         role: m.role,
         content: m.content
@@ -192,37 +185,41 @@ export function AICompanion({
       const { response } = await refineGoal(
         currentGoal || 'Pas encore défini',
         aiMessages,
-        { ...context, previousConversations: modeConfig.systemContext }
+        { ...context, previousConversations: modeContext }
       )
 
+      // Add assistant message with typing animation
       const updatedMessages = [...newMessages, { role: 'assistant' as const, content: response }]
       setChatMessages(updatedMessages)
+      setTypingMessageIndex(updatedMessages.length - 1)
 
       // Save conversation
       saveConversation(userId, aiMessages, context)
     } catch (err) {
-      setChatMessages([...newMessages, {
-        role: 'assistant',
-        content: "Oops ! Quelque chose s'est mal passé. On réessaie ?"
-      }])
+      const errorMsg = { role: 'assistant' as const, content: "Oops ! Quelque chose s'est mal passé. On réessaie ?" }
+      setChatMessages([...newMessages, errorMsg])
+      setTypingMessageIndex(newMessages.length)
     } finally {
       setLoading(false)
     }
   }
 
+  const handleTypingComplete = useCallback(() => {
+    setTypingMessageIndex(null)
+  }, [])
+
   const resetConversation = () => {
     setMode(null)
     setChatMessages([])
-    setGreeting(getContextualGreeting(displayName))
+    setTypingMessageIndex(null)
   }
 
   const closeCompanion = () => {
     setIsExpanded(false)
-    // Keep state for when they reopen
   }
 
   if (!hasKey) {
-    return null // Don't show if no API key
+    return null
   }
 
   return (
@@ -251,6 +248,7 @@ export function AICompanion({
                 <button 
                   className="ai-companion__back"
                   onClick={resetConversation}
+                  title="Retour"
                 >
                   ←
                 </button>
@@ -265,63 +263,106 @@ export function AICompanion({
           </header>
 
           <div className="ai-companion__content">
-            {/* Mode selection */}
+            {/* Mode pills - always visible at top when no mode selected */}
             {!mode && (
-              <div className="ai-companion__mode-select">
-                <p className="ai-companion__greeting">{greeting}</p>
-                <div className="ai-companion__modes">
-                  {(Object.keys(MODE_CONFIG) as ConversationMode[]).map(m => (
-                    <button
-                      key={m}
-                      className="ai-companion__mode-btn"
-                      onClick={() => selectMode(m)}
-                    >
-                      <span>{MODE_CONFIG[m!].icon}</span>
-                      <span>{MODE_CONFIG[m!].label}</span>
-                    </button>
-                  ))}
-                </div>
+              <div className="ai-companion__mode-pills">
+                {(Object.keys(MODE_CONFIG) as ConversationMode[]).map(m => (
+                  <button
+                    key={m}
+                    className={`ai-companion__pill ${m === 'tasks' ? 'ai-companion__pill--disabled' : ''}`}
+                    onClick={() => selectMode(m)}
+                    disabled={m === 'tasks'}
+                  >
+                    <span>{MODE_CONFIG[m!].icon}</span>
+                    <span>{MODE_CONFIG[m!].label}</span>
+                  </button>
+                ))}
               </div>
             )}
 
-            {/* Chat interface */}
+            {/* Active mode indicator */}
             {mode && (
-              <div className="ai-companion__chat">
-                <div className="ai-companion__messages">
-                  {chatMessages.map((msg, i) => (
+              <div className="ai-companion__active-mode">
+                <span>{MODE_CONFIG[mode].icon}</span>
+                <span>{MODE_CONFIG[mode].label}</span>
+              </div>
+            )}
+
+            {/* Chat area - always visible */}
+            <div className="ai-companion__chat">
+              <div className="ai-companion__messages">
+                {chatMessages.length === 0 && !mode && (
+                  <div className="ai-companion__placeholder">
+                    Choisis un sujet ou écris directement 👆
+                  </div>
+                )}
+                
+                {chatMessages.length === 0 && mode && mode !== 'tasks' && (
+                  <div className="ai-companion__placeholder">
+                    Qu'est-ce que tu veux me dire ?
+                  </div>
+                )}
+
+                {chatMessages.map((msg, i) => (
+                  msg.role === 'assistant' && i === typingMessageIndex ? (
+                    <TypingMessage 
+                      key={i} 
+                      content={msg.content} 
+                      onComplete={handleTypingComplete}
+                    />
+                  ) : (
                     <div
                       key={i}
                       className={`ai-companion__message ai-companion__message--${msg.role}`}
                     >
                       {msg.content}
                     </div>
-                  ))}
-                  {loading && (
-                    <div className="ai-companion__message ai-companion__message--assistant ai-companion__message--loading">
-                      <span className="ai-companion__typing">●●●</span>
-                    </div>
-                  )}
-                  <div ref={chatEndRef} />
-                </div>
-
-                <div className="ai-companion__input-area">
-                  <input
-                    type="text"
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Écris ta réponse..."
-                    disabled={loading}
-                  />
-                  <button
-                    onClick={sendMessage}
-                    disabled={loading || !userInput.trim()}
-                  >
-                    →
-                  </button>
-                </div>
+                  )
+                ))}
+                
+                {loading && (
+                  <div className="ai-companion__message ai-companion__message--assistant ai-companion__message--loading">
+                    <span className="ai-companion__typing-dots">
+                      <span>●</span><span>●</span><span>●</span>
+                    </span>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
               </div>
-            )}
+
+              {/* Input - always visible */}
+              <div className="ai-companion__input-area">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      if (!mode && userInput.trim()) {
+                        // Auto-select north_star if typing without mode
+                        setMode('north_star')
+                      }
+                      sendMessage()
+                    }
+                  }}
+                  placeholder={displayName ? `Hey ${displayName}, écris-moi...` : 'Écris-moi...'}
+                  disabled={loading}
+                />
+                <button
+                  onClick={() => {
+                    if (!mode && userInput.trim()) {
+                      setMode('north_star')
+                    }
+                    sendMessage()
+                  }}
+                  disabled={loading || !userInput.trim()}
+                >
+                  →
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
