@@ -136,6 +136,22 @@ export function AICompanion({
   
   const hasKey = hasApiKey()
 
+  // Get contextual greeting from Aoi
+  const getAoiGreeting = () => {
+    const hour = new Date().getHours()
+    const name = displayName || ''
+    
+    if (hour >= 5 && hour < 12) {
+      return name ? `Bonjour ${name} ! Qu'est-ce qui te ferait du bien aujourd'hui ?` : `Bonjour ! Comment puis-je t'aider ce matin ?`
+    } else if (hour >= 12 && hour < 18) {
+      return name ? `Hey ${name} ! Comment se passe ta journée ?` : `Hey ! De quoi veux-tu parler ?`
+    } else if (hour >= 18 && hour < 22) {
+      return name ? `Bonsoir ${name} ! Comment s'est passée ta journée ?` : `Bonsoir ! Envie de faire le point ?`
+    } else {
+      return name ? `Salut ${name}... Encore debout ? 🌙` : `Salut... Tu as du mal à dormir ?`
+    }
+  }
+
   // Scroll to bottom - only within the messages container
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   
@@ -257,8 +273,7 @@ export function AICompanion({
         <div className="ai-companion__panel">
           <header className="ai-companion__header">
             <div className="ai-companion__title">
-              <span>✨</span>
-              <span>Clarity Coach</span>
+              Chat with Aoi
             </div>
             <div className="ai-companion__header-actions">
               {mode && (
@@ -308,15 +323,9 @@ export function AICompanion({
             {/* Chat area - always visible */}
             <div className="ai-companion__chat">
               <div className="ai-companion__messages" ref={messagesContainerRef}>
-                {chatMessages.length === 0 && !mode && (
-                  <div className="ai-companion__placeholder">
-                    Choisis un sujet ou écris directement 👆
-                  </div>
-                )}
-                
-                {chatMessages.length === 0 && mode && mode !== 'tasks' && (
-                  <div className="ai-companion__placeholder">
-                    Qu'est-ce que tu veux me dire ?
+                {chatMessages.length === 0 && (
+                  <div className="ai-companion__message ai-companion__message--assistant ai-companion__message--greeting">
+                    {getAoiGreeting()}
                   </div>
                 )}
 
