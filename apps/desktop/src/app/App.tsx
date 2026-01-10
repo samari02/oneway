@@ -8,6 +8,7 @@ import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
 import { Mascot, type MascotMood } from '@/features/mascot'
 import { AICompanion } from '@/features/ai-companion'
+import { GoalsBar, useGoals } from '@/features/goals'
 import type { OnboardingData } from '@/features/onboarding'
 import type { Habit } from '@oneway/shared'
 import './App.css'
@@ -18,6 +19,7 @@ function TodayView() {
   const { habits, loading: habitsLoading, refetch: refetchHabits } = useHabits(user?.id)
   const { checkedIds, toggleHabit } = useTodayCheckIns(user?.id)
   const { create, update, remove } = useHabitActions()
+  const { goals, create: createGoal, update: updateGoal, remove: removeGoal } = useGoals(user?.id)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
   const [showNorthStarEdit, setShowNorthStarEdit] = useState(false)
@@ -160,6 +162,15 @@ function TodayView() {
                 <span className="today-view__north-star-text">{northStar.goal}</span>
                 <span className="today-view__north-star-edit">✏️</span>
               </button>
+            )}
+            {user && (
+              <GoalsBar
+                goals={goals}
+                onCreateGoal={createGoal}
+                onUpdateGoal={updateGoal}
+                onDeleteGoal={removeGoal}
+                userId={user.id}
+              />
             )}
           </div>
         </div>

@@ -2,6 +2,17 @@ export type TimeOfDay = 'morning' | 'evening' | 'anytime'
 export type HabitType = 'do' | 'avoid'
 export type AvoidCategory = 'digital' | 'physical'
 
+export interface Goal {
+  id: string
+  user_id: string
+  name: string
+  icon?: string
+  progress: number // 0-100
+  target_date?: string // YYYY-MM-DD
+  created_at: string
+  updated_at: string
+}
+
 export interface Habit {
   id: string
   user_id: string
@@ -24,7 +35,8 @@ export interface Habit {
   blocked_sites?: string[]        // For digital boundaries
   days_of_week?: number[]         // 1=Mon, 7=Sun. null = every day
   
-  // North Star
+  // Goal linking
+  goal_id?: string                // Link to a specific goal
   linked_to_north_star?: boolean  // Whether this habit contributes to the main goal
 }
 
