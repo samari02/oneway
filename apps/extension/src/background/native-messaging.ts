@@ -264,6 +264,21 @@ export function sendBlockEvent(event: BlockEvent) {
 }
 
 /**
+ * Send history sync to desktop (called after importing history)
+ */
+export function sendHistorySync(visits: CategorizedVisit[]) {
+  if (isConnected && visits.length > 0) {
+    log(`Sending ${visits.length} visits to desktop (history sync)`)
+    sendToDesktop({
+      type: 'HISTORY_SYNC',
+      data: { visits }
+    })
+  } else if (!isConnected) {
+    log('Cannot send history sync: not connected to desktop')
+  }
+}
+
+/**
  * Get connection status for UI
  */
 export async function getConnectionStatus(): Promise<{

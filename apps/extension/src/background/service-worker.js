@@ -5,7 +5,7 @@
 import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL } from '../shared/constants';
 import { extractDomain, matchesPattern, log } from '../shared/utils';
 import { requestHistoryPermission, importHistory, recordVisit, getCollectionStatus, calculateHistoryStats } from './history-collector';
-import { connectToDesktopApp, isDesktopAppConnected, getConnectionStatus, sendNavigationEvent } from './native-messaging';
+import { connectToDesktopApp, isDesktopAppConnected, getConnectionStatus, sendNavigationEvent, sendHistorySync } from './native-messaging';
 // NOTE: Supabase sync temporarily disabled
 // Supabase client is not compatible with Chrome extension service workers
 // TODO: Use fetch-based API calls instead of Supabase client
@@ -30,9 +30,11 @@ chrome.runtime.onInstalled.addListener(async () => {
     await chrome.storage.local.set(defaultData);
     log('Default storage initialized', defaultData);
     // Try to connect to desktop app (with delay to avoid startup issues)
-    setTimeout(() => {
+    setTimeout(async () => {
         try {
             connectToDesktopApp();
+            // Send existing history if we have it
+            await syncExistingHistoryToDesktop();
         }
         catch (e) {
             log('Desktop app not available:', e);
@@ -42,15 +44,37 @@ chrome.runtime.onInstalled.addListener(async () => {
 // On startup, try to connect to desktop app
 chrome.runtime.onStartup.addListener(() => {
     log('Extension started');
-    setTimeout(() => {
+    setTimeout(async () => {
         try {
             connectToDesktopApp();
+            // Send existing history if we have it
+            await syncExistingHistoryToDesktop();
         }
         catch (e) {
             log('Desktop app not available:', e);
         }
     }, 2000);
 });
+/**
+ * Sync existing local history to desktop app
+ * Called when extension starts and desktop connection is established
+ */
+async function syncExistingHistoryToDesktop() {
+    // Wait a bit for connection to be established
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    if (!isDesktopAppConnected()) {
+        log('Cannot sync history: desktop not connected');
+        return;
+    }
+    const { navigationHistory = [] } = await chrome.storage.local.get('navigationHistory');
+    if (navigationHistory.length > 0) {
+        log('Syncing existing history to desktop:', navigationHistory.length, 'visits');
+        sendHistorySync(navigationHistory);
+    }
+    else {
+        log('No existing history to sync');
+    }
+}
 // Monitor navigation - blocking
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
     // Only main frame navigations
@@ -172,7 +196,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     if (message.type === 'IMPORT_HISTORY') {
         importHistory(message.data?.days || 30)
-            .then(visits => sendResponse({ success: true, visits: visits.length }))
+            .then(visits => {
+            // Send to desktop app if connected
+            if (isDesktopAppConnected()) {
+                sendHistorySync(visits);
+                log('History imported and sent to desktop:', visits.length, 'visits');
+            }
+            else {
+                log('History imported but desktop not connected:', visits.length, 'visits');
+            }
+            sendResponse({ success: true, visits: visits.length });
+        })
             .catch(error => sendResponse({ success: false, error: error.message }));
         return true;
     }
