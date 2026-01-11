@@ -1,10 +1,6 @@
 .streak-card {
-  background: linear-gradient(
-    135deg,
-    rgba(30, 35, 50, 0.8) 0%,
-    rgba(40, 45, 60, 0.9) 100%
-  );
-  border: 1px solid rgba(255, 182, 147, 0.2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   padding: var(--space-xl) var(--space-lg);
   display: flex;
@@ -13,6 +9,7 @@
   gap: var(--space-md);
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Subtle glow effect */
