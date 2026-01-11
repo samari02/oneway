@@ -133,17 +133,17 @@
 
 .today-view__header {
   padding: var(--space-lg);
-  background: linear-gradient(135deg, rgba(125, 216, 196, 0.12) 0%, rgba(248, 250, 252, 1) 100%);
+  background: linear-gradient(90deg, #FFFFFF 0%, #FFFFFF 20%, rgba(125, 216, 196, 0.12) 100%);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
   transition: background var(--transition-normal);
-  border: 1px solid rgba(125, 216, 196, 0.15);
+  border: 1px solid rgba(125, 216, 196, 0.35);
 }
 
 .today-view__header--chat-open {
-  background: linear-gradient(135deg, rgba(125, 216, 196, 0.18) 0%, rgba(248, 250, 252, 1) 100%);
+  background: linear-gradient(90deg, #FFFFFF 0%, #FFFFFF 15%, rgba(125, 216, 196, 0.15) 100%);
 }
 
 .today-view__header-main {

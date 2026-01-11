@@ -61,6 +61,12 @@ button {
   cursor: pointer;
   border: none;
   background: none;
+  outline: none;
+}
+
+button:focus,
+button:focus-visible {
+  outline: none;
 }
 
 /* ========================================

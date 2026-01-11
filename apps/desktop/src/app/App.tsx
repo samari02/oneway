@@ -117,13 +117,13 @@ function TodayView() {
     const hour = new Date().getHours()
     
     if (allDone) {
-      return { mood: 'proud', message: `${greeting} All done! 🎉` }
+      return { mood: 'proud', message: `${greeting} All done!` }
     }
     if (progress >= 0.7) {
       return { mood: 'encouraging', message: `${greeting} Almost there!` }
     }
     if (progress >= 0.3) {
-      return { mood: 'happy', message: `${greeting} Great progress! 💪` }
+      return { mood: 'happy', message: `${greeting} Great progress!` }
     }
     if (hour >= 22 || hour < 5) {
       return { mood: 'sleepy', message: `${greeting} Time to rest...` }
@@ -131,7 +131,7 @@ function TodayView() {
     if (totalCount === 0) {
       return { mood: 'thinking', message: `${greeting} Add a habit!` }
     }
-    return { mood: 'encouraging', message: `${greeting} Let's go! ✨` }
+    return { mood: 'encouraging', message: `${greeting} Let's go!` }
   }
 
   const mascotState = getMascotState()

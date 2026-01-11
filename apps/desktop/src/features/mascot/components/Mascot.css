@@ -5,6 +5,7 @@
   gap: var(--space-sm);
 }
 
+
 /* Interactive state (clickable) */
 .mascot--interactive {
   cursor: pointer;
@@ -12,10 +13,29 @@
 
 .mascot--interactive:hover .mascot__blob {
   transform: scale(1.08);
-  box-shadow: 
-    0 6px 20px rgba(125, 216, 196, 0.35),
-    inset 0 -4px 8px rgba(150, 130, 220, 0.15),
-    inset 0 4px 8px rgba(255, 255, 255, 0.6);
+}
+
+/* Chat hint on hover */
+.mascot__chat-hint {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  background: var(--text-primary);
+  color: white;
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.mascot--interactive:hover .mascot__chat-hint {
+  opacity: 1;
+  transform: translateX(-50%) translateY(2px);
 }
 
 .mascot--interactive:hover .mascot__bubble {
@@ -125,30 +145,114 @@
 .mascot__blob {
   background: linear-gradient(
     180deg,
-    rgba(167, 220, 255, 0.85) 0%,
-    rgba(190, 170, 255, 0.75) 100%
+    #A7DCFF 0%,
+    #C8B9FF 100%
   );
   border-radius: 50% 50% 46% 46%;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: blobFloat 3s ease-in-out infinite;
-  box-shadow: 
-    0 4px 12px rgba(167, 139, 250, 0.2),
-    inset 0 -4px 8px rgba(150, 130, 220, 0.15),
-    inset 0 4px 8px rgba(255, 255, 255, 0.6);
-  transition: all 0.4s ease;
+  animation: blobBounce 3s ease-in-out infinite;
+  box-shadow: inset 0 -3px 6px rgba(150, 130, 220, 0.1), inset 0 3px 6px rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
   position: relative;
 }
 
-.mascot__blob:hover {
-  filter: brightness(1.05);
-  transform: scale(1.02);
+/* ===== SPROUT ===== */
+.mascot__sprout {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-@keyframes blobFloat {
+.mascot__sprout-stem {
+  width: 2px;
+  height: 6px;
+  background: #5BC4AD;
+  border-radius: 1px;
+}
+
+.mascot__sprout-leaf {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  height: 4px;
+  background: #7DD8C4;
+  border-radius: 50% 50% 50% 50%;
+}
+
+.mascot__sprout-leaf--left {
+  transform: rotate(-30deg);
+  left: -4px;
+  border-radius: 50% 0 50% 50%;
+}
+
+.mascot__sprout-leaf--right {
+  transform: rotate(30deg);
+  right: -4px;
+  border-radius: 0 50% 50% 50%;
+}
+
+/* Size variations for sprout */
+.mascot--small .mascot__sprout {
+  top: -6px;
+}
+
+.mascot--small .mascot__sprout-stem {
+  width: 1.5px;
+  height: 4px;
+}
+
+.mascot--small .mascot__sprout-leaf {
+  width: 4px;
+  height: 3px;
+}
+
+.mascot--small .mascot__sprout-leaf--left {
+  left: -3px;
+}
+
+.mascot--small .mascot__sprout-leaf--right {
+  right: -3px;
+}
+
+.mascot--large .mascot__sprout {
+  top: -10px;
+}
+
+.mascot--large .mascot__sprout-stem {
+  width: 3px;
+  height: 8px;
+}
+
+.mascot--large .mascot__sprout-leaf {
+  width: 8px;
+  height: 5px;
+}
+
+.mascot--large .mascot__sprout-leaf--left {
+  left: -5px;
+}
+
+.mascot--large .mascot__sprout-leaf--right {
+  right: -5px;
+}
+
+.mascot__blob:hover {
+  transform: scale(1.05);
+}
+
+.mascot__blob:hover .mascot__eye {
+  transform: scale(1.1);
+}
+
+@keyframes blobBounce {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  50% { transform: translateY(-2px); }
 }
 
 /* ===== KAWAII FACE ===== */
@@ -161,21 +265,29 @@
   justify-content: center;
 }
 
-/* Eyes - small dots */
+/* Eyes - small dots with blink */
 .mascot__eye {
   position: absolute;
   top: 30%;
-  background: #3a3a4a;
+  background: #2d3748;
   border-radius: 50%;
   transition: all 0.2s ease;
+  animation: eyeBlink 4s ease-in-out infinite;
 }
 
 .mascot__eye--left {
   left: 22%;
+  animation-delay: 0s;
 }
 
 .mascot__eye--right {
   right: 22%;
+  animation-delay: 0.05s;
+}
+
+@keyframes eyeBlink {
+  0%, 45%, 55%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.1); }
 }
 
 /* Happy eyes - curved arcs ᵕᵕ */
@@ -209,13 +321,13 @@
   background: #3a3a4a;
 }
 
-/* Cheeks - pink blush */
+/* Cheeks - coral blush */
 .mascot__cheek {
   position: absolute;
   top: 55%;
-  background: rgba(255, 180, 180, 0.5);
+  background: rgba(255, 155, 133, 0.5);
   border-radius: 50%;
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 .mascot__cheek--left {
@@ -224,6 +336,55 @@
 
 .mascot__cheek--right {
   right: 8%;
+}
+
+/* Mouth - small smile */
+.mascot__mouth {
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 4px;
+  border-radius: 0 0 50% 50%;
+  border-bottom: 2px solid #3a3a4a;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.mascot--small .mascot__mouth {
+  width: 6px;
+  height: 3px;
+}
+
+.mascot--large .mascot__mouth {
+  width: 10px;
+  height: 5px;
+}
+
+/* Mouth variations by mood */
+.mascot__mouth--happy,
+.mascot__mouth--proud {
+  width: 10px;
+  height: 5px;
+}
+
+.mascot__mouth--sleepy {
+  width: 6px;
+  height: 2px;
+  border-radius: 50%;
+  border: none;
+  background: #3a3a4a;
+}
+
+.mascot__mouth--thinking {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  border: none;
+  background: #3a3a4a;
+  opacity: 0.6;
 }
 
 /* ===== LEGS ===== */
@@ -249,11 +410,11 @@
 .mascot__leg {
   background: linear-gradient(
     180deg,
-    rgba(167, 220, 255, 0.85) 0%,
-    rgba(150, 200, 240, 0.7) 100%
+    #A7DCFF 0%,
+    #96C8F5 100%
   );
   border-radius: 2px 2px 4px 4px;
-  animation: legSwing 3s ease-in-out infinite;
+  animation: legSwing 2s ease-in-out infinite;
 }
 
 .mascot__leg--left {
@@ -265,43 +426,46 @@
 }
 
 @keyframes legSwing {
-  0%, 100% { transform: rotate(-2deg); }
-  50% { transform: rotate(2deg); }
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
 }
 
 /* ===== MOOD VARIATIONS ===== */
 .mascot__blob--happy,
 .mascot__blob--proud {
-  box-shadow: 
-    0 4px 16px rgba(255, 200, 100, 0.25),
-    inset 0 -4px 8px rgba(150, 130, 220, 0.15),
-    inset 0 4px 8px rgba(255, 255, 255, 0.6);
+  /* No external glow, just internal shading */
 }
 
 .mascot__blob--proud {
-  filter: brightness(1.08);
+  filter: brightness(1.1) saturate(1.1);
+  animation: blobCelebrate 1.5s ease-in-out infinite;
+}
+
+@keyframes blobCelebrate {
+  0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+  25% { transform: translateY(-6px) scale(1.05) rotate(-2deg); }
+  75% { transform: translateY(-6px) scale(1.05) rotate(2deg); }
 }
 
 .mascot__blob--encouraging {
-  box-shadow: 
-    0 4px 16px rgba(125, 216, 196, 0.25),
-    inset 0 -4px 8px rgba(150, 130, 220, 0.15),
-    inset 0 4px 8px rgba(255, 255, 255, 0.6);
+  /* No external glow */
 }
 
 .mascot__blob--sleepy {
-  filter: brightness(0.95);
-  animation: blobFloatSlow 4s ease-in-out infinite;
+  animation: blobSleep 4s ease-in-out infinite;
 }
 
-@keyframes blobFloatSlow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
+@keyframes blobSleep {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-1px) scale(0.98); }
 }
 
 .mascot__blob--thinking {
-  box-shadow: 
-    0 4px 12px rgba(253, 230, 138, 0.2),
-    inset 0 -4px 8px rgba(150, 130, 220, 0.15),
-    inset 0 4px 8px rgba(255, 255, 255, 0.6);
+  animation: blobThink 2.5s ease-in-out infinite;
+}
+
+@keyframes blobThink {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-3px) rotate(-3deg); }
+  75% { transform: translateY(-3px) rotate(3deg); }
 }

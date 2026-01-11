@@ -17,6 +17,9 @@ importers:
       '@oneway/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@rive-app/react-canvas':
+        specifier: ^4.25.3
+        version: 4.25.3(react@19.2.3)
       '@supabase/supabase-js':
         specifier: ^2.49.1
         version: 2.90.1
@@ -317,6 +320,14 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@rive-app/canvas@2.33.3':
+    resolution: {integrity: sha512-mdC0sIJIn9NU1u6W6uqP2UiLcUtZfCp8nJpmwAFeW3je6lrYAUiKrn80+YXdTWWXVE/PCVFfakdErCHo4+yn2A==}
+
+  '@rive-app/react-canvas@4.25.3':
+    resolution: {integrity: sha512-m+CJiAt0judVYjH0g4R8bCFr7i67wadPCbWxygO6/TFzAP/rH1++4et40ZqsA52DvpDTPSra5shxrFZ1pzOj6g==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0
 
   '@rolldown/pluginutils@1.0.0-beta.27':
     resolution: {integrity: sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==}
@@ -1013,6 +1024,13 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@rive-app/canvas@2.33.3': {}
+
+  '@rive-app/react-canvas@4.25.3(react@19.2.3)':
+    dependencies:
+      '@rive-app/canvas': 2.33.3
+      react: 19.2.3
 
   '@rolldown/pluginutils@1.0.0-beta.27': {}
 

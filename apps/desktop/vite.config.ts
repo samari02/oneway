@@ -9,6 +9,9 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   plugins: [react()],
 
+  // Include .riv files as assets
+  assetsInclude: ['**/*.riv'],
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

@@ -17,16 +17,15 @@ export function Mascot({
   showMessage = true,
   onChatClick 
 }: MascotProps) {
-  // Eye style based on mood
   const getEyeClass = () => {
     switch (mood) {
       case 'happy':
       case 'proud':
-        return 'mascot__eye--happy' // Curved happy eyes ᵕᵕ
+        return 'mascot__eye--happy'
       case 'sleepy':
-        return 'mascot__eye--sleepy' // Closed —
+        return 'mascot__eye--sleepy'
       default:
-        return '' // Normal dots ● ●
+        return ''
     }
   }
 
@@ -42,16 +41,25 @@ export function Mascot({
           <p className="mascot__message">{message}</p>
         </div>
       )}
+      
       <div className={`mascot__blob mascot__blob--${mood}`}>
+        {/* Green sprout on top */}
+        <div className="mascot__sprout">
+          <div className="mascot__sprout-stem" />
+          <div className="mascot__sprout-leaf mascot__sprout-leaf--left" />
+          <div className="mascot__sprout-leaf mascot__sprout-leaf--right" />
+        </div>
+        
         {/* Kawaii face */}
         <div className="mascot__face">
-          {/* Cheeks (blush) */}
           <div className="mascot__cheek mascot__cheek--left" />
           <div className="mascot__cheek mascot__cheek--right" />
-          
-          {/* Eyes */}
           <div className={`mascot__eye mascot__eye--left ${getEyeClass()}`} />
           <div className={`mascot__eye mascot__eye--right ${getEyeClass()}`} />
+          {/* Only show mouth when eyes are round dots (encouraging/thinking) */}
+          {mood !== 'happy' && mood !== 'proud' && mood !== 'sleepy' && (
+            <div className={`mascot__mouth mascot__mouth--${mood}`} />
+          )}
         </div>
         
         {/* Small legs */}
@@ -59,6 +67,11 @@ export function Mascot({
           <div className="mascot__leg mascot__leg--left" />
           <div className="mascot__leg mascot__leg--right" />
         </div>
+        
+        {/* Hover hint for chat */}
+        {onChatClick && (
+          <div className="mascot__chat-hint">Chat with Aoi</div>
+        )}
       </div>
     </div>
   )

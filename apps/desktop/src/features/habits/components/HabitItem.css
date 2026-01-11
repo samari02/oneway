@@ -11,6 +11,13 @@
   cursor: pointer;
   z-index: 1;
   animation: habitSlideIn 0.2s ease-out;
+  outline: none;
+}
+
+.habit-item:focus,
+.habit-item:focus-visible {
+  outline: none;
+  border-color: var(--color-mint);
 }
 
 @keyframes habitSlideIn {
