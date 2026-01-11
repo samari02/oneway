@@ -28,10 +28,22 @@ chrome.runtime.sendMessage({ type: 'GET_STATUS' }, (response) => {
 
 // Check history permission status
 chrome.runtime.sendMessage({ type: 'GET_COLLECTION_STATUS' }, (status) => {
+  console.log('[Clarity Popup] GET_COLLECTION_STATUS response:', status)
+  console.log('[Clarity Popup] chrome.runtime.lastError:', chrome.runtime.lastError)
+  
   const historySection = document.getElementById('history-section')!
   const historyStats = document.getElementById('history-stats')!
   
+  // Guard: if no response, show the permission request card
+  if (!status) {
+    console.log('[Clarity Popup] No status received, showing Enable Insights card')
+    historySection.style.display = 'block'
+    historyStats.style.display = 'none'
+    return
+  }
+  
   if (status.hasPermission) {
+    console.log('[Clarity Popup] Permission granted, showing stats')
     // Show stats
     historySection.style.display = 'none'
     historyStats.style.display = 'block'
@@ -52,6 +64,7 @@ chrome.runtime.sendMessage({ type: 'GET_COLLECTION_STATUS' }, (status) => {
       }
     })
   } else {
+    console.log('[Clarity Popup] Permission NOT granted, showing Enable Insights card')
     // Show permission request
     historySection.style.display = 'block'
     historyStats.style.display = 'none'
@@ -64,7 +77,14 @@ document.getElementById('btn-enable-history')?.addEventListener('click', async (
   btn.textContent = 'Requesting...'
   btn.disabled = true
   
-  chrome.runtime.sendMessage({ type: 'REQUEST_HISTORY_PERMISSION' }, async (granted) => {
+  try {
+    // Request permission directly from popup (required by Chrome)
+    const granted = await chrome.permissions.request({
+      permissions: ['history']
+    })
+    
+    console.log('[Clarity Popup] Permission request result:', granted)
+    
     if (granted) {
       // Permission granted - import history
       btn.textContent = 'Importing history...'
@@ -72,7 +92,8 @@ document.getElementById('btn-enable-history')?.addEventListener('click', async (
       chrome.runtime.sendMessage(
         { type: 'IMPORT_HISTORY', data: { days: 30 } },
         (result) => {
-          if (result.success) {
+          console.log('[Clarity Popup] Import result:', result)
+          if (result && result.success) {
             // Refresh UI
             window.location.reload()
           } else {
@@ -88,7 +109,11 @@ document.getElementById('btn-enable-history')?.addEventListener('click', async (
         btn.disabled = false
       }, 2000)
     }
-  })
+  } catch (error) {
+    console.error('[Clarity Popup] Permission request error:', error)
+    btn.textContent = 'Error - Try again'
+    btn.disabled = false
+  }
 })
 
 // Toggle button
