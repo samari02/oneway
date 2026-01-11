@@ -225,6 +225,65 @@ export function calculateHabitStats(
 }
 
 /**
+ * Calculate daily completion stats for heatmap
+ */
+export function calculateDailyStats(
+  checkIns: HabitCheckIn[],
+  habits: Habit[],
+  days: number = 30
+): Array<{
+  date: Date
+  completionRate: number
+  completed: number
+  total: number
+  isFuture: boolean
+}> {
+  const requiredHabits = habits.filter(h => h.is_required)
+  const totalHabits = requiredHabits.length
+  
+  if (totalHabits === 0) {
+    return []
+  }
+  
+  const requiredIds = new Set(requiredHabits.map(h => h.id))
+  
+  // Get date range
+  const today = new Date()
+  const startDate = new Date(today)
+  startDate.setDate(startDate.getDate() - days + 1)
+  
+  const dateRange = getDateRange(startDate, today)
+  
+  // Group check-ins by date
+  const checkInsByDate = new Map<string, Set<string>>()
+  for (const checkIn of checkIns) {
+    if (!checkInsByDate.has(checkIn.date)) {
+      checkInsByDate.set(checkIn.date, new Set())
+    }
+    checkInsByDate.get(checkIn.date)!.add(checkIn.habit_id)
+  }
+  
+  // Calculate stats for each day
+  return dateRange.map(dateStr => {
+    const date = new Date(dateStr)
+    const isFuture = date > today
+    const completedToday = checkInsByDate.get(dateStr) || new Set()
+    
+    // Count how many required habits were completed
+    const completed = [...requiredIds].filter(id => completedToday.has(id)).length
+    const completionRate = Math.round((completed / totalHabits) * 100)
+    
+    return {
+      date,
+      completionRate,
+      completed,
+      total: totalHabits,
+      isFuture
+    }
+  })
+}
+
+/**
  * Get an encouraging message based on stats
  */
 export function getEncouragingMessage(

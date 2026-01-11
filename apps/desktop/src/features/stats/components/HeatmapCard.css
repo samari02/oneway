@@ -1,0 +1,136 @@
+.heatmap-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.heatmap-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.heatmap-card__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Grid of squares */
+.heatmap-card__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 14px);
+  gap: 4px;
+  justify-content: start;
+}
+
+.heatmap-card__square {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.heatmap-card__square:hover:not(.heatmap-card__square--future) {
+  transform: scale(1.2);
+  border: 2px solid var(--text-primary);
+}
+
+/* Color levels */
+.heatmap-card__square--future {
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-light);
+  cursor: default;
+}
+
+.heatmap-card__square--low {
+  background: rgba(125, 216, 196, 0.2);
+}
+
+.heatmap-card__square--medium {
+  background: rgba(125, 216, 196, 0.5);
+}
+
+.heatmap-card__square--high {
+  background: var(--color-mint);
+  box-shadow: 0 0 8px rgba(125, 216, 196, 0.3);
+}
+
+/* Footer with stats */
+.heatmap-card__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.heatmap-card__meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Legend */
+.heatmap-card__legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+  justify-content: flex-end;
+}
+
+.heatmap-card__legend-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.heatmap-card__legend-square {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+/* Tooltip */
+.heatmap-card__tooltip {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  z-index: 1000;
+  white-space: nowrap;
+  animation: tooltipFadeIn 0.15s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -95%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%);
+  }
+}
+
+.heatmap-card__tooltip-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.heatmap-card__tooltip-stats {
+  font-size: 11px;
+  color: var(--text-secondary);
+}

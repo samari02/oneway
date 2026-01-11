@@ -6,6 +6,7 @@ import {
   calculateBestStreak,
   calculateCompletionRate,
   calculateHabitStats,
+  calculateDailyStats,
   getEncouragingMessage
 } from '../utils/calculations'
 
@@ -14,6 +15,14 @@ export interface HabitStat {
   completionRate: number
   totalCheckIns: number
   totalDays: number
+}
+
+export interface DayData {
+  date: Date
+  completionRate: number
+  completed: number
+  total: number
+  isFuture: boolean
 }
 
 export interface Stats {
@@ -29,6 +38,7 @@ export interface Stats {
     completed: number
     total: number
   }
+  dailyStats: DayData[]
   perHabit: HabitStat[]
   encouragingMessage: string
 }
@@ -66,6 +76,7 @@ export function useStats(userId: string | undefined): UseStatsResult {
       const bestStreak = calculateBestStreak(checkIns, habits)
       const weekCompletion = calculateCompletionRate(checkIns, habits, 7)
       const monthCompletion = calculateCompletionRate(checkIns, habits, 30)
+      const dailyStats = calculateDailyStats(checkIns, habits, 30)
       const perHabit = calculateHabitStats(checkIns, habits, 14)
       const encouragingMessage = getEncouragingMessage(currentStreak, weekCompletion.rate)
 
@@ -74,6 +85,7 @@ export function useStats(userId: string | undefined): UseStatsResult {
         bestStreak,
         weekCompletion,
         monthCompletion,
+        dailyStats,
         perHabit,
         encouragingMessage
       })

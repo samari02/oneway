@@ -1,6 +1,7 @@
 import { useAuth } from '../../auth'
 import { useStats } from '../hooks/useStats'
 import { StreakCard } from './StreakCard'
+import { HeatmapCard } from './HeatmapCard'
 import { CompletionBar } from './CompletionBar'
 import { HabitStatsCard } from './HabitStatsCard'
 import { Mascot, type MascotMood } from '../../mascot'
@@ -63,6 +64,11 @@ export function StatsView() {
             currentStreak={stats.currentStreak}
             bestStreak={stats.bestStreak}
           />
+        </section>
+
+        {/* Activity Heatmap */}
+        <section className="stats-view__section stats-view__section--heatmap">
+          <HeatmapCard dailyStats={stats.dailyStats} />
         </section>
 
         {/* Completion Rates */}

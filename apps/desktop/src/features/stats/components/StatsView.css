@@ -79,16 +79,20 @@
   animation-delay: 0ms;
 }
 
-.stats-view__section--completion {
+.stats-view__section--heatmap {
   animation-delay: 100ms;
 }
 
-.stats-view__section--habits {
+.stats-view__section--completion {
   animation-delay: 200ms;
 }
 
-.stats-view__section--mascot {
+.stats-view__section--habits {
   animation-delay: 300ms;
+}
+
+.stats-view__section--mascot {
+  animation-delay: 400ms;
 }
 
 @keyframes fadeSlideIn {
