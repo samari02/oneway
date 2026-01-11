@@ -39,8 +39,8 @@
 }
 
 .mascot--interactive:hover .mascot__bubble {
-  background: rgba(255, 255, 255, 1);
-  border-color: rgba(125, 216, 196, 0.4);
+  background: var(--bg-elevated);
+  border-color: var(--color-mint);
 }
 
 .mascot--interactive:active .mascot__blob {

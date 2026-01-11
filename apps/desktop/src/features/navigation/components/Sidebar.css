@@ -75,9 +75,13 @@
 }
 
 .sidebar__item--active {
-  background: rgba(125, 216, 196, 0.2);
-  color: var(--color-mint);
+  background: rgba(125, 216, 196, 0.25);
+  color: var(--color-mint-dark);
   font-weight: var(--font-weight-semibold);
+}
+
+.sidebar__item--active .sidebar__icon {
+  color: var(--color-mint-dark);
 }
 
 /* Icon */
@@ -94,10 +98,6 @@
 .sidebar__icon svg {
   width: 16px;
   height: 16px;
-}
-
-.sidebar__item--active .sidebar__icon {
-  color: var(--color-mint);
 }
 
 /* Label - hidden when collapsed */

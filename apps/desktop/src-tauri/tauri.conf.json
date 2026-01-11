@@ -13,10 +13,10 @@
     "windows": [
       {
         "title": "Clarity",
-        "width": 1280,
-        "height": 860,
-        "minWidth": 800,
-        "minHeight": 600,
+        "width": 1440,
+        "height": 900,
+        "minWidth": 900,
+        "minHeight": 700,
         "resizable": true,
         "center": true,
         "titleBarStyle": "Overlay",
