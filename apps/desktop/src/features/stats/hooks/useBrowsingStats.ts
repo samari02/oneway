@@ -13,6 +13,14 @@ export interface DailyFocusScore {
   score: number // 0-100
 }
 
+export interface DataSourceMeta {
+  isConnected: boolean
+  totalVisits: number
+  periodStart?: string
+  periodEnd?: string
+  lastSync?: string
+}
+
 export interface BrowsingStats {
   focusScore: number
   focusTrend: 'up' | 'down' | 'stable'
@@ -25,6 +33,7 @@ export interface BrowsingStats {
   dailyScores: DailyFocusScore[]
   totalVisits: number
   totalTimeTracked: number // in minutes
+  dataSource: DataSourceMeta
 }
 
 // Response from Rust (matches BrowsingStats struct)
@@ -48,6 +57,10 @@ interface RustBrowsingStats {
   }>
   totalVisits: number
   totalTimeTracked: number
+  // Data source metadata
+  periodStart?: string
+  periodEnd?: string
+  lastSync?: string
 }
 
 // Map Rust category to frontend category
@@ -83,6 +96,13 @@ function transformStats(rust: RustBrowsingStats): BrowsingStats {
     dailyScores: rust.dailyScores,
     totalVisits: rust.totalVisits,
     totalTimeTracked: rust.totalTimeTracked,
+    dataSource: {
+      isConnected: rust.totalVisits > 0,
+      totalVisits: rust.totalVisits,
+      periodStart: rust.periodStart,
+      periodEnd: rust.periodEnd,
+      lastSync: rust.lastSync,
+    },
   }
 }
 
@@ -91,33 +111,33 @@ export function useBrowsingStats(userId?: string) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  useEffect(() => {
-    async function fetchStats() {
-      setLoading(true)
-      setError(null)
+  async function fetchStats() {
+    setLoading(true)
+    setError(null)
 
-      try {
-        // Call Rust backend via Tauri
-        const rustStats = await invoke<RustBrowsingStats>('get_browsing_stats')
-        
-        // Transform to frontend format
-        const transformedStats = transformStats(rustStats)
-        
-        // Check if we have any data
-        if (transformedStats.totalVisits === 0) {
-          // No data yet - could show empty state or mock data
-          console.log('[useBrowsingStats] No data from extension yet')
-        }
-        
-        setStats(transformedStats)
-      } catch (err) {
-        console.error('[useBrowsingStats] Error fetching stats:', err)
-        setError(err instanceof Error ? err : new Error('Failed to fetch browsing stats'))
-      } finally {
-        setLoading(false)
+    try {
+      // Call Rust backend via Tauri
+      const rustStats = await invoke<RustBrowsingStats>('get_browsing_stats')
+      
+      // Transform to frontend format
+      const transformedStats = transformStats(rustStats)
+      
+      // Check if we have any data
+      if (transformedStats.totalVisits === 0) {
+        // No data yet - could show empty state or mock data
+        console.log('[useBrowsingStats] No data from extension yet')
       }
+      
+      setStats(transformedStats)
+    } catch (err) {
+      console.error('[useBrowsingStats] Error fetching stats:', err)
+      setError(err instanceof Error ? err : new Error('Failed to fetch browsing stats'))
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchStats()
     
     // Refresh every 30 seconds to pick up new data
@@ -126,5 +146,10 @@ export function useBrowsingStats(userId?: string) {
     return () => clearInterval(interval)
   }, [userId])
 
-  return { stats, loading, error }
+  // Expose refetch for manual refresh
+  const refetch = async () => {
+    await fetchStats()
+  }
+
+  return { stats, loading, error, refetch }
 }

@@ -112,6 +112,7 @@ export async function hasHistoryPermission() {
 /**
  * Import history for a given period (in days)
  * Privacy: Only stores domain, title, timestamp
+ * Smart merge: Deduplicates by domain+visitTime
  */
 export async function importHistory(days = 30) {
     const hasPermission = await hasHistoryPermission();
@@ -130,8 +131,8 @@ export async function importHistory(days = 30) {
             maxResults: 10000 // Limit to prevent performance issues
         });
         log('Found', historyItems.length, 'history items');
-        // Categorize and sanitize
-        const categorized = historyItems
+        // Categorize and sanitize new items
+        const newVisits = historyItems
             .filter(item => item.url && isValidUrl(item.url))
             .map(item => {
             const domain = extractDomain(item.url);
@@ -145,14 +146,25 @@ export async function importHistory(days = 30) {
                 isDistraction: isDistraction(category)
             };
         });
+        // Smart merge: get existing history and deduplicate
+        const { navigationHistory: existingHistory = [] } = await chrome.storage.local.get('navigationHistory');
+        // Create a Set of existing visit signatures for fast lookup
+        const existingSignatures = new Set(existingHistory.map((v) => `${v.domain}:${v.visitTime}`));
+        // Filter out duplicates and merge
+        const uniqueNewVisits = newVisits.filter(v => !existingSignatures.has(`${v.domain}:${v.visitTime}`));
+        // Merge: existing + new unique visits
+        const mergedHistory = [...existingHistory, ...uniqueNewVisits]
+            .sort((a, b) => b.visitTime - a.visitTime) // Most recent first
+            .slice(0, 10000); // Keep limit
+        log('Merged:', existingHistory.length, 'existing +', uniqueNewVisits.length, 'new =', mergedHistory.length, 'total');
         // Store in local storage
         await chrome.storage.local.set({
-            navigationHistory: categorized,
+            navigationHistory: mergedHistory,
             historyLastImport: Date.now(),
             historyPeriodDays: days
         });
-        log('Imported and categorized', categorized.length, 'visits');
-        return categorized;
+        log('Imported and categorized', uniqueNewVisits.length, 'new visits (', mergedHistory.length, 'total)');
+        return mergedHistory;
     }
     catch (error) {
         log('Error importing history:', error);

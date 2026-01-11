@@ -101,8 +101,12 @@
   animation-delay: 200ms;
 }
 
-.browsing-view__section--mascot {
+.browsing-view__section--source {
   animation-delay: 300ms;
+}
+
+.browsing-view__section--mascot {
+  animation-delay: 400ms;
 }
 
 @keyframes fadeSlideIn {

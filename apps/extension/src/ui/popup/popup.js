@@ -24,23 +24,38 @@ chrome.runtime.sendMessage({ type: 'GET_STATUS' }, (response) => {
 // Check history permission status
 chrome.runtime.sendMessage({ type: 'GET_COLLECTION_STATUS' }, (status) => {
     console.log('[Clarity Popup] GET_COLLECTION_STATUS response:', status);
-    console.log('[Clarity Popup] chrome.runtime.lastError:', chrome.runtime.lastError);
     const historySection = document.getElementById('history-section');
-    const historyStats = document.getElementById('history-stats');
+    const insightsSection = document.getElementById('insights-section');
     // Guard: if no response, show the permission request card
     if (!status) {
         console.log('[Clarity Popup] No status received, showing Enable Insights card');
         historySection.style.display = 'block';
-        historyStats.style.display = 'none';
+        insightsSection.style.display = 'none';
         return;
     }
     if (status.hasPermission) {
-        console.log('[Clarity Popup] Permission granted, showing stats');
-        // Show stats
+        console.log('[Clarity Popup] Permission granted, showing insights');
+        // Show insights section
         historySection.style.display = 'none';
-        historyStats.style.display = 'block';
+        insightsSection.style.display = 'block';
         // Update stats
         document.getElementById('visits-count').textContent = status.totalVisits.toString();
+        // Update last import time
+        if (status.lastImport) {
+            const date = new Date(status.lastImport);
+            const timeStr = date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+            document.getElementById('last-import').textContent = `Last import: ${timeStr}`;
+            // Set period select to match last import
+            if (status.periodDays) {
+                const periodSelect = document.getElementById('period-select');
+                periodSelect.value = status.periodDays.toString();
+            }
+        }
         // Get detailed stats
         chrome.runtime.sendMessage({ type: 'GET_HISTORY_STATS' }, (stats) => {
             if (stats && stats.topDomains && stats.topDomains.length > 0) {
@@ -55,12 +70,14 @@ chrome.runtime.sendMessage({ type: 'GET_COLLECTION_STATUS' }, (status) => {
         console.log('[Clarity Popup] Permission NOT granted, showing Enable Insights card');
         // Show permission request
         historySection.style.display = 'block';
-        historyStats.style.display = 'none';
+        insightsSection.style.display = 'none';
     }
 });
-// Enable history button
+// Enable history button (first time)
 document.getElementById('btn-enable-history')?.addEventListener('click', async () => {
     const btn = document.getElementById('btn-enable-history');
+    const periodSelect = document.getElementById('period-select-initial');
+    const days = parseInt(periodSelect.value, 10);
     btn.textContent = 'Requesting...';
     btn.disabled = true;
     try {
@@ -71,8 +88,8 @@ document.getElementById('btn-enable-history')?.addEventListener('click', async (
         console.log('[Clarity Popup] Permission request result:', granted);
         if (granted) {
             // Permission granted - import history
-            btn.textContent = 'Importing history...';
-            chrome.runtime.sendMessage({ type: 'IMPORT_HISTORY', data: { days: 30 } }, (result) => {
+            btn.textContent = `Importing ${days} days...`;
+            chrome.runtime.sendMessage({ type: 'IMPORT_HISTORY', data: { days } }, (result) => {
                 console.log('[Clarity Popup] Import result:', result);
                 if (result && result.success) {
                     // Refresh UI
@@ -97,6 +114,40 @@ document.getElementById('btn-enable-history')?.addEventListener('click', async (
         btn.textContent = 'Error - Try again';
         btn.disabled = false;
     }
+});
+// Re-import button (when already enabled)
+document.getElementById('btn-reimport')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-reimport');
+    const periodSelect = document.getElementById('period-select');
+    const days = parseInt(periodSelect.value, 10);
+    btn.textContent = `Importing ${days} days...`;
+    btn.disabled = true;
+    chrome.runtime.sendMessage({ type: 'IMPORT_HISTORY', data: { days } }, (result) => {
+        console.log('[Clarity Popup] Re-import result:', result);
+        if (result && result.success) {
+            btn.textContent = `✓ Imported ${result.visits} visits`;
+            // Update stats
+            document.getElementById('visits-count').textContent = result.visits.toString();
+            document.getElementById('last-import').textContent = `Last import: Just now`;
+            // Refresh top distraction
+            chrome.runtime.sendMessage({ type: 'GET_HISTORY_STATS' }, (stats) => {
+                if (stats && stats.topDomains && stats.topDomains.length > 0) {
+                    const topDistraction = stats.topDomains.find((d) => ['social_media', 'news', 'video', 'entertainment'].includes(d.category));
+                    if (topDistraction) {
+                        document.getElementById('top-distraction').textContent = topDistraction.domain;
+                    }
+                }
+            });
+            setTimeout(() => {
+                btn.textContent = 'Re-import History';
+                btn.disabled = false;
+            }, 2000);
+        }
+        else {
+            btn.textContent = 'Error - Try again';
+            btn.disabled = false;
+        }
+    });
 });
 // Toggle button
 document.getElementById('btn-toggle').addEventListener('click', () => {

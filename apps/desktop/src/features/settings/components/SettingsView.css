@@ -54,6 +54,17 @@
   font-size: var(--font-size-sm);
   color: var(--text-muted);
   line-height: 1.5;
+  margin-bottom: var(--space-md);
+}
+
+.settings-section__hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+  background: rgba(125, 216, 196, 0.1);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  margin: var(--space-md) 0;
 }
 
 /* Badge */
@@ -163,6 +174,17 @@
 .settings-button--small:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Combined small + danger */
+.settings-button--small.settings-button--danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.settings-button--small.settings-button--danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
 }
 
 .settings-button--ghost {

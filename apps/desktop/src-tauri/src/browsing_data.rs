@@ -74,6 +74,13 @@ pub struct BrowsingStats {
     pub total_visits: u32,
     #[serde(rename = "totalTimeTracked")]
     pub total_time_tracked: u32,
+    // Data source metadata
+    #[serde(rename = "periodStart")]
+    pub period_start: Option<String>,
+    #[serde(rename = "periodEnd")]
+    pub period_end: Option<String>,
+    #[serde(rename = "lastSync")]
+    pub last_sync: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -244,6 +251,10 @@ impl BrowsingStorage {
         // Daily scores map
         let mut daily_visits: std::collections::HashMap<String, (u32, u32)> = std::collections::HashMap::new(); // (productive, total)
         
+        // Track period bounds
+        let mut min_time: i64 = i64::MAX;
+        let mut max_time: i64 = 0;
+        
         for visit in &visits {
             // Category counts
             match visit.category.as_str() {
@@ -262,6 +273,14 @@ impl BrowsingStorage {
             daily.1 += 1;
             if !visit.is_distraction {
                 daily.0 += 1;
+            }
+            
+            // Track period bounds
+            if visit.visit_time < min_time {
+                min_time = visit.visit_time;
+            }
+            if visit.visit_time > max_time {
+                max_time = visit.visit_time;
             }
         }
         
@@ -318,6 +337,22 @@ impl BrowsingStorage {
         let _today = chrono::Local::now().format("%Y-%m-%d").to_string();
         let _blocks_today = blocks.iter().filter(|b| timestamp_to_date(b.timestamp) == _today).count() as u32;
         
+        // Calculate period dates
+        let period_start = if min_time < i64::MAX {
+            Some(timestamp_to_iso(min_time))
+        } else {
+            None
+        };
+        
+        let period_end = if max_time > 0 {
+            Some(timestamp_to_iso(max_time))
+        } else {
+            None
+        };
+        
+        // Last sync is now
+        let last_sync = Some(chrono::Local::now().to_rfc3339());
+        
         BrowsingStats {
             focus_score,
             focus_trend,
@@ -330,6 +365,9 @@ impl BrowsingStorage {
             daily_scores,
             total_visits,
             total_time_tracked: total_visits * 2, // Estimate
+            period_start,
+            period_end,
+            last_sync,
         }
     }
 }
@@ -348,6 +386,17 @@ fn timestamp_to_date(timestamp: i64) -> String {
     let dt = Local.timestamp_millis_opt(timestamp).single();
     match dt {
         Some(dt) => dt.format("%Y-%m-%d").to_string(),
+        None => "unknown".to_string(),
+    }
+}
+
+/// Convert timestamp (ms) to ISO 8601 string
+fn timestamp_to_iso(timestamp: i64) -> String {
+    use chrono::{TimeZone, Local};
+    
+    let dt = Local.timestamp_millis_opt(timestamp).single();
+    match dt {
+        Some(dt) => dt.to_rfc3339(),
         None => "unknown".to_string(),
     }
 }
@@ -445,6 +494,27 @@ pub fn store_history_batch(visits: Vec<StoredVisit>) {
     }
 }
 
+/// Clear all browsing data
+pub fn clear_browsing_data() -> Result<(), String> {
+    if let Ok(storage) = STORAGE.lock() {
+        let visits_path = storage.visits_path();
+        let blocks_path = storage.blocks_path();
+        
+        // Remove files if they exist
+        if visits_path.exists() {
+            std::fs::remove_file(&visits_path).map_err(|e| e.to_string())?;
+        }
+        if blocks_path.exists() {
+            std::fs::remove_file(&blocks_path).map_err(|e| e.to_string())?;
+        }
+        
+        eprintln!("[BrowsingData] Cleared all data");
+        Ok(())
+    } else {
+        Err("Failed to acquire lock".to_string())
+    }
+}
+
 /// Get browsing stats for the frontend
 pub fn get_browsing_stats() -> BrowsingStats {
     if let Ok(storage) = STORAGE.lock() {
@@ -463,6 +533,9 @@ pub fn get_browsing_stats() -> BrowsingStats {
             daily_scores: vec![],
             total_visits: 0,
             total_time_tracked: 0,
+            period_start: None,
+            period_end: None,
+            last_sync: None,
         }
     }
 }

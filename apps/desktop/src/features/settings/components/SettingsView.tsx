@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '@/features/auth'
 import { supabase } from '@/lib/supabase'
 import { getApiKey, setApiKey, removeApiKey, hasApiKey } from '@/lib/openai'
 import './SettingsView.css'
+
+interface DataStats {
+  totalVisits: number
+  periodStart?: string
+  periodEnd?: string
+}
 
 export function SettingsView() {
   const { user, signOut } = useAuth()
@@ -10,6 +17,8 @@ export function SettingsView() {
   const [apiKeyInput, setApiKeyInput] = useState('')
   const [hasKey, setHasKey] = useState(false)
   const [showApiKey, setShowApiKey] = useState(false)
+  const [dataStats, setDataStats] = useState<DataStats | null>(null)
+  const [clearingData, setClearingData] = useState(false)
 
   useEffect(() => {
     setHasKey(hasApiKey())
@@ -17,7 +26,44 @@ export function SettingsView() {
     if (key) {
       setApiKeyInput(key)
     }
+    
+    // Fetch browsing data stats
+    fetchDataStats()
   }, [])
+
+  const fetchDataStats = async () => {
+    try {
+      const stats = await invoke<{ totalVisits: number; periodStart?: string; periodEnd?: string }>('get_browsing_stats')
+      setDataStats({
+        totalVisits: stats.totalVisits,
+        periodStart: stats.periodStart,
+        periodEnd: stats.periodEnd,
+      })
+    } catch (e) {
+      console.error('Failed to fetch data stats:', e)
+    }
+  }
+
+  const handleClearData = async () => {
+    if (!confirm('Are you sure you want to clear all browsing data? This cannot be undone.')) {
+      return
+    }
+    setClearingData(true)
+    try {
+      await invoke('clear_browsing_data')
+      await fetchDataStats()
+    } catch (e) {
+      console.error('Failed to clear data:', e)
+    } finally {
+      setClearingData(false)
+    }
+  }
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'N/A'
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
 
   const handleSaveApiKey = () => {
     if (apiKeyInput.trim()) {
@@ -87,6 +133,48 @@ export function SettingsView() {
             <span className="settings-item__value">—</span>
           </div>
         </div>
+      </section>
+
+      {/* Browsing Data Section */}
+      <section className="settings-section">
+        <h2 className="settings-section__title">
+          📊 Browsing Data
+        </h2>
+        
+        <p className="settings-section__description">
+          Manage your browsing history data synced from the Clarity extension.
+        </p>
+
+        <div className="settings-item">
+          <div className="settings-item__info">
+            <span className="settings-item__label">Total visits tracked</span>
+            <span className="settings-item__value">{dataStats?.totalVisits?.toLocaleString() || '0'}</span>
+          </div>
+        </div>
+
+        <div className="settings-item">
+          <div className="settings-item__info">
+            <span className="settings-item__label">Data period</span>
+            <span className="settings-item__value">
+              {dataStats?.periodStart && dataStats?.periodEnd 
+                ? `${formatDate(dataStats.periodStart)} – ${formatDate(dataStats.periodEnd)}`
+                : 'No data'
+              }
+            </span>
+          </div>
+        </div>
+
+        <p className="settings-section__hint">
+          💡 To import more history, use the "Re-import History" button in the Clarity browser extension popup.
+        </p>
+
+        <button 
+          className="settings-button settings-button--danger settings-button--small"
+          onClick={handleClearData}
+          disabled={clearingData || !dataStats?.totalVisits}
+        >
+          {clearingData ? 'Clearing...' : 'Clear All Data'}
+        </button>
       </section>
 
       {/* Blocked Sites Section (Coming Soon) */}

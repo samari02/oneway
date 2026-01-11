@@ -4,12 +4,13 @@ import { FocusScoreCard } from './FocusScoreCard'
 import { TimeDistributionCard } from './TimeDistributionCard'
 import { TopSitesCard } from './TopSitesCard'
 import { BrowsingHeatmapCard } from './BrowsingHeatmapCard'
+import { DataSourceCard } from './DataSourceCard'
 import { Mascot, type MascotMood } from '../../mascot'
 import './BrowsingView.css'
 
 export function BrowsingView() {
   const { user } = useAuth()
-  const { stats, loading, error } = useBrowsingStats(user?.id)
+  const { stats, loading, error, refetch } = useBrowsingStats(user?.id)
 
   if (loading) {
     return (
@@ -91,6 +92,18 @@ export function BrowsingView() {
         {/* Top Sites */}
         <section className="browsing-view__section browsing-view__section--sites">
           <TopSitesCard sites={stats.topSites} />
+        </section>
+
+        {/* Data Source */}
+        <section className="browsing-view__section browsing-view__section--source">
+          <DataSourceCard
+            totalVisits={stats.dataSource.totalVisits}
+            periodStart={stats.dataSource.periodStart}
+            periodEnd={stats.dataSource.periodEnd}
+            lastSync={stats.dataSource.lastSync}
+            isConnected={stats.dataSource.isConnected}
+            onRefresh={refetch}
+          />
         </section>
 
         {/* Mascot Message */}
