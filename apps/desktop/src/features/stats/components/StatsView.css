@@ -1,7 +1,5 @@
 .stats-view {
   padding: var(--space-lg);
-  max-width: 900px;
-  margin: 0 auto;
   height: 100%;
   overflow-y: auto;
 }
