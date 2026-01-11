@@ -728,6 +728,488 @@ async function syncBlockingRules() {
 }
 ```
 
+### Extension Best Practices
+
+#### Service Worker Patterns
+
+**Principe : Service workers sont éphémères**
+
+Les service workers Chrome peuvent être tués à tout moment. Ne jamais se fier à la mémoire.
+
+```typescript
+// ❌ BAD - State en mémoire sera perdu
+let allowedDomains = ['twitter.com']
+
+// ✅ GOOD - State dans chrome.storage
+async function isAllowed(domain: string) {
+  const { allowedDomains } = await chrome.storage.local.get('allowedDomains')
+  return allowedDomains?.includes(domain)
+}
+```
+
+**Tab-specific state**
+
+Pour tracker des états par tab (allowlists, timers, etc.) :
+
+```typescript
+// Structure de données
+interface AllowedTab {
+  domain: string
+  expiresAt: number
+  bypassMethod?: string
+}
+
+interface Storage {
+  allowedTabs: Record<number, AllowedTab> // tabId -> data
+}
+
+// Toujours checker l'expiration
+async function isTabAllowed(tabId: number, domain: string): Promise<boolean> {
+  const { allowedTabs } = await chrome.storage.local.get('allowedTabs')
+  const allowed = allowedTabs?.[tabId]
+  
+  if (!allowed) return false
+  if (allowed.domain !== domain) return false
+  if (allowed.expiresAt < Date.now()) {
+    // Cleanup expired entry
+    delete allowedTabs[tabId]
+    await chrome.storage.local.set({ allowedTabs })
+    return false
+  }
+  
+  return true
+}
+```
+
+**Flow de décision**
+
+```typescript
+// Pattern : Check allowlist AVANT les rules
+async function shouldBlock(url: string, tabId: number) {
+  // 1. Check si mode actif
+  const { isActive } = await chrome.storage.local.get('isActive')
+  if (!isActive) return { shouldBlock: false }
+  
+  // 2. Check allowlist par tab (priorité haute)
+  const allowed = await isTabAllowed(tabId, extractDomain(url))
+  if (allowed) {
+    log('Tab', tabId, 'is allowed')
+    return { shouldBlock: false }
+  }
+  
+  // 3. Check rules
+  const { rules } = await chrome.storage.local.get('rules')
+  for (const rule of rules) {
+    if (matchesPattern(url, rule.pattern)) {
+      return { shouldBlock: true, reason: rule.reason }
+    }
+  }
+  
+  return { shouldBlock: false }
+}
+```
+
+#### Message Passing Patterns
+
+**Type-safe messages**
+
+```typescript
+// src/shared/types.ts
+type MessageType = 
+  | 'BYPASS_BLOCK'
+  | 'GET_STATUS'
+  | 'NAVIGATE_WITH_BYPASS'
+
+interface Message<T = any> {
+  type: MessageType
+  data?: T
+}
+
+interface BypassBlockMessage extends Message {
+  type: 'BYPASS_BLOCK'
+  data: {
+    url: string
+    tabId: number
+    method: string
+  }
+}
+
+// Service worker
+chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
+  switch (message.type) {
+    case 'BYPASS_BLOCK':
+      handleBypass(message.data).then(sendResponse)
+      return true // Keep channel open for async
+    
+    case 'GET_STATUS':
+      getStatus().then(sendResponse)
+      return true
+    
+    default:
+      sendResponse({ error: 'Unknown message type' })
+  }
+})
+```
+
+**Toujours gérer les erreurs**
+
+```typescript
+// Content script / Block screen
+chrome.runtime.sendMessage(
+  { type: 'BYPASS_BLOCK', data: { url, tabId, method } },
+  (response) => {
+    // Check si erreur de communication
+    if (chrome.runtime.lastError) {
+      console.error('Message error:', chrome.runtime.lastError)
+      return
+    }
+    
+    // Check réponse valide
+    if (!response || !response.success) {
+      console.error('Bypass failed:', response)
+      return
+    }
+    
+    // Success
+    window.location.href = url
+  }
+)
+```
+
+#### Storage Patterns
+
+**Structure claire**
+
+```typescript
+// Définir l'interface du storage
+interface ExtensionStorage {
+  // Configuration
+  mode: 'focus' | 'wind_down' | 'free'
+  isActive: boolean
+  strictness: 'gentle' | 'guided' | 'strict'
+  
+  // Rules
+  rules: BlockRule[]
+  
+  // State temporaire
+  allowedTabs: Record<number, AllowedTab>
+  cache: Record<string, 'allow' | 'block'>
+  
+  // Analytics
+  blockHistory: BlockEvent[]
+  navigationHistory: NavigationEvent[]
+}
+
+// Helpers typés
+async function getStorage<K extends keyof ExtensionStorage>(
+  keys: K[]
+): Promise<Pick<ExtensionStorage, K>> {
+  return chrome.storage.local.get(keys) as Promise<Pick<ExtensionStorage, K>>
+}
+```
+
+**Cleanup périodique**
+
+```typescript
+// Cleanup automatique des données expirées
+chrome.alarms.create('cleanup', { periodInMinutes: 5 })
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'cleanup') {
+    await cleanupExpiredData()
+  }
+})
+
+async function cleanupExpiredData() {
+  const { allowedTabs, blockHistory } = await getStorage(['allowedTabs', 'blockHistory'])
+  
+  // Remove expired tabs
+  const now = Date.now()
+  const validTabs = Object.fromEntries(
+    Object.entries(allowedTabs || {}).filter(([_, data]) => data.expiresAt > now)
+  )
+  
+  // Keep only last 1000 events
+  const recentHistory = (blockHistory || []).slice(-1000)
+  
+  await chrome.storage.local.set({
+    allowedTabs: validTabs,
+    blockHistory: recentHistory
+  })
+}
+```
+
+#### Security Best Practices
+
+**1. Content Security Policy**
+
+```json
+// manifest.json
+{
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
+```
+
+**2. Permissions minimales**
+
+```json
+// manifest.json - Demander seulement ce qui est nécessaire
+{
+  "permissions": [
+    "storage",              // ✅ Nécessaire pour cache
+    "webNavigation",        // ✅ Nécessaire pour monitoring
+    "declarativeNetRequest" // ✅ Nécessaire pour blocking
+  ],
+  "optional_permissions": [
+    "history"               // ✅ Demandé au runtime si besoin
+  ]
+}
+```
+
+**3. Validation des inputs**
+
+```typescript
+// Toujours valider les données reçues
+function handleBypass(data: unknown) {
+  // Validate structure
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid bypass data')
+  }
+  
+  const { url, tabId, method } = data as any
+  
+  // Validate types
+  if (typeof url !== 'string' || !url.startsWith('http')) {
+    throw new Error('Invalid URL')
+  }
+  
+  if (typeof tabId !== 'number' || tabId <= 0) {
+    throw new Error('Invalid tab ID')
+  }
+  
+  // Proceed with validated data
+  // ...
+}
+```
+
+**4. Sanitization**
+
+```typescript
+// Échapper les données avant de les afficher dans le DOM
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+}
+
+// Dans block-screen.ts
+const domain = escapeHtml(extractDomain(blockedUrl))
+document.getElementById('blocked-domain')!.textContent = domain
+```
+
+**5. Pas de eval() ou innerHTML avec données externes**
+
+```typescript
+// ❌ DANGEREUX
+element.innerHTML = userInput
+
+// ✅ SÛR
+element.textContent = userInput
+// ou
+element.innerText = userInput
+```
+
+**6. URL validation stricte**
+
+```typescript
+function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    
+    // Seulement http/https
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return false
+    }
+    
+    // Pas de javascript: ou data:
+    if (url.toLowerCase().includes('javascript:') || url.toLowerCase().includes('data:')) {
+      return false
+    }
+    
+    return true
+  } catch {
+    return false
+  }
+}
+```
+
+**7. Privacy - Ne jamais logger de données sensibles**
+
+```typescript
+// ❌ BAD - Log potentiellement sensible
+log('User navigated to', fullUrl, 'with query params', queryParams)
+
+// ✅ GOOD - Log seulement le nécessaire
+log('Navigation to domain:', extractDomain(fullUrl))
+```
+
+**8. Storage encryption (si données sensibles)**
+
+```typescript
+// Si on stocke des tokens ou données sensibles
+import { encrypt, decrypt } from './crypto'
+
+async function storeToken(token: string) {
+  const encrypted = await encrypt(token)
+  await chrome.storage.local.set({ token: encrypted })
+}
+
+async function getToken(): Promise<string> {
+  const { token } = await chrome.storage.local.get('token')
+  return decrypt(token)
+}
+```
+
+#### Testing Patterns
+
+**Unit tests pour la logique**
+
+```typescript
+// src/background/__tests__/rules.test.ts
+import { describe, it, expect } from 'vitest'
+import { matchesPattern, extractDomain } from '../utils'
+
+describe('matchesPattern', () => {
+  it('matches wildcard domains', () => {
+    expect(matchesPattern('https://twitter.com/user', '*://*.twitter.com/*')).toBe(true)
+    expect(matchesPattern('https://facebook.com', '*://*.twitter.com/*')).toBe(false)
+  })
+})
+```
+
+**Mock Chrome APIs**
+
+```typescript
+// vitest.setup.ts
+global.chrome = {
+  storage: {
+    local: {
+      get: vi.fn(),
+      set: vi.fn(),
+    }
+  },
+  runtime: {
+    sendMessage: vi.fn(),
+    onMessage: {
+      addListener: vi.fn()
+    }
+  }
+} as any
+```
+
+#### Performance Patterns
+
+**Debounce storage writes**
+
+```typescript
+// Éviter trop de writes en storage
+let writeTimeout: NodeJS.Timeout | null = null
+
+function scheduleStorageWrite(data: Partial<ExtensionStorage>) {
+  if (writeTimeout) clearTimeout(writeTimeout)
+  
+  writeTimeout = setTimeout(async () => {
+    await chrome.storage.local.set(data)
+    writeTimeout = null
+  }, 500)
+}
+```
+
+**Cache les checks fréquents**
+
+```typescript
+// Cache en mémoire pour les checks rapides
+const memoryCache = new Map<string, { value: boolean; expiresAt: number }>()
+
+async function shouldBlockCached(url: string, tabId: number): Promise<boolean> {
+  const cacheKey = `${tabId}:${url}`
+  const cached = memoryCache.get(cacheKey)
+  
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value
+  }
+  
+  const result = await shouldBlock(url, tabId)
+  memoryCache.set(cacheKey, {
+    value: result.shouldBlock,
+    expiresAt: Date.now() + 1000 // 1s cache
+  })
+  
+  return result.shouldBlock
+}
+```
+
+#### Monitoring & Debugging
+
+**Structured logging**
+
+```typescript
+enum LogLevel {
+  DEBUG = 'DEBUG',
+  INFO = 'INFO',
+  WARN = 'WARN',
+  ERROR = 'ERROR'
+}
+
+function log(level: LogLevel, message: string, data?: any) {
+  const timestamp = new Date().toISOString()
+  const prefix = `[Oneway ${level} ${timestamp}]`
+  
+  switch (level) {
+    case LogLevel.ERROR:
+      console.error(prefix, message, data)
+      break
+    case LogLevel.WARN:
+      console.warn(prefix, message, data)
+      break
+    default:
+      console.log(prefix, message, data)
+  }
+}
+
+// Usage
+log(LogLevel.INFO, 'Tab allowed', { tabId, domain })
+log(LogLevel.ERROR, 'Failed to block', { error })
+```
+
+**Telemetry (privacy-first)**
+
+```typescript
+// Seulement des métriques anonymes, jamais d'URLs ou contenu
+interface Telemetry {
+  blocksToday: number
+  bypassCount: number
+  mostBlockedCategory: string
+  avgBlocksPerDay: number
+}
+
+async function collectTelemetry(): Promise<Telemetry> {
+  const { blockHistory } = await getStorage(['blockHistory'])
+  
+  // Agrégation anonyme
+  return {
+    blocksToday: blockHistory.filter(e => isToday(e.timestamp)).length,
+    bypassCount: blockHistory.filter(e => e.action === 'bypassed').length,
+    // ... etc
+  }
+}
+```
+
 ---
 
 ## Communication Patterns
