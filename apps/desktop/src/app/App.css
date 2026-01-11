@@ -167,8 +167,32 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  transition: background var(--transition-normal);
   border: 1px solid rgba(125, 216, 196, 0.35);
+  transition: background 0.3s ease;
+}
+
+/* Section labels */
+.today-view__section-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-xs);
+}
+
+/* Sections */
+.today-view__section {
+  margin-top: var(--space-md);
+}
+
+/* Date */
+.today-view__date {
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
 }
 
 /* Scrollable content area */
@@ -191,32 +215,11 @@
 
 .today-view__hero-mascot {
   flex-shrink: 0;
+  transition: margin 0.4s ease;
 }
 
 .today-view__header-text {
   flex: 1;
-}
-
-.today-view__date {
-  font-size: var(--font-size-md);
-  color: var(--text-primary);
-  margin: 0;
-  font-weight: var(--font-weight-semibold);
-}
-
-/* Section with label */
-.today-view__section {
-  margin-top: var(--space-md);
-}
-
-.today-view__section-label {
-  display: block;
-  font-size: 10px;
-  font-weight: var(--font-weight-bold);
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: var(--space-xs);
 }
 
 /* North Star - prominent display */

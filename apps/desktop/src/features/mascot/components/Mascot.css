@@ -118,6 +118,7 @@
   max-width: 200px;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .mascot__bubble::after {
