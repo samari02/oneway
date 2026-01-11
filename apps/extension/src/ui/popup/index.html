@@ -174,6 +174,47 @@
       padding: 16px;
       margin-bottom: 16px;
     }
+
+    .popup__sync {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .popup__sync-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+
+    .popup__sync-icon {
+      font-size: 16px;
+    }
+
+    .popup__sync-text {
+      opacity: 0.9;
+    }
+
+    .btn-sync {
+      width: 100%;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+
+    .btn-sync:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-sync:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -224,6 +265,15 @@
         <span>Top distraction:</span>
         <span class="popup__stat-value" id="top-distraction">N/A</span>
       </div>
+    </div>
+
+    <!-- Cloud Sync Section -->
+    <div class="popup__sync" id="sync-section" style="display: none;">
+      <div class="popup__sync-status">
+        <span class="popup__sync-icon" id="sync-icon">☁️</span>
+        <span class="popup__sync-text" id="sync-text">Not synced</span>
+      </div>
+      <button class="btn-sync" id="btn-sync">Sync to Cloud</button>
     </div>
     
     <div class="popup__actions">

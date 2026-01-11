@@ -13,6 +13,13 @@ import {
   getCollectionStatus,
   calculateHistoryStats
 } from './history-collector'
+import {
+  syncHistoryToSupabase,
+  getSyncStatus,
+  cleanupSyncedHistory,
+  fetchStatsFromSupabase
+} from './history-sync'
+import { getCurrentUser, isAuthenticated, signInWithEmail, signOut } from '../lib/supabase'
 
 // Initialize extension
 chrome.runtime.onInstalled.addListener(async () => {
@@ -184,6 +191,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     getCollectionStatus().then(sendResponse)
     return true
   }
+  
+  // Supabase sync messages
+  if (message.type === 'SYNC_TO_SUPABASE') {
+    syncHistoryToSupabase().then(sendResponse)
+    return true
+  }
+  
+  if (message.type === 'GET_SYNC_STATUS') {
+    getSyncStatus().then(sendResponse)
+    return true
+  }
+  
+  if (message.type === 'GET_AUTH_STATUS') {
+    isAuthenticated().then(authenticated => {
+      getCurrentUser().then(user => {
+        sendResponse({ authenticated, user: user ? { id: user.id, email: user.email } : null })
+      })
+    })
+    return true
+  }
+  
+  if (message.type === 'SIGN_IN') {
+    signInWithEmail(message.data?.email).then(sendResponse)
+    return true
+  }
+  
+  if (message.type === 'SIGN_OUT') {
+    signOut().then(() => sendResponse({ success: true }))
+    return true
+  }
+  
+  if (message.type === 'FETCH_CLOUD_STATS') {
+    fetchStatsFromSupabase(message.data?.days || 30).then(sendResponse)
+    return true
+  }
 })
 
 /**
@@ -258,5 +300,26 @@ async function getHistoryStats() {
   const stats = calculateHistoryStats(navigationHistory)
   return stats
 }
+
+// Periodic sync to Supabase (every 30 minutes)
+chrome.alarms.create('sync-to-supabase', { periodInMinutes: 30 })
+
+// Periodic cleanup (every 24 hours)
+chrome.alarms.create('cleanup-history', { periodInMinutes: 1440 })
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'sync-to-supabase') {
+    log('Periodic sync triggered')
+    const authenticated = await isAuthenticated()
+    if (authenticated) {
+      await syncHistoryToSupabase()
+    }
+  }
+  
+  if (alarm.name === 'cleanup-history') {
+    log('Periodic cleanup triggered')
+    await cleanupSyncedHistory()
+  }
+})
 
 log('Service worker loaded')

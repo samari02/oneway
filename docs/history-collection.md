@@ -35,6 +35,74 @@ Le système de **history collection** permet à Clarity d'analyser les habitudes
 
 ---
 
+## Permission Strategy: Optional vs Required
+
+### Le dilemme
+
+Chrome Extensions offrent deux façons de demander des permissions :
+
+| Approche | `permissions` (required) | `optional_permissions` (opt-in) |
+|----------|--------------------------|--------------------------------|
+| **Quand demandé** | À l'installation | Au clic utilisateur |
+| **UX** | Dialog avant install | Dialog quand on en a besoin |
+| **Conversion** | Peut réduire les installs | Plus doux |
+| **Privacy** | Moins transparent | Plus de contrôle |
+
+### Notre choix : `optional_permissions`
+
+**Pourquoi ?**
+
+1. **Privacy-first** : L'utilisateur consent explicitement pour les insights
+2. **Meilleure conversion** : L'extension est installable sans la permission history
+3. **Progressive disclosure** : On explique pourquoi avant de demander
+4. **Best practice Google** : Chrome Web Store favorise les permissions minimales
+
+**Manifest.json :**
+
+```json
+{
+  "permissions": [
+    "storage",           // Toujours nécessaire
+    "webNavigation",     // Pour le blocking
+    "tabs"               // Pour le bypass
+  ],
+  "optional_permissions": [
+    "history"            // Demandé au clic "Enable Insights"
+  ]
+}
+```
+
+### Alternative : Permission required
+
+Si on préfère la simplicité (pas de UX d'opt-in) :
+
+```json
+{
+  "permissions": [
+    "storage",
+    "webNavigation",
+    "tabs",
+    "history"            // Accordé automatiquement
+  ]
+}
+```
+
+**Avantages :**
+- Pas besoin de UI pour demander la permission
+- Flow plus simple
+- L'utilisateur voit la permission AVANT d'installer
+
+**Inconvénients :**
+- Peut réduire les installations (permission sensible visible d'entrée)
+- Moins de contrôle utilisateur
+
+### Recommendation
+
+Pour une app **privacy-first** comme Clarity, on garde `optional_permissions`.
+Le flow UX avec la card "Enable Insights" est plus transparent et professionnel.
+
+---
+
 ## Architecture
 
 ```
@@ -42,7 +110,7 @@ Le système de **history collection** permet à Clarity d'analyser les habitudes
 │                  Extension Popup                     │
 │  ┌──────────────────────────────────────────────┐  │
 │  │  "Enable Insights" Button                    │  │
-│  │  (Visible si permission pas accordée)        │  │
+│  │  "Sync to Cloud" Button                      │  │
 │  └──────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────┘
                          │
@@ -51,29 +119,24 @@ Le système de **history collection** permet à Clarity d'analyser les habitudes
 │              Service Worker                          │
 │  ┌──────────────────────────────────────────────┐  │
 │  │  history-collector.ts                        │  │
-│  │  • requestHistoryPermission()                │  │
 │  │  • importHistory(days)                       │  │
 │  │  • recordVisit(url, title)                   │  │
 │  │  • calculateHistoryStats()                   │  │
+│  ├──────────────────────────────────────────────┤  │
+│  │  history-sync.ts                   (NEW)     │  │
+│  │  • syncHistoryToSupabase()                   │  │
+│  │  • getSyncStatus()                           │  │
+│  │  • fetchStatsFromSupabase()                  │  │
 │  └──────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────┐
-│          Chrome History API                          │
-│  chrome.history.search()                             │
-│  chrome.permissions.request(['history'])             │
-└─────────────────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────┐
-│         chrome.storage.local                         │
-│  {                                                    │
-│    navigationHistory: CategorizedVisit[]             │
-│    historyLastImport: timestamp                      │
-│    historyPeriodDays: number                         │
-│  }                                                    │
-└─────────────────────────────────────────────────────┘
+           │                           │
+           ▼                           ▼
+┌─────────────────────┐    ┌─────────────────────────┐
+│  chrome.storage     │    │      Supabase           │
+│  (local cache)      │    │  (cloud backup)         │
+│  • navigationHistory│    │  • navigation_history   │
+│  • lastSupabaseSync │    │  • navigation_stats     │
+└─────────────────────┘    └─────────────────────────┘
 ```
 
 ---
@@ -298,14 +361,17 @@ export function categorizeDomain(domain: string): Category {
    - Tronqué à 200 caractères
    - HTML escaped pour éviter XSS
 
-4. **No External Tracking**
-   - Tout est stocké en **local** (`chrome.storage.local`)
-   - Pas d'envoi automatique vers Supabase
-   - Sync manuel si l'utilisateur connecte la Desktop App
+4. **Cloud Sync (Opt-in)**
+   - Stockage local par défaut (`chrome.storage.local`)
+   - Sync vers Supabase **seulement si authentifié**
+   - Sync automatique toutes les 30 minutes (si connecté)
+   - RLS protège les données (chaque user voit seulement ses données)
 
 5. **User Control**
    - L'utilisateur peut révoquer la permission depuis `chrome://extensions`
    - Peut supprimer l'historique stocké depuis Settings
+   - Peut se déconnecter pour arrêter le sync cloud
+   - Peut supprimer ses données Supabase via la desktop app
 
 ### Security Practices
 
@@ -405,26 +471,59 @@ interface HistoryStats {
   isActive: boolean,
   rules: BlockRule[],
   
-  // History collection (NEW)
+  // History collection
   navigationHistory: CategorizedVisit[],
   historyLastImport: number,
   historyPeriodDays: number,
+  
+  // Supabase sync
+  lastSupabaseSync: number,        // Timestamp of last successful sync
   
   // Events
   blockHistory: BlockEvent[]
 }
 ```
 
+### Supabase Schema
+
+```sql
+-- Table: navigation_history
+CREATE TABLE navigation_history (
+  id uuid PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES auth.users(id),
+  
+  domain text NOT NULL,              -- "twitter.com"
+  category text NOT NULL,            -- "social_media"
+  is_distraction boolean,
+  
+  visit_time timestamptz NOT NULL,
+  title text,                        -- Max 200 chars
+  
+  synced_at timestamptz,
+  source text DEFAULT 'extension'
+);
+
+-- RLS: Users only see their own data
+ALTER TABLE navigation_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own navigation history"
+  ON navigation_history FOR SELECT
+  USING (auth.uid() = user_id);
+```
+
 ---
 
 ## Future Enhancements
 
-### Phase 1 (Current)
-- ✅ Permission request flow
-- ✅ Import history (1-time)
+### Phase 1 (Complete)
+- ✅ Permission request flow (optional_permissions)
+- ✅ Import history (1-time, 30 days)
 - ✅ Real-time monitoring
 - ✅ Basic categorization (domain-based)
 - ✅ Stats display in popup
+- ✅ **Supabase sync** (manual + automatic every 30min)
+- ✅ **Authentication flow** (magic link)
+- ✅ **RLS protection** (user data isolation)
 
 ### Phase 2 (Next)
 - [ ] **Sync avec Desktop App** via Native Messaging
@@ -497,10 +596,7 @@ chrome.runtime.sendMessage(
 ```typescript
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
-    case 'REQUEST_HISTORY_PERMISSION':
-      requestHistoryPermission().then(sendResponse)
-      return true
-    
+    // History collection
     case 'IMPORT_HISTORY':
       importHistory(message.data?.days || 30)
         .then(visits => sendResponse({ success: true, visits: visits.length }))
@@ -514,6 +610,43 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'GET_COLLECTION_STATUS':
       getCollectionStatus().then(sendResponse)
       return true
+    
+    // Supabase sync
+    case 'SYNC_TO_SUPABASE':
+      syncHistoryToSupabase().then(sendResponse)
+      return true
+    
+    case 'GET_SYNC_STATUS':
+      getSyncStatus().then(sendResponse)
+      return true
+    
+    case 'GET_AUTH_STATUS':
+      // Returns { authenticated: boolean, user: { id, email } | null }
+      return true
+    
+    case 'SIGN_IN':
+      signInWithEmail(message.data?.email).then(sendResponse)
+      return true
+    
+    case 'SIGN_OUT':
+      signOut().then(() => sendResponse({ success: true }))
+      return true
+  }
+})
+```
+
+### Automatic Sync
+
+```typescript
+// Service worker sets up periodic sync
+chrome.alarms.create('sync-to-supabase', { periodInMinutes: 30 })
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'sync-to-supabase') {
+    const authenticated = await isAuthenticated()
+    if (authenticated) {
+      await syncHistoryToSupabase()
+    }
   }
 })
 ```
@@ -614,11 +747,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 ## Conclusion
 
-Le système de **history collection** est maintenant **opérationnel** avec :
+Le système de **history collection** est maintenant **complet** avec :
 
-✅ Flow UX clair (permission → import → monitoring)  
+✅ Flow UX clair (permission opt-in → import → monitoring)  
 ✅ Privacy-first (domain-only, no query params)  
-✅ Secure (URL validation, sanitization)  
-✅ Extensible (prêt pour LLM integration)  
+✅ Secure (URL validation, sanitization, RLS)  
+✅ Cloud sync (Supabase, user-controlled)  
+✅ Automatic sync (every 30 minutes if authenticated)  
+✅ Extensible (prêt pour dashboard desktop et LLM integration)  
 
-**Next step** : Implémenter Native Messaging pour sync avec Desktop App.
+**Files créés/modifiés :**
+- `apps/extension/src/background/history-collector.ts` - Collection logic
+- `apps/extension/src/background/history-sync.ts` - Supabase sync
+- `apps/extension/src/lib/supabase.ts` - Supabase client
+- `supabase/migrations/012_navigation_history.sql` - Database schema
+
+**Next steps** :
+1. Dashboard dans Desktop App (visualisation des stats)
+2. Native Messaging (sync temps réel)
+3. Smart recommendations (LLM integration)

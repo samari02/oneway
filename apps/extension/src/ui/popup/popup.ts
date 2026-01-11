@@ -129,3 +129,88 @@ document.getElementById('btn-settings')!.addEventListener('click', () => {
   // TODO: Open settings page in main app
   alert('Settings coming soon!')
 })
+
+// Check sync status and show sync section
+chrome.runtime.sendMessage({ type: 'GET_SYNC_STATUS' }, (status) => {
+  console.log('[Clarity Popup] Sync status:', status)
+  
+  const syncSection = document.getElementById('sync-section')!
+  const syncIcon = document.getElementById('sync-icon')!
+  const syncText = document.getElementById('sync-text')!
+  const syncBtn = document.getElementById('btn-sync') as HTMLButtonElement
+  
+  // Only show sync section if history is enabled
+  chrome.runtime.sendMessage({ type: 'GET_COLLECTION_STATUS' }, (collectionStatus) => {
+    if (collectionStatus?.hasPermission) {
+      syncSection.style.display = 'block'
+      
+      if (status?.isAuthenticated) {
+        if (status.pendingCount > 0) {
+          syncIcon.textContent = '🔄'
+          syncText.textContent = `${status.pendingCount} visits pending sync`
+          syncBtn.textContent = 'Sync Now'
+        } else {
+          syncIcon.textContent = '✅'
+          syncText.textContent = 'All synced to cloud'
+          syncBtn.textContent = 'Synced'
+        }
+      } else {
+        syncIcon.textContent = '🔐'
+        syncText.textContent = 'Sign in to sync to cloud'
+        syncBtn.textContent = 'Sign In'
+      }
+    }
+  })
+})
+
+// Sync button
+document.getElementById('btn-sync')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btn-sync') as HTMLButtonElement
+  const syncIcon = document.getElementById('sync-icon')!
+  const syncText = document.getElementById('sync-text')!
+  
+  // Check if authenticated
+  chrome.runtime.sendMessage({ type: 'GET_AUTH_STATUS' }, async (authStatus) => {
+    if (!authStatus?.authenticated) {
+      // Not authenticated - prompt for email
+      const email = prompt('Enter your email to sync:')
+      if (email) {
+        btn.textContent = 'Sending link...'
+        btn.disabled = true
+        
+        chrome.runtime.sendMessage({ type: 'SIGN_IN', data: { email } }, (result) => {
+          if (result?.error) {
+            alert('Error: ' + result.error.message)
+            btn.textContent = 'Sign In'
+            btn.disabled = false
+          } else {
+            alert('Check your email for the sign-in link!')
+            btn.textContent = 'Check email'
+            btn.disabled = false
+          }
+        })
+      }
+    } else {
+      // Authenticated - sync
+      btn.textContent = 'Syncing...'
+      btn.disabled = true
+      syncIcon.textContent = '🔄'
+      
+      chrome.runtime.sendMessage({ type: 'SYNC_TO_SUPABASE' }, (result) => {
+        console.log('[Clarity Popup] Sync result:', result)
+        
+        if (result?.success) {
+          syncIcon.textContent = '✅'
+          syncText.textContent = `Synced ${result.synced} visits`
+          btn.textContent = 'Synced!'
+        } else {
+          syncIcon.textContent = '❌'
+          syncText.textContent = 'Sync failed'
+          btn.textContent = 'Retry'
+        }
+        
+        btn.disabled = false
+      })
+    }
+  })
+})
