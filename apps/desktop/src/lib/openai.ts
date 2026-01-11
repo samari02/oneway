@@ -118,44 +118,111 @@ Commence toujours par accueillir la personne chaleureusement et poser une questi
 // Conversation History Storage
 // ============================================
 
-interface ConversationEntry {
+export interface ConversationEntry {
   id: string
   user_id: string
   messages: ChatMessage[]
   context: UserContext
+  title: string | null
+  mode: string | null
+  is_active: boolean
   created_at: string
   updated_at: string
 }
 
-export async function saveConversation(
+// Generate a title from the first user message
+function generateTitle(messages: ChatMessage[]): string {
+  const firstUserMessage = messages.find(m => m.role === 'user')
+  if (firstUserMessage) {
+    const content = firstUserMessage.content
+    return content.length > 40 ? content.substring(0, 40) + '...' : content
+  }
+  return 'Nouvelle conversation'
+}
+
+// Create a new conversation
+export async function createConversation(
   userId: string,
   messages: ChatMessage[],
-  context: UserContext
-): Promise<void> {
-  const { error } = await supabase
+  context: UserContext,
+  mode?: string
+): Promise<string | null> {
+  const title = generateTitle(messages)
+  
+  const { data, error } = await supabase
     .from('ai_conversations')
-    .upsert({
+    .insert({
       user_id: userId,
       messages: JSON.stringify(messages),
       context: JSON.stringify(context),
-      updated_at: new Date().toISOString()
-    }, {
-      onConflict: 'user_id'
+      title,
+      mode: mode || null,
+      is_active: true
     })
+    .select('id')
+    .single()
 
   if (error) {
-    console.error('Failed to save conversation:', error)
+    console.error('Failed to create conversation:', error)
+    return null
+  }
+
+  return data?.id || null
+}
+
+// Update an existing conversation
+export async function updateConversation(
+  conversationId: string,
+  messages: ChatMessage[],
+  context: UserContext
+): Promise<void> {
+  const title = generateTitle(messages)
+  
+  const { error } = await supabase
+    .from('ai_conversations')
+    .update({
+      messages: JSON.stringify(messages),
+      context: JSON.stringify(context),
+      title,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', conversationId)
+
+  if (error) {
+    console.error('Failed to update conversation:', error)
   }
 }
 
+// Save conversation (creates new or updates existing)
+export async function saveConversation(
+  userId: string,
+  messages: ChatMessage[],
+  context: UserContext,
+  conversationId?: string,
+  mode?: string
+): Promise<string | null> {
+  if (conversationId) {
+    await updateConversation(conversationId, messages, context)
+    return conversationId
+  } else {
+    return createConversation(userId, messages, context, mode)
+  }
+}
+
+// Load most recent conversation
 export async function loadConversation(userId: string): Promise<{
+  id: string
   messages: ChatMessage[]
   context: UserContext
+  title: string | null
+  mode: string | null
 } | null> {
   const { data, error } = await supabase
     .from('ai_conversations')
     .select('*')
     .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(1)
     .single()
 
   if (error || !data) {
@@ -163,11 +230,90 @@ export async function loadConversation(userId: string): Promise<{
   }
 
   return {
+    id: data.id,
     messages: JSON.parse(data.messages),
-    context: JSON.parse(data.context)
+    context: JSON.parse(data.context),
+    title: data.title,
+    mode: data.mode
   }
 }
 
+// Get a specific conversation by ID
+export async function getConversation(conversationId: string): Promise<{
+  id: string
+  messages: ChatMessage[]
+  context: UserContext
+  title: string | null
+  mode: string | null
+  created_at: string
+} | null> {
+  const { data, error } = await supabase
+    .from('ai_conversations')
+    .select('*')
+    .eq('id', conversationId)
+    .single()
+
+  if (error || !data) {
+    return null
+  }
+
+  return {
+    id: data.id,
+    messages: JSON.parse(data.messages),
+    context: JSON.parse(data.context),
+    title: data.title,
+    mode: data.mode,
+    created_at: data.created_at
+  }
+}
+
+// List all conversations for a user
+export async function listConversations(userId: string, limit = 20): Promise<Array<{
+  id: string
+  title: string | null
+  mode: string | null
+  created_at: string
+  updated_at: string
+  preview: string
+}>> {
+  const { data, error } = await supabase
+    .from('ai_conversations')
+    .select('id, title, mode, created_at, updated_at, messages')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(limit)
+
+  if (error || !data) {
+    return []
+  }
+
+  return data.map(conv => {
+    const messages: ChatMessage[] = JSON.parse(conv.messages)
+    const lastAssistantMsg = [...messages].reverse().find(m => m.role === 'assistant')
+    const preview = lastAssistantMsg 
+      ? (lastAssistantMsg.content.length > 60 ? lastAssistantMsg.content.substring(0, 60) + '...' : lastAssistantMsg.content)
+      : 'Conversation vide'
+
+    return {
+      id: conv.id,
+      title: conv.title,
+      mode: conv.mode,
+      created_at: conv.created_at,
+      updated_at: conv.updated_at,
+      preview
+    }
+  })
+}
+
+// Delete a conversation
+export async function deleteConversation(conversationId: string): Promise<void> {
+  await supabase
+    .from('ai_conversations')
+    .delete()
+    .eq('id', conversationId)
+}
+
+// Clear all conversations for a user
 export async function clearConversation(userId: string): Promise<void> {
   await supabase
     .from('ai_conversations')

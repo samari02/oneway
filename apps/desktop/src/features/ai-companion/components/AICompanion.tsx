@@ -4,11 +4,47 @@ import {
   refineGoal, 
   saveConversation,
   loadConversation,
+  listConversations,
+  getConversation,
+  deleteConversation,
   type UserContext,
   type ChatMessage as AIChatMessage
 } from '@/lib/openai'
 import type { Habit, Goal } from '@oneway/shared'
 import './AICompanion.css'
+
+// Conversation history item type
+interface ConversationHistoryItem {
+  id: string
+  title: string | null
+  mode: string | null
+  created_at: string
+  updated_at: string
+  preview: string
+}
+
+// Format relative date
+function formatRelativeDate(dateString: string): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) {
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    if (diffHours === 0) {
+      const diffMinutes = Math.floor(diffMs / (1000 * 60))
+      return diffMinutes <= 1 ? 'À l\'instant' : `Il y a ${diffMinutes} min`
+    }
+    return diffHours === 1 ? 'Il y a 1h' : `Il y a ${diffHours}h`
+  } else if (diffDays === 1) {
+    return 'Hier'
+  } else if (diffDays < 7) {
+    return `Il y a ${diffDays} jours`
+  } else {
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+  }
+}
 
 type ConversationMode = 'north_star' | 'goals' | 'habits' | 'progress' | 'tasks' | null
 
@@ -183,6 +219,12 @@ export function AICompanion({
   const [creatingFromSuggestion, setCreatingFromSuggestion] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   
+  // History state
+  const [showHistory, setShowHistory] = useState(false)
+  const [conversationHistory, setConversationHistory] = useState<ConversationHistoryItem[]>([])
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  
   const hasKey = hasApiKey()
 
   // Get contextual greeting from Aoi
@@ -212,7 +254,7 @@ export function AICompanion({
 
   // Load conversation history when chat opens
   useEffect(() => {
-    if (isExpanded && userId && chatMessages.length === 0) {
+    if (isExpanded && userId && chatMessages.length === 0 && !currentConversationId) {
       loadConversation(userId).then(saved => {
         if (saved && saved.messages.length > 0) {
           // Filter out system messages and convert to local format
@@ -225,11 +267,67 @@ export function AICompanion({
           
           if (loadedMessages.length > 0) {
             setChatMessages(loadedMessages)
+            setCurrentConversationId(saved.id)
+            if (saved.mode) {
+              setMode(saved.mode as ConversationMode)
+            }
           }
         }
       })
     }
-  }, [isExpanded, userId])
+  }, [isExpanded, userId, currentConversationId])
+
+  // Load history list when history panel opens
+  const loadHistory = useCallback(async () => {
+    if (!userId) return
+    setLoadingHistory(true)
+    const history = await listConversations(userId, 20)
+    setConversationHistory(history)
+    setLoadingHistory(false)
+  }, [userId])
+
+  // Open a conversation from history
+  const openConversation = useCallback(async (conversationId: string) => {
+    const conv = await getConversation(conversationId)
+    if (conv) {
+      const loadedMessages: ChatMessage[] = conv.messages
+        .filter(m => m.role !== 'system')
+        .map(m => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content
+        }))
+      
+      setChatMessages(loadedMessages)
+      setCurrentConversationId(conv.id)
+      if (conv.mode) {
+        setMode(conv.mode as ConversationMode)
+      }
+      setShowHistory(false)
+    }
+  }, [])
+
+  // Delete a conversation from history
+  const handleDeleteConversation = useCallback(async (conversationId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    await deleteConversation(conversationId)
+    setConversationHistory(prev => prev.filter(c => c.id !== conversationId))
+    // If we deleted the current conversation, reset
+    if (conversationId === currentConversationId) {
+      setChatMessages([])
+      setCurrentConversationId(null)
+      setMode(null)
+    }
+  }, [currentConversationId])
+
+  // Start a new conversation
+  const startNewConversation = useCallback(() => {
+    setChatMessages([])
+    setCurrentConversationId(null)
+    setMode(null)
+    setPendingSuggestion(null)
+    setShowHistory(false)
+    setTimeout(() => inputRef.current?.focus(), 100)
+  }, [])
 
   // Focus input when expanded
   useEffect(() => {
@@ -370,8 +468,17 @@ export function AICompanion({
       setChatMessages(updatedMessages)
       setTypingMessageIndex(updatedMessages.length - 1)
 
-      // Save conversation
-      saveConversation(userId, aiMessages, context)
+      // Save conversation (create new or update existing)
+      const savedId = await saveConversation(
+        userId, 
+        [...aiMessages, { role: 'assistant', content: cleanResponse }], 
+        context, 
+        currentConversationId || undefined,
+        mode || undefined
+      )
+      if (savedId && !currentConversationId) {
+        setCurrentConversationId(savedId)
+      }
     } catch (err) {
       const errorMsg = { role: 'assistant' as const, content: "Oops ! Quelque chose s'est mal passé. On réessaie ?" }
       setChatMessages([...newMessages, errorMsg])
@@ -418,16 +525,40 @@ export function AICompanion({
         <div className="ai-companion__panel">
           <header className="ai-companion__header">
             <div className="ai-companion__title">
-              Chat with Aoi
+              {showHistory ? 'Historique' : 'Chat with Aoi'}
             </div>
             <div className="ai-companion__header-actions">
-              {mode && (
+              {!showHistory && (
+                <button 
+                  className="ai-companion__history-btn"
+                  onClick={() => {
+                    setShowHistory(true)
+                    loadHistory()
+                  }}
+                  title="Historique"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12,6 12,12 16,14"/>
+                  </svg>
+                </button>
+              )}
+              {showHistory && (
+                <button 
+                  className="ai-companion__back"
+                  onClick={() => setShowHistory(false)}
+                  title="Retour au chat"
+                >
+                  ←
+                </button>
+              )}
+              {!showHistory && mode && (
                 <button 
                   className="ai-companion__back"
                   onClick={resetConversation}
-                  title="Retour"
+                  title="Nouveau sujet"
                 >
-                  ←
+                  ↻
                 </button>
               )}
               <button 
@@ -440,8 +571,62 @@ export function AICompanion({
           </header>
 
           <div className="ai-companion__content">
+            {/* History panel */}
+            {showHistory && (
+              <div className="ai-companion__history-panel">
+                <button 
+                  className="ai-companion__new-chat-btn"
+                  onClick={startNewConversation}
+                >
+                  + Nouvelle conversation
+                </button>
+                
+                {loadingHistory && (
+                  <div className="ai-companion__history-loading">Chargement...</div>
+                )}
+                
+                {!loadingHistory && conversationHistory.length === 0 && (
+                  <div className="ai-companion__history-empty">
+                    Pas encore de conversations
+                  </div>
+                )}
+                
+                <div className="ai-companion__history-list">
+                  {conversationHistory.map(conv => (
+                    <div 
+                      key={conv.id}
+                      className={`ai-companion__history-item ${conv.id === currentConversationId ? 'ai-companion__history-item--active' : ''}`}
+                      onClick={() => openConversation(conv.id)}
+                    >
+                      <div className="ai-companion__history-item-header">
+                        {conv.mode && MODE_CONFIG[conv.mode as keyof typeof MODE_CONFIG] && (
+                          <span className="ai-companion__history-mode">
+                            {MODE_CONFIG[conv.mode as keyof typeof MODE_CONFIG].icon}
+                          </span>
+                        )}
+                        <span className="ai-companion__history-title">
+                          {conv.title || 'Sans titre'}
+                        </span>
+                        <button
+                          className="ai-companion__history-delete"
+                          onClick={(e) => handleDeleteConversation(conv.id, e)}
+                          title="Supprimer"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="ai-companion__history-preview">{conv.preview}</div>
+                      <div className="ai-companion__history-date">
+                        {formatRelativeDate(conv.updated_at)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Mode pills - always visible at top when no mode selected */}
-            {!mode && (
+            {!showHistory && !mode && (
               <div className="ai-companion__mode-pills">
                 {(Object.keys(MODE_CONFIG) as ConversationMode[]).map(m => (
                   <button
@@ -458,14 +643,15 @@ export function AICompanion({
             )}
 
             {/* Active mode indicator */}
-            {mode && (
+            {!showHistory && mode && (
               <div className="ai-companion__active-mode">
                 <span>{MODE_CONFIG[mode].icon}</span>
                 <span>{MODE_CONFIG[mode].label}</span>
               </div>
             )}
 
-            {/* Chat area - always visible */}
+            {/* Chat area - visible when not showing history */}
+            {!showHistory && (
             <div className="ai-companion__chat">
               <div className="ai-companion__messages" ref={messagesContainerRef}>
                 {chatMessages.length === 0 && (
@@ -564,6 +750,7 @@ export function AICompanion({
                 </button>
               </div>
             </div>
+            )}
           </div>
         </div>
       )}

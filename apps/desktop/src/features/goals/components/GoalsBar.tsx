@@ -54,16 +54,20 @@ export function GoalsBar({ goals, habits = [], onCreateGoal, onUpdateGoal, onDel
           key={goal.id}
           className="goals-bar__pill"
           onClick={() => handleGoalClick(goal)}
-          title={goal.name}
+          title={`${goal.name} — ${goal.progress}%`}
         >
           <GoalIcon iconId={goal.icon || 'target'} size={14} className="goals-bar__pill-icon" />
-          <span className="goals-bar__pill-progress">{goal.progress}%</span>
-          <div className="goals-bar__pill-bar">
-            <div 
-              className="goals-bar__pill-fill" 
-              style={{ width: `${goal.progress}%` }}
-            />
-          </div>
+          <span className="goals-bar__pill-name">
+            {goal.name.length > 18 ? goal.name.substring(0, 18) + '…' : goal.name}
+          </span>
+          {goal.progress > 0 && (
+            <div className="goals-bar__pill-bar">
+              <div 
+                className="goals-bar__pill-fill" 
+                style={{ width: `${goal.progress}%` }}
+              />
+            </div>
+          )}
         </button>
       ))}
       
