@@ -141,11 +141,19 @@ function TodayView() {
     icon: settings.north_star_icon || '🎯'
   } : null
 
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setIsScrolled(e.currentTarget.scrollTop > 10)
+  }
+
   return (
     <div className="today-view">
-      <h1 className="today-view__title">Home</h1>
-      
-      <section className={`today-view__header ${showAiChat ? 'today-view__header--chat-open' : ''}`}>
+      {/* Sticky hero section */}
+      <div className={`today-view__sticky-hero ${isScrolled ? 'today-view__sticky-hero--scrolled' : ''}`}>
+        <h1 className="today-view__title">Home</h1>
+        
+        <section className={`today-view__header ${showAiChat ? 'today-view__header--chat-open' : ''}`}>
         <div className="today-view__header-main">
           <div className="today-view__hero-mascot">
             <Mascot 
@@ -234,38 +242,42 @@ function TodayView() {
             hideTrigger={true}
           />
         )}
-      </section>
+        </section>
+      </div>
 
-      {habitsLoading ? (
-        <div className="today-view__loader">Loading...</div>
-      ) : (
-        <>
-          <HabitList
-            habits={habits}
-            checkedIds={checkedIds}
-            onCheck={handleToggle}
-            onUncheck={handleToggle}
-            onEdit={setEditingHabit}
-            onDelete={handleDeleteHabit}
-            onMarkViolated={handleMarkViolated}
-          />
-
-          <button 
-            className="today-view__add-button"
-            onClick={() => setShowAddForm(true)}
-          >
-            + Add Habit
-          </button>
-
-          {showAddForm && (
-            <AddHabitModal
-              onAdd={handleAddHabit}
-              onCancel={() => setShowAddForm(false)}
-              goals={goals}
+      {/* Scrollable content area */}
+      <div className="today-view__content" onScroll={handleScroll}>
+        {habitsLoading ? (
+          <div className="today-view__loader">Loading...</div>
+        ) : (
+          <>
+            <HabitList
+              habits={habits}
+              checkedIds={checkedIds}
+              onCheck={handleToggle}
+              onUncheck={handleToggle}
+              onEdit={setEditingHabit}
+              onDelete={handleDeleteHabit}
+              onMarkViolated={handleMarkViolated}
             />
-          )}
-        </>
-      )}
+
+            <button 
+              className="today-view__add-button"
+              onClick={() => setShowAddForm(true)}
+            >
+              + Add Habit
+            </button>
+
+            {showAddForm && (
+              <AddHabitModal
+                onAdd={handleAddHabit}
+                onCancel={() => setShowAddForm(false)}
+                goals={goals}
+              />
+            )}
+          </>
+        )}
+      </div>
 
       {editingHabit && (
         <EditHabitModal
