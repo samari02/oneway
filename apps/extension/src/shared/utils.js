@@ -37,5 +37,5 @@ export function formatDate(timestamp) {
  */
 export function log(...args) {
     // Always log in development (chrome extension doesn't have process.env)
-    console.log(`[Oneway ${new Date().toISOString()}]`, ...args);
+    console.log(`[Clarity ${new Date().toISOString()}]`, ...args);
 }

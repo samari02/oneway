@@ -27,8 +27,8 @@ const Icons = {
     </svg>
   ),
   logo: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/>
     </svg>
   ),
   pin: (
@@ -85,6 +85,7 @@ export function Sidebar({ currentView, onNavigate, onPinnedChange }: SidebarProp
     <nav className={`sidebar ${isPinned ? 'sidebar--pinned' : ''}`}>
       <div className="sidebar__brand">
         <span className="sidebar__logo">{Icons.logo}</span>
+        <span className="sidebar__brand-text">Clarity</span>
       </div>
       
       <ul className="sidebar__nav">

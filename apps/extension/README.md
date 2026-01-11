@@ -1,4 +1,4 @@
-# Oneway Browser Extension
+# Clarity Browser Extension
 
 Chrome/Edge/Brave extension for intelligent distraction blocking.
 

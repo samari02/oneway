@@ -26,9 +26,11 @@
 .sidebar__brand {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: var(--space-sm);
   padding: var(--space-sm);
   margin-bottom: var(--space-lg);
+  overflow: hidden;
 }
 
 .sidebar__logo {
@@ -36,7 +38,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   transition: transform var(--transition-fast);
+}
+
+.sidebar__brand-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.sidebar:hover .sidebar__brand-text,
+.sidebar--pinned .sidebar__brand-text {
+  opacity: 1;
 }
 
 .sidebar:hover .sidebar__logo {
