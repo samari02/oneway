@@ -1,0 +1,241 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2D3748;
+}
+
+.block-screen {
+  width: 100%;
+  max-width: 500px;
+  padding: 24px;
+}
+
+.block-screen__content {
+  background: white;
+  border-radius: 20px;
+  padding: 48px 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.block-screen__icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.block-screen__title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #2D3748;
+  margin-bottom: 16px;
+}
+
+.block-screen__status {
+  margin-bottom: 24px;
+}
+
+.block-screen__mode {
+  display: inline-block;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #7DD8C4 0%, #5BC4AD 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.block-screen__site {
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: #718096;
+}
+
+.block-screen__domain {
+  font-weight: 700;
+  color: #2D3748;
+  font-size: 18px;
+}
+
+.block-screen__blocked-label {
+  margin-left: 4px;
+}
+
+.block-screen__reason {
+  color: #8B9DB5;
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+
+.block-screen__question {
+  text-align: left;
+  margin-bottom: 32px;
+}
+
+.block-screen__question p {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2D3748;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.block-screen__options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.block-screen__option {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: #F8FAFC;
+  border: 2px solid #E2E8F0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.block-screen__option:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E0;
+}
+
+.block-screen__option input[type="radio"] {
+  margin-right: 12px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #7DD8C4;
+}
+
+.block-screen__option input[type="radio"]:checked + span {
+  font-weight: 600;
+  color: #2D3748;
+}
+
+.block-screen__actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.btn {
+  flex: 1;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn--secondary {
+  background: #F8FAFC;
+  color: #718096;
+  border: 2px solid #E2E8F0;
+}
+
+.btn--secondary:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E0;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, #7DD8C4 0%, #5BC4AD 100%);
+  color: white;
+}
+
+.btn--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(125, 216, 196, 0.4);
+}
+
+.btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.block-screen__stats {
+  font-size: 13px;
+  color: #8B9DB5;
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  }
+  
+  .block-screen__content {
+    background: #1a202c;
+    color: #E7E9EA;
+  }
+  
+  .block-screen__title,
+  .block-screen__domain,
+  .block-screen__question p {
+    color: #E7E9EA;
+  }
+  
+  .block-screen__site,
+  .block-screen__reason,
+  .block-screen__stats {
+    color: #8B98A5;
+  }
+  
+  .block-screen__option {
+    background: #2d3748;
+    border-color: #3D4752;
+  }
+  
+  .block-screen__option:hover {
+    background: #374151;
+    border-color: #4B5563;
+  }
+  
+  .btn--secondary {
+    background: #2d3748;
+    color: #8B98A5;
+    border-color: #3D4752;
+  }
+  
+  .btn--secondary:hover {
+    background: #374151;
+    border-color: #4B5563;
+  }
+}

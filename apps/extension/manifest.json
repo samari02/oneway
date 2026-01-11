@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Oneway - Focus & Clarity",
+  "version": "0.1.0",
+  "description": "Intelligent distraction blocker for focused work",
+  
+  "permissions": [
+    "storage",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
+    "webNavigation",
+    "history",
+    "tabs",
+    "scripting"
+  ],
+  
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_start"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html"
+  },
+  
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "default_rules",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
+}

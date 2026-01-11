@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blocked - Oneway</title>
+  <link rel="stylesheet" href="block-screen.css">
+</head>
+<body>
+  <div class="block-screen">
+    <div class="block-screen__content">
+      <div class="block-screen__icon">🧘</div>
+      <h1 class="block-screen__title">Pause</h1>
+      
+      <div class="block-screen__status">
+        <span class="block-screen__mode">You're in Focus Mode</span>
+      </div>
+      
+      <div class="block-screen__site">
+        <span id="blocked-domain" class="block-screen__domain"></span>
+        <span class="block-screen__blocked-label">is blocked</span>
+      </div>
+      
+      <div id="reason" class="block-screen__reason"></div>
+      
+      <div class="block-screen__question">
+        <p>Why do you want to visit this site?</p>
+        
+        <div class="block-screen__options">
+          <label class="block-screen__option">
+            <input type="radio" name="reason" value="urgent">
+            <span>Work-related / Urgent</span>
+          </label>
+          
+          <label class="block-screen__option">
+            <input type="radio" name="reason" value="break">
+            <span>Quick break (5 min)</span>
+          </label>
+          
+          <label class="block-screen__option">
+            <input type="radio" name="reason" value="end_mode">
+            <span>End Focus Mode</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="block-screen__actions">
+        <button id="btn-cancel" class="btn btn--secondary">Go Back</button>
+        <button id="btn-continue" class="btn btn--primary" disabled>Continue</button>
+      </div>
+      
+      <div class="block-screen__stats">
+        <span id="blocks-today">0 sites blocked today</span>
+      </div>
+    </div>
+  </div>
+  
+  <script src="block-screen.js" type="module"></script>
+</body>
+</html>

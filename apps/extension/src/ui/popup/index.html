@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oneway</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 320px;
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #7DD8C4 0%, #5BC4AD 100%);
+      color: white;
+    }
+    
+    .popup {
+      padding: 20px;
+    }
+    
+    .popup__header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .popup__icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    
+    .popup__title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    
+    .popup__status {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .popup__mode {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .popup__active {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    
+    .popup__stats {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .popup__stat {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    
+    .popup__stat:last-child {
+      margin-bottom: 0;
+    }
+    
+    .popup__stat-value {
+      font-weight: 700;
+    }
+    
+    .popup__actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    button {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+      background: white;
+      color: #5BC4AD;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="popup">
+    <div class="popup__header">
+      <div class="popup__icon">🧘</div>
+      <div class="popup__title">Oneway</div>
+    </div>
+    
+    <div class="popup__status">
+      <div class="popup__mode" id="mode">🟢 Focus Mode</div>
+      <div class="popup__active" id="active-until">Active</div>
+    </div>
+    
+    <div class="popup__stats">
+      <div class="popup__stat">
+        <span>Sites blocked today:</span>
+        <span class="popup__stat-value" id="blocks-today">0</span>
+      </div>
+      <div class="popup__stat">
+        <span>Time saved:</span>
+        <span class="popup__stat-value">~0 min</span>
+      </div>
+    </div>
+    
+    <div class="popup__actions">
+      <button class="btn-primary" id="btn-toggle">End Focus Mode</button>
+      <button class="btn-secondary" id="btn-settings">Settings</button>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
