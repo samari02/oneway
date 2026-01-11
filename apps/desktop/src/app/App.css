@@ -56,6 +56,38 @@
   background-clip: text;
 }
 
+.app-titlebar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.app-titlebar__theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-titlebar__theme-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  transform: scale(1.08);
+}
+
+.app-titlebar__theme-toggle:active {
+  transform: scale(0.96);
+}
+
 .app-titlebar__profile {
   display: flex;
   align-items: center;
@@ -66,9 +98,8 @@
   background: linear-gradient(135deg, var(--color-mint-light) 0%, var(--color-mint) 50%, var(--color-mint-dark) 100%);
   color: white;
   border: none;
+  cursor: pointer;
   transition: all var(--transition-fast);
-  -webkit-app-region: no-drag;
-  app-region: no-drag;
 }
 
 .app-titlebar__profile:hover {
@@ -153,22 +184,22 @@
 }
 
 .today-view__title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
   margin: 0 0 var(--space-md) 0;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 .today-view__header {
   padding: var(--space-lg);
-  background: linear-gradient(90deg, #FFFFFF 0%, #FFFFFF 20%, rgba(125, 216, 196, 0.12) 100%);
+  background: linear-gradient(90deg, var(--bg-primary) 0%, var(--bg-primary) 20%, rgba(125, 216, 196, 0.12) 100%);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  border: 1px solid rgba(125, 216, 196, 0.35);
-  transition: background 0.3s ease;
+  border: 1px solid var(--border-light);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 /* Section labels */
@@ -204,7 +235,7 @@
 }
 
 .today-view__header--chat-open {
-  background: linear-gradient(90deg, #FFFFFF 0%, #FFFFFF 15%, rgba(125, 216, 196, 0.15) 100%);
+  background: linear-gradient(90deg, var(--bg-primary) 0%, var(--bg-primary) 15%, rgba(125, 216, 196, 0.15) 100%);
 }
 
 .today-view__header-main {

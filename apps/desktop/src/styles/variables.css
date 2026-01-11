@@ -21,8 +21,8 @@
   /* Text */
   --text-primary: #2D3748;
   --text-secondary: #718096;
-  --text-muted: #8B9DB5; /* Slightly darker for better readability */
-  --text-nav: #6B7A8F; /* For navigation labels */
+  --text-muted: #8B9DB5;
+  --text-nav: #6B7A8F;
   
   /* Borders */
   --border-light: #E2E8F0;
@@ -70,4 +70,36 @@
   --transition-fast: 150ms ease;
   --transition-normal: 200ms ease;
   --transition-slow: 300ms ease;
+}
+
+/* ========================================
+   Dark Mode
+   ======================================== */
+
+[data-theme="dark"] {
+  /* Backgrounds - Deep navy/charcoal */
+  --bg-primary: #0F1419;
+  --bg-secondary: #1A1F26;
+  --bg-elevated: #242B33;
+  --bg-hover: #2A323C;
+  
+  /* Text - Softer whites */
+  --text-primary: #E7E9EA;
+  --text-secondary: #8B98A5;
+  --text-muted: #6E7C8A;
+  --text-nav: #8B98A5;
+  
+  /* Borders */
+  --border-light: #2F3841;
+  --border-default: #3D4752;
+  
+  /* Colors stay vibrant but slightly adjusted */
+  --color-mint: #6ECEB5;
+  --color-mint-light: #8FDBC9;
+  --color-mint-dark: #4FB99D;
+  
+  /* Shadows - More subtle in dark mode */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
 }

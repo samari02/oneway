@@ -110,15 +110,15 @@
 
 /* ===== SPEECH BUBBLE ===== */
 .mascot__bubble {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(167, 139, 250, 0.2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   padding: var(--space-xs) var(--space-sm);
   position: relative;
   max-width: 200px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease;
 }
 
 .mascot__bubble::after {

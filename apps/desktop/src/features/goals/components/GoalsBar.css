@@ -10,7 +10,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--bg-elevated);
   border: 1px solid var(--border-light);
   border-radius: 20px;
   font-size: 13px;
@@ -21,10 +21,10 @@
 }
 
 .goals-bar__pill:hover {
-  background: white;
+  background: var(--bg-hover);
   border-color: var(--color-mint);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .goals-bar__pill-icon {
@@ -42,7 +42,7 @@
 .goals-bar__pill-bar {
   width: 24px;
   height: 3px;
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--border-light);
   border-radius: 2px;
   overflow: hidden;
   flex-shrink: 0;

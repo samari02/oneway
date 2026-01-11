@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useAuth, LoginForm } from '@/features/auth'
 import { useHabits, useTodayCheckIns, useHabitActions, HabitList, AddHabitModal, EditHabitModal } from '@/features/habits'
@@ -314,6 +314,16 @@ function Dashboard() {
   const { user } = useAuth()
   const [currentView, setCurrentView] = useState<ViewType>('today')
   const [sidebarPinned, setSidebarPinned] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('clarity-theme')
+    return saved === 'dark'
+  })
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light')
+    localStorage.setItem('clarity-theme', isDarkMode ? 'dark' : 'light')
+  }, [isDarkMode])
 
   const renderView = () => {
     switch (currentView) {
@@ -340,16 +350,34 @@ function Dashboard() {
       <div className="app-titlebar" onMouseDown={handleDragStart}>
         <div className="app-titlebar__spacer" />
         <span className="app-titlebar__title">Clarity</span>
-        <button 
-          className="app-titlebar__profile"
-          onClick={() => setCurrentView('settings')}
-          title={user?.email}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="8" r="4"/>
-            <path d="M20 21a8 8 0 1 0-16 0"/>
-          </svg>
-        </button>
+        <div className="app-titlebar__actions">
+          <button 
+            className="app-titlebar__theme-toggle"
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            title={isDarkMode ? 'Light mode' : 'Dark mode'}
+          >
+            {isDarkMode ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="5"/>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            )}
+          </button>
+          <button 
+            className="app-titlebar__profile"
+            onClick={() => setCurrentView('settings')}
+            title={user?.email}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M20 21a8 8 0 1 0-16 0"/>
+            </svg>
+          </button>
+        </div>
       </div>
       
       <div className="app-layout__body">

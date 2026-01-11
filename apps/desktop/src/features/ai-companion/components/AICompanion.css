@@ -8,11 +8,11 @@
 
 /* Panel - inline style within header */
 .ai-companion__panel {
-  background: #fff;
+  background: var(--bg-elevated);
   border-radius: var(--radius-md);
   overflow: hidden;
   animation: companionFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  border: 1px solid rgba(125, 216, 196, 0.2);
+  border: 1px solid var(--border-light);
 }
 
 @keyframes companionFadeIn {
@@ -96,7 +96,7 @@
   align-items: center;
   gap: 5px;
   padding: 5px 10px;
-  background: #fff;
+  background: var(--bg-secondary);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-full);
   font-size: 11px;
@@ -192,7 +192,7 @@
 }
 
 .ai-companion__message--assistant {
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   color: var(--text-primary);
   align-self: flex-start;
   border-bottom-left-radius: 4px;
@@ -259,11 +259,11 @@
   height: 36px;
   padding: 0 12px;
   font-size: 13px;
-  background: #fff;
+  background: var(--bg-secondary);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   color: var(--text-primary);
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
 .ai-companion__input-area input:focus {
@@ -356,7 +356,7 @@
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   font-size: 12px;
   color: var(--text-primary);
@@ -436,7 +436,7 @@
 
 .ai-companion__history-item {
   padding: 10px 12px;
-  background: #fff;
+  background: var(--bg-secondary);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -444,7 +444,7 @@
 }
 
 .ai-companion__history-item:hover {
-  background: #f8f9fa;
+  background: var(--bg-hover);
   border-color: var(--color-mint);
 }
 

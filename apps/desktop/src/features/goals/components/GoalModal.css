@@ -10,11 +10,11 @@
 }
 
 .goal-modal {
-  background: white;
+  background: var(--bg-elevated);
   border-radius: 16px;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   animation: goalModalIn 0.2s ease-out;
 }
 
