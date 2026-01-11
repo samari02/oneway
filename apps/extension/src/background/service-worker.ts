@@ -6,6 +6,13 @@
 import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL } from '../shared/constants'
 import { extractDomain, matchesPattern, log } from '../shared/utils'
 import type { BlockRule, StorageData, NavigationEvent, BlockEvent } from '../shared/types'
+import {
+  requestHistoryPermission,
+  importHistory,
+  recordVisit,
+  getCollectionStatus,
+  calculateHistoryStats
+} from './history-collector'
 
 // Initialize extension
 chrome.runtime.onInstalled.addListener(async () => {
@@ -24,7 +31,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   log('Default storage initialized', defaultData)
 })
 
-// Monitor navigation
+// Monitor navigation - blocking
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   // Only main frame navigations
   if (details.frameId !== 0) return
@@ -57,6 +64,23 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
       action: 'blocked',
       timestamp: Date.now()
     })
+  }
+})
+
+// Monitor navigation - history recording
+chrome.webNavigation.onCompleted.addListener(async (details) => {
+  // Only main frame navigations
+  if (details.frameId !== 0) return
+  
+  // Don't record our own block screen
+  if (details.url.startsWith(chrome.runtime.getURL(''))) return
+  
+  // Record visit for history
+  try {
+    const tab = await chrome.tabs.get(details.tabId)
+    await recordVisit(details.url, tab.title)
+  } catch (error) {
+    // Permission not granted or error - fail silently
   }
 })
 
@@ -138,6 +162,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     getStatus().then(sendResponse)
     return true
   }
+  
+  if (message.type === 'REQUEST_HISTORY_PERMISSION') {
+    requestHistoryPermission().then(sendResponse)
+    return true
+  }
+  
+  if (message.type === 'IMPORT_HISTORY') {
+    importHistory(message.data?.days || 30)
+      .then(visits => sendResponse({ success: true, visits: visits.length }))
+      .catch(error => sendResponse({ success: false, error: error.message }))
+    return true
+  }
+  
+  if (message.type === 'GET_HISTORY_STATS') {
+    getHistoryStats().then(sendResponse)
+    return true
+  }
+  
+  if (message.type === 'GET_COLLECTION_STATUS') {
+    getCollectionStatus().then(sendResponse)
+    return true
+  }
 })
 
 /**
@@ -202,6 +248,15 @@ async function getStatus() {
     strictness: storage.strictness || 'guided',
     blocksToday
   }
+}
+
+/**
+ * Get history stats
+ */
+async function getHistoryStats() {
+  const { navigationHistory = [] } = await chrome.storage.local.get('navigationHistory')
+  const stats = calculateHistoryStats(navigationHistory)
+  return stats
 }
 
 log('Service worker loaded')

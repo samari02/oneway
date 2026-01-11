@@ -84,3 +84,54 @@ export interface ModeChangeMessage extends Message {
     isActive: boolean
   }
 }
+
+export interface RequestHistoryPermissionMessage extends Message {
+  type: 'REQUEST_HISTORY_PERMISSION'
+}
+
+export interface ImportHistoryMessage extends Message {
+  type: 'IMPORT_HISTORY'
+  data: {
+    days: number
+  }
+}
+
+export interface GetHistoryStatsMessage extends Message {
+  type: 'GET_HISTORY_STATS'
+}
+
+// History collection types
+export interface HistoryItem {
+  url: string
+  domain: string
+  title?: string
+  visitTime: number
+  visitCount?: number
+  category?: Category
+}
+
+export interface CategorizedVisit {
+  url: string
+  domain: string
+  title?: string
+  visitTime: number
+  duration?: number
+  category: Category
+  isDistraction: boolean
+}
+
+export interface HistoryStats {
+  totalVisits: number
+  byCategory: Record<Category, number>
+  topDomains: Array<{ domain: string; count: number; category: Category }>
+  periodStart: number
+  periodEnd: number
+}
+
+export interface HistoryCollectionStatus {
+  hasPermission: boolean
+  isCollecting: boolean
+  lastImport?: number
+  totalVisits: number
+  periodDays: number
+}
