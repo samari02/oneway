@@ -118,10 +118,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  */
 async function handleBypass(data) {
     log('Bypass requested:', data);
+    const domain = extractDomain(data.url);
     // Log bypass event
     await logBlockEvent({
         url: data.url,
-        domain: extractDomain(data.url),
+        domain,
         reason: 'User bypassed',
         action: 'bypassed',
         bypassMethod: data.method,
@@ -130,8 +131,10 @@ async function handleBypass(data) {
     // Add to cache as allowed (temporarily)
     const storage = await chrome.storage.local.get(STORAGE_KEYS.CACHE);
     const cache = storage.cache || {};
-    cache[extractDomain(data.url)] = 'allow';
-    await chrome.storage.local.set({ cache });
+    // Allow this domain for the next 5 minutes (or until mode changes)
+    cache[domain] = 'allow';
+    await chrome.storage.local.set({ [STORAGE_KEYS.CACHE]: cache });
+    log('Domain allowed temporarily:', domain);
     return { success: true };
 }
 /**

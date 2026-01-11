@@ -21,6 +21,20 @@ export const DEFAULT_BLOCKLIST = [
         category: 'social_media'
     },
     {
+        id: 'lemonde',
+        pattern: '*://*.lemonde.fr/*',
+        action: 'block',
+        reason: 'News can be a distraction',
+        category: 'news'
+    },
+    {
+        id: 'lefigaro',
+        pattern: '*://*.lefigaro.fr/*',
+        action: 'block',
+        reason: 'News can be a distraction',
+        category: 'news'
+    },
+    {
         id: 'facebook',
         pattern: '*://*.facebook.com/*',
         action: 'block',
