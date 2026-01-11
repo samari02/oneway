@@ -6,6 +6,7 @@
 const params = new URLSearchParams(window.location.search);
 const blockedUrl = params.get('url') || '';
 const reason = params.get('reason') || 'This site is blocked in Focus Mode';
+const tabId = parseInt(params.get('tabId') || '0');
 // Extract domain
 function extractDomain(url) {
     try {
@@ -51,12 +52,17 @@ continueBtn.addEventListener('click', async () => {
         type: 'BYPASS_BLOCK',
         data: {
             url: blockedUrl,
-            method: selectedReason
+            method: selectedReason,
+            tabId: tabId
         }
     }, (response) => {
-        if (response.success) {
+        if (response && response.success) {
+            console.log('[Block Screen] Bypass approved, navigating to', blockedUrl);
             // Navigate to the original URL
             window.location.href = blockedUrl;
+        }
+        else {
+            console.error('[Block Screen] Bypass failed', response);
         }
     });
 });

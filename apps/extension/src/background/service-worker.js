@@ -29,13 +29,13 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
         timestamp: details.timeStamp,
         tabId: details.tabId
     };
-    log('Navigation detected:', event.domain);
+    log('Navigation detected:', event.domain, 'on tab', details.tabId);
     // Check if should be blocked
-    const decision = await shouldBlock(event.url);
+    const decision = await shouldBlock(event.url, details.tabId);
     if (decision.shouldBlock) {
         log('Blocking:', event.domain, decision.reason);
-        // Redirect to block screen
-        const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(event.url)}&reason=${encodeURIComponent(decision.reason || '')}`;
+        // Redirect to block screen with tab ID
+        const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(event.url)}&reason=${encodeURIComponent(decision.reason || '')}&tabId=${details.tabId}`;
         chrome.tabs.update(details.tabId, { url: blockUrl });
         // Log block event
         await logBlockEvent({
@@ -50,25 +50,25 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
 /**
  * Check if URL should be blocked
  */
-async function shouldBlock(url) {
+async function shouldBlock(url, tabId) {
     const storage = await chrome.storage.local.get([
         STORAGE_KEYS.RULES,
         STORAGE_KEYS.MODE,
         STORAGE_KEYS.IS_ACTIVE,
-        STORAGE_KEYS.CACHE
+        'allowedTabs'
     ]);
     // If not active, allow everything
     if (!storage.isActive) {
         return { shouldBlock: false };
     }
-    // Check cache first
     const domain = extractDomain(url);
-    if (storage.cache && storage.cache[domain]) {
-        const cached = storage.cache[domain];
-        if (cached === 'block') {
-            return { shouldBlock: true, reason: 'Cached block decision' };
+    // Check tab-specific allowlist first
+    if (storage.allowedTabs && storage.allowedTabs[tabId]) {
+        const allowed = storage.allowedTabs[tabId];
+        if (allowed.domain === domain && allowed.expiresAt > Date.now()) {
+            log('Tab', tabId, 'is allowed for', domain, 'until', new Date(allowed.expiresAt).toLocaleTimeString());
+            return { shouldBlock: false };
         }
-        return { shouldBlock: false };
     }
     // Check rules
     const rules = storage.rules || DEFAULT_BLOCKLIST;
@@ -128,13 +128,17 @@ async function handleBypass(data) {
         bypassMethod: data.method,
         timestamp: Date.now()
     });
-    // Add to cache as allowed (temporarily)
-    const storage = await chrome.storage.local.get(STORAGE_KEYS.CACHE);
-    const cache = storage.cache || {};
-    // Allow this domain for the next 5 minutes (or until mode changes)
-    cache[domain] = 'allow';
-    await chrome.storage.local.set({ [STORAGE_KEYS.CACHE]: cache });
-    log('Domain allowed temporarily:', domain);
+    // Add to tab-specific allowlist
+    const storage = await chrome.storage.local.get('allowedTabs');
+    const allowedTabs = storage.allowedTabs || {};
+    // Allow this tab for this domain for the next 5 minutes
+    const expiresAt = Date.now() + (5 * 60 * 1000);
+    allowedTabs[data.tabId] = {
+        domain,
+        expiresAt
+    };
+    await chrome.storage.local.set({ allowedTabs });
+    log('Tab', data.tabId, 'allowed for', domain, 'until', new Date(expiresAt).toLocaleTimeString());
     return { success: true };
 }
 /**
