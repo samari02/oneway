@@ -1,9 +1,19 @@
+mod browsing_data;
 mod native_host;
+
+use browsing_data::BrowsingStats;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+/// Get browsing stats from local storage
+/// Called by React frontend to display insights
+#[tauri::command]
+fn get_browsing_stats() -> BrowsingStats {
+    browsing_data::get_browsing_stats()
 }
 
 /// Check if running as native messaging host
@@ -20,7 +30,7 @@ pub fn run_as_native_host() {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, get_browsing_stats])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

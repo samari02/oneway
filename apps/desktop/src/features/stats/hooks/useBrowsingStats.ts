@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 
 export interface SiteVisit {
   domain: string
@@ -26,52 +27,63 @@ export interface BrowsingStats {
   totalTimeTracked: number // in minutes
 }
 
-// Mock data for now - will be replaced with native messaging data
-const MOCK_STATS: BrowsingStats = {
-  focusScore: 73,
-  focusTrend: 'up',
+// Response from Rust (matches BrowsingStats struct)
+interface RustBrowsingStats {
+  focusScore: number
+  focusTrend: string
   timeDistribution: {
-    productive: 45,
-    neutral: 35,
-    distraction: 20
-  },
-  topSites: [
-    { domain: 'github.com', visits: 142, timeSpent: 180, category: 'productive' },
-    { domain: 'twitter.com', visits: 89, timeSpent: 95, category: 'distraction' },
-    { domain: 'google.com', visits: 67, timeSpent: 45, category: 'neutral' },
-    { domain: 'notion.so', visits: 52, timeSpent: 120, category: 'productive' },
-    { domain: 'youtube.com', visits: 34, timeSpent: 85, category: 'distraction' },
-    { domain: 'stackoverflow.com', visits: 28, timeSpent: 40, category: 'productive' },
-    { domain: 'reddit.com', visits: 24, timeSpent: 55, category: 'distraction' },
-    { domain: 'figma.com', visits: 18, timeSpent: 90, category: 'productive' },
-    { domain: 'linkedin.com', visits: 12, timeSpent: 15, category: 'neutral' },
-    { domain: 'slack.com', visits: 8, timeSpent: 60, category: 'productive' },
-  ],
-  dailyScores: generateLast30DaysScores(),
-  totalVisits: 474,
-  totalTimeTracked: 785
+    productive: number
+    neutral: number
+    distraction: number
+  }
+  topSites: Array<{
+    domain: string
+    visits: number
+    timeSpent: number
+    category: string
+  }>
+  dailyScores: Array<{
+    date: string
+    score: number
+  }>
+  totalVisits: number
+  totalTimeTracked: number
 }
 
-function generateLast30DaysScores(): DailyFocusScore[] {
-  const scores: DailyFocusScore[] = []
-  const today = new Date()
-  
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(today)
-    date.setDate(date.getDate() - i)
-    
-    // Generate somewhat realistic scores with some variance
-    const baseScore = 65 + Math.sin(i / 3) * 15
-    const randomVariance = (Math.random() - 0.5) * 20
-    const score = Math.max(0, Math.min(100, Math.round(baseScore + randomVariance)))
-    
-    scores.push({
-      date: date.toISOString().split('T')[0],
-      score
-    })
+// Map Rust category to frontend category
+function mapCategory(category: string): 'productive' | 'neutral' | 'distraction' {
+  switch (category) {
+    case 'work':
+    case 'dev':
+    case 'productivity':
+      return 'productive'
+    case 'social_media':
+    case 'video':
+    case 'entertainment':
+    case 'news':
+    case 'shopping':
+      return 'distraction'
+    default:
+      return 'neutral'
   }
-  
-  return scores
+}
+
+// Transform Rust response to frontend format
+function transformStats(rust: RustBrowsingStats): BrowsingStats {
+  return {
+    focusScore: rust.focusScore,
+    focusTrend: (rust.focusTrend as 'up' | 'down' | 'stable') || 'stable',
+    timeDistribution: rust.timeDistribution,
+    topSites: rust.topSites.map(site => ({
+      domain: site.domain,
+      visits: site.visits,
+      timeSpent: site.timeSpent,
+      category: mapCategory(site.category),
+    })),
+    dailyScores: rust.dailyScores,
+    totalVisits: rust.totalVisits,
+    totalTimeTracked: rust.totalTimeTracked,
+  }
 }
 
 export function useBrowsingStats(userId?: string) {
@@ -85,13 +97,21 @@ export function useBrowsingStats(userId?: string) {
       setError(null)
 
       try {
-        // TODO: Replace with actual native messaging call
-        // const response = await invoke('get_browsing_stats', { userId })
+        // Call Rust backend via Tauri
+        const rustStats = await invoke<RustBrowsingStats>('get_browsing_stats')
         
-        // For now, use mock data with a small delay to simulate loading
-        await new Promise(resolve => setTimeout(resolve, 300))
-        setStats(MOCK_STATS)
+        // Transform to frontend format
+        const transformedStats = transformStats(rustStats)
+        
+        // Check if we have any data
+        if (transformedStats.totalVisits === 0) {
+          // No data yet - could show empty state or mock data
+          console.log('[useBrowsingStats] No data from extension yet')
+        }
+        
+        setStats(transformedStats)
       } catch (err) {
+        console.error('[useBrowsingStats] Error fetching stats:', err)
         setError(err instanceof Error ? err : new Error('Failed to fetch browsing stats'))
       } finally {
         setLoading(false)
@@ -99,6 +119,11 @@ export function useBrowsingStats(userId?: string) {
     }
 
     fetchStats()
+    
+    // Refresh every 30 seconds to pick up new data
+    const interval = setInterval(fetchStats, 30000)
+    
+    return () => clearInterval(interval)
   }, [userId])
 
   return { stats, loading, error }

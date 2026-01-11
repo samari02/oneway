@@ -9,6 +9,8 @@
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read, Write};
 
+use crate::browsing_data::{self, StoredVisit};
+
 /// Message received from the Chrome extension
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
@@ -195,19 +197,50 @@ pub fn handle_message(msg: IncomingMessage) -> OutgoingMessage {
         
         IncomingMessage::NavigationEvent { data } => {
             eprintln!("[NativeHost] Received NAVIGATION_EVENT: {}", data.domain);
-            // TODO: Store in local DB, notify React frontend
+            
+            // Store in local database
+            browsing_data::store_navigation_event(
+                data.domain,
+                data.category,
+                data.visit_time,
+                data.title,
+                data.is_distraction,
+            );
+            
             OutgoingMessage::Ack
         }
         
         IncomingMessage::BlockEvent { data } => {
             eprintln!("[NativeHost] Received BLOCK_EVENT: {} - {}", data.domain, data.action);
-            // TODO: Store in local DB, notify React frontend
+            
+            // Store in local database
+            browsing_data::store_block_event(
+                data.domain,
+                data.reason,
+                data.action,
+                data.timestamp,
+            );
+            
             OutgoingMessage::Ack
         }
         
         IncomingMessage::HistorySync { data } => {
             eprintln!("[NativeHost] Received HISTORY_SYNC: {} visits", data.visits.len());
-            // TODO: Store visits in local DB
+            
+            // Convert and store visits in local database
+            let visits: Vec<StoredVisit> = data.visits
+                .into_iter()
+                .map(|v| StoredVisit {
+                    domain: v.domain,
+                    category: v.category,
+                    visit_time: v.visit_time,
+                    title: v.title,
+                    is_distraction: v.is_distraction,
+                })
+                .collect();
+            
+            browsing_data::store_history_batch(visits);
+            
             OutgoingMessage::Ack
         }
     }
