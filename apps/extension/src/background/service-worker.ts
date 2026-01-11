@@ -14,12 +14,23 @@ import {
   calculateHistoryStats
 } from './history-collector'
 import {
-  syncHistoryToSupabase,
-  getSyncStatus,
-  cleanupSyncedHistory,
-  fetchStatsFromSupabase
-} from './history-sync'
-import { getCurrentUser, isAuthenticated, signInWithEmail, signOut } from '../lib/supabase'
+  connectToDesktopApp,
+  isDesktopAppConnected,
+  getConnectionStatus,
+  sendNavigationEvent,
+  sendBlockEvent
+} from './native-messaging'
+
+// NOTE: Supabase sync temporarily disabled
+// Supabase client is not compatible with Chrome extension service workers
+// TODO: Use fetch-based API calls instead of Supabase client
+// import {
+//   syncHistoryToSupabase,
+//   getSyncStatus,
+//   cleanupSyncedHistory,
+//   fetchStatsFromSupabase
+// } from './history-sync'
+// import { getCurrentUser, isAuthenticated, signInWithEmail, signOut } from '../lib/supabase'
 
 // Initialize extension
 chrome.runtime.onInstalled.addListener(async () => {
@@ -36,6 +47,15 @@ chrome.runtime.onInstalled.addListener(async () => {
   
   await chrome.storage.local.set(defaultData)
   log('Default storage initialized', defaultData)
+  
+  // Try to connect to desktop app
+  connectToDesktopApp()
+})
+
+// On startup, try to connect to desktop app
+chrome.runtime.onStartup.addListener(() => {
+  log('Extension started')
+  connectToDesktopApp()
 })
 
 // Monitor navigation - blocking
@@ -85,7 +105,12 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
   // Record visit for history
   try {
     const tab = await chrome.tabs.get(details.tabId)
-    await recordVisit(details.url, tab.title)
+    const visit = await recordVisit(details.url, tab.title)
+    
+    // Send to desktop app if connected
+    if (visit && isDesktopAppConnected()) {
+      sendNavigationEvent(visit)
+    }
   } catch (error) {
     // Permission not granted or error - fail silently
   }
@@ -192,38 +217,47 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
   }
   
-  // Supabase sync messages
+  // Supabase sync messages - temporarily disabled
+  // TODO: Implement using fetch API instead of Supabase client
   if (message.type === 'SYNC_TO_SUPABASE') {
-    syncHistoryToSupabase().then(sendResponse)
+    sendResponse({ success: false, error: 'Sync not yet available' })
     return true
   }
   
   if (message.type === 'GET_SYNC_STATUS') {
-    getSyncStatus().then(sendResponse)
+    sendResponse({ isAuthenticated: false, pendingCount: 0, lastSync: null, totalSynced: 0 })
     return true
   }
   
   if (message.type === 'GET_AUTH_STATUS') {
-    isAuthenticated().then(authenticated => {
-      getCurrentUser().then(user => {
-        sendResponse({ authenticated, user: user ? { id: user.id, email: user.email } : null })
-      })
-    })
+    sendResponse({ authenticated: false, user: null })
     return true
   }
   
   if (message.type === 'SIGN_IN') {
-    signInWithEmail(message.data?.email).then(sendResponse)
+    sendResponse({ error: { message: 'Auth not yet available in extension' } })
     return true
   }
   
   if (message.type === 'SIGN_OUT') {
-    signOut().then(() => sendResponse({ success: true }))
+    sendResponse({ success: true })
     return true
   }
   
   if (message.type === 'FETCH_CLOUD_STATS') {
-    fetchStatsFromSupabase(message.data?.days || 30).then(sendResponse)
+    sendResponse(null)
+    return true
+  }
+  
+  // Native messaging / Desktop app connection
+  if (message.type === 'GET_DESKTOP_STATUS') {
+    getConnectionStatus().then(sendResponse)
+    return true
+  }
+  
+  if (message.type === 'CONNECT_DESKTOP') {
+    const success = connectToDesktopApp()
+    sendResponse({ success })
     return true
   }
 })
@@ -301,25 +335,8 @@ async function getHistoryStats() {
   return stats
 }
 
-// Periodic sync to Supabase (every 30 minutes)
-chrome.alarms.create('sync-to-supabase', { periodInMinutes: 30 })
-
-// Periodic cleanup (every 24 hours)
-chrome.alarms.create('cleanup-history', { periodInMinutes: 1440 })
-
-chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === 'sync-to-supabase') {
-    log('Periodic sync triggered')
-    const authenticated = await isAuthenticated()
-    if (authenticated) {
-      await syncHistoryToSupabase()
-    }
-  }
-  
-  if (alarm.name === 'cleanup-history') {
-    log('Periodic cleanup triggered')
-    await cleanupSyncedHistory()
-  }
-})
+// Periodic sync - temporarily disabled until we implement fetch-based API
+// chrome.alarms.create('sync-to-supabase', { periodInMinutes: 30 })
+// chrome.alarms.create('cleanup-history', { periodInMinutes: 1440 })
 
 log('Service worker loaded')

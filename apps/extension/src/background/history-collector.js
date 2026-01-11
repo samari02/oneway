@@ -263,7 +263,7 @@ export function calculateHistoryStats(visits) {
  */
 export async function recordVisit(url, title) {
     if (!isValidUrl(url))
-        return;
+        return null;
     const domain = extractDomain(url);
     const category = categorizeDomain(domain);
     const visit = {
@@ -282,6 +282,7 @@ export async function recordVisit(url, title) {
         navigationHistory.shift();
     }
     await chrome.storage.local.set({ navigationHistory });
+    return visit;
 }
 /**
  * Get collection status

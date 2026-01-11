@@ -296,8 +296,8 @@ export function calculateHistoryStats(visits: CategorizedVisit[]): HistoryStats 
  * Monitor new visits in real-time
  * Called from webNavigation.onCompleted
  */
-export async function recordVisit(url: string, title?: string): Promise<void> {
-  if (!isValidUrl(url)) return
+export async function recordVisit(url: string, title?: string): Promise<CategorizedVisit | null> {
+  if (!isValidUrl(url)) return null
   
   const domain = extractDomain(url)
   const category = categorizeDomain(domain)
@@ -321,6 +321,8 @@ export async function recordVisit(url: string, title?: string): Promise<void> {
   }
   
   await chrome.storage.local.set({ navigationHistory })
+  
+  return visit
 }
 
 /**

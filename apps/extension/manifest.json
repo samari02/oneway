@@ -10,7 +10,8 @@
     "declarativeNetRequestFeedback",
     "webNavigation",
     "tabs",
-    "scripting"
+    "scripting",
+    "nativeMessaging"
   ],
   
   "optional_permissions": [
