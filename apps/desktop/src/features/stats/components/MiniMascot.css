@@ -1,0 +1,162 @@
+.mini-mascot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-mascot__blob {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, #C5B4E3 0%, #A89DC8 100%);
+  border-radius: 50%;
+  position: relative;
+  animation: miniFloat 3s ease-in-out infinite;
+}
+
+@keyframes miniFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Sprout */
+.mini-mascot__sprout {
+  position: absolute;
+  top: -15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20%;
+  height: 25%;
+}
+
+.mini-mascot__sprout-stem {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10%;
+  height: 60%;
+  background: #7DD8C4;
+  border-radius: 2px;
+}
+
+.mini-mascot__sprout-leaf {
+  position: absolute;
+  top: 0;
+  width: 45%;
+  height: 50%;
+  background: #7DD8C4;
+  border-radius: 50% 50% 50% 50%;
+}
+
+.mini-mascot__sprout-leaf--left {
+  left: 0;
+  transform: rotate(-30deg);
+  border-radius: 50% 0 50% 50%;
+}
+
+.mini-mascot__sprout-leaf--right {
+  right: 0;
+  transform: rotate(30deg);
+  border-radius: 0 50% 50% 50%;
+}
+
+/* Face */
+.mini-mascot__face {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 40%;
+}
+
+/* Cheeks */
+.mini-mascot__cheek {
+  position: absolute;
+  width: 20%;
+  height: 20%;
+  background: rgba(255, 182, 193, 0.6);
+  border-radius: 50%;
+  top: 50%;
+}
+
+.mini-mascot__cheek--left {
+  left: 5%;
+}
+
+.mini-mascot__cheek--right {
+  right: 5%;
+}
+
+/* Eyes */
+.mini-mascot__eye {
+  position: absolute;
+  width: 12%;
+  height: 12%;
+  background: #2D3436;
+  border-radius: 50%;
+  top: 30%;
+}
+
+.mini-mascot__eye--left {
+  left: 25%;
+}
+
+.mini-mascot__eye--right {
+  right: 25%;
+}
+
+/* Happy eyes (curved) */
+.mini-mascot__eye--happy {
+  height: 6%;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  border-top: 2px solid #2D3436;
+}
+
+/* Focused eyes (determined) */
+.mini-mascot__eye--focused {
+  height: 8%;
+  border-radius: 50%;
+}
+
+/* Meh eyes (half-closed) */
+.mini-mascot__eye--meh {
+  height: 4%;
+  border-radius: 2px;
+}
+
+/* Worried eyes */
+.mini-mascot__eye--worried {
+  height: 14%;
+  border-radius: 50%;
+}
+
+/* Mouths */
+.mini-mascot__mouth {
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.mini-mascot__mouth--meh {
+  width: 20%;
+  height: 2px;
+  background: #2D3436;
+  border-radius: 2px;
+}
+
+.mini-mascot__mouth--worried {
+  width: 15%;
+  height: 8%;
+  border: 2px solid #2D3436;
+  border-radius: 50%;
+  background: transparent;
+  border-top: none;
+}

@@ -1,0 +1,89 @@
+.time-distribution-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.time-distribution-card__title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-md) 0;
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+}
+
+.time-distribution-card__bar {
+  display: flex;
+  height: 12px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--bg-tertiary);
+  margin-bottom: var(--space-lg);
+}
+
+.time-distribution-card__segment {
+  height: 100%;
+  transition: width var(--transition-normal);
+}
+
+.time-distribution-card__segment--productive {
+  background: linear-gradient(90deg, #7DD8C4 0%, #5BB5A0 100%);
+}
+
+.time-distribution-card__segment--neutral {
+  background: linear-gradient(90deg, #A8B4C4 0%, #8E99A8 100%);
+}
+
+.time-distribution-card__segment--distraction {
+  background: linear-gradient(90deg, #FF8A65 0%, #E74C3C 100%);
+}
+
+.time-distribution-card__legend {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.time-distribution-card__legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.time-distribution-card__legend-mascot {
+  flex-shrink: 0;
+}
+
+.time-distribution-card__legend-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.time-distribution-card__legend-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: lowercase;
+}
+
+.time-distribution-card__legend-value {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.time-distribution-card__legend-value--productive {
+  color: #7DD8C4;
+}
+
+.time-distribution-card__legend-value--neutral {
+  color: var(--text-secondary);
+}
+
+.time-distribution-card__legend-value--distraction {
+  color: #FF8A65;
+}

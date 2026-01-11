@@ -1,0 +1,122 @@
+.focus-score-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Subtle glow effect */
+.focus-score-card::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(
+    circle,
+    rgba(125, 216, 196, 0.15) 0%,
+    transparent 70%
+  );
+  animation: focusGlow 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes focusGlow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+
+.focus-score-card__mascot {
+  position: relative;
+  z-index: 1;
+}
+
+.focus-score-card__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  position: relative;
+  z-index: 1;
+}
+
+.focus-score-card__score {
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--accent) 0%, #5BB5A0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.focus-score-card__score--good {
+  background: linear-gradient(135deg, #7DD8C4 0%, #5BB5A0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.focus-score-card__score--medium {
+  background: linear-gradient(135deg, #FFD93D 0%, #F5A623 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.focus-score-card__score--low {
+  background: linear-gradient(135deg, #FF8A65 0%, #E74C3C 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.focus-score-card__label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+}
+
+.focus-score-card__trend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.focus-score-card__trend--up {
+  background: rgba(125, 216, 196, 0.15);
+  color: var(--accent);
+}
+
+.focus-score-card__trend--down {
+  background: rgba(231, 76, 60, 0.15);
+  color: #E74C3C;
+}
+
+.focus-score-card__trend--stable {
+  background: rgba(255, 217, 61, 0.15);
+  color: #F5A623;
+}
+
+.focus-score-card__trend-icon {
+  font-size: 14px;
+  font-weight: 600;
+}

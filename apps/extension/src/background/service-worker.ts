@@ -48,14 +48,26 @@ chrome.runtime.onInstalled.addListener(async () => {
   await chrome.storage.local.set(defaultData)
   log('Default storage initialized', defaultData)
   
-  // Try to connect to desktop app
-  connectToDesktopApp()
+  // Try to connect to desktop app (with delay to avoid startup issues)
+  setTimeout(() => {
+    try {
+      connectToDesktopApp()
+    } catch (e) {
+      log('Desktop app not available:', e)
+    }
+  }, 2000)
 })
 
 // On startup, try to connect to desktop app
 chrome.runtime.onStartup.addListener(() => {
   log('Extension started')
-  connectToDesktopApp()
+  setTimeout(() => {
+    try {
+      connectToDesktopApp()
+    } catch (e) {
+      log('Desktop app not available:', e)
+    }
+  }, 2000)
 })
 
 // Monitor navigation - blocking

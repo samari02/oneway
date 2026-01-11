@@ -33,6 +33,11 @@ export function connectToDesktopApp() {
         log('Already connected to desktop app');
         return true;
     }
+    // Check if nativeMessaging is available
+    if (!chrome.runtime.connectNative) {
+        log('Native messaging not available');
+        return false;
+    }
     try {
         log('Connecting to desktop app...');
         port = chrome.runtime.connectNative(HOST_NAME);
