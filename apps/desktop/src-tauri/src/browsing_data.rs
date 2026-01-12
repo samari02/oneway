@@ -348,7 +348,7 @@ impl BrowsingStorage {
             .collect();
         
         top_sites.sort_by(|a, b| b.visits.cmp(&a.visits));
-        top_sites.truncate(10);
+        top_sites.truncate(50); // Allow up to 50 sites for Top 10/20/30 selector
         
         // Daily scores (last 30 days)
         let mut daily_scores: Vec<DailyScore> = daily_visits
