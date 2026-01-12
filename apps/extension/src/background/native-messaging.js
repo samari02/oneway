@@ -177,12 +177,8 @@ async function handleSyncRequest(data) {
     const { navigationHistory = [] } = await chrome.storage.local.get('navigationHistory');
     // Filter visits since the requested timestamp
     const visitsToSync = navigationHistory.filter(visit => visit.visitTime > data.since);
-    // Send to desktop
-    sendToDesktop({
-        type: 'HISTORY_SYNC',
-        data: { visits: visitsToSync }
-    });
-    log(`Sent ${visitsToSync.length} visits to desktop`);
+    // Send in batches
+    await sendHistorySync(visitsToSync);
 }
 /**
  * Send a navigation event to desktop (called when user visits a page)
@@ -208,18 +204,36 @@ export function sendBlockEvent(event) {
 }
 /**
  * Send history sync to desktop (called after importing history)
+ * Chunks the data to avoid Native Messaging's 1MB limit
  */
-export function sendHistorySync(visits) {
-    if (isConnected && visits.length > 0) {
-        log(`Sending ${visits.length} visits to desktop (history sync)`);
+export async function sendHistorySync(visits) {
+    if (!isConnected) {
+        log('Cannot send history sync: not connected to desktop');
+        return;
+    }
+    if (visits.length === 0) {
+        log('No visits to sync');
+        return;
+    }
+    // Native Messaging limit is ~1MB, each visit is ~200-300 bytes
+    // Use batch size of 500 to be safe (~150KB per batch)
+    const BATCH_SIZE = 500;
+    const totalBatches = Math.ceil(visits.length / BATCH_SIZE);
+    log(`Sending ${visits.length} visits to desktop in ${totalBatches} batches`);
+    for (let i = 0; i < visits.length; i += BATCH_SIZE) {
+        const batch = visits.slice(i, i + BATCH_SIZE);
+        const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+        log(`Sending batch ${batchNum}/${totalBatches} (${batch.length} visits)`);
         sendToDesktop({
             type: 'HISTORY_SYNC',
-            data: { visits }
+            data: { visits: batch }
         });
+        // Small delay between batches to avoid overwhelming the receiver
+        if (i + BATCH_SIZE < visits.length) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
     }
-    else if (!isConnected) {
-        log('Cannot send history sync: not connected to desktop');
-    }
+    log(`History sync complete: ${visits.length} visits sent`);
 }
 /**
  * Get connection status for UI
