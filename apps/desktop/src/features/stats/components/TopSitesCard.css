@@ -26,11 +26,11 @@
   letter-spacing: 0.5px;
 }
 
-/* Limit selector menu - positioned absolute like period menu */
+/* Limit selector menu - positioned to the left of period menu */
 .top-sites-card__limit-menu {
   position: absolute;
   top: var(--space-sm);
-  left: var(--space-sm);
+  right: calc(var(--space-sm) + 70px); /* Period menu width + gap */
   z-index: 10;
 }
 
@@ -127,6 +127,29 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  max-height: 520px; /* Approximately 10 items */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: var(--space-xs); /* Space for scrollbar */
+}
+
+/* Custom scrollbar styling */
+.top-sites-card__list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.top-sites-card__list::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+}
+
+.top-sites-card__list::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: var(--radius-full);
+}
+
+.top-sites-card__list::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
 
 .top-sites-card__item {
