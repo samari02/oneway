@@ -11,9 +11,18 @@ fn greet(name: &str) -> String {
 
 /// Get browsing stats from local storage
 /// Called by React frontend to display insights
+/// period: "today" | "7days" | "30days" | "90days" | "all"
 #[tauri::command]
-fn get_browsing_stats() -> BrowsingStats {
-    browsing_data::get_browsing_stats()
+fn get_browsing_stats(period: Option<String>) -> BrowsingStats {
+    let period_days = match period.as_deref() {
+        Some("today") => Some(1),
+        Some("7days") => Some(7),
+        Some("30days") => Some(30),
+        Some("90days") => Some(90),
+        _ => None, // "all" or missing
+    };
+    
+    browsing_data::get_browsing_stats(period_days)
 }
 
 /// Clear all browsing data

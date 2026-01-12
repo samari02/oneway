@@ -258,9 +258,25 @@ impl BrowsingStorage {
     }
     
     /// Calculate browsing stats from stored data
-    pub fn calculate_stats(&self) -> BrowsingStats {
-        let visits = self.read_visits();
+    /// period_days: None = all data, Some(n) = last n days
+    pub fn calculate_stats(&self, period_days: Option<u32>) -> BrowsingStats {
+        let all_visits = self.read_visits();
         let blocks = self.read_block_events();
+        
+        // Filter visits by period
+        let visits = if let Some(days) = period_days {
+            let cutoff_time = chrono::Local::now()
+                .checked_sub_signed(chrono::Duration::days(days as i64))
+                .unwrap()
+                .timestamp_millis();
+            
+            all_visits
+                .into_iter()
+                .filter(|v| v.visit_time >= cutoff_time)
+                .collect()
+        } else {
+            all_visits
+        };
         
         // Count by category
         let mut productive_count = 0u32;
@@ -538,9 +554,10 @@ pub fn clear_browsing_data() -> Result<(), String> {
 }
 
 /// Get browsing stats for the frontend
-pub fn get_browsing_stats() -> BrowsingStats {
+/// period_days: None = all data, Some(n) = last n days
+pub fn get_browsing_stats(period_days: Option<u32>) -> BrowsingStats {
     if let Ok(storage) = STORAGE.lock() {
-        storage.calculate_stats()
+        storage.calculate_stats(period_days)
     } else {
         // Return empty stats on error
         BrowsingStats {

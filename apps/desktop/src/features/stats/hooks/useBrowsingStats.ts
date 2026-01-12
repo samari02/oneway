@@ -116,8 +116,10 @@ export function useBrowsingStats(userId?: string, period?: string) {
     setError(null)
 
     try {
-      // Call Rust backend via Tauri
-      const rustStats = await invoke<RustBrowsingStats>('get_browsing_stats')
+      // Call Rust backend via Tauri with period filter
+      const rustStats = await invoke<RustBrowsingStats>('get_browsing_stats', {
+        period: period || 'all'
+      })
       
       // Transform to frontend format
       const transformedStats = transformStats(rustStats)
