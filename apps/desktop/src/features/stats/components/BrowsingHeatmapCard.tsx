@@ -51,7 +51,6 @@ export function BrowsingHeatmapCard({ dailyScores, period, defaultPeriod, onPeri
       )}
       <div className="browsing-heatmap-card__header">
         <h3 className="browsing-heatmap-card__title">Focus Activity</h3>
-        <span className="browsing-heatmap-card__period">Last 30 days</span>
       </div>
 
       <div className="browsing-heatmap-card__grid">

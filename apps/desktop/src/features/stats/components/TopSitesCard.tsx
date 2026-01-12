@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { SiteVisit } from '../hooks/useBrowsingStats'
 import { CardPeriodMenu } from './CardPeriodMenu'
 import type { Period } from './PeriodSelector'
@@ -11,11 +11,29 @@ interface TopSitesCardProps {
   onPeriodChange?: (period: Period | null) => void
 }
 
+type DisplayLimit = 10 | 20 | 30
+
 export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: TopSitesCardProps) {
-  const [showAll, setShowAll] = useState(false)
+  const [displayLimit, setDisplayLimit] = useState<DisplayLimit>(10)
+  const [isLimitMenuOpen, setIsLimitMenuOpen] = useState(false)
+  const limitMenuRef = useRef<HTMLDivElement>(null)
   
-  const displayedSites = showAll ? sites : sites.slice(0, 5)
+  const displayedSites = sites.slice(0, displayLimit)
   const maxVisits = Math.max(...sites.map(s => s.visits))
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (limitMenuRef.current && !limitMenuRef.current.contains(event.target as Node)) {
+        setIsLimitMenuOpen(false)
+      }
+    }
+
+    if (isLimitMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isLimitMenuOpen])
 
   const getCategoryEmoji = (category: SiteVisit['category']) => {
     switch (category) {
@@ -43,14 +61,38 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: T
       )}
       <div className="top-sites-card__header">
         <h3 className="top-sites-card__title">Top Sites</h3>
-        {sites.length > 5 && (
-          <button 
-            className="top-sites-card__toggle"
-            onClick={() => setShowAll(!showAll)}
+        
+        {/* Limit selector */}
+        <div className="top-sites-card__limit-menu" ref={limitMenuRef}>
+          <button
+            className="top-sites-card__limit-trigger"
+            onClick={() => setIsLimitMenuOpen(!isLimitMenuOpen)}
           >
-            {showAll ? 'Show less' : `View all (${sites.length})`}
+            <span className="top-sites-card__limit-text">Top {displayLimit}</span>
+            <span className="top-sites-card__limit-icon">▼</span>
           </button>
-        )}
+
+          {isLimitMenuOpen && (
+            <div className="top-sites-card__limit-dropdown">
+              <div className="top-sites-card__limit-header">Display</div>
+              {[10, 20, 30].map((limit) => (
+                <button
+                  key={limit}
+                  className={`top-sites-card__limit-item ${
+                    displayLimit === limit ? 'top-sites-card__limit-item--active' : ''
+                  }`}
+                  onClick={() => {
+                    setDisplayLimit(limit as DisplayLimit)
+                    setIsLimitMenuOpen(false)
+                  }}
+                >
+                  Top {limit}
+                  {displayLimit === limit && <span className="top-sites-card__limit-check">✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="top-sites-card__list">

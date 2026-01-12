@@ -61,6 +61,11 @@
   pointer-events: none; /* Disable hover on mascots */
 }
 
+/* Disable floating animation on mini mascots */
+.time-distribution-card__legend-mascot .mini-mascot__blob {
+  animation: none !important;
+}
+
 .time-distribution-card__legend-content {
   display: flex;
   flex-direction: column;
