@@ -10,9 +10,10 @@
 
 .top-sites-card__header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: var(--space-md);
+  padding-top: var(--space-lg); /* Space for absolute positioned menus */
 }
 
 .top-sites-card__title {
@@ -25,9 +26,12 @@
   letter-spacing: 0.5px;
 }
 
-/* Limit selector menu */
+/* Limit selector menu - positioned absolute like period menu */
 .top-sites-card__limit-menu {
-  position: relative;
+  position: absolute;
+  top: var(--space-sm);
+  left: var(--space-sm);
+  z-index: 10;
 }
 
 .top-sites-card__limit-trigger {

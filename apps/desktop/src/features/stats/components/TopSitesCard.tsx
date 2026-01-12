@@ -19,7 +19,9 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: T
   const limitMenuRef = useRef<HTMLDivElement>(null)
   
   const displayedSites = sites.slice(0, displayLimit)
-  const maxVisits = Math.max(...sites.map(s => s.visits))
+  const maxVisits = Math.max(...displayedSites.map(s => s.visits), 1) // Ensure at least 1 to avoid division by 0
+  
+  console.log('[TopSitesCard] Total sites:', sites.length, 'Display limit:', displayLimit, 'Displayed:', displayedSites.length)
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -59,40 +61,41 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: T
           onPeriodChange={onPeriodChange}
         />
       )}
+      
+      {/* Limit selector - positioned absolute like period menu */}
+      <div className="top-sites-card__limit-menu" ref={limitMenuRef}>
+        <button
+          className="top-sites-card__limit-trigger"
+          onClick={() => setIsLimitMenuOpen(!isLimitMenuOpen)}
+        >
+          <span className="top-sites-card__limit-text">Top {displayLimit}</span>
+          <span className="top-sites-card__limit-icon">▼</span>
+        </button>
+
+        {isLimitMenuOpen && (
+          <div className="top-sites-card__limit-dropdown">
+            <div className="top-sites-card__limit-header">Display</div>
+            {[10, 20, 30].map((limit) => (
+              <button
+                key={limit}
+                className={`top-sites-card__limit-item ${
+                  displayLimit === limit ? 'top-sites-card__limit-item--active' : ''
+                }`}
+                onClick={() => {
+                  setDisplayLimit(limit as DisplayLimit)
+                  setIsLimitMenuOpen(false)
+                }}
+              >
+                Top {limit}
+                {displayLimit === limit && <span className="top-sites-card__limit-check">✓</span>}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      
       <div className="top-sites-card__header">
         <h3 className="top-sites-card__title">Top Sites</h3>
-        
-        {/* Limit selector */}
-        <div className="top-sites-card__limit-menu" ref={limitMenuRef}>
-          <button
-            className="top-sites-card__limit-trigger"
-            onClick={() => setIsLimitMenuOpen(!isLimitMenuOpen)}
-          >
-            <span className="top-sites-card__limit-text">Top {displayLimit}</span>
-            <span className="top-sites-card__limit-icon">▼</span>
-          </button>
-
-          {isLimitMenuOpen && (
-            <div className="top-sites-card__limit-dropdown">
-              <div className="top-sites-card__limit-header">Display</div>
-              {[10, 20, 30].map((limit) => (
-                <button
-                  key={limit}
-                  className={`top-sites-card__limit-item ${
-                    displayLimit === limit ? 'top-sites-card__limit-item--active' : ''
-                  }`}
-                  onClick={() => {
-                    setDisplayLimit(limit as DisplayLimit)
-                    setIsLimitMenuOpen(false)
-                  }}
-                >
-                  Top {limit}
-                  {displayLimit === limit && <span className="top-sites-card__limit-check">✓</span>}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
       <div className="top-sites-card__list">
