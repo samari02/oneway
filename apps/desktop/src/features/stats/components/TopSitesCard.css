@@ -10,8 +10,9 @@
 
 .top-sites-card__header {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  gap: var(--space-sm);
   margin-bottom: var(--space-md);
   padding-top: var(--space-lg); /* Space for absolute positioned menus */
 }
@@ -24,6 +25,55 @@
   margin: 0;
   text-transform: lowercase;
   letter-spacing: 0.5px;
+}
+
+/* Category filter pills */
+.top-sites-card__filters {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.top-sites-card__filter-pill {
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  background: var(--bg-tertiary);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.top-sites-card__filter-pill:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.top-sites-card__filter-pill--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg-primary);
+  font-weight: 600;
+}
+
+/* Category-specific active styles */
+.top-sites-card__filter-pill--productive.top-sites-card__filter-pill--active {
+  background: linear-gradient(135deg, #7DD8C4 0%, #5BB5A0 100%);
+  border-color: #5BB5A0;
+}
+
+.top-sites-card__filter-pill--neutral.top-sites-card__filter-pill--active {
+  background: linear-gradient(135deg, #A8B4C4 0%, #8E99A8 100%);
+  border-color: #8E99A8;
+}
+
+.top-sites-card__filter-pill--distraction.top-sites-card__filter-pill--active {
+  background: linear-gradient(135deg, #FF8A65 0%, #E74C3C 100%);
+  border-color: #E74C3C;
 }
 
 /* Limit selector menu - positioned to the left of period menu */

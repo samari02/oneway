@@ -12,16 +12,23 @@ interface TopSitesCardProps {
 }
 
 type DisplayLimit = 10 | 20 | 30
+type CategoryFilter = 'all' | 'productive' | 'neutral' | 'distraction'
 
 export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: TopSitesCardProps) {
   const [displayLimit, setDisplayLimit] = useState<DisplayLimit>(10)
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [isLimitMenuOpen, setIsLimitMenuOpen] = useState(false)
   const limitMenuRef = useRef<HTMLDivElement>(null)
   
-  const displayedSites = sites.slice(0, displayLimit)
+  // Filter by category first, then slice by limit
+  const filteredSites = categoryFilter === 'all' 
+    ? sites 
+    : sites.filter(s => s.category === categoryFilter)
+  
+  const displayedSites = filteredSites.slice(0, displayLimit)
   const maxVisits = Math.max(...displayedSites.map(s => s.visits), 1) // Ensure at least 1 to avoid division by 0
   
-  console.log('[TopSitesCard] Total sites:', sites.length, 'Display limit:', displayLimit, 'Displayed:', displayedSites.length)
+  console.log('[TopSitesCard] Total:', sites.length, 'Filtered:', filteredSites.length, 'Category:', categoryFilter, 'Limit:', displayLimit)
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -96,6 +103,21 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: T
       
       <div className="top-sites-card__header">
         <h3 className="top-sites-card__title">Top Sites</h3>
+        
+        {/* Category filter pills */}
+        <div className="top-sites-card__filters">
+          {(['all', 'productive', 'neutral', 'distraction'] as CategoryFilter[]).map((cat) => (
+            <button
+              key={cat}
+              className={`top-sites-card__filter-pill ${
+                categoryFilter === cat ? 'top-sites-card__filter-pill--active' : ''
+              } top-sites-card__filter-pill--${cat}`}
+              onClick={() => setCategoryFilter(cat)}
+            >
+              {cat === 'all' ? 'All' : cat === 'productive' ? '✨ Focus' : cat === 'neutral' ? '🌙 Neutral' : '🔥 Distraction'}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="top-sites-card__list">
