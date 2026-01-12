@@ -78,6 +78,7 @@ chrome.runtime.onStartup.addListener(() => {
 /**
  * Sync existing local history to desktop app
  * Called when extension starts and desktop connection is established
+ * Uses lastDesktopSync timestamp to avoid redundant syncs
  */
 async function syncExistingHistoryToDesktop() {
   // Wait a bit for connection to be established
@@ -88,11 +89,26 @@ async function syncExistingHistoryToDesktop() {
     return
   }
   
-  const { navigationHistory = [] } = await chrome.storage.local.get('navigationHistory')
+  const { navigationHistory = [], lastDesktopSync = 0 } = await chrome.storage.local.get([
+    'navigationHistory',
+    'lastDesktopSync'
+  ])
+  
+  // Only sync if we haven't synced in the last 5 minutes (avoid redundant syncs)
+  const SYNC_COOLDOWN = 5 * 60 * 1000 // 5 minutes
+  const now = Date.now()
+  
+  if (now - lastDesktopSync < SYNC_COOLDOWN) {
+    log('Skipping sync: already synced', Math.round((now - lastDesktopSync) / 1000), 'seconds ago')
+    return
+  }
   
   if (navigationHistory.length > 0) {
     log('Syncing existing history to desktop:', navigationHistory.length, 'visits')
-    sendHistorySync(navigationHistory)
+    await sendHistorySync(navigationHistory)
+    
+    // Update sync timestamp
+    await chrome.storage.local.set({ lastDesktopSync: now })
   } else {
     log('No existing history to sync')
   }
@@ -242,10 +258,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   if (message.type === 'IMPORT_HISTORY') {
     importHistory(message.data?.days || 30)
-      .then(visits => {
+      .then(async (visits) => {
         // Send to desktop app if connected
         if (isDesktopAppConnected()) {
-          sendHistorySync(visits)
+          await sendHistorySync(visits)
+          // Update sync timestamp to prevent redundant auto-sync
+          await chrome.storage.local.set({ lastDesktopSync: Date.now() })
           log('History imported and sent to desktop:', visits.length, 'visits')
         } else {
           log('History imported but desktop not connected:', visits.length, 'visits')

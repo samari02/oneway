@@ -152,21 +152,43 @@ impl BrowsingStorage {
         Ok(())
     }
     
-    /// Store multiple visits (batch import)
-    pub fn store_visits_batch(&self, visits: &[StoredVisit]) -> std::io::Result<()> {
+    /// Store multiple visits (batch import) with deduplication
+    pub fn store_visits_batch(&self, visits: &[StoredVisit]) -> std::io::Result<usize> {
+        // Read existing visits to check for duplicates
+        let existing = self.read_visits();
+        
+        // Create signature set for deduplication (domain:visitTime)
+        let existing_signatures: std::collections::HashSet<String> = existing
+            .iter()
+            .map(|v| format!("{}:{}", v.domain, v.visit_time))
+            .collect();
+        
+        // Filter out duplicates
+        let unique_visits: Vec<&StoredVisit> = visits
+            .iter()
+            .filter(|v| !existing_signatures.contains(&format!("{}:{}", v.domain, v.visit_time)))
+            .collect();
+        
+        if unique_visits.is_empty() {
+            eprintln!("[BrowsingData] No new visits to store (all {} duplicates)", visits.len());
+            return Ok(0);
+        }
+        
+        // Append only unique visits
         let path = self.visits_path();
         let mut file = OpenOptions::new()
             .create(true)
             .append(true)
             .open(&path)?;
         
-        for visit in visits {
+        for visit in &unique_visits {
             let json = serde_json::to_string(visit)?;
             writeln!(file, "{}", json)?;
         }
         
-        eprintln!("[BrowsingData] Stored {} visits (batch)", visits.len());
-        Ok(())
+        eprintln!("[BrowsingData] Stored {} new visits ({} duplicates skipped)", 
+            unique_visits.len(), visits.len() - unique_visits.len());
+        Ok(unique_visits.len())
     }
     
     /// Read all visits from storage
