@@ -1,0 +1,108 @@
+import { useState, useEffect } from 'react'
+import { invoke } from '@tauri-apps/api/core'
+import type { Period } from '../components/PeriodSelector'
+
+interface RustBrowsingStats {
+  focusScore: number
+  focusTrend: string
+  timeDistribution: {
+    productive: number
+    neutral: number
+    distraction: number
+  }
+  topSites: Array<{
+    domain: string
+    visits: number
+    timeSpent: number
+    category: string
+  }>
+  dailyScores: Array<{
+    date: string
+    score: number
+  }>
+  totalVisits: number
+  totalTimeTracked: number
+  periodStart?: string
+  periodEnd?: string
+  lastSync?: string
+}
+
+interface CardStats {
+  focusScore?: RustBrowsingStats
+  timeDistribution?: RustBrowsingStats
+  topSites?: RustBrowsingStats
+  heatmap?: RustBrowsingStats
+}
+
+export function useBrowsingStatsWithOverride(
+  userId: string | undefined,
+  defaultPeriod: Period,
+  cardPeriods: {
+    'focus-score': Period
+    'time-distribution': Period
+    'top-sites': Period
+    'heatmap': Period
+  }
+) {
+  const [cardStats, setCardStats] = useState<CardStats>({})
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  async function fetchAllCardStats() {
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Fetch stats for each card with its own period
+      const [focusScore, timeDistribution, topSites, heatmap] = await Promise.all([
+        invoke<RustBrowsingStats>('get_browsing_stats', {
+          period: cardPeriods['focus-score'] || 'all'
+        }),
+        invoke<RustBrowsingStats>('get_browsing_stats', {
+          period: cardPeriods['time-distribution'] || 'all'
+        }),
+        invoke<RustBrowsingStats>('get_browsing_stats', {
+          period: cardPeriods['top-sites'] || 'all'
+        }),
+        invoke<RustBrowsingStats>('get_browsing_stats', {
+          period: cardPeriods['heatmap'] || 'all'
+        }),
+      ])
+
+      setCardStats({
+        focusScore,
+        timeDistribution,
+        topSites,
+        heatmap,
+      })
+    } catch (err) {
+      console.error('[useBrowsingStatsWithOverride] Error fetching stats:', err)
+      setError(err instanceof Error ? err : new Error('Failed to fetch browsing stats'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!userId) return
+
+    fetchAllCardStats()
+
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchAllCardStats, 30000)
+
+    return () => clearInterval(interval)
+  }, [
+    userId,
+    cardPeriods['focus-score'],
+    cardPeriods['time-distribution'],
+    cardPeriods['top-sites'],
+    cardPeriods['heatmap'],
+  ])
+
+  const refetch = async () => {
+    await fetchAllCardStats()
+  }
+
+  return { cardStats, loading, error, refetch }
+}

@@ -4,19 +4,19 @@
 
 .card-period-menu__trigger {
   position: absolute;
-  top: var(--space-sm);
-  right: var(--space-sm);
+  top: var(--space-md);
+  right: var(--space-md);
   width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-elevated);
+  background: transparent;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   color: var(--text-muted);
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.5;
   transition: all var(--transition-fast);
   font-size: 18px;
   font-weight: 600;
@@ -28,15 +28,7 @@
   background: var(--bg-tertiary);
   border-color: var(--accent);
   color: var(--accent);
-  opacity: 1 !important;
-}
-
-/* Show on card hover */
-.focus-score-card:hover .card-period-menu__trigger,
-.time-distribution-card:hover .card-period-menu__trigger,
-.browsing-heatmap-card:hover .card-period-menu__trigger,
-.top-sites-card:hover .card-period-menu__trigger {
-  opacity: 0.6;
+  opacity: 1;
 }
 
 .card-period-menu__dropdown {
