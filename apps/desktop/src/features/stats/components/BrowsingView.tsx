@@ -1,5 +1,6 @@
 import { useAuth } from '../../auth'
 import { useBrowsingStats } from '../hooks/useBrowsingStats'
+import { useCardPeriods } from '../hooks/useCardPeriods'
 import { FocusScoreCard } from './FocusScoreCard'
 import { TimeDistributionCard } from './TimeDistributionCard'
 import { TopSitesCard } from './TopSitesCard'
@@ -16,6 +17,7 @@ interface BrowsingViewProps {
 export function BrowsingView({ period }: BrowsingViewProps) {
   const { user } = useAuth()
   const { stats, loading, error, refetch } = useBrowsingStats(user?.id, period)
+  const { getEffectivePeriod, setCardPeriod } = useCardPeriods(period)
 
   if (loading) {
     return (
@@ -79,7 +81,10 @@ export function BrowsingView({ period }: BrowsingViewProps) {
           <div className="browsing-view__hero-grid">
             <FocusScoreCard 
               score={stats.focusScore} 
-              trend={stats.focusTrend} 
+              trend={stats.focusTrend}
+              period={getEffectivePeriod('focus-score')}
+              defaultPeriod={period}
+              onPeriodChange={(p) => setCardPeriod('focus-score', p)}
             />
             <TimeDistributionCard 
               productive={stats.timeDistribution.productive}
@@ -87,6 +92,9 @@ export function BrowsingView({ period }: BrowsingViewProps) {
               distraction={stats.timeDistribution.distraction}
               totalMinutes={stats.totalTimeTracked}
               topSite={stats.topSites[0]?.domain}
+              period={getEffectivePeriod('time-distribution')}
+              defaultPeriod={period}
+              onPeriodChange={(p) => setCardPeriod('time-distribution', p)}
             />
           </div>
         </section>

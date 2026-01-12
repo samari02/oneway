@@ -8,7 +8,7 @@
   align-items: center;
   gap: var(--space-md);
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Changed from hidden to allow menu dropdown */
   box-shadow: var(--shadow-sm);
 }
 
@@ -126,4 +126,11 @@
   color: var(--text-muted);
   margin-top: var(--space-xs);
   text-align: center;
+}
+
+.focus-score-card__period-badge {
+  font-size: 10px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-left: var(--space-xs);
 }

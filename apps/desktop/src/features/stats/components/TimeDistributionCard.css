@@ -4,6 +4,8 @@
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: visible;
 }
 
 .time-distribution-card__title {
@@ -103,4 +105,10 @@
   border-top: 1px solid var(--border-light);
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+.time-distribution-card__period-badge {
+  font-size: 10px;
+  color: var(--accent);
+  font-weight: 600;
 }

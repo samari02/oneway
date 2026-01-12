@@ -1,0 +1,105 @@
+.card-period-menu {
+  position: relative;
+}
+
+.card-period-menu__trigger {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--transition-fast);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0;
+}
+
+.card-period-menu__trigger:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent);
+  color: var(--accent);
+  opacity: 1 !important;
+}
+
+/* Show on card hover */
+.focus-score-card:hover .card-period-menu__trigger,
+.time-distribution-card:hover .card-period-menu__trigger,
+.browsing-heatmap-card:hover .card-period-menu__trigger,
+.top-sites-card:hover .card-period-menu__trigger {
+  opacity: 0.6;
+}
+
+.card-period-menu__dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-xs);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  min-width: 160px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.card-period-menu__header {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-tertiary);
+}
+
+.card-period-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.card-period-menu__item:hover {
+  background: rgba(125, 216, 196, 0.1);
+}
+
+.card-period-menu__item--active {
+  background: rgba(125, 216, 196, 0.15);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.card-period-menu__item--reset {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.card-period-menu__check {
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.card-period-menu__divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: var(--space-xs) 0;
+}

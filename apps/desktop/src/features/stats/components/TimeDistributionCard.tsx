@@ -1,4 +1,6 @@
 import { MiniMascot } from './MiniMascot'
+import { CardPeriodMenu } from './CardPeriodMenu'
+import type { Period } from './PeriodSelector'
 import './TimeDistributionCard.css'
 
 interface TimeDistributionCardProps {
@@ -7,6 +9,9 @@ interface TimeDistributionCardProps {
   distraction: number
   totalMinutes?: number // Total time tracked in minutes
   topSite?: string // Top site visited
+  period?: Period
+  defaultPeriod: Period
+  onPeriodChange?: (period: Period | null) => void
 }
 
 function formatMinutes(minutes: number): string {
@@ -24,7 +29,7 @@ function getContextualMessage(productive: number, neutral: number, distraction: 
   return "Keep up the good work!"
 }
 
-export function TimeDistributionCard({ productive, neutral, distraction, totalMinutes = 0, topSite }: TimeDistributionCardProps) {
+export function TimeDistributionCard({ productive, neutral, distraction, totalMinutes = 0, topSite, period, defaultPeriod, onPeriodChange }: TimeDistributionCardProps) {
   // Calculate time for each category
   const productiveTime = Math.round((totalMinutes * productive) / 100)
   const neutralTime = Math.round((totalMinutes * neutral) / 100)
@@ -38,9 +43,32 @@ export function TimeDistributionCard({ productive, neutral, distraction, totalMi
 
   const contextualMessage = getContextualMessage(productive, neutral, distraction, topSite)
 
+  const getPeriodLabel = () => {
+    if (!period || period === defaultPeriod) return null
+    switch (period) {
+      case 'today': return 'Today'
+      case '7days': return '7d'
+      case '30days': return '30d'
+      case '90days': return '90d'
+      default: return null
+    }
+  }
+
   return (
     <div className="time-distribution-card">
-      <h3 className="time-distribution-card__title">Time Distribution</h3>
+      {onPeriodChange && (
+        <CardPeriodMenu
+          currentPeriod={period}
+          defaultPeriod={defaultPeriod}
+          onPeriodChange={onPeriodChange}
+        />
+      )}
+      <h3 className="time-distribution-card__title">
+        Time Distribution
+        {getPeriodLabel() && (
+          <span className="time-distribution-card__period-badge"> ({getPeriodLabel()})</span>
+        )}
+      </h3>
       
       {/* Visual bar */}
       <div className="time-distribution-card__bar">
