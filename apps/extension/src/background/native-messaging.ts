@@ -239,9 +239,13 @@ async function handleSyncRequest(data: { since: number }) {
  */
 export function sendNavigationEvent(visit: CategorizedVisit) {
   if (isConnected) {
+    // Sanitize: convert visitTime float to integer (Rust expects i64)
     sendToDesktop({
       type: 'NAVIGATION_EVENT',
-      data: visit
+      data: {
+        ...visit,
+        visitTime: Math.floor(visit.visitTime)
+      }
     })
   }
 }
@@ -273,15 +277,21 @@ export async function sendHistorySync(visits: CategorizedVisit[]) {
     return
   }
   
+  // Sanitize: convert visitTime floats to integers (Rust expects i64)
+  const sanitizedVisits = visits.map(v => ({
+    ...v,
+    visitTime: Math.floor(v.visitTime)
+  }))
+  
   // Native Messaging limit is ~1MB, each visit is ~200-300 bytes
   // Use batch size of 500 to be safe (~150KB per batch)
   const BATCH_SIZE = 500
-  const totalBatches = Math.ceil(visits.length / BATCH_SIZE)
+  const totalBatches = Math.ceil(sanitizedVisits.length / BATCH_SIZE)
   
-  log(`Sending ${visits.length} visits to desktop in ${totalBatches} batches`)
+  log(`Sending ${sanitizedVisits.length} visits to desktop in ${totalBatches} batches`)
   
-  for (let i = 0; i < visits.length; i += BATCH_SIZE) {
-    const batch = visits.slice(i, i + BATCH_SIZE)
+  for (let i = 0; i < sanitizedVisits.length; i += BATCH_SIZE) {
+    const batch = sanitizedVisits.slice(i, i + BATCH_SIZE)
     const batchNum = Math.floor(i / BATCH_SIZE) + 1
     
     log(`Sending batch ${batchNum}/${totalBatches} (${batch.length} visits)`)
@@ -297,7 +307,7 @@ export async function sendHistorySync(visits: CategorizedVisit[]) {
     }
   }
   
-  log(`History sync complete: ${visits.length} visits sent`)
+  log(`History sync complete: ${sanitizedVisits.length} visits sent`)
 }
 
 /**

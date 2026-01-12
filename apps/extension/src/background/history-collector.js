@@ -141,7 +141,7 @@ export async function importHistory(days = 30) {
                 url: sanitizeUrl(item.url), // Remove query params
                 domain,
                 title: sanitizeTitle(item.title),
-                visitTime: item.lastVisitTime || Date.now(),
+                visitTime: Math.floor(item.lastVisitTime || Date.now()), // Convert to integer for Rust
                 category,
                 isDistraction: isDistraction(category)
             };
