@@ -143,7 +143,12 @@ export function BrowsingView({ period }: BrowsingViewProps) {
         {/* Heatmap */}
         {cardStats.heatmap && (
           <section className="browsing-view__section browsing-view__section--heatmap">
-            <BrowsingHeatmapCard dailyScores={cardStats.heatmap.dailyScores} />
+            <BrowsingHeatmapCard 
+              dailyScores={cardStats.heatmap.dailyScores}
+              period={getEffectivePeriod('heatmap')}
+              defaultPeriod={period}
+              onPeriodChange={(p) => setCardPeriod('heatmap', p)}
+            />
           </section>
         )}
 
@@ -157,6 +162,9 @@ export function BrowsingView({ period }: BrowsingViewProps) {
                 timeSpent: site.timeSpent,
                 category: mapCategory(site.category),
               }))}
+              period={getEffectivePeriod('top-sites')}
+              defaultPeriod={period}
+              onPeriodChange={(p) => setCardPeriod('top-sites', p)}
             />
           </section>
         )}

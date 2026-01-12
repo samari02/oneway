@@ -34,6 +34,16 @@ export function CardPeriodMenu({ currentPeriod, onPeriodChange, defaultPeriod }:
   }, [isOpen])
 
   const activePeriod = currentPeriod || defaultPeriod
+  
+  const getPeriodLabel = (period: Period): string => {
+    switch (period) {
+      case 'today': return 'Today'
+      case '7days': return '7D'
+      case '30days': return '30D'
+      case '90days': return '90D'
+      default: return 'All'
+    }
+  }
 
   return (
     <div className="card-period-menu" ref={menuRef}>
@@ -42,7 +52,8 @@ export function CardPeriodMenu({ currentPeriod, onPeriodChange, defaultPeriod }:
         onClick={() => setIsOpen(!isOpen)}
         title="Change period"
       >
-        ⋮
+        <span className="card-period-menu__trigger-text">{getPeriodLabel(activePeriod)}</span>
+        <span className="card-period-menu__trigger-icon">▼</span>
       </button>
 
       {isOpen && (

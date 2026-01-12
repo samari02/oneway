@@ -1,12 +1,17 @@
 import { useState } from 'react'
 import type { SiteVisit } from '../hooks/useBrowsingStats'
+import { CardPeriodMenu } from './CardPeriodMenu'
+import type { Period } from './PeriodSelector'
 import './TopSitesCard.css'
 
 interface TopSitesCardProps {
   sites: SiteVisit[]
+  period?: Period
+  defaultPeriod: Period
+  onPeriodChange?: (period: Period | null) => void
 }
 
-export function TopSitesCard({ sites }: TopSitesCardProps) {
+export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: TopSitesCardProps) {
   const [showAll, setShowAll] = useState(false)
   
   const displayedSites = showAll ? sites : sites.slice(0, 5)
@@ -29,6 +34,13 @@ export function TopSitesCard({ sites }: TopSitesCardProps) {
 
   return (
     <div className="top-sites-card">
+      {onPeriodChange && (
+        <CardPeriodMenu
+          currentPeriod={period}
+          defaultPeriod={defaultPeriod}
+          onPeriodChange={onPeriodChange}
+        />
+      )}
       <div className="top-sites-card__header">
         <h3 className="top-sites-card__title">Top Sites</h3>
         {sites.length > 5 && (

@@ -2,33 +2,46 @@
   position: relative;
 }
 
-.card-period-menu__trigger {
+.card-period-menu {
   position: absolute;
-  top: var(--space-md);
-  right: var(--space-md);
-  width: 28px;
-  height: 28px;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  z-index: 10;
+}
+
+.card-period-menu__trigger {
+  min-width: 60px;
+  height: 26px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: transparent;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  padding: 0 var(--space-sm);
+  background: var(--bg-elevated);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
-  color: var(--text-muted);
+  color: var(--text-secondary);
   cursor: pointer;
-  opacity: 0.5;
   transition: all var(--transition-fast);
-  font-size: 18px;
+  font-size: 11px;
   font-weight: 600;
-  line-height: 1;
-  padding: 0;
 }
 
 .card-period-menu__trigger:hover {
   background: var(--bg-tertiary);
   border-color: var(--accent);
   color: var(--accent);
-  opacity: 1;
+}
+
+.card-period-menu__trigger-text {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.card-period-menu__trigger-icon {
+  font-size: 8px;
+  opacity: 0.6;
 }
 
 .card-period-menu__dropdown {

@@ -1,11 +1,16 @@
 import type { DailyFocusScore } from '../hooks/useBrowsingStats'
+import { CardPeriodMenu } from './CardPeriodMenu'
+import type { Period } from './PeriodSelector'
 import './BrowsingHeatmapCard.css'
 
 interface BrowsingHeatmapCardProps {
   dailyScores: DailyFocusScore[]
+  period?: Period
+  defaultPeriod: Period
+  onPeriodChange?: (period: Period | null) => void
 }
 
-export function BrowsingHeatmapCard({ dailyScores }: BrowsingHeatmapCardProps) {
+export function BrowsingHeatmapCard({ dailyScores, period, defaultPeriod, onPeriodChange }: BrowsingHeatmapCardProps) {
   const getScoreLevel = (score: number): number => {
     if (score >= 70) return 3 // green
     if (score >= 40) return 2 // yellow
@@ -37,6 +42,13 @@ export function BrowsingHeatmapCard({ dailyScores }: BrowsingHeatmapCardProps) {
 
   return (
     <div className="browsing-heatmap-card">
+      {onPeriodChange && (
+        <CardPeriodMenu
+          currentPeriod={period}
+          defaultPeriod={defaultPeriod}
+          onPeriodChange={onPeriodChange}
+        />
+      )}
       <div className="browsing-heatmap-card__header">
         <h3 className="browsing-heatmap-card__title">Focus Activity</h3>
         <span className="browsing-heatmap-card__period">Last 30 days</span>
