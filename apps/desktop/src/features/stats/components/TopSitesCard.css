@@ -23,6 +23,7 @@
   font-weight: 600;
   color: var(--text-secondary);
   margin: 0;
+  margin-bottom: var(--space-sm);
   text-transform: lowercase;
   letter-spacing: 0.5px;
 }
@@ -33,9 +34,13 @@
   gap: var(--space-xs);
   flex-wrap: wrap;
   justify-content: center;
+  margin-top: var(--space-xs);
 }
 
 .top-sites-card__filter-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   padding: 4px 10px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-light);
@@ -46,6 +51,25 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
+}
+
+/* Filter dot inside pills */
+.top-sites-card__filter-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.top-sites-card__filter-dot--productive {
+  background: #7DD8C4;
+}
+
+.top-sites-card__filter-dot--neutral {
+  background: #A8B4C4;
+}
+
+.top-sites-card__filter-dot--distraction {
+  background: #FF8A65;
 }
 
 .top-sites-card__filter-pill:hover {
@@ -249,8 +273,24 @@
   margin-bottom: 4px;
 }
 
-.top-sites-card__category-emoji {
-  font-size: 12px;
+/* Category dot indicator */
+.top-sites-card__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.top-sites-card__dot--productive {
+  background: linear-gradient(135deg, #7DD8C4 0%, #5BB5A0 100%);
+}
+
+.top-sites-card__dot--neutral {
+  background: linear-gradient(135deg, #A8B4C4 0%, #8E99A8 100%);
+}
+
+.top-sites-card__dot--distraction {
+  background: linear-gradient(135deg, #FF8A65 0%, #E74C3C 100%);
 }
 
 .top-sites-card__domain {

@@ -44,11 +44,12 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: T
     }
   }, [isLimitMenuOpen])
 
-  const getCategoryEmoji = (category: SiteVisit['category']) => {
+  // Category indicator dot color class
+  const getCategoryClass = (category: SiteVisit['category']) => {
     switch (category) {
-      case 'productive': return '✨'
-      case 'distraction': return '🔥'
-      default: return '🌙'
+      case 'productive': return 'top-sites-card__dot--productive'
+      case 'distraction': return 'top-sites-card__dot--distraction'
+      default: return 'top-sites-card__dot--neutral'
     }
   }
 
@@ -114,7 +115,8 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: T
               } top-sites-card__filter-pill--${cat}`}
               onClick={() => setCategoryFilter(cat)}
             >
-              {cat === 'all' ? 'All' : cat === 'productive' ? '✨ Focus' : cat === 'neutral' ? '🌙 Neutral' : '🔥 Distraction'}
+              {cat !== 'all' && <span className={`top-sites-card__filter-dot top-sites-card__filter-dot--${cat}`} />}
+              {cat === 'all' ? 'all' : cat === 'productive' ? 'focus' : cat}
             </button>
           ))}
         </div>
@@ -131,9 +133,7 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: T
             
             <div className="top-sites-card__info">
               <div className="top-sites-card__domain-row">
-                <span className="top-sites-card__category-emoji">
-                  {getCategoryEmoji(site.category)}
-                </span>
+                <span className={`top-sites-card__dot ${getCategoryClass(site.category)}`} />
                 <span className="top-sites-card__domain">{site.domain}</span>
               </div>
               

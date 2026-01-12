@@ -42,15 +42,15 @@ export function StatsView() {
             className={`stats-view__tab ${activeTab === 'habits' ? 'stats-view__tab--active' : ''}`}
             onClick={() => setActiveTab('habits')}
           >
-            <span className="stats-view__tab-icon">🌱</span>
-            <span>Habits</span>
+            <span className="stats-view__tab-icon">○</span>
+            <span>habits</span>
           </button>
           <button
             className={`stats-view__tab ${activeTab === 'browsing' ? 'stats-view__tab--active' : ''}`}
             onClick={() => setActiveTab('browsing')}
           >
-            <span className="stats-view__tab-icon">🔍</span>
-            <span>Browsing</span>
+            <span className="stats-view__tab-icon">◎</span>
+            <span>browsing</span>
           </button>
         </div>
 
