@@ -17,9 +17,9 @@
 
 .browsing-heatmap-card__title {
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   margin: 0;
   text-transform: lowercase;
   letter-spacing: 0.5px;

@@ -42,14 +42,19 @@ export function StatsView() {
             className={`stats-view__tab ${activeTab === 'habits' ? 'stats-view__tab--active' : ''}`}
             onClick={() => setActiveTab('habits')}
           >
-            <span className="stats-view__tab-icon">○</span>
+            <svg className="stats-view__tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2L12 6M12 18L12 22M4.93 4.93L7.76 7.76M16.24 16.24L19.07 19.07M2 12H6M18 12H22M4.93 19.07L7.76 16.24M16.24 7.76L19.07 4.93"/>
+            </svg>
             <span>habits</span>
           </button>
           <button
             className={`stats-view__tab ${activeTab === 'browsing' ? 'stats-view__tab--active' : ''}`}
             onClick={() => setActiveTab('browsing')}
           >
-            <span className="stats-view__tab-icon">◎</span>
+            <svg className="stats-view__tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
             <span>browsing</span>
           </button>
         </div>

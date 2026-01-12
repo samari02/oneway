@@ -19,9 +19,9 @@
 
 .top-sites-card__title {
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   margin: 0;
   margin-bottom: var(--space-sm);
   text-transform: lowercase;

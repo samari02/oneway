@@ -85,8 +85,9 @@
 }
 
 .focus-score-card__label {
-  font-size: 14px;
-  color: var(--text-secondary);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
   text-transform: lowercase;
   letter-spacing: 0.5px;
 }
