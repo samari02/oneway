@@ -52,8 +52,10 @@ export function SettingsView() {
     try {
       await invoke('clear_browsing_data')
       await fetchDataStats()
+      alert('✅ Browsing data cleared successfully!')
     } catch (e) {
       console.error('Failed to clear data:', e)
+      alert('❌ Failed to clear data: ' + e)
     } finally {
       setClearingData(false)
     }
@@ -171,7 +173,7 @@ export function SettingsView() {
         <button 
           className="settings-button settings-button--danger settings-button--small"
           onClick={handleClearData}
-          disabled={clearingData || !dataStats?.totalVisits}
+          disabled={clearingData}
         >
           {clearingData ? 'Clearing...' : 'Clear All Data'}
         </button>
