@@ -106,7 +106,7 @@ function transformStats(rust: RustBrowsingStats): BrowsingStats {
   }
 }
 
-export function useBrowsingStats(userId?: string) {
+export function useBrowsingStats(userId?: string, period?: string) {
   const [stats, setStats] = useState<BrowsingStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -144,7 +144,7 @@ export function useBrowsingStats(userId?: string) {
     const interval = setInterval(fetchStats, 30000)
     
     return () => clearInterval(interval)
-  }, [userId])
+  }, [userId, period])
 
   // Expose refetch for manual refresh
   const refetch = async () => {

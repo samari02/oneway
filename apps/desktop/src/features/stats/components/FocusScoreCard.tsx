@@ -49,6 +49,9 @@ export function FocusScoreCard({ score, trend }: FocusScoreCardProps) {
           <span className="focus-score-card__trend-icon">{getTrendIcon()}</span>
           <span className="focus-score-card__trend-label">{getTrendLabel()}</span>
         </div>
+        <div className="focus-score-card__explanation">
+          Based on productive vs distracting sites
+        </div>
       </div>
     </div>
   )

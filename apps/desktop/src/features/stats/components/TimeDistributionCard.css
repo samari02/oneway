@@ -56,6 +56,7 @@
 
 .time-distribution-card__legend-mascot {
   flex-shrink: 0;
+  pointer-events: none; /* Disable hover on mascots */
 }
 
 .time-distribution-card__legend-content {
@@ -86,4 +87,20 @@
 
 .time-distribution-card__legend-value--distraction {
   color: #FF8A65;
+}
+
+.time-distribution-card__legend-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Contextual message */
+.time-distribution-card__message {
+  text-align: center;
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-light);
+  font-size: 13px;
+  color: var(--text-secondary);
 }

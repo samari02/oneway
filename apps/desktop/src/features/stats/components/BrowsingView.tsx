@@ -6,11 +6,16 @@ import { TopSitesCard } from './TopSitesCard'
 import { BrowsingHeatmapCard } from './BrowsingHeatmapCard'
 import { DataSourceCard } from './DataSourceCard'
 import { Mascot, type MascotMood } from '../../mascot'
+import type { Period } from './PeriodSelector'
 import './BrowsingView.css'
 
-export function BrowsingView() {
+interface BrowsingViewProps {
+  period: Period
+}
+
+export function BrowsingView({ period }: BrowsingViewProps) {
   const { user } = useAuth()
-  const { stats, loading, error, refetch } = useBrowsingStats(user?.id)
+  const { stats, loading, error, refetch } = useBrowsingStats(user?.id, period)
 
   if (loading) {
     return (
@@ -80,6 +85,8 @@ export function BrowsingView() {
               productive={stats.timeDistribution.productive}
               neutral={stats.timeDistribution.neutral}
               distraction={stats.timeDistribution.distraction}
+              totalMinutes={stats.totalTimeTracked}
+              topSite={stats.topSites[0]?.domain}
             />
           </div>
         </section>

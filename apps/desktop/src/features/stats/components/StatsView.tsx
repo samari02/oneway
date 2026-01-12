@@ -7,12 +7,14 @@ import { CompletionBar } from './CompletionBar'
 import { HabitStatsCard } from './HabitStatsCard'
 import { Mascot, type MascotMood } from '../../mascot'
 import { BrowsingView } from './BrowsingView'
+import { PeriodSelector, type Period } from './PeriodSelector'
 import './StatsView.css'
 
 type TabType = 'habits' | 'browsing'
 
 export function StatsView() {
   const [activeTab, setActiveTab] = useState<TabType>('habits')
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('today')
   const { user } = useAuth()
   const { stats, loading, error } = useStats(user?.id)
 
@@ -51,18 +53,24 @@ export function StatsView() {
             <span>Browsing</span>
           </button>
         </div>
+
+        {/* Period Selector */}
+        <PeriodSelector selected={selectedPeriod} onChange={setSelectedPeriod} />
       </header>
 
-      {activeTab === 'habits' ? (
-        <HabitsContent 
-          stats={stats} 
-          loading={loading} 
-          error={error}
-          mascotMood={getMascotMood()}
-        />
-      ) : (
-        <BrowsingView />
-      )}
+      <div className="stats-view__tab-content">
+        {activeTab === 'habits' ? (
+          <HabitsContent 
+            stats={stats} 
+            loading={loading} 
+            error={error}
+            mascotMood={getMascotMood()}
+            period={selectedPeriod}
+          />
+        ) : (
+          <BrowsingView period={selectedPeriod} />
+        )}
+      </div>
     </div>
   )
 }
@@ -73,9 +81,10 @@ interface HabitsContentProps {
   loading: boolean
   error: Error | null
   mascotMood: MascotMood
+  period: Period
 }
 
-function HabitsContent({ stats, loading, error, mascotMood }: HabitsContentProps) {
+function HabitsContent({ stats, loading, error, mascotMood, period }: HabitsContentProps) {
   if (loading) {
     return (
       <div className="stats-view__loading">
