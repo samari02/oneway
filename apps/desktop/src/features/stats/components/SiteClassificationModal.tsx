@@ -132,9 +132,7 @@ export function SiteClassificationModal({
                           : ''
                       }`}
                       onClick={() => handleCategoryChange(site.domain, 'productive')}
-                    >
-                      {classifications[site.domain] === 'productive' ? '●' : '○'}
-                    </button>
+                    />
                   </td>
                   <td className="site-classification-modal__td-cat">
                     <button
@@ -144,9 +142,7 @@ export function SiteClassificationModal({
                           : ''
                       }`}
                       onClick={() => handleCategoryChange(site.domain, 'neutral')}
-                    >
-                      {classifications[site.domain] === 'neutral' ? '●' : '○'}
-                    </button>
+                    />
                   </td>
                   <td className="site-classification-modal__td-cat">
                     <button
@@ -156,9 +152,7 @@ export function SiteClassificationModal({
                           : ''
                       }`}
                       onClick={() => handleCategoryChange(site.domain, 'distraction')}
-                    >
-                      {classifications[site.domain] === 'distraction' ? '●' : '○'}
-                    </button>
+                    />
                   </td>
                 </tr>
               ))}

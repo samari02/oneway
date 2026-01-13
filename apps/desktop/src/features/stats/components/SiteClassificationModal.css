@@ -200,46 +200,35 @@
 }
 
 .site-classification-modal__radio {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-tertiary);
+  background: transparent;
   border: 2px solid var(--border-light);
-  font-size: 14px;
-  color: var(--border-light);
+  font-size: 0;
   cursor: pointer;
   border-radius: 50%;
-  transition: all 0.15s ease;
 }
 
 .site-classification-modal__radio:hover {
   border-color: var(--text-muted);
-  transform: scale(1.1);
-}
-
-.site-classification-modal__radio--active {
-  font-weight: bold;
-  transform: scale(1.1);
 }
 
 .site-classification-modal__radio--active.site-classification-modal__radio--productive {
-  background: linear-gradient(135deg, #7DD8C4 0%, #5BB5A0 100%);
+  background: #5BB5A0;
   border-color: #5BB5A0;
-  color: white;
 }
 
 .site-classification-modal__radio--active.site-classification-modal__radio--neutral {
-  background: linear-gradient(135deg, #A8B4C4 0%, #8E99A8 100%);
+  background: #8E99A8;
   border-color: #8E99A8;
-  color: white;
 }
 
 .site-classification-modal__radio--active.site-classification-modal__radio--distraction {
-  background: linear-gradient(135deg, #FF8A65 0%, #E74C3C 100%);
+  background: #E74C3C;
   border-color: #E74C3C;
-  color: white;
 }
 
 .site-classification-modal__footer {
