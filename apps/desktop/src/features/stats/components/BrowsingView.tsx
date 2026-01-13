@@ -122,15 +122,26 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
   }
 
   const handleClassificationSave = async (classifications: Record<string, SiteCategory>) => {
-    console.log('[BrowsingView] Saving classifications:', classifications)
+    console.log('[BrowsingView] ========== SAVE START ==========')
+    console.log('[BrowsingView] Received classifications:', classifications)
+    console.log('[BrowsingView] Type:', typeof classifications)
+    console.log('[BrowsingView] Keys:', Object.keys(classifications))
+    
+    if (Object.keys(classifications).length === 0) {
+      console.warn('[BrowsingView] Empty classifications object!')
+      return
+    }
+    
     try {
+      console.log('[BrowsingView] Calling invoke...')
       await invoke('save_site_classifications', { classifications })
-      console.log('[BrowsingView] Classifications saved successfully')
+      console.log('[BrowsingView] ✅ invoke() completed successfully')
       // Refetch to see updated stats
       refetch()
     } catch (e) {
-      console.error('[BrowsingView] Failed to save classifications:', e)
+      console.error('[BrowsingView] ❌ Failed to save:', e)
     }
+    console.log('[BrowsingView] ========== SAVE END ==========')
   }
 
   return (

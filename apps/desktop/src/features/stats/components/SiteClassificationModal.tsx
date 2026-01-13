@@ -79,6 +79,15 @@ export function SiteClassificationModal({
         toSave[domain] = category
       }
     })
+    
+    console.log('[Classification Modal] Current state:', classifications)
+    console.log('[Classification Modal] Saving:', toSave)
+    console.log('[Classification Modal] Count:', Object.keys(toSave).length)
+    
+    if (Object.keys(toSave).length === 0) {
+      console.warn('[Classification Modal] Nothing to save!')
+    }
+    
     onSave(toSave)
     onClose()
   }
