@@ -126,9 +126,9 @@
 
 /* Future days - dashed outline */
 .browsing-heatmap-card__square--future {
-  background: transparent;
-  border: 1px dashed var(--border-light);
-  opacity: 0.4;
+  background: rgba(125, 216, 196, 0.05);
+  border: 1.5px dashed var(--text-muted);
+  opacity: 0.5;
   cursor: default;
 }
 
