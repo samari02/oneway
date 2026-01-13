@@ -87,7 +87,7 @@
 /* Weeks container - responsive columns */
 .browsing-heatmap-card__weeks {
   display: flex;
-  gap: 4px;
+  gap: 3px;
 }
 
 /* Each week column - fills available space equally */
@@ -95,9 +95,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0; /* Allow shrinking */
-  max-width: 60px; /* Cap maximum size */
+  max-width: 28px; /* Smaller squares */
 }
 
 .browsing-heatmap-card__square {
