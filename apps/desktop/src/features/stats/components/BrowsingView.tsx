@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useAuth } from '../../auth'
 import { useBrowsingStatsWithOverride } from '../hooks/useBrowsingStatsWithOverride'
 import { useCardPeriods } from '../hooks/useCardPeriods'
@@ -31,11 +32,19 @@ function mapCategory(category: string): 'productive' | 'neutral' | 'distraction'
 
 interface BrowsingViewProps {
   period: Period
+  resetTrigger?: number
 }
 
-export function BrowsingView({ period }: BrowsingViewProps) {
+export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
   const { user } = useAuth()
-  const { getEffectivePeriod, setCardPeriod } = useCardPeriods(period)
+  const { getEffectivePeriod, setCardPeriod, resetAllOverrides } = useCardPeriods(period)
+  
+  // Reset all card overrides when global period is clicked
+  useEffect(() => {
+    if (resetTrigger > 0) {
+      resetAllOverrides()
+    }
+  }, [resetTrigger, resetAllOverrides])
   
   // Get effective periods for all cards
   const cardPeriods = {

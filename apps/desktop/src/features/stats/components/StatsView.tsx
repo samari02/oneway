@@ -15,8 +15,15 @@ type TabType = 'habits' | 'browsing'
 export function StatsView() {
   const [activeTab, setActiveTab] = useState<TabType>('habits')
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('today')
+  const [resetCounter, setResetCounter] = useState(0) // Increments on every global period click
   const { user } = useAuth()
   const { stats, loading, error } = useStats(user?.id)
+
+  // Handle global period change - always reset individual overrides
+  const handleGlobalPeriodChange = (period: Period) => {
+    setSelectedPeriod(period)
+    setResetCounter((c) => c + 1) // Trigger reset even if same period
+  }
 
   // Determine mascot mood based on stats
   const getMascotMood = (): MascotMood => {
@@ -60,7 +67,7 @@ export function StatsView() {
         </div>
 
         {/* Period Selector */}
-        <PeriodSelector selected={selectedPeriod} onChange={setSelectedPeriod} />
+        <PeriodSelector selected={selectedPeriod} onChange={handleGlobalPeriodChange} />
       </header>
 
       <div className="stats-view__tab-content">
@@ -73,7 +80,7 @@ export function StatsView() {
             period={selectedPeriod}
           />
         ) : (
-          <BrowsingView period={selectedPeriod} />
+          <BrowsingView period={selectedPeriod} resetTrigger={resetCounter} />
         )}
       </div>
     </div>

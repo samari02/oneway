@@ -123,10 +123,11 @@
 }
 
 .focus-score-card__explanation {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 12px;
+  color: var(--text-secondary);
   margin-top: var(--space-xs);
   text-align: center;
+  opacity: 0.9;
 }
 
 .focus-score-card__period-badge {
