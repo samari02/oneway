@@ -39,23 +39,40 @@
 .browsing-heatmap-card__day-labels {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 3px;
   font-size: 10px;
   color: var(--text-muted);
-  padding: 2px 0;
+  padding-top: 2px;
+  width: 28px;
+  flex-shrink: 0;
 }
 
-.browsing-heatmap-card__squares {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
+.browsing-heatmap-card__day-labels span {
+  height: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.browsing-heatmap-card__day-label--hidden {
+  visibility: hidden;
+}
+
+.browsing-heatmap-card__weeks {
+  display: flex;
   gap: 3px;
   flex: 1;
+  justify-content: flex-end;
+}
+
+.browsing-heatmap-card__week {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .browsing-heatmap-card__square {
-  aspect-ratio: 1;
-  min-width: 14px;
-  max-width: 20px;
+  width: 14px;
+  height: 14px;
   border-radius: 3px;
   position: relative;
   cursor: pointer;
@@ -63,8 +80,17 @@
 }
 
 .browsing-heatmap-card__square:hover {
-  transform: scale(1.2);
+  transform: scale(1.3);
   z-index: 10;
+}
+
+.browsing-heatmap-card__square--future {
+  background: transparent;
+  cursor: default;
+}
+
+.browsing-heatmap-card__square--future:hover {
+  transform: none;
 }
 
 .browsing-heatmap-card__square--level-0 {
