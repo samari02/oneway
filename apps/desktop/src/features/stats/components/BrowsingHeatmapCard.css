@@ -114,21 +114,36 @@
   z-index: 10;
 }
 
-.browsing-heatmap-card__square--future,
+/* Empty cells (padding at start/end of period) */
 .browsing-heatmap-card__square--empty {
   background: transparent;
   cursor: default;
 }
 
-.browsing-heatmap-card__square--future:hover,
 .browsing-heatmap-card__square--empty:hover {
   transform: none;
 }
 
-.browsing-heatmap-card__square--level-0 {
-  background: var(--bg-tertiary);
+/* Future days - dashed outline */
+.browsing-heatmap-card__square--future {
+  background: transparent;
+  border: 1px dashed var(--border-light);
+  opacity: 0.4;
+  cursor: default;
 }
 
+.browsing-heatmap-card__square--future:hover {
+  transform: none;
+}
+
+/* 0% score - empty with subtle border */
+.browsing-heatmap-card__square--level-0 {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  opacity: 0.6;
+}
+
+/* Has data but low score (1-39%) - red */
 .browsing-heatmap-card__square--level-1 {
   background: linear-gradient(135deg, #FF8A65 0%, #E74C3C 100%);
   box-shadow: 0 0 4px rgba(231, 76, 60, 0.3);
