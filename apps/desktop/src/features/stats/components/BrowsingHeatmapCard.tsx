@@ -10,8 +10,13 @@ interface BrowsingHeatmapCardProps {
   onPeriodChange?: (period: Period | null) => void
 }
 
-// Day of week: 0 = Sunday, 1 = Monday, etc.
+// Day of week labels (Mon-Sun)
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+interface WeekData {
+  days: { date: string; score: number }[]
+  monthLabel?: string // "Jan", "Feb", etc. - shown at first week of month
+}
 
 export function BrowsingHeatmapCard({ dailyScores, period, defaultPeriod, onPeriodChange }: BrowsingHeatmapCardProps) {
   const getScoreLevel = (score: number): number => {
@@ -22,13 +27,18 @@ export function BrowsingHeatmapCard({ dailyScores, period, defaultPeriod, onPeri
   }
 
   const formatDate = (dateString: string): string => {
-    const date = new Date(dateString)
+    const date = new Date(dateString + 'T12:00:00') // Avoid timezone issues
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
   const getDayName = (dateString: string): string => {
-    const date = new Date(dateString)
+    const date = new Date(dateString + 'T12:00:00')
     return date.toLocaleDateString('en-US', { weekday: 'short' })
+  }
+
+  const getMonthName = (dateString: string): string => {
+    const date = new Date(dateString + 'T12:00:00')
+    return date.toLocaleDateString('en-US', { month: 'short' })
   }
 
   // Build a map of date -> score for quick lookup
@@ -37,40 +47,62 @@ export function BrowsingHeatmapCard({ dailyScores, period, defaultPeriod, onPeri
     scoreMap.set(day.date, day.score)
   })
 
-  // Generate grid: 7 rows (Mon-Sun) x N columns (weeks)
-  // Start from today and go back
+  // Find the date range from data
   const today = new Date()
-  const numWeeks = Math.ceil(dailyScores.length / 7) || 4
+  today.setHours(12, 0, 0, 0) // Normalize to noon to avoid timezone issues
   
-  // Build weeks array (each week is a column)
-  const weeks: { date: string; score: number }[][] = []
+  // Sort daily scores by date to find range
+  const sortedDates = dailyScores
+    .map(d => d.date)
+    .sort((a, b) => a.localeCompare(b))
   
-  // Find the start of the period (go back numWeeks * 7 days from today)
-  const startDate = new Date(today)
-  startDate.setDate(startDate.getDate() - (numWeeks * 7 - 1))
+  // If no data, show last 4 weeks
+  const oldestDate = sortedDates.length > 0 
+    ? new Date(sortedDates[0] + 'T12:00:00')
+    : new Date(today.getTime() - 27 * 24 * 60 * 60 * 1000) // 4 weeks ago
   
-  // Adjust to start on Monday
+  // Start from oldest date, aligned to Monday
+  const startDate = new Date(oldestDate)
   const dayOfWeek = startDate.getDay() // 0 = Sunday
   const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
   startDate.setDate(startDate.getDate() - daysToMonday)
   
+  // Calculate number of weeks needed
+  const msPerDay = 24 * 60 * 60 * 1000
+  const daysDiff = Math.ceil((today.getTime() - startDate.getTime()) / msPerDay)
+  const numWeeks = Math.ceil(daysDiff / 7) + 1
+  
   // Build week columns
+  const weeks: WeekData[] = []
+  let lastMonth = ''
+  
   for (let week = 0; week < numWeeks; week++) {
     const weekData: { date: string; score: number }[] = []
+    let weekMonthLabel: string | undefined = undefined
+    
     for (let day = 0; day < 7; day++) {
       const currentDate = new Date(startDate)
       currentDate.setDate(startDate.getDate() + week * 7 + day)
       const dateStr = currentDate.toISOString().split('T')[0]
       const score = scoreMap.get(dateStr) ?? 0
       
-      // Don't show future dates
+      // Check if this is first day of a new month (for label)
+      if (day === 0) {
+        const monthName = getMonthName(dateStr)
+        if (monthName !== lastMonth) {
+          weekMonthLabel = monthName
+          lastMonth = monthName
+        }
+      }
+      
+      // Mark future dates
       if (currentDate > today) {
         weekData.push({ date: dateStr, score: -1 }) // -1 = future
       } else {
         weekData.push({ date: dateStr, score })
       }
     }
-    weeks.push(weekData)
+    weeks.push({ days: weekData, monthLabel: weekMonthLabel })
   }
 
   return (
@@ -86,11 +118,25 @@ export function BrowsingHeatmapCard({ dailyScores, period, defaultPeriod, onPeri
         <h3 className="browsing-heatmap-card__title">focus activity</h3>
       </div>
 
+      {/* Month labels row */}
+      <div className="browsing-heatmap-card__month-row">
+        <div className="browsing-heatmap-card__month-spacer" /> {/* Space for day labels */}
+        <div className="browsing-heatmap-card__months">
+          {weeks.map((week, i) => (
+            <div key={i} className="browsing-heatmap-card__month-cell">
+              {week.monthLabel && (
+                <span className="browsing-heatmap-card__month-label">{week.monthLabel}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="browsing-heatmap-card__grid">
         {/* Day labels (rows) */}
         <div className="browsing-heatmap-card__day-labels">
           {DAY_LABELS.map((day, i) => (
-            <span key={day} className={i % 2 === 0 ? '' : 'browsing-heatmap-card__day-label--hidden'}>
+            <span key={day} className={i % 2 === 1 ? 'browsing-heatmap-card__day-label--hidden' : ''}>
               {day}
             </span>
           ))}
@@ -100,7 +146,7 @@ export function BrowsingHeatmapCard({ dailyScores, period, defaultPeriod, onPeri
         <div className="browsing-heatmap-card__weeks">
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="browsing-heatmap-card__week">
-              {week.map((day, dayIndex) => (
+              {week.days.map((day) => (
                 <div
                   key={day.date}
                   className={`browsing-heatmap-card__square ${

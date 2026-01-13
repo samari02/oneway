@@ -30,6 +30,37 @@
   color: var(--text-muted);
 }
 
+/* Month labels row */
+.browsing-heatmap-card__month-row {
+  display: flex;
+  margin-bottom: 4px;
+}
+
+.browsing-heatmap-card__month-spacer {
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.browsing-heatmap-card__months {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+}
+
+.browsing-heatmap-card__month-cell {
+  width: 14px;
+  font-size: 10px;
+  color: var(--text-muted);
+  position: relative;
+}
+
+.browsing-heatmap-card__month-label {
+  position: absolute;
+  left: 0;
+  white-space: nowrap;
+}
+
+/* Main grid */
 .browsing-heatmap-card__grid {
   display: flex;
   gap: var(--space-sm);
@@ -42,7 +73,6 @@
   gap: 3px;
   font-size: 10px;
   color: var(--text-muted);
-  padding-top: 2px;
   width: 28px;
   flex-shrink: 0;
 }
@@ -61,7 +91,6 @@
   display: flex;
   gap: 3px;
   flex: 1;
-  justify-content: flex-end;
 }
 
 .browsing-heatmap-card__week {
