@@ -99,13 +99,19 @@ export function SiteClassificationModal({
                 <th className="site-classification-modal__th-site">Site</th>
                 <th className="site-classification-modal__th-visits">Visits</th>
                 <th className="site-classification-modal__th-cat site-classification-modal__th-productive">
-                  <span className="site-classification-modal__icon site-classification-modal__icon--productive">★</span>
+                  <span className="site-classification-modal__label site-classification-modal__label--productive">
+                    🎯 Focus
+                  </span>
                 </th>
                 <th className="site-classification-modal__th-cat site-classification-modal__th-neutral">
-                  <span className="site-classification-modal__icon site-classification-modal__icon--neutral">◇</span>
+                  <span className="site-classification-modal__label site-classification-modal__label--neutral">
+                    ⚪ Neutral
+                  </span>
                 </th>
                 <th className="site-classification-modal__th-cat site-classification-modal__th-distraction">
-                  <span className="site-classification-modal__icon site-classification-modal__icon--distraction">✕</span>
+                  <span className="site-classification-modal__label site-classification-modal__label--distraction">
+                    🔥 Distraction
+                  </span>
                 </th>
               </tr>
             </thead>
