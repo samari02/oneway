@@ -3,12 +3,14 @@ import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '@/features/auth'
 import { supabase } from '@/lib/supabase'
 import { getApiKey, setApiKey, removeApiKey, hasApiKey } from '@/lib/openai'
+import { SiteClassificationModal, type SiteClassification, type SiteCategory } from '@/features/stats/components/SiteClassificationModal'
 import './SettingsView.css'
 
 interface DataStats {
   totalVisits: number
   periodStart?: string
   periodEnd?: string
+  topSites?: Array<{ domain: string; visits: number; category: string }>
 }
 
 export function SettingsView() {
@@ -19,6 +21,7 @@ export function SettingsView() {
   const [showApiKey, setShowApiKey] = useState(false)
   const [dataStats, setDataStats] = useState<DataStats | null>(null)
   const [clearingData, setClearingData] = useState(false)
+  const [isClassificationModalOpen, setIsClassificationModalOpen] = useState(false)
 
   useEffect(() => {
     setHasKey(hasApiKey())
@@ -33,15 +36,26 @@ export function SettingsView() {
 
   const fetchDataStats = async () => {
     try {
-      const stats = await invoke<{ totalVisits: number; periodStart?: string; periodEnd?: string }>('get_browsing_stats')
+      const stats = await invoke<{ 
+        totalVisits: number
+        periodStart?: string
+        periodEnd?: string 
+        topSites?: Array<{ domain: string; visits: number; category: string }>
+      }>('get_browsing_stats')
       setDataStats({
         totalVisits: stats.totalVisits,
         periodStart: stats.periodStart,
         periodEnd: stats.periodEnd,
+        topSites: stats.topSites,
       })
     } catch (e) {
       console.error('Failed to fetch data stats:', e)
     }
+  }
+
+  const handleClassificationSave = (classifications: Record<string, SiteCategory>) => {
+    console.log('[Settings] Classifications saved:', classifications)
+    // TODO: Save to Rust backend and refresh data
   }
 
   const handleClearData = async () => {
@@ -167,16 +181,38 @@ export function SettingsView() {
         </div>
 
         <p className="settings-section__hint">
-          💡 To import more history, use the "Re-import History" button in the Clarity browser extension popup.
+          To import more history, use the "Re-import History" button in the Clarity browser extension popup.
         </p>
 
-        <button 
-          className="settings-button settings-button--danger settings-button--small"
-          onClick={handleClearData}
-          disabled={clearingData}
-        >
-          {clearingData ? 'Clearing...' : 'Clear All Data'}
-        </button>
+        <div className="settings-section__actions">
+          <button 
+            className="settings-button settings-button--secondary settings-button--small"
+            onClick={() => setIsClassificationModalOpen(true)}
+          >
+            <span className="settings-button__icon">★</span>
+            Manage Site Classification
+          </button>
+          
+          <button 
+            className="settings-button settings-button--danger settings-button--small"
+            onClick={handleClearData}
+            disabled={clearingData}
+          >
+            {clearingData ? 'Clearing...' : 'Clear All Data'}
+          </button>
+        </div>
+
+        {/* Classification modal */}
+        <SiteClassificationModal
+          isOpen={isClassificationModalOpen}
+          onClose={() => setIsClassificationModalOpen(false)}
+          sites={(dataStats?.topSites || []).map((s): SiteClassification => ({
+            domain: s.domain,
+            visits: s.visits,
+            category: s.category === 'productive' || s.category === 'distraction' ? s.category : 'neutral'
+          }))}
+          onSave={handleClassificationSave}
+        />
       </section>
 
       {/* Blocked Sites Section (Coming Soon) */}

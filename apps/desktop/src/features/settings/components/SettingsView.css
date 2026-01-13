@@ -259,3 +259,33 @@
   font-size: var(--font-size-xs);
   color: var(--color-mint);
 }
+
+/* Section actions row */
+.settings-section__actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-top: var(--space-sm);
+}
+
+/* Secondary button style */
+.settings-button--secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.settings-button--secondary:hover {
+  background: rgba(125, 216, 196, 0.1);
+  border-color: var(--color-mint);
+  color: var(--color-mint);
+}
+
+.settings-button__icon {
+  color: var(--color-mint);
+  font-size: 14px;
+}

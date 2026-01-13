@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import type { SiteVisit } from '../hooks/useBrowsingStats'
 import { CardPeriodMenu } from './CardPeriodMenu'
 import type { Period } from './PeriodSelector'
+import { SiteClassificationModal, type SiteClassification, type SiteCategory } from './SiteClassificationModal'
 import './TopSitesCard.css'
 
 interface TopSitesCardProps {
@@ -9,15 +10,17 @@ interface TopSitesCardProps {
   period?: Period
   defaultPeriod: Period
   onPeriodChange?: (period: Period | null) => void
+  onClassificationSave?: (classifications: Record<string, SiteCategory>) => void
 }
 
 type DisplayLimit = 10 | 20 | 30
 type CategoryFilter = 'all' | 'productive' | 'neutral' | 'distraction'
 
-export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: TopSitesCardProps) {
+export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onClassificationSave }: TopSitesCardProps) {
   const [displayLimit, setDisplayLimit] = useState<DisplayLimit>(10)
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [isLimitMenuOpen, setIsLimitMenuOpen] = useState(false)
+  const [isClassificationModalOpen, setIsClassificationModalOpen] = useState(false)
   const limitMenuRef = useRef<HTMLDivElement>(null)
   
   // Filter by category first, then slice by limit
@@ -152,6 +155,30 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange }: T
           </div>
         ))}
       </div>
+
+      {/* Improve classification button */}
+      <button
+        className="top-sites-card__classify-btn"
+        onClick={() => setIsClassificationModalOpen(true)}
+      >
+        <span className="top-sites-card__classify-icon">★</span>
+        Improve classification
+      </button>
+
+      {/* Classification modal */}
+      <SiteClassificationModal
+        isOpen={isClassificationModalOpen}
+        onClose={() => setIsClassificationModalOpen(false)}
+        sites={sites.map((s): SiteClassification => ({
+          domain: s.domain,
+          visits: s.visits,
+          category: s.category === 'productive' || s.category === 'distraction' ? s.category : 'neutral'
+        }))}
+        onSave={(classifications) => {
+          console.log('[TopSitesCard] Classifications saved:', classifications)
+          onClassificationSave?.(classifications)
+        }}
+      />
     </div>
   )
 }

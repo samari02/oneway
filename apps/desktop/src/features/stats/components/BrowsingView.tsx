@@ -10,6 +10,7 @@ import { DataSourceCard } from './DataSourceCard'
 import { Mascot, type MascotMood } from '../../mascot'
 import type { Period } from './PeriodSelector'
 import type { SiteVisit } from '../hooks/useBrowsingStats'
+import type { SiteCategory } from './SiteClassificationModal'
 import './BrowsingView.css'
 
 // Map Rust category to frontend category
@@ -108,15 +109,22 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
   const getMascotMessage = () => {
     const score = cardStats.focusScore?.focusScore || stats.focusScore
     if (score >= 80) {
-      return "Incredible focus today! You're crushing it! 💎"
+      return "Incredible focus today! You're crushing it!"
     }
     if (score >= 60) {
-      return "Good balance! A few less distractions and you'll be golden ✨"
+      return "Good balance! A few less distractions and you'll be golden"
     }
     if (score >= 40) {
-      return "Room for improvement! Try blocking some distracting sites 🌱"
+      return "Room for improvement! Try blocking some distracting sites"
     }
-    return "Let's work on reducing those distractions together 🤝"
+    return "Let's work on reducing those distractions together"
+  }
+
+  const handleClassificationSave = (classifications: Record<string, SiteCategory>) => {
+    console.log('[BrowsingView] Classifications saved:', classifications)
+    // TODO: Persist to Rust backend
+    // For now, just refetch to see updated data (if backend saves it)
+    refetch()
   }
 
   return (
@@ -174,6 +182,7 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
               period={getEffectivePeriod('top-sites')}
               defaultPeriod={period}
               onPeriodChange={(p) => setCardPeriod('top-sites', p)}
+              onClassificationSave={handleClassificationSave}
             />
           </section>
         )}
