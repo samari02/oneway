@@ -113,12 +113,14 @@
   z-index: 10;
 }
 
-.browsing-heatmap-card__square--future {
+.browsing-heatmap-card__square--future,
+.browsing-heatmap-card__square--empty {
   background: transparent;
   cursor: default;
 }
 
-.browsing-heatmap-card__square--future:hover {
+.browsing-heatmap-card__square--future:hover,
+.browsing-heatmap-card__square--empty:hover {
   transform: none;
 }
 
