@@ -172,7 +172,7 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
         sites={sites.map((s): SiteClassification => ({
           domain: s.domain,
           visits: s.visits,
-          category: s.category === 'productive' || s.category === 'distraction' ? s.category : 'neutral'
+          category: null // Start unclassified - user must explicitly choose
         }))}
         onSave={(classifications) => {
           console.log('[TopSitesCard] Classifications saved:', classifications)

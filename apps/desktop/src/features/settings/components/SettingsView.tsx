@@ -216,7 +216,7 @@ export function SettingsView() {
           sites={(dataStats?.topSites || []).map((s): SiteClassification => ({
             domain: s.domain,
             visits: s.visits,
-            category: s.category === 'productive' || s.category === 'distraction' ? s.category : 'neutral'
+            category: null // Start unclassified - modal loads existing from backend
           }))}
           onSave={handleClassificationSave}
         />

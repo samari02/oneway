@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import './SiteClassificationModal.css'
 
 export type SiteCategory = 'productive' | 'neutral' | 'distraction'
@@ -23,15 +24,43 @@ export function SiteClassificationModal({
   onSave 
 }: SiteClassificationModalProps) {
   const [classifications, setClassifications] = useState<Record<string, SiteCategory | null>>({})
+  const [loading, setLoading] = useState(true)
   
-  // Initialize classifications from props
+  // Load existing classifications from backend when modal opens
   useEffect(() => {
-    const initial: Record<string, SiteCategory | null> = {}
-    sites.forEach(site => {
-      initial[site.domain] = site.category
-    })
-    setClassifications(initial)
-  }, [sites])
+    if (!isOpen) return
+    
+    const loadExisting = async () => {
+      setLoading(true)
+      try {
+        const existing = await invoke<Record<string, string>>('get_site_classifications')
+        
+        // Initialize with null for all sites, then override with existing classifications
+        const initial: Record<string, SiteCategory | null> = {}
+        sites.forEach(site => {
+          const savedCategory = existing[site.domain]
+          if (savedCategory === 'productive' || savedCategory === 'neutral' || savedCategory === 'distraction') {
+            initial[site.domain] = savedCategory
+          } else {
+            initial[site.domain] = null // Not classified yet
+          }
+        })
+        setClassifications(initial)
+      } catch (e) {
+        console.error('[Classification] Failed to load existing:', e)
+        // Fallback: all null
+        const initial: Record<string, SiteCategory | null> = {}
+        sites.forEach(site => {
+          initial[site.domain] = null
+        })
+        setClassifications(initial)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadExisting()
+  }, [isOpen, sites])
 
   if (!isOpen) return null
 
