@@ -260,12 +260,11 @@
 }
 
 .site-classification-modal__btn--save {
-  background: var(--accent-mint);
+  background: #5BB5A0;
   border: none;
-  color: var(--bg-primary);
+  color: white;
 }
 
 .site-classification-modal__btn--save:hover {
-  background: var(--accent-mint-dark, #5bc4a8);
-  transform: translateY(-1px);
+  background: #4A9A87;
 }

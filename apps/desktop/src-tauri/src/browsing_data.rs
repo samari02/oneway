@@ -40,6 +40,15 @@ pub struct StoredBlockEvent {
     pub timestamp: i64,
 }
 
+/// User classification override for a domain
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserClassification {
+    pub domain: String,
+    pub category: String,  // "productive" | "neutral" | "distraction"
+    #[serde(rename = "updatedAt")]
+    pub updated_at: i64,
+}
+
 /// Aggregated stats for a domain
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DomainStats {
@@ -120,6 +129,36 @@ impl BrowsingStorage {
     /// Path to block events file
     fn blocks_path(&self) -> PathBuf {
         self.data_dir.join("blocks.jsonl")
+    }
+    
+    /// Path to user classifications file
+    fn classifications_path(&self) -> PathBuf {
+        self.data_dir.join("classifications.json")
+    }
+    
+    /// Read user classifications
+    pub fn read_classifications(&self) -> std::collections::HashMap<String, String> {
+        let path = self.classifications_path();
+        
+        if !path.exists() {
+            return std::collections::HashMap::new();
+        }
+        
+        match fs::read_to_string(&path) {
+            Ok(content) => {
+                serde_json::from_str(&content).unwrap_or_default()
+            }
+            Err(_) => std::collections::HashMap::new()
+        }
+    }
+    
+    /// Save user classifications (domain -> category)
+    pub fn save_classifications(&self, classifications: &std::collections::HashMap<String, String>) -> std::io::Result<()> {
+        let path = self.classifications_path();
+        let json = serde_json::to_string_pretty(classifications)?;
+        fs::write(&path, json)?;
+        eprintln!("[BrowsingData] Saved {} classifications", classifications.len());
+        Ok(())
     }
     
     /// Append a visit to storage (fast, append-only)
@@ -262,6 +301,7 @@ impl BrowsingStorage {
     pub fn calculate_stats(&self, period_days: Option<u32>) -> BrowsingStats {
         let all_visits = self.read_visits();
         let blocks = self.read_block_events();
+        let user_classifications = self.read_classifications();
         
         // Filter visits by period
         let visits = if let Some(days) = period_days {
@@ -294,22 +334,31 @@ impl BrowsingStorage {
         let mut max_time: i64 = 0;
         
         for visit in &visits {
-            // Category counts
-            match visit.category.as_str() {
-                "work" | "dev" | "productivity" => productive_count += 1,
-                "social_media" | "video" | "entertainment" | "news" | "shopping" => distraction_count += 1,
+            // Get effective category (user override > default)
+            let effective_category = user_classifications
+                .get(&visit.domain)
+                .cloned()
+                .unwrap_or_else(|| visit.category.clone());
+            
+            // Category counts based on effective category
+            match effective_category.as_str() {
+                "productive" | "work" | "dev" | "productivity" => productive_count += 1,
+                "distraction" | "social_media" | "video" | "entertainment" | "news" | "shopping" => distraction_count += 1,
                 _ => neutral_count += 1,
             }
             
-            // Domain counts
-            let entry = domain_counts.entry(visit.domain.clone()).or_insert((0, visit.category.clone()));
+            // Domain counts (use effective category)
+            let entry = domain_counts.entry(visit.domain.clone()).or_insert((0, effective_category.clone()));
             entry.0 += 1;
             
-            // Daily tracking
+            // Daily tracking (based on effective category)
             let date = timestamp_to_date(visit.visit_time);
             let daily = daily_visits.entry(date).or_insert((0, 0));
             daily.1 += 1;
-            if !visit.is_distraction {
+            // Count as productive if not distraction
+            let is_productive = matches!(effective_category.as_str(), 
+                "productive" | "work" | "dev" | "productivity" | "neutral" | "other");
+            if is_productive {
                 daily.0 += 1;
             }
             
@@ -576,5 +625,28 @@ pub fn get_browsing_stats(period_days: Option<u32>) -> BrowsingStats {
             period_end: None,
             last_sync: None,
         }
+    }
+}
+
+/// Save user site classifications
+pub fn save_site_classifications(classifications: std::collections::HashMap<String, String>) -> Result<(), String> {
+    if let Ok(storage) = STORAGE.lock() {
+        // Merge with existing classifications
+        let mut existing = storage.read_classifications();
+        for (domain, category) in classifications {
+            existing.insert(domain, category);
+        }
+        storage.save_classifications(&existing).map_err(|e| e.to_string())
+    } else {
+        Err("Failed to acquire lock".to_string())
+    }
+}
+
+/// Get user site classifications
+pub fn get_site_classifications() -> std::collections::HashMap<String, String> {
+    if let Ok(storage) = STORAGE.lock() {
+        storage.read_classifications()
+    } else {
+        std::collections::HashMap::new()
     }
 }

@@ -53,9 +53,16 @@ export function SettingsView() {
     }
   }
 
-  const handleClassificationSave = (classifications: Record<string, SiteCategory>) => {
-    console.log('[Settings] Classifications saved:', classifications)
-    // TODO: Save to Rust backend and refresh data
+  const handleClassificationSave = async (classifications: Record<string, SiteCategory>) => {
+    console.log('[Settings] Saving classifications:', classifications)
+    try {
+      await invoke('save_site_classifications', { classifications })
+      console.log('[Settings] Classifications saved successfully')
+      // Refresh data stats
+      await fetchDataStats()
+    } catch (e) {
+      console.error('[Settings] Failed to save classifications:', e)
+    }
   }
 
   const handleClearData = async () => {

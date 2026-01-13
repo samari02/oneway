@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '../../auth'
 import { useBrowsingStatsWithOverride } from '../hooks/useBrowsingStatsWithOverride'
 import { useCardPeriods } from '../hooks/useCardPeriods'
@@ -120,11 +121,16 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
     return "Let's work on reducing those distractions together"
   }
 
-  const handleClassificationSave = (classifications: Record<string, SiteCategory>) => {
-    console.log('[BrowsingView] Classifications saved:', classifications)
-    // TODO: Persist to Rust backend
-    // For now, just refetch to see updated data (if backend saves it)
-    refetch()
+  const handleClassificationSave = async (classifications: Record<string, SiteCategory>) => {
+    console.log('[BrowsingView] Saving classifications:', classifications)
+    try {
+      await invoke('save_site_classifications', { classifications })
+      console.log('[BrowsingView] Classifications saved successfully')
+      // Refetch to see updated stats
+      refetch()
+    } catch (e) {
+      console.error('[BrowsingView] Failed to save classifications:', e)
+    }
   }
 
   return (

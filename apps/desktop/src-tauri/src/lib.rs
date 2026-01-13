@@ -32,6 +32,19 @@ fn clear_browsing_data() -> Result<(), String> {
     browsing_data::clear_browsing_data()
 }
 
+/// Save user site classifications
+/// classifications: { "domain.com": "productive" | "neutral" | "distraction" }
+#[tauri::command]
+fn save_site_classifications(classifications: std::collections::HashMap<String, String>) -> Result<(), String> {
+    browsing_data::save_site_classifications(classifications)
+}
+
+/// Get user site classifications
+#[tauri::command]
+fn get_site_classifications() -> std::collections::HashMap<String, String> {
+    browsing_data::get_site_classifications()
+}
+
 /// Check if running as native messaging host
 pub fn is_native_host_mode() -> bool {
     std::env::args().any(|arg| arg == "--native-host")
@@ -46,7 +59,13 @@ pub fn run_as_native_host() {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, get_browsing_stats, clear_browsing_data])
+        .invoke_handler(tauri::generate_handler![
+            greet, 
+            get_browsing_stats, 
+            clear_browsing_data,
+            save_site_classifications,
+            get_site_classifications
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
