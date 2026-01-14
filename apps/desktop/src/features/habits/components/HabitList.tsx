@@ -19,8 +19,8 @@ type ViewMode = 'list' | 'visual' | 'calendar'
 
 // Calendar constants
 const HOUR_HEIGHT = 60 // pixels per hour (increased for better visibility)
-const START_HOUR = 6 // 6am
-const END_HOUR = 22 // 10pm
+const START_HOUR = 0 // midnight
+const END_HOUR = 24 // midnight (full day)
 const TOTAL_HOURS = END_HOUR - START_HOUR
 const GRID_HEIGHT = TOTAL_HOURS * HOUR_HEIGHT
 const GRID_PADDING = 10 // Top padding so first hour is visible
@@ -155,6 +155,17 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
       hoursColumnRef.current.scrollTop = e.currentTarget.scrollTop
     }
   }, [])
+
+  // Auto-scroll to 7am when calendar view is shown
+  useEffect(() => {
+    if (viewMode === 'calendar' && calendarScrollRef.current) {
+      const scrollTo7am = 7 * HOUR_HEIGHT // 7am position
+      calendarScrollRef.current.scrollTop = scrollTo7am
+      if (hoursColumnRef.current) {
+        hoursColumnRef.current.scrollTop = scrollTo7am
+      }
+    }
+  }, [viewMode])
 
   // Get the display time for sorting (scheduled_time for habits, time_start for boundaries)
   const getDisplayTime = (habit: Habit) => {
