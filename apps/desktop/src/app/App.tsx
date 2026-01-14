@@ -96,6 +96,30 @@ function TodayView() {
     toggleHabit(habitId, user.id)
   }
 
+  // Create habit from calendar drag
+  const handleCreateHabitFromDrag = async (time: string, duration: number) => {
+    if (!user) return
+    await create({
+      user_id: user.id,
+      name: 'New habit',
+      icon: '✨',
+      scheduled_time: time,
+      duration_minutes: duration,
+      is_required: false,
+      time_of_day: 'anytime',
+      habit_type: 'do',
+    })
+    refetchHabits()
+    // Open edit modal for the newly created habit
+    // TODO: get the new habit ID and open edit modal
+  }
+
+  // Update habit time from calendar drag
+  const handleUpdateHabitTime = async (habitId: string, newTime: string) => {
+    await update(habitId, { scheduled_time: newTime })
+    refetchHabits()
+  }
+
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'short',
@@ -259,6 +283,8 @@ function TodayView() {
               onEdit={setEditingHabit}
               onDelete={handleDeleteHabit}
               onMarkViolated={handleMarkViolated}
+              onCreateHabit={handleCreateHabitFromDrag}
+              onUpdateHabitTime={handleUpdateHabitTime}
             />
 
             <button 

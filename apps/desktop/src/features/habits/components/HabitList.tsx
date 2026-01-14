@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { Habit } from '@oneway/shared'
 import { HabitItem } from './HabitItem'
 import './HabitList.css'
@@ -11,14 +11,20 @@ interface HabitListProps {
   onEdit?: (habit: Habit) => void
   onDelete?: (habitId: string) => void
   onMarkViolated?: (habitId: string) => void
+  onCreateHabit?: (time: string, duration: number) => void
+  onUpdateHabitTime?: (habitId: string, newTime: string) => void
 }
 
 type ViewMode = 'list' | 'visual' | 'calendar'
 
 // Calendar constants
-const HOUR_HEIGHT = 50 // pixels per hour
+const HOUR_HEIGHT = 60 // pixels per hour (increased for better visibility)
 const START_HOUR = 6 // 6am
 const END_HOUR = 22 // 10pm
+const TOTAL_HOURS = END_HOUR - START_HOUR
+const GRID_HEIGHT = TOTAL_HOURS * HOUR_HEIGHT
+const SNAP_MINUTES = 15 // Snap to 15-minute increments
+const SNAP_HEIGHT = (SNAP_MINUTES / 60) * HOUR_HEIGHT // 15px per 15 minutes
 
 function getCurrentTime() {
   const now = new Date()
@@ -31,9 +37,17 @@ function timeToMinutes(time: string): number {
   return h * 60 + m
 }
 
-export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDelete, onMarkViolated }: HabitListProps) {
+export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDelete, onMarkViolated, onCreateHabit, onUpdateHabitTime }: HabitListProps) {
   const [currentTime, setCurrentTime] = useState(getCurrentTime)
   const [viewMode, setViewMode] = useState<ViewMode>('visual') // Timeline view by default
+  
+  // Drag state for calendar
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState<{ y: number; time: string } | null>(null)
+  const [dragEnd, setDragEnd] = useState<{ y: number; time: string } | null>(null)
+  const [draggingHabit, setDraggingHabit] = useState<string | null>(null)
+  const [dragOffset, setDragOffset] = useState(0)
+  const calendarGridRef = useRef<HTMLDivElement>(null)
 
   // Update current time every minute
   useEffect(() => {
@@ -42,6 +56,95 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
     }, 60000)
     return () => clearInterval(interval)
   }, [])
+
+  // Snap Y position to 15-minute grid
+  const snapY = useCallback((y: number): number => {
+    const snapped = Math.round(y / SNAP_HEIGHT) * SNAP_HEIGHT
+    return Math.max(0, Math.min(GRID_HEIGHT, snapped))
+  }, [])
+
+  // Convert Y position to time string (already snapped)
+  const yToTime = useCallback((y: number): string => {
+    const snappedY = snapY(y)
+    const minutes = (snappedY / HOUR_HEIGHT) * 60 + START_HOUR * 60
+    const hours = Math.floor(minutes / 60)
+    const mins = Math.round(minutes % 60)
+    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
+  }, [snapY])
+
+  // Handle mouse down on calendar grid (start drag to create)
+  const handleGridMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!calendarGridRef.current) return
+    // Ignore if clicking on a habit block
+    if ((e.target as HTMLElement).closest('.habit-list__calendar-block')) return
+    
+    const rect = calendarGridRef.current.getBoundingClientRect()
+    const rawY = e.clientY - rect.top
+    const snappedY = snapY(rawY)
+    const time = yToTime(snappedY)
+    
+    setIsDragging(true)
+    setDragStart({ y: snappedY, time })
+    setDragEnd({ y: snappedY, time })
+  }, [yToTime, snapY])
+
+  // Handle mouse move during drag
+  const handleGridMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!calendarGridRef.current) return
+    
+    const rect = calendarGridRef.current.getBoundingClientRect()
+    const rawY = Math.max(0, Math.min(GRID_HEIGHT, e.clientY - rect.top))
+    const snappedY = snapY(rawY)
+    const time = yToTime(snappedY)
+    
+    if (isDragging && dragStart) {
+      setDragEnd({ y: snappedY, time })
+    }
+    
+    if (draggingHabit) {
+      const habitRawY = rawY - dragOffset
+      const habitSnappedY = snapY(habitRawY)
+      setDragEnd({ y: habitSnappedY, time: yToTime(habitSnappedY) })
+    }
+  }, [isDragging, dragStart, draggingHabit, dragOffset, yToTime, snapY])
+
+  // Handle mouse up (end drag)
+  const handleGridMouseUp = useCallback(() => {
+    if (isDragging && dragStart && dragEnd && onCreateHabit) {
+      const startMinutes = timeToMinutes(dragStart.time)
+      const endMinutes = timeToMinutes(dragEnd.time)
+      const duration = Math.abs(endMinutes - startMinutes)
+      
+      if (duration >= 15) { // Minimum 15 minutes
+        const startTime = startMinutes < endMinutes ? dragStart.time : dragEnd.time
+        onCreateHabit(startTime, duration)
+      }
+    }
+    
+    if (draggingHabit && dragEnd && onUpdateHabitTime) {
+      onUpdateHabitTime(draggingHabit, dragEnd.time)
+    }
+    
+    setIsDragging(false)
+    setDragStart(null)
+    setDragEnd(null)
+    setDraggingHabit(null)
+  }, [isDragging, dragStart, dragEnd, draggingHabit, onCreateHabit, onUpdateHabitTime])
+
+  // Handle habit drag start
+  const handleHabitDragStart = useCallback((e: React.MouseEvent, habitId: string, habitTop: number) => {
+    e.stopPropagation()
+    if (!calendarGridRef.current) return
+    
+    const rect = calendarGridRef.current.getBoundingClientRect()
+    const y = e.clientY - rect.top
+    const offset = y - habitTop
+    const snappedTop = snapY(habitTop)
+    
+    setDraggingHabit(habitId)
+    setDragOffset(offset)
+    setDragEnd({ y: snappedTop, time: yToTime(snappedTop) })
+  }, [yToTime, snapY])
 
   // Get the display time for sorting (scheduled_time for habits, time_start for boundaries)
   const getDisplayTime = (habit: Habit) => {
@@ -149,22 +252,51 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
       {/* Calendar View */}
       {viewMode === 'calendar' && (
         <div className="habit-list__calendar">
-          {/* Hour grid */}
-          <div className="habit-list__calendar-grid">
-            {/* Hour labels and lines */}
-            {Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => {
+          {/* Hour labels column */}
+          <div className="habit-list__calendar-hours">
+            {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => {
               const hour = START_HOUR + i
               return (
                 <div 
                   key={hour} 
-                  className="habit-list__calendar-hour"
-                  style={{ height: `${HOUR_HEIGHT}px` }}
+                  className="habit-list__calendar-hour-label"
+                  style={{ top: `${i * HOUR_HEIGHT}px` }}
                 >
-                  <span className="habit-list__calendar-hour-label">
-                    {String(hour).padStart(2, '0')}:00
-                  </span>
-                  <div className="habit-list__calendar-hour-line" />
+                  {String(hour).padStart(2, '0')}:00
                 </div>
+              )
+            })}
+          </div>
+
+          {/* Main grid area */}
+          <div 
+            className={`habit-list__calendar-grid ${isDragging || draggingHabit ? 'habit-list__calendar-grid--dragging' : ''}`}
+            ref={calendarGridRef}
+            style={{ height: `${GRID_HEIGHT}px` }}
+            onMouseDown={handleGridMouseDown}
+            onMouseMove={handleGridMouseMove}
+            onMouseUp={handleGridMouseUp}
+            onMouseLeave={handleGridMouseUp}
+          >
+            {/* Hour lines */}
+            {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => (
+              <div 
+                key={`hour-${i}`} 
+                className="habit-list__calendar-hour-line"
+                style={{ top: `${i * HOUR_HEIGHT}px` }}
+              />
+            ))}
+
+            {/* 15-minute gridlines (subtle) */}
+            {Array.from({ length: TOTAL_HOURS * 4 }, (_, i) => {
+              // Skip lines that overlap with hour lines (0, 4, 8, ...)
+              if (i % 4 === 0) return null
+              return (
+                <div 
+                  key={`quarter-${i}`} 
+                  className="habit-list__calendar-quarter-line"
+                  style={{ top: `${i * SNAP_HEIGHT}px` }}
+                />
               )
             })}
 
@@ -189,40 +321,22 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
               return null
             })()}
 
-            {/* Habit blocks */}
-            {doHabits.map(habit => {
-              if (!habit.scheduled_time) return null
-              
-              const habitMinutes = timeToMinutes(habit.scheduled_time)
-              const startMinutes = START_HOUR * 60
-              const endMinutes = END_HOUR * 60
-              
-              // Skip if outside visible range
-              if (habitMinutes < startMinutes || habitMinutes > endMinutes) return null
-              
-              const topPosition = ((habitMinutes - startMinutes) / 60) * HOUR_HEIGHT
-              const duration = habit.duration_minutes || 30
-              const height = (duration / 60) * HOUR_HEIGHT
-              const isChecked = checkedIds.has(habit.id)
-              
-              return (
-                <div
-                  key={habit.id}
-                  className={`habit-list__calendar-block ${isChecked ? 'habit-list__calendar-block--done' : ''}`}
-                  style={{ 
-                    top: `${topPosition}px`,
-                    height: `${Math.max(height, 30)}px`
-                  }}
-                  onClick={() => isChecked ? onUncheck(habit.id) : onCheck(habit.id)}
-                >
-                  <span className="habit-list__calendar-block-icon">{habit.icon || '✨'}</span>
-                  <span className="habit-list__calendar-block-name">{habit.name}</span>
-                  {isChecked && <span className="habit-list__calendar-block-check">✓</span>}
-                </div>
-              )
-            })}
+            {/* Drag preview (creating new habit) */}
+            {isDragging && dragStart && dragEnd && (
+              <div
+                className="habit-list__calendar-drag-preview"
+                style={{
+                  top: `${Math.min(dragStart.y, dragEnd.y)}px`,
+                  height: `${Math.abs(dragEnd.y - dragStart.y)}px`
+                }}
+              >
+                <span className="habit-list__calendar-drag-time">
+                  {dragStart.y < dragEnd.y ? dragStart.time : dragEnd.time} → {dragStart.y < dragEnd.y ? dragEnd.time : dragStart.time}
+                </span>
+              </div>
+            )}
 
-            {/* Boundary blocks */}
+            {/* Boundary blocks (background) */}
             {boundaries.map(b => {
               if (!b.time_start || !b.time_end) return null
               
@@ -231,7 +345,6 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
               const gridStart = START_HOUR * 60
               const gridEnd = END_HOUR * 60
               
-              // Clamp to visible range
               const visibleStart = Math.max(startMin, gridStart)
               const visibleEnd = Math.min(endMin, gridEnd)
               
@@ -245,13 +358,55 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
                 <div
                   key={b.id}
                   className={`habit-list__calendar-boundary ${isActive ? 'habit-list__calendar-boundary--active' : ''}`}
-                  style={{ 
-                    top: `${topPosition}px`,
-                    height: `${height}px`
-                  }}
+                  style={{ top: `${topPosition}px`, height: `${height}px` }}
                 >
                   <span className="habit-list__calendar-boundary-icon">{b.icon || '🛡️'}</span>
                   <span className="habit-list__calendar-boundary-name">{b.name}</span>
+                </div>
+              )
+            })}
+
+            {/* Habit blocks */}
+            {doHabits.map(habit => {
+              if (!habit.scheduled_time) return null
+              
+              const habitMinutes = timeToMinutes(habit.scheduled_time)
+              const startMinutes = START_HOUR * 60
+              const endMinutes = END_HOUR * 60
+              
+              if (habitMinutes < startMinutes || habitMinutes > endMinutes) return null
+              
+              let topPosition = ((habitMinutes - startMinutes) / 60) * HOUR_HEIGHT
+              const duration = habit.duration_minutes || 30
+              const height = (duration / 60) * HOUR_HEIGHT
+              const isChecked = checkedIds.has(habit.id)
+              const isBeingDragged = draggingHabit === habit.id
+              
+              // Use drag position if being dragged
+              if (isBeingDragged && dragEnd) {
+                topPosition = dragEnd.y
+              }
+              
+              return (
+                <div
+                  key={habit.id}
+                  className={`habit-list__calendar-block ${isChecked ? 'habit-list__calendar-block--done' : ''} ${isBeingDragged ? 'habit-list__calendar-block--dragging' : ''}`}
+                  style={{ 
+                    top: `${topPosition}px`,
+                    height: `${Math.max(height, 30)}px`
+                  }}
+                  onClick={(e) => {
+                    if (!isBeingDragged) {
+                      e.stopPropagation()
+                      isChecked ? onUncheck(habit.id) : onCheck(habit.id)
+                    }
+                  }}
+                  onMouseDown={(e) => handleHabitDragStart(e, habit.id, topPosition)}
+                >
+                  <span className="habit-list__calendar-block-icon">{habit.icon || '✨'}</span>
+                  <span className="habit-list__calendar-block-name">{habit.name}</span>
+                  <span className="habit-list__calendar-block-time">{habit.scheduled_time}</span>
+                  {isChecked && <span className="habit-list__calendar-block-check">✓</span>}
                 </div>
               )
             })}
