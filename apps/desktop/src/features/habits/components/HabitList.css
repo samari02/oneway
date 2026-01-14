@@ -512,22 +512,15 @@
   background: var(--bg-secondary);
 }
 
-/* Hour labels column - scrolls with grid */
+/* Hour labels column - synced with grid scroll (not directly scrollable) */
 .habit-list__calendar-hours {
   position: relative;
   width: 50px;
   flex-shrink: 0;
   background: var(--bg-tertiary);
   border-right: 1px solid var(--border-light);
-  overflow-y: auto;
-  overflow-x: hidden;
-  /* Hide scrollbar but allow scroll sync */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.habit-list__calendar-hours::-webkit-scrollbar {
-  display: none;
+  overflow: hidden;
+  pointer-events: none; /* Prevent direct scroll on hours column */
 }
 
 .habit-list__calendar-hours-inner {
@@ -539,9 +532,9 @@
   left: 0;
   right: 8px;
   text-align: right;
-  font-size: 10px;
-  font-weight: var(--font-weight-medium);
-  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
   transform: translateY(-50%);
   background: var(--bg-tertiary);
   padding: 2px 0;
