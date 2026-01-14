@@ -506,7 +506,7 @@
   position: relative;
   display: flex;
   overflow: hidden;
-  max-height: 500px;
+  max-height: 700px;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   background: var(--bg-secondary);
@@ -519,7 +519,15 @@
   flex-shrink: 0;
   background: var(--bg-tertiary);
   border-right: 1px solid var(--border-light);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Hide scrollbar but allow scroll sync */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.habit-list__calendar-hours::-webkit-scrollbar {
+  display: none;
 }
 
 .habit-list__calendar-hours-inner {

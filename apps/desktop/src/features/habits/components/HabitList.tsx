@@ -23,6 +23,7 @@ const START_HOUR = 6 // 6am
 const END_HOUR = 22 // 10pm
 const TOTAL_HOURS = END_HOUR - START_HOUR
 const GRID_HEIGHT = TOTAL_HOURS * HOUR_HEIGHT
+const GRID_PADDING = 10 // Top padding so first hour is visible
 const SNAP_MINUTES = 15 // Snap to 15-minute increments
 const SNAP_HEIGHT = (SNAP_MINUTES / 60) * HOUR_HEIGHT // 15px per 15 minutes
 
@@ -263,14 +264,14 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
         <div className="habit-list__calendar">
           {/* Hour labels column - syncs with scroll */}
           <div className="habit-list__calendar-hours" ref={hoursColumnRef}>
-            <div className="habit-list__calendar-hours-inner" style={{ height: `${GRID_HEIGHT}px` }}>
+            <div className="habit-list__calendar-hours-inner" style={{ height: `${GRID_HEIGHT + GRID_PADDING * 2}px` }}>
               {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => {
                 const hour = START_HOUR + i
                 return (
                   <div 
                     key={hour} 
                     className="habit-list__calendar-hour-label"
-                    style={{ top: `${i * HOUR_HEIGHT}px` }}
+                    style={{ top: `${GRID_PADDING + i * HOUR_HEIGHT}px` }}
                   >
                     {String(hour).padStart(2, '0')}:00
                   </div>
@@ -289,7 +290,7 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
             <div 
               className={`habit-list__calendar-grid ${isDragging || draggingHabit ? 'habit-list__calendar-grid--dragging' : ''}`}
               ref={calendarGridRef}
-              style={{ height: `${GRID_HEIGHT}px` }}
+              style={{ height: `${GRID_HEIGHT + GRID_PADDING * 2}px` }}
               onMouseDown={handleGridMouseDown}
               onMouseMove={handleGridMouseMove}
               onMouseUp={handleGridMouseUp}
@@ -300,7 +301,7 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
               <div 
                 key={`hour-${i}`} 
                 className="habit-list__calendar-hour-line"
-                style={{ top: `${i * HOUR_HEIGHT}px` }}
+                style={{ top: `${GRID_PADDING + i * HOUR_HEIGHT}px` }}
               />
             ))}
 
@@ -312,7 +313,7 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
                 <div 
                   key={`quarter-${i}`} 
                   className="habit-list__calendar-quarter-line"
-                  style={{ top: `${i * SNAP_HEIGHT}px` }}
+                  style={{ top: `${GRID_PADDING + i * SNAP_HEIGHT}px` }}
                 />
               )
             })}
@@ -323,7 +324,7 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
               const startMinutes = START_HOUR * 60
               const endMinutes = END_HOUR * 60
               if (nowMinutes >= startMinutes && nowMinutes <= endMinutes) {
-                const topPosition = ((nowMinutes - startMinutes) / 60) * HOUR_HEIGHT
+                const topPosition = GRID_PADDING + ((nowMinutes - startMinutes) / 60) * HOUR_HEIGHT
                 return (
                   <div 
                     className="habit-list__calendar-now"
@@ -343,7 +344,7 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
               <div
                 className="habit-list__calendar-drag-preview"
                 style={{
-                  top: `${Math.min(dragStart.y, dragEnd.y)}px`,
+                  top: `${GRID_PADDING + Math.min(dragStart.y, dragEnd.y)}px`,
                   height: `${Math.abs(dragEnd.y - dragStart.y)}px`
                 }}
               >
@@ -367,7 +368,7 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
               
               if (visibleStart >= visibleEnd) return null
               
-              const topPosition = ((visibleStart - gridStart) / 60) * HOUR_HEIGHT
+              const topPosition = GRID_PADDING + ((visibleStart - gridStart) / 60) * HOUR_HEIGHT
               const height = ((visibleEnd - visibleStart) / 60) * HOUR_HEIGHT
               const isActive = activeBoundaries.some(ab => ab.id === b.id)
               
@@ -393,15 +394,15 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
               
               if (habitMinutes < startMinutes || habitMinutes > endMinutes) return null
               
-              let topPosition = ((habitMinutes - startMinutes) / 60) * HOUR_HEIGHT
+              let topPosition = GRID_PADDING + ((habitMinutes - startMinutes) / 60) * HOUR_HEIGHT
               const duration = habit.duration_minutes || 30
               const height = (duration / 60) * HOUR_HEIGHT
               const isChecked = checkedIds.has(habit.id)
               const isBeingDragged = draggingHabit === habit.id
               
-              // Use drag position if being dragged
+              // Use drag position if being dragged (already includes padding from snap)
               if (isBeingDragged && dragEnd) {
-                topPosition = dragEnd.y
+                topPosition = GRID_PADDING + dragEnd.y
               }
               
               return (
