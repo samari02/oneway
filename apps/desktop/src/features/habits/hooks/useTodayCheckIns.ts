@@ -2,6 +2,15 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { getTodayCheckIns, checkHabit, uncheckHabit } from '../api/habits'
 import type { HabitCheckIn } from '@oneway/shared'
 
+/** Get today's date in local timezone as YYYY-MM-DD */
+function getLocalToday(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 interface UseTodayCheckInsResult {
   checkIns: HabitCheckIn[]
   checkedIds: Set<string>
@@ -74,7 +83,7 @@ export function useTodayCheckIns(userId: string | undefined): UseTodayCheckInsRe
         id: `temp-${habitId}-${Date.now()}`,
         habit_id: habitId,
         user_id: visibleUserId,
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalToday(),
         completed_at: new Date().toISOString(),
       }
       const newCheckIns = [...currentCheckIns, optimisticCheckIn]

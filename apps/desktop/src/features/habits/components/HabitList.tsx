@@ -13,7 +13,12 @@ interface HabitListProps {
   onMarkViolated?: (habitId: string) => void
 }
 
-type ViewMode = 'list' | 'visual'
+type ViewMode = 'list' | 'visual' | 'calendar'
+
+// Calendar constants
+const HOUR_HEIGHT = 50 // pixels per hour
+const START_HOUR = 6 // 6am
+const END_HOUR = 22 // 10pm
 
 function getCurrentTime() {
   const now = new Date()
@@ -26,14 +31,9 @@ function timeToMinutes(time: string): number {
   return h * 60 + m
 }
 
-// Calculate block height based on duration (1 hour = 60px)
-function durationToHeight(minutes: number): number {
-  return Math.max(40, minutes) // Minimum 40px
-}
-
 export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDelete, onMarkViolated }: HabitListProps) {
   const [currentTime, setCurrentTime] = useState(getCurrentTime)
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [viewMode, setViewMode] = useState<ViewMode>('visual') // Timeline view by default
 
   // Update current time every minute
   useEffect(() => {
@@ -103,22 +103,6 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
     return currentMinutes >= start && currentMinutes < end
   })
 
-  // Get time range for visual timeline (from earliest habit to latest)
-  const getTimeRange = () => {
-    const times: number[] = []
-    doHabits.forEach(h => {
-      if (h.scheduled_time) times.push(timeToMinutes(h.scheduled_time))
-    })
-    if (times.length === 0) return { start: 6 * 60, end: 22 * 60 } // Default 6am-10pm
-    const min = Math.min(...times)
-    const max = Math.max(...times)
-    // Add padding
-    return { 
-      start: Math.floor(min / 60) * 60, 
-      end: Math.ceil((max + 60) / 60) * 60 
-    }
-  }
-
   return (
     <div className="habit-list">
       <div className="habit-list__section-header">
@@ -126,11 +110,11 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
           <h2 className="habit-list__section-title">Today's Focus</h2>
           <div className="habit-list__view-toggle">
             <button 
-              className={`habit-list__view-btn ${viewMode === 'list' ? 'habit-list__view-btn--active' : ''}`}
-              onClick={() => setViewMode('list')}
-              title="List view"
+              className={`habit-list__view-btn ${viewMode === 'calendar' ? 'habit-list__view-btn--active' : ''}`}
+              onClick={() => setViewMode('calendar')}
+              title="Calendar view"
             >
-              ☰
+              📅
             </button>
             <button 
               className={`habit-list__view-btn ${viewMode === 'visual' ? 'habit-list__view-btn--active' : ''}`}
@@ -138,6 +122,13 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
               title="Timeline view"
             >
               ▤
+            </button>
+            <button 
+              className={`habit-list__view-btn ${viewMode === 'list' ? 'habit-list__view-btn--active' : ''}`}
+              onClick={() => setViewMode('list')}
+              title="List view"
+            >
+              ☰
             </button>
           </div>
         </div>
@@ -155,63 +146,143 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
         </div>
       </div>
 
+      {/* Calendar View */}
+      {viewMode === 'calendar' && (
+        <div className="habit-list__calendar">
+          {/* Hour grid */}
+          <div className="habit-list__calendar-grid">
+            {/* Hour labels and lines */}
+            {Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => {
+              const hour = START_HOUR + i
+              return (
+                <div 
+                  key={hour} 
+                  className="habit-list__calendar-hour"
+                  style={{ height: `${HOUR_HEIGHT}px` }}
+                >
+                  <span className="habit-list__calendar-hour-label">
+                    {String(hour).padStart(2, '0')}:00
+                  </span>
+                  <div className="habit-list__calendar-hour-line" />
+                </div>
+              )
+            })}
+
+            {/* Now marker */}
+            {(() => {
+              const nowMinutes = timeToMinutes(currentTime)
+              const startMinutes = START_HOUR * 60
+              const endMinutes = END_HOUR * 60
+              if (nowMinutes >= startMinutes && nowMinutes <= endMinutes) {
+                const topPosition = ((nowMinutes - startMinutes) / 60) * HOUR_HEIGHT
+                return (
+                  <div 
+                    className="habit-list__calendar-now"
+                    style={{ top: `${topPosition}px` }}
+                  >
+                    <span className="habit-list__calendar-now-dot" />
+                    <span className="habit-list__calendar-now-line" />
+                    <span className="habit-list__calendar-now-time">{currentTime}</span>
+                  </div>
+                )
+              }
+              return null
+            })()}
+
+            {/* Habit blocks */}
+            {doHabits.map(habit => {
+              if (!habit.scheduled_time) return null
+              
+              const habitMinutes = timeToMinutes(habit.scheduled_time)
+              const startMinutes = START_HOUR * 60
+              const endMinutes = END_HOUR * 60
+              
+              // Skip if outside visible range
+              if (habitMinutes < startMinutes || habitMinutes > endMinutes) return null
+              
+              const topPosition = ((habitMinutes - startMinutes) / 60) * HOUR_HEIGHT
+              const duration = habit.duration_minutes || 30
+              const height = (duration / 60) * HOUR_HEIGHT
+              const isChecked = checkedIds.has(habit.id)
+              
+              return (
+                <div
+                  key={habit.id}
+                  className={`habit-list__calendar-block ${isChecked ? 'habit-list__calendar-block--done' : ''}`}
+                  style={{ 
+                    top: `${topPosition}px`,
+                    height: `${Math.max(height, 30)}px`
+                  }}
+                  onClick={() => isChecked ? onUncheck(habit.id) : onCheck(habit.id)}
+                >
+                  <span className="habit-list__calendar-block-icon">{habit.icon || '✨'}</span>
+                  <span className="habit-list__calendar-block-name">{habit.name}</span>
+                  {isChecked && <span className="habit-list__calendar-block-check">✓</span>}
+                </div>
+              )
+            })}
+
+            {/* Boundary blocks */}
+            {boundaries.map(b => {
+              if (!b.time_start || !b.time_end) return null
+              
+              const startMin = timeToMinutes(b.time_start)
+              const endMin = timeToMinutes(b.time_end)
+              const gridStart = START_HOUR * 60
+              const gridEnd = END_HOUR * 60
+              
+              // Clamp to visible range
+              const visibleStart = Math.max(startMin, gridStart)
+              const visibleEnd = Math.min(endMin, gridEnd)
+              
+              if (visibleStart >= visibleEnd) return null
+              
+              const topPosition = ((visibleStart - gridStart) / 60) * HOUR_HEIGHT
+              const height = ((visibleEnd - visibleStart) / 60) * HOUR_HEIGHT
+              const isActive = activeBoundaries.some(ab => ab.id === b.id)
+              
+              return (
+                <div
+                  key={b.id}
+                  className={`habit-list__calendar-boundary ${isActive ? 'habit-list__calendar-boundary--active' : ''}`}
+                  style={{ 
+                    top: `${topPosition}px`,
+                    height: `${height}px`
+                  }}
+                >
+                  <span className="habit-list__calendar-boundary-icon">{b.icon || '🛡️'}</span>
+                  <span className="habit-list__calendar-boundary-name">{b.name}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Visual Timeline View */}
       {viewMode === 'visual' && (
         <div className="habit-list__visual">
-          {/* Active boundaries banner */}
-          {activeBoundaries.length > 0 && (
-            <div className="habit-list__boundaries-banner">
-              <span className="habit-list__boundaries-icon">🛡️</span>
-              <span className="habit-list__boundaries-label">Active:</span>
-              {activeBoundaries.map(b => (
-                <span key={b.id} className="habit-list__boundary-tag">
-                  {b.icon || '🚫'} {b.name}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* All boundaries summary */}
-          {boundaries.length > 0 && (
-            <div className="habit-list__boundaries-summary">
-              {boundaries.map(b => (
-                <div key={b.id} className="habit-list__boundary-row">
-                  <span className="habit-list__boundary-time">
-                    {b.time_start} → {b.time_end}
-                  </span>
-                  <div className="habit-list__boundary-bar">
-                    <span className="habit-list__boundary-name">
-                      {b.icon || '🚫'} {b.name}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Visual timeline for habits */}
           <div className="habit-list__visual-timeline">
             {doHabits.map(habit => {
-              const startTime = habit.scheduled_time || '09:00'
-              const duration = habit.duration_minutes || 30
-              const height = durationToHeight(duration)
+              const startTime = habit.scheduled_time || '—'
+              const duration = habit.duration_minutes
               const isChecked = checkedIds.has(habit.id)
               
               return (
                 <div 
                   key={habit.id} 
                   className={`habit-list__visual-block ${isChecked ? 'habit-list__visual-block--done' : ''}`}
-                  style={{ minHeight: `${height}px` }}
                   onClick={() => isChecked ? onUncheck(habit.id) : onCheck(habit.id)}
                 >
                   <div className="habit-list__visual-time">{startTime}</div>
                   <div className="habit-list__visual-content">
                     <span className="habit-list__visual-icon">{habit.icon || '✨'}</span>
                     <span className="habit-list__visual-name">{habit.name}</span>
-                    {duration && (
-                      <span className="habit-list__visual-duration">{duration}min</span>
-                    )}
                   </div>
+                  {duration && (
+                    <span className="habit-list__visual-duration">{duration}m</span>
+                  )}
                   {isChecked && <span className="habit-list__visual-check">✓</span>}
                 </div>
               )
@@ -223,6 +294,40 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
             <span className="habit-list__visual-now-dot" />
             <span className="habit-list__visual-now-label">Now {currentTime}</span>
           </div>
+
+          {/* Boundaries section */}
+          {boundaries.length > 0 && (
+            <div className="habit-list__boundaries-section">
+              <div className="habit-list__boundaries-header">
+                <span className="habit-list__boundaries-title">🛡️ Boundaries</span>
+                {activeBoundaries.length > 0 && (
+                  <span className="habit-list__boundaries-active-badge">
+                    {activeBoundaries.length} active
+                  </span>
+                )}
+              </div>
+              <div className="habit-list__boundaries-list">
+                {boundaries.map(b => {
+                  const isActive = activeBoundaries.some(ab => ab.id === b.id)
+                  const isPast = b.time_end && timeToMinutes(b.time_end) < currentMinutes
+                  return (
+                    <div 
+                      key={b.id} 
+                      className={`habit-list__boundary-item ${isActive ? 'habit-list__boundary-item--active' : ''} ${isPast ? 'habit-list__boundary-item--past' : ''}`}
+                    >
+                      <span className="habit-list__boundary-icon">{b.icon || '🚫'}</span>
+                      <span className="habit-list__boundary-name">{b.name}</span>
+                      <span className="habit-list__boundary-time">
+                        {b.time_start} → {b.time_end}
+                      </span>
+                      {isActive && <span className="habit-list__boundary-status">⏳</span>}
+                      {isPast && !isActive && <span className="habit-list__boundary-status">✓</span>}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

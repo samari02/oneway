@@ -17,16 +17,23 @@ import './BrowsingView.css'
 // Map Rust category to frontend category
 function mapCategory(category: string): 'productive' | 'neutral' | 'distraction' {
   switch (category) {
+    // User classification values (from SiteClassificationModal)
+    case 'productive':
+    // Original backend categories
     case 'work':
     case 'dev':
     case 'productivity':
       return 'productive'
+    // User classification value
+    case 'distraction':
+    // Original backend categories
     case 'social_media':
     case 'video':
     case 'entertainment':
     case 'news':
     case 'shopping':
       return 'distraction'
+    // 'neutral' and anything else
     default:
       return 'neutral'
   }

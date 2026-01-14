@@ -323,19 +323,20 @@
   justify-content: center;
   gap: var(--space-xs);
   width: 100%;
-  padding: var(--space-sm) var(--space-md);
-  background: transparent;
-  border: none;
+  padding: 12px var(--space-md);
+  margin-top: var(--space-lg);
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-light);
   border-radius: var(--radius-md);
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   transition: all var(--transition-fast);
-  opacity: 0.7;
+  cursor: pointer;
 }
 
 .today-view__add-button:hover {
-  color: var(--color-mint-dark);
+  color: var(--color-mint);
+  border-color: var(--color-mint);
   background: rgba(125, 216, 196, 0.08);
-  opacity: 1;
 }

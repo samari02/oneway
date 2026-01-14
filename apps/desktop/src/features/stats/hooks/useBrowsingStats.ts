@@ -111,8 +111,11 @@ export function useBrowsingStats(userId?: string, period?: string) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  async function fetchStats() {
-    setLoading(true)
+  // showLoading: true for initial load, false for background refresh
+  async function fetchStats(showLoading = true) {
+    if (showLoading) {
+      setLoading(true)
+    }
     setError(null)
 
     try {
@@ -124,26 +127,23 @@ export function useBrowsingStats(userId?: string, period?: string) {
       // Transform to frontend format
       const transformedStats = transformStats(rustStats)
       
-      // Check if we have any data
-      if (transformedStats.totalVisits === 0) {
-        // No data yet - could show empty state or mock data
-        console.log('[useBrowsingStats] No data from extension yet')
-      }
-      
       setStats(transformedStats)
     } catch (err) {
       console.error('[useBrowsingStats] Error fetching stats:', err)
       setError(err instanceof Error ? err : new Error('Failed to fetch browsing stats'))
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
-    fetchStats()
+    // Initial fetch with loading indicator
+    fetchStats(true)
     
-    // Refresh every 30 seconds to pick up new data
-    const interval = setInterval(fetchStats, 30000)
+    // Background refresh every 60 seconds (silent, no loading state)
+    const interval = setInterval(() => fetchStats(false), 60000)
     
     return () => clearInterval(interval)
   }, [userId, period])

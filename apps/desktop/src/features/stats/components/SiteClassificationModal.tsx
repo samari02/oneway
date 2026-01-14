@@ -10,57 +10,99 @@ export interface SiteClassification {
   category: SiteCategory | null // null = unclassified
 }
 
+// Backend response type for browsing stats
+interface BrowsingStatsResponse {
+  topSites: Array<{
+    domain: string
+    visits: number
+    timeSpent: number
+    category: string
+  }>
+}
+
 interface SiteClassificationModalProps {
   isOpen: boolean
   onClose: () => void
-  sites: SiteClassification[]
   onSave: (classifications: Record<string, SiteCategory>) => void
 }
 
 export function SiteClassificationModal({ 
   isOpen, 
   onClose, 
-  sites,
   onSave 
 }: SiteClassificationModalProps) {
+  const [sites, setSites] = useState<SiteClassification[]>([])
   const [classifications, setClassifications] = useState<Record<string, SiteCategory | null>>({})
   const [loading, setLoading] = useState(true)
   
-  // Load existing classifications from backend when modal opens
+  // Map backend category to frontend category
+  const mapBackendCategory = (category: string): SiteCategory => {
+    switch (category) {
+      case 'productive':
+      case 'work':
+      case 'dev':
+      case 'productivity':
+        return 'productive'
+      case 'distraction':
+      case 'social_media':
+      case 'video':
+      case 'entertainment':
+      case 'news':
+      case 'shopping':
+        return 'distraction'
+      default:
+        return 'neutral'
+    }
+  }
+
+  // Fetch ALL sites and existing classifications when modal opens
   useEffect(() => {
     if (!isOpen) return
     
-    const loadExisting = async () => {
+    const loadData = async () => {
       setLoading(true)
       try {
-        const existing = await invoke<Record<string, string>>('get_site_classifications')
+        // Fetch ALL sites (no period filter) and existing classifications in parallel
+        const [statsResponse, userOverrides] = await Promise.all([
+          invoke<BrowsingStatsResponse>('get_browsing_stats', { periodDays: null }),
+          invoke<Record<string, string>>('get_site_classifications')
+        ])
         
-        // Initialize with null for all sites, then override with existing classifications
+        // Build sites list from all-time data
+        const allSites: SiteClassification[] = statsResponse.topSites.map(site => ({
+          domain: site.domain,
+          visits: site.visits,
+          category: null
+        }))
+        
+        setSites(allSites)
+        
+        // Initialize classifications: user override > automatic classification
         const initial: Record<string, SiteCategory | null> = {}
-        sites.forEach(site => {
-          const savedCategory = existing[site.domain]
-          if (savedCategory === 'productive' || savedCategory === 'neutral' || savedCategory === 'distraction') {
-            initial[site.domain] = savedCategory
+        
+        statsResponse.topSites.forEach(site => {
+          // Check if user has manually overridden this site
+          const userOverride = userOverrides[site.domain]
+          if (userOverride === 'productive' || userOverride === 'neutral' || userOverride === 'distraction') {
+            // Use user's manual classification
+            initial[site.domain] = userOverride
           } else {
-            initial[site.domain] = null // Not classified yet
+            // Use automatic classification from backend
+            initial[site.domain] = mapBackendCategory(site.category)
           }
         })
         setClassifications(initial)
       } catch (e) {
-        console.error('[Classification] Failed to load existing:', e)
-        // Fallback: all null
-        const initial: Record<string, SiteCategory | null> = {}
-        sites.forEach(site => {
-          initial[site.domain] = null
-        })
-        setClassifications(initial)
+        console.error('[Classification Modal] Failed to load data:', e)
+        setSites([])
+        setClassifications({})
       } finally {
         setLoading(false)
       }
     }
     
-    loadExisting()
-  }, [isOpen, sites])
+    loadData()
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -72,21 +114,13 @@ export function SiteClassificationModal({
   }
 
   const handleSave = () => {
-    // Filter out null values
+    // Save all classifications (both auto and manual adjustments)
     const toSave: Record<string, SiteCategory> = {}
     Object.entries(classifications).forEach(([domain, category]) => {
       if (category) {
         toSave[domain] = category
       }
     })
-    
-    console.log('[Classification Modal] Current state:', classifications)
-    console.log('[Classification Modal] Saving:', toSave)
-    console.log('[Classification Modal] Count:', Object.keys(toSave).length)
-    
-    if (Object.keys(toSave).length === 0) {
-      console.warn('[Classification Modal] Nothing to save!')
-    }
     
     onSave(toSave)
     onClose()
@@ -114,6 +148,16 @@ export function SiteClassificationModal({
           </button>
         </div>
 
+        {loading ? (
+          <div className="site-classification-modal__loading">
+            <p>Loading sites...</p>
+          </div>
+        ) : sites.length === 0 ? (
+          <div className="site-classification-modal__empty">
+            <p>No browsing data available yet.</p>
+          </div>
+        ) : (
+          <>
         <div className="site-classification-modal__intro">
           <p>Classify your top sites to improve focus accuracy</p>
           
@@ -170,6 +214,7 @@ export function SiteClassificationModal({
                           : ''
                       }`}
                       onClick={() => handleCategoryChange(site.domain, 'productive')}
+                      style={classifications[site.domain] === 'productive' ? { background: '#5BB5A0' } : {}}
                     />
                   </td>
                   <td className="site-classification-modal__td-cat">
@@ -179,6 +224,7 @@ export function SiteClassificationModal({
                           ? 'site-classification-modal__radio--active site-classification-modal__radio--neutral' 
                           : ''
                       }`}
+                      style={classifications[site.domain] === 'neutral' ? { background: '#8E99A8' } : {}}
                       onClick={() => handleCategoryChange(site.domain, 'neutral')}
                     />
                   </td>
@@ -190,6 +236,7 @@ export function SiteClassificationModal({
                           : ''
                       }`}
                       onClick={() => handleCategoryChange(site.domain, 'distraction')}
+                      style={classifications[site.domain] === 'distraction' ? { background: '#E74C3C' } : {}}
                     />
                   </td>
                 </tr>
@@ -212,6 +259,8 @@ export function SiteClassificationModal({
             Save
           </button>
         </div>
+          </>
+        )}
       </div>
     </div>
   )

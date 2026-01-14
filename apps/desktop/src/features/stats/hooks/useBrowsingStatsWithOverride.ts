@@ -48,8 +48,11 @@ export function useBrowsingStatsWithOverride(
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  async function fetchAllCardStats() {
-    setLoading(true)
+  // showLoading: true for initial load, false for background refresh
+  async function fetchAllCardStats(showLoading = true) {
+    if (showLoading) {
+      setLoading(true)
+    }
     setError(null)
 
     try {
@@ -79,17 +82,20 @@ export function useBrowsingStatsWithOverride(
       console.error('[useBrowsingStatsWithOverride] Error fetching stats:', err)
       setError(err instanceof Error ? err : new Error('Failed to fetch browsing stats'))
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
     if (!userId) return
 
-    fetchAllCardStats()
+    // Initial fetch with loading indicator
+    fetchAllCardStats(true)
 
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchAllCardStats, 30000)
+    // Background refresh every 60 seconds (silent, no loading state)
+    const interval = setInterval(() => fetchAllCardStats(false), 60000)
 
     return () => clearInterval(interval)
   }, [

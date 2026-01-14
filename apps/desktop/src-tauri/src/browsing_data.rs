@@ -385,9 +385,14 @@ impl BrowsingStorage {
         // Determine trend (compare last 7 days to previous 7 days)
         let focus_trend = calculate_trend(&daily_visits);
         
-        // Top sites
+        // Top sites - filter out invalid domains (GPS coordinates, IP addresses, etc.)
         let mut top_sites: Vec<DomainStats> = domain_counts
             .into_iter()
+            .filter(|(domain, _)| {
+                // Valid domains must look like a real domain (e.g., "example.com")
+                // Filter out GPS coordinates like "35.4034841,139.2772499,1135m"
+                is_valid_domain(domain)
+            })
             .map(|(domain, (count, category))| DomainStats {
                 domain,
                 visits: count,
@@ -397,7 +402,7 @@ impl BrowsingStorage {
             .collect();
         
         top_sites.sort_by(|a, b| b.visits.cmp(&a.visits));
-        top_sites.truncate(50); // Allow up to 50 sites for Top 10/20/30 selector
+        // No truncation - return all unique sites for classification modal
         
         // Daily scores (last 30 days)
         let mut daily_scores: Vec<DailyScore> = daily_visits
@@ -464,6 +469,28 @@ fn get_data_dir() -> PathBuf {
     // Use home directory for simplicity
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
     home.join(".clarity").join(DATA_DIR)
+}
+
+/// Check if a string looks like a valid domain name
+/// Filters out GPS coordinates like "35.4034841,139.2772499,1135m"
+fn is_valid_domain(domain: &str) -> bool {
+    // Must contain a dot
+    if !domain.contains('.') {
+        return false;
+    }
+    
+    // Must not contain commas (GPS coordinates have commas)
+    if domain.contains(',') {
+        return false;
+    }
+    
+    // Get the last part after the last dot (should be TLD like "com", "org", "fr")
+    if let Some(tld) = domain.rsplit('.').next() {
+        // TLD must be 2+ letters only (no numbers)
+        tld.len() >= 2 && tld.chars().all(|c| c.is_ascii_alphabetic())
+    } else {
+        false
+    }
 }
 
 /// Convert timestamp (ms) to date string (YYYY-MM-DD)

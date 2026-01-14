@@ -57,7 +57,11 @@ export function BrowsingHeatmapCard({ dailyScores, period, defaultPeriod, onPeri
   for (let i = periodDays - 1; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(today.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
+    // Use local date to match user's timezone
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
     const score = scoreMap.get(dateStr) ?? 0
     const dayOfWeek = date.getDay() // 0 = Sunday
     days.push({ date: dateStr, score, dayOfWeek })

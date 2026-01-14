@@ -268,3 +268,12 @@
 .site-classification-modal__btn--save:hover {
   background: #4A9A87;
 }
+
+/* Loading and empty states */
+.site-classification-modal__loading,
+.site-classification-modal__empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}

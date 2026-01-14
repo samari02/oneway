@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import type { SiteVisit } from '../hooks/useBrowsingStats'
 import { CardPeriodMenu } from './CardPeriodMenu'
 import type { Period } from './PeriodSelector'
-import { SiteClassificationModal, type SiteClassification, type SiteCategory } from './SiteClassificationModal'
+import { SiteClassificationModal, type SiteCategory } from './SiteClassificationModal'
 import './TopSitesCard.css'
 
 interface TopSitesCardProps {
@@ -21,7 +21,9 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [isLimitMenuOpen, setIsLimitMenuOpen] = useState(false)
   const [isClassificationModalOpen, setIsClassificationModalOpen] = useState(false)
+  const [reclassifyDropdownOpen, setReclassifyDropdownOpen] = useState<string | null>(null)
   const limitMenuRef = useRef<HTMLDivElement>(null)
+  const reclassifyRef = useRef<HTMLDivElement>(null)
   
   // Filter by category first, then slice by limit
   const filteredSites = categoryFilter === 'all' 
@@ -30,22 +32,29 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
   
   const displayedSites = filteredSites.slice(0, displayLimit)
   const maxVisits = Math.max(...displayedSites.map(s => s.visits), 1) // Ensure at least 1 to avoid division by 0
-  
-  console.log('[TopSitesCard] Total:', sites.length, 'Filtered:', filteredSites.length, 'Category:', categoryFilter, 'Limit:', displayLimit)
 
-  // Close menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (limitMenuRef.current && !limitMenuRef.current.contains(event.target as Node)) {
         setIsLimitMenuOpen(false)
       }
+      if (reclassifyRef.current && !reclassifyRef.current.contains(event.target as Node)) {
+        setReclassifyDropdownOpen(null)
+      }
     }
 
-    if (isLimitMenuOpen) {
+    if (isLimitMenuOpen || reclassifyDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside)
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [isLimitMenuOpen])
+  }, [isLimitMenuOpen, reclassifyDropdownOpen])
+
+  // Handle reclassify from inline dropdown
+  const handleInlineReclassify = (domain: string, newCategory: SiteCategory) => {
+    setReclassifyDropdownOpen(null)
+    onClassificationSave?.({ [domain]: newCategory })
+  }
 
   // Category indicator dot color class
   const getCategoryClass = (category: SiteVisit['category']) => {
@@ -136,7 +145,46 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
             
             <div className="top-sites-card__info">
               <div className="top-sites-card__domain-row">
-                <span className={`top-sites-card__dot ${getCategoryClass(site.category)}`} />
+                <div 
+                  className="top-sites-card__dot-wrapper"
+                  ref={reclassifyDropdownOpen === site.domain ? reclassifyRef : null}
+                >
+                  <button
+                    className={`top-sites-card__dot top-sites-card__dot--clickable ${getCategoryClass(site.category)}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setReclassifyDropdownOpen(reclassifyDropdownOpen === site.domain ? null : site.domain)
+                    }}
+                    title="Reclassify"
+                  />
+                  <span className="top-sites-card__reclassify-hint">reclassify</span>
+                  
+                  {reclassifyDropdownOpen === site.domain && (
+                    <div className="top-sites-card__reclassify-dropdown">
+                      <button
+                        className={`top-sites-card__reclassify-option ${site.category === 'productive' ? 'top-sites-card__reclassify-option--active' : ''}`}
+                        onClick={() => handleInlineReclassify(site.domain, 'productive')}
+                      >
+                        <span className="top-sites-card__dot top-sites-card__dot--productive" />
+                        Focus
+                      </button>
+                      <button
+                        className={`top-sites-card__reclassify-option ${site.category === 'neutral' ? 'top-sites-card__reclassify-option--active' : ''}`}
+                        onClick={() => handleInlineReclassify(site.domain, 'neutral')}
+                      >
+                        <span className="top-sites-card__dot top-sites-card__dot--neutral" />
+                        Neutral
+                      </button>
+                      <button
+                        className={`top-sites-card__reclassify-option ${site.category === 'distraction' ? 'top-sites-card__reclassify-option--active' : ''}`}
+                        onClick={() => handleInlineReclassify(site.domain, 'distraction')}
+                      >
+                        <span className="top-sites-card__dot top-sites-card__dot--distraction" />
+                        Distraction
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <span className="top-sites-card__domain">{site.domain}</span>
               </div>
               
@@ -165,15 +213,10 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
         Improve classification
       </button>
 
-      {/* Classification modal */}
+      {/* Classification modal - fetches its own data (all sites, all time) */}
       <SiteClassificationModal
         isOpen={isClassificationModalOpen}
         onClose={() => setIsClassificationModalOpen(false)}
-        sites={sites.map((s): SiteClassification => ({
-          domain: s.domain,
-          visits: s.visits,
-          category: null // Start unclassified - user must explicitly choose
-        }))}
         onSave={(classifications) => {
           console.log('[TopSitesCard] Classifications saved:', classifications)
           onClassificationSave?.(classifications)

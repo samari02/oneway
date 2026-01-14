@@ -274,11 +274,88 @@
 }
 
 /* Category dot indicator */
+.top-sites-card__dot-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .top-sites-card__dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+  border: none;
+  padding: 0;
+}
+
+.top-sites-card__dot--clickable {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.top-sites-card__dot--clickable:hover {
+  transform: scale(1.4);
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* Reclassify hint - appears on hover */
+.top-sites-card__reclassify-hint {
+  position: absolute;
+  left: 14px;
+  font-size: 9px;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.top-sites-card__dot-wrapper:hover .top-sites-card__reclassify-hint {
+  opacity: 1;
+}
+
+/* Reclassify dropdown */
+.top-sites-card__reclassify-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: -8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  overflow: hidden;
+  min-width: 120px;
+}
+
+.top-sites-card__reclassify-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  text-align: left;
+}
+
+.top-sites-card__reclassify-option:hover {
+  background: var(--bg-tertiary);
+}
+
+.top-sites-card__reclassify-option--active {
+  background: rgba(125, 216, 196, 0.1);
+  font-weight: 600;
+}
+
+.top-sites-card__reclassify-option .top-sites-card__dot {
+  width: 10px;
+  height: 10px;
 }
 
 .top-sites-card__dot--productive {

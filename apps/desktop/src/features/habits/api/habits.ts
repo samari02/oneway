@@ -1,6 +1,18 @@
 import { supabase } from '@/lib/supabase'
 import type { Habit, HabitCheckIn } from '@oneway/shared'
 
+/**
+ * Get today's date in local timezone as YYYY-MM-DD
+ * Important: Using local date (not UTC) so habits reset at midnight local time
+ */
+function getLocalToday(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export async function getHabits(userId: string): Promise<Habit[]> {
   const { data, error } = await supabase
     .from('habits')
@@ -110,7 +122,7 @@ export async function deleteHabit(id: string): Promise<void> {
 }
 
 export async function getTodayCheckIns(userId: string): Promise<HabitCheckIn[]> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = getLocalToday()
   
   const { data, error } = await supabase
     .from('habit_check_ins')
@@ -126,7 +138,7 @@ export async function checkHabit(
   habitId: string,
   userId: string
 ): Promise<HabitCheckIn> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = getLocalToday()
   
   const { data, error } = await supabase
     .from('habit_check_ins')
@@ -160,7 +172,7 @@ export async function checkHabit(
 }
 
 export async function uncheckHabit(habitId: string): Promise<void> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = getLocalToday()
   
   const { error } = await supabase
     .from('habit_check_ins')

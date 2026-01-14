@@ -18,13 +18,18 @@ Manual site classification allows users to override the default categorization o
 ┌─────────────────────────────────────────────────────────────────┐
 │                     FRONTEND (React)                            │
 ├─────────────────────────────────────────────────────────────────┤
-│  TopSitesCard / SettingsView                                    │
-│       │                                                         │
+│  TopSitesCard                                                   │
+│       │ "Improve classification" button                         │
 │       ▼                                                         │
 │  SiteClassificationModal                                        │
-│       │ - Loads existing from backend on open                   │
-│       │ - User clicks to classify sites                         │
-│       │ - Save button calls onSave(classifications)             │
+│       │ On open:                                                │
+│       │   - invoke('get_browsing_stats', { periodDays: null })  │
+│       │   - invoke('get_site_classifications')                  │
+│       │ → Fetches ALL sites + existing classifications          │
+│       │ → Pre-fills radio buttons                               │
+│       │                                                         │
+│       │ On save:                                                │
+│       │   - onSave(classifications) → BrowsingView              │
 │       ▼                                                         │
 │  BrowsingView.handleClassificationSave()                        │
 │       │                                                         │
@@ -56,10 +61,15 @@ Manual site classification allows users to override the default categorization o
 useEffect(() => {
   if (!isOpen) return
   
-  const existing = await invoke<Record<string, string>>('get_site_classifications')
-  // Initialize state with existing classifications
-  sites.forEach(site => {
-    initial[site.domain] = existing[site.domain] || null
+  // Fetch ALL sites (no period filter) and existing classifications
+  const [statsResponse, existingClassifications] = await Promise.all([
+    invoke('get_browsing_stats', { periodDays: null }),
+    invoke('get_site_classifications')
+  ])
+  
+  // Build sites list and pre-fill with existing classifications
+  allSites.forEach(site => {
+    initial[site.domain] = existingClassifications[site.domain] || null
   })
 })
 ```
@@ -188,11 +198,28 @@ for visit in &visits {
 - Only saves explicitly classified sites
 - Problem: **Save still not working** (current issue)
 
+### Attempt 5: Fix mapCategory Function ✅
+- **Root cause:** `mapCategory()` in `BrowsingView.tsx` didn't recognize user classification values
+- User sets site to `'productive'` → Rust returns `'productive'` → `mapCategory()` falls to default → shows as `'neutral'`
+- **Fix:** Added `'productive'` and `'distraction'` cases to `mapCategory()` switch statement
+
+### Attempt 6: Modal Fetches Own Data ✅
+- **Issues:**
+  1. Classifications weren't pre-filled when reopening modal
+  2. Modal was affected by view filters (period, category, limit)
+- **Root cause:** Modal received `sites` prop from TopSitesCard which was filtered
+- **Fix:** Modal now fetches its own data:
+  - Calls `get_browsing_stats({ periodDays: null })` → ALL sites, all time
+  - Calls `get_site_classifications()` → existing user classifications
+  - Merges them to show pre-filled state
+
 ---
 
-## Next Steps to Debug
+## Resolved ✅
 
-1. Add `console.log` before `invoke()` to see what data is being sent
-2. Add `eprintln!` in Rust to see what data is received
-3. Check if the file is actually being written
-4. Verify the Tauri command is properly registered
+The classification system now works correctly:
+1. User clicks "Improve classification" → modal fetches ALL sites (not filtered)
+2. Modal loads existing classifications and pre-fills radio buttons
+3. User classifies sites → saved to `classifications.json`
+4. Backend applies classification in `calculate_stats()` → returns site with user category
+5. Frontend `mapCategory()` recognizes user category values → displays correctly
