@@ -6,7 +6,7 @@ interface UseHabitsResult {
   habits: Habit[]
   loading: boolean
   error: Error | null
-  refetch: () => Promise<void>
+  refetch: (silent?: boolean) => Promise<void>
 }
 
 export function useHabits(userId: string | undefined): UseHabitsResult {
@@ -14,13 +14,16 @@ export function useHabits(userId: string | undefined): UseHabitsResult {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  const fetch = useCallback(async () => {
+  const fetch = useCallback(async (silent = false) => {
     if (!userId) {
       setLoading(false)
       return
     }
 
-    setLoading(true)
+    // Only show loading on initial fetch, not on silent refetch
+    if (!silent) {
+      setLoading(true)
+    }
     setError(null)
 
     try {
@@ -29,12 +32,14 @@ export function useHabits(userId: string | undefined): UseHabitsResult {
     } catch (e) {
       setError(e instanceof Error ? e : new Error('Unknown error'))
     } finally {
-      setLoading(false)
+      if (!silent) {
+        setLoading(false)
+      }
     }
   }, [userId])
 
   useEffect(() => {
-    fetch()
+    fetch(false) // Initial fetch shows loading
   }, [fetch])
 
   return { habits, loading, error, refetch: fetch }

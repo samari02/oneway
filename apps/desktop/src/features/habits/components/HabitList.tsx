@@ -48,6 +48,8 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
   const [draggingHabit, setDraggingHabit] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const calendarGridRef = useRef<HTMLDivElement>(null)
+  const calendarScrollRef = useRef<HTMLDivElement>(null)
+  const hoursColumnRef = useRef<HTMLDivElement>(null)
 
   // Update current time every minute
   useEffect(() => {
@@ -145,6 +147,13 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
     setDragOffset(offset)
     setDragEnd({ y: snappedTop, time: yToTime(snappedTop) })
   }, [yToTime, snapY])
+
+  // Sync scroll between hours column and grid
+  const handleCalendarScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    if (hoursColumnRef.current) {
+      hoursColumnRef.current.scrollTop = e.currentTarget.scrollTop
+    }
+  }, [])
 
   // Get the display time for sorting (scheduled_time for habits, time_start for boundaries)
   const getDisplayTime = (habit: Habit) => {
@@ -252,32 +261,40 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
       {/* Calendar View */}
       {viewMode === 'calendar' && (
         <div className="habit-list__calendar">
-          {/* Hour labels column */}
-          <div className="habit-list__calendar-hours">
-            {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => {
-              const hour = START_HOUR + i
-              return (
-                <div 
-                  key={hour} 
-                  className="habit-list__calendar-hour-label"
-                  style={{ top: `${i * HOUR_HEIGHT}px` }}
-                >
-                  {String(hour).padStart(2, '0')}:00
-                </div>
-              )
-            })}
+          {/* Hour labels column - syncs with scroll */}
+          <div className="habit-list__calendar-hours" ref={hoursColumnRef}>
+            <div className="habit-list__calendar-hours-inner" style={{ height: `${GRID_HEIGHT}px` }}>
+              {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => {
+                const hour = START_HOUR + i
+                return (
+                  <div 
+                    key={hour} 
+                    className="habit-list__calendar-hour-label"
+                    style={{ top: `${i * HOUR_HEIGHT}px` }}
+                  >
+                    {String(hour).padStart(2, '0')}:00
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
-          {/* Main grid area */}
+          {/* Scrollable grid container */}
           <div 
-            className={`habit-list__calendar-grid ${isDragging || draggingHabit ? 'habit-list__calendar-grid--dragging' : ''}`}
-            ref={calendarGridRef}
-            style={{ height: `${GRID_HEIGHT}px` }}
-            onMouseDown={handleGridMouseDown}
-            onMouseMove={handleGridMouseMove}
-            onMouseUp={handleGridMouseUp}
-            onMouseLeave={handleGridMouseUp}
+            className="habit-list__calendar-scroll"
+            ref={calendarScrollRef}
+            onScroll={handleCalendarScroll}
           >
+            {/* Main grid area */}
+            <div 
+              className={`habit-list__calendar-grid ${isDragging || draggingHabit ? 'habit-list__calendar-grid--dragging' : ''}`}
+              ref={calendarGridRef}
+              style={{ height: `${GRID_HEIGHT}px` }}
+              onMouseDown={handleGridMouseDown}
+              onMouseMove={handleGridMouseMove}
+              onMouseUp={handleGridMouseUp}
+              onMouseLeave={handleGridMouseUp}
+            >
             {/* Hour lines */}
             {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => (
               <div 
@@ -410,6 +427,7 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
                 </div>
               )
             })}
+            </div>
           </div>
         </div>
       )}

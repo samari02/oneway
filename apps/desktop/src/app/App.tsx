@@ -109,7 +109,7 @@ function TodayView() {
       time_of_day: 'anytime',
       habit_type: 'do',
     })
-    refetchHabits()
+    refetchHabits(true) // Silent refetch to avoid unmounting HabitList
     // Open edit modal for the newly created habit
     // TODO: get the new habit ID and open edit modal
   }
@@ -117,7 +117,7 @@ function TodayView() {
   // Update habit time from calendar drag
   const handleUpdateHabitTime = async (habitId: string, newTime: string) => {
     await update(habitId, { scheduled_time: newTime })
-    refetchHabits()
+    refetchHabits(true) // Silent refetch to avoid unmounting HabitList
   }
 
   const today = new Date().toLocaleDateString('en-US', {

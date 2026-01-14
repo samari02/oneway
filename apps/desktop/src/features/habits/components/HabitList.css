@@ -505,21 +505,25 @@
 .habit-list__calendar {
   position: relative;
   display: flex;
-  overflow-y: auto;
-  overflow-x: hidden;
-  max-height: 600px;
+  overflow: hidden;
+  max-height: 500px;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   background: var(--bg-secondary);
 }
 
-/* Hour labels column */
+/* Hour labels column - scrolls with grid */
 .habit-list__calendar-hours {
   position: relative;
   width: 50px;
   flex-shrink: 0;
   background: var(--bg-tertiary);
   border-right: 1px solid var(--border-light);
+  overflow: hidden;
+}
+
+.habit-list__calendar-hours-inner {
+  position: relative;
 }
 
 .habit-list__calendar-hour-label {
@@ -533,6 +537,13 @@
   transform: translateY(-50%);
   background: var(--bg-tertiary);
   padding: 2px 0;
+}
+
+/* Scrollable grid container */
+.habit-list__calendar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Main grid */
