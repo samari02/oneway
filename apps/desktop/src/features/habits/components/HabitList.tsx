@@ -48,6 +48,10 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
   const [dragEnd, setDragEnd] = useState<{ y: number; time: string } | null>(null)
   const [draggingHabit, setDraggingHabit] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
+  
+  // Optimistic position updates (to prevent flash back to old position)
+  const [optimisticTimes, setOptimisticTimes] = useState<Record<string, string>>({})
+  
   const calendarGridRef = useRef<HTMLDivElement>(null)
   const calendarScrollRef = useRef<HTMLDivElement>(null)
   const hoursColumnRef = useRef<HTMLDivElement>(null)
@@ -59,6 +63,11 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
     }, 60000)
     return () => clearInterval(interval)
   }, [])
+
+  // Clear optimistic times when habits data is updated (real data arrived)
+  useEffect(() => {
+    setOptimisticTimes({})
+  }, [habits])
 
   // Snap Y position to 15-minute grid
   const snapY = useCallback((y: number): number => {
@@ -125,6 +134,8 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
     }
     
     if (draggingHabit && dragEnd && onUpdateHabitTime) {
+      // Store optimistic position BEFORE clearing drag state
+      setOptimisticTimes(prev => ({ ...prev, [draggingHabit]: dragEnd.time }))
       onUpdateHabitTime(draggingHabit, dragEnd.time)
     }
     
@@ -399,7 +410,9 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
             {doHabits.map(habit => {
               if (!habit.scheduled_time) return null
               
-              const habitMinutes = timeToMinutes(habit.scheduled_time)
+              // Use optimistic time if available, otherwise use database time
+              const displayTime = optimisticTimes[habit.id] || habit.scheduled_time
+              const habitMinutes = timeToMinutes(displayTime)
               const startMinutes = START_HOUR * 60
               const endMinutes = END_HOUR * 60
               
