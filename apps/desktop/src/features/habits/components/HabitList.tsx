@@ -80,9 +80,9 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
     setOptimisticTimes({})
   }, [habits])
 
-  // Snap Y position to 15-minute grid
+  // Snap Y position to 15-minute grid (floor = snap to earlier time slot)
   const snapY = useCallback((y: number): number => {
-    const snapped = Math.round(y / SNAP_HEIGHT) * SNAP_HEIGHT
+    const snapped = Math.floor(y / SNAP_HEIGHT) * SNAP_HEIGHT
     return Math.max(0, Math.min(GRID_HEIGHT, snapped))
   }, [])
 

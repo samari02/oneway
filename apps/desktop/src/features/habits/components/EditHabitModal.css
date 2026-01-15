@@ -107,19 +107,20 @@
 .edit-modal__field input,
 .edit-modal__field select {
   height: 42px;
-  padding: 0 var(--space-sm);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  background: var(--bg-primary);
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  font-size: 14px;
+  background: var(--bg-card);
   color: var(--text-primary);
-  transition: border-color var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .edit-modal__field input:focus,
 .edit-modal__field select:focus {
   outline: none;
   border-color: var(--color-mint);
+  box-shadow: 0 0 0 3px rgba(125, 216, 196, 0.15);
 }
 
 .edit-modal__field--icon input {
