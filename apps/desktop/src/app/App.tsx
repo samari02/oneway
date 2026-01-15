@@ -304,6 +304,10 @@ function TodayView() {
         <EditHabitModal
           habit={editingHabit}
           onSave={handleEditHabit}
+          onDelete={async (habitId) => {
+            await handleDeleteHabit(habitId)
+            setEditingHabit(null)
+          }}
           onCancel={() => setEditingHabit(null)}
         />
       )}

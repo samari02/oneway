@@ -69,19 +69,16 @@
 
 /* Form */
 .add-modal__form {
-  padding: 20px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 
 /* Type Toggle */
 .add-modal__type-toggle {
   display: flex;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  padding: 4px;
-  gap: 4px;
+  gap: 8px;
 }
 
 .add-modal__type-btn {
@@ -89,38 +86,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-muted);
-  transition: all var(--transition-fast);
-  border: 2px solid transparent;
+  gap: 6px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  transition: all 0.15s ease;
 }
 
 .add-modal__type-btn:hover {
-  color: var(--text-secondary);
+  border-color: var(--color-mint);
 }
 
 .add-modal__type-btn--active {
-  background: rgba(125, 216, 196, 0.1);
-  color: var(--color-mint-dark);
+  background: var(--bg-card);
+  color: var(--color-mint);
   border-color: var(--color-mint);
-  box-shadow: 0 1px 3px rgba(125, 216, 196, 0.2);
+  box-shadow: 0 0 0 3px rgba(125, 216, 196, 0.15);
 }
 
 .add-modal__type-btn--avoid.add-modal__type-btn--active {
-  background: rgba(184, 169, 232, 0.1);
   color: var(--color-lavender);
   border-color: var(--color-lavender);
-  box-shadow: 0 1px 3px rgba(184, 169, 232, 0.2);
+  box-shadow: 0 0 0 3px rgba(184, 169, 232, 0.15);
 }
 
 /* Row */
 .add-modal__row {
   display: flex;
-  gap: var(--space-md);
+  gap: 16px;
   align-items: flex-end;
 }
 
@@ -128,7 +125,7 @@
 .add-modal__field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .add-modal__field--icon {
@@ -209,11 +206,11 @@
   color: var(--text-primary);
 }
 
-/* Time Range */
+/* Time Range (for boundaries) */
 .add-modal__time-range {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 12px;
 }
 
 .add-modal__time-range input {
@@ -234,10 +231,58 @@
   box-shadow: 0 0 0 3px rgba(125, 216, 196, 0.15);
 }
 
-.add-modal__time-range span {
+.add-modal__time-range > span {
   color: var(--text-muted);
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-medium);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Time Interval (for habits) */
+.add-modal__time-interval {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.add-modal__time-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.add-modal__time-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.add-modal__time-field input,
+.add-modal__time-field select {
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  font-size: 14px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: all 0.15s ease;
+}
+
+.add-modal__time-field input:focus,
+.add-modal__time-field select:focus {
+  outline: none;
+  border-color: var(--color-mint);
+  box-shadow: 0 0 0 3px rgba(125, 216, 196, 0.15);
+}
+
+.add-modal__time-separator {
+  color: var(--text-muted);
+  font-size: 16px;
+  font-weight: 500;
+  padding-bottom: 10px;
 }
 
 /* Days */

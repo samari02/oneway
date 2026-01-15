@@ -69,22 +69,22 @@
 
 /* Form */
 .edit-modal__form {
-  padding: 20px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 
 .edit-modal__row {
   display: flex;
-  gap: var(--space-md);
+  gap: 16px;
   align-items: flex-end;
 }
 
 .edit-modal__field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   flex: 1;
 }
 
@@ -166,9 +166,18 @@
 /* Actions */
 .edit-modal__actions {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-sm);
-  margin-top: var(--space-sm);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-light);
+}
+
+.edit-modal__actions-right {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .edit-modal__btn {
@@ -195,6 +204,15 @@
 
 .edit-modal__btn--primary:hover {
   background: var(--color-mint-dark);
+}
+
+.edit-modal__btn--delete {
+  background: transparent;
+  color: var(--color-coral);
+}
+
+.edit-modal__btn--delete:hover {
+  background: rgba(255, 155, 133, 0.1);
 }
 
 /* Compact time picker inside edit modal */
@@ -248,4 +266,52 @@
   width: 22px;
   height: 22px;
   font-size: 12px;
+}
+
+/* Time Interval */
+.edit-modal__time-interval {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.edit-modal__time-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-modal__time-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.edit-modal__time-field input,
+.edit-modal__time-field select {
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  font-size: 14px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: all 0.15s ease;
+}
+
+.edit-modal__time-field input:focus,
+.edit-modal__time-field select:focus {
+  outline: none;
+  border-color: var(--color-mint);
+  box-shadow: 0 0 0 3px rgba(125, 216, 196, 0.15);
+}
+
+.edit-modal__time-separator {
+  color: var(--text-muted);
+  font-size: 16px;
+  font-weight: 500;
+  padding-bottom: 10px;
 }

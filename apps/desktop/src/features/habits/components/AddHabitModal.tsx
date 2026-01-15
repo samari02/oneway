@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { TimeOfDay, HabitType, AvoidCategory, Goal } from '@oneway/shared'
 import { EmojiPicker } from './EmojiPicker'
-import { TimePicker } from './TimePicker'
 import { GoalIcon } from '@/features/goals/components/GoalModal'
 import './AddHabitModal.css'
 
@@ -143,33 +142,54 @@ export function AddHabitModal({ onAdd, onCancel, goals = [], initialTime, initia
             </button>
           </div>
 
-          {/* Icon + Name */}
+          {/* Name + Icon */}
           <div className="add-modal__row">
-            <div className="add-modal__field add-modal__field--icon">
-              <label>Icon</label>
-              <EmojiPicker value={data.icon} onChange={(icon) => updateData({ icon })} />
-            </div>
             <div className="add-modal__field add-modal__field--name">
               <label>Name</label>
               <input
                 type="text"
                 value={data.name}
                 onChange={e => updateData({ name: e.target.value })}
-                placeholder={isBoundary ? 'No phone at wake-up' : 'Morning meditation'}
+                placeholder=""
                 autoFocus
                 required
               />
             </div>
+            <div className="add-modal__field add-modal__field--icon">
+              <label>Icon</label>
+              <EmojiPicker value={data.icon} onChange={(icon) => updateData({ icon })} />
+            </div>
           </div>
 
-          {/* For DO habits: Scheduled time */}
+          {/* For DO habits: Time interval */}
           {!isBoundary && (
             <div className="add-modal__field">
-              <label>Scheduled time</label>
-              <TimePicker
-                value={data.scheduled_time}
-                onChange={(scheduled_time) => updateData({ scheduled_time })}
-              />
+              <label>When</label>
+              <div className="add-modal__time-interval">
+                <div className="add-modal__time-field">
+                  <span className="add-modal__time-label">Start</span>
+                  <input
+                    type="time"
+                    value={data.scheduled_time || '08:00'}
+                    onChange={e => updateData({ scheduled_time: e.target.value })}
+                  />
+                </div>
+                <span className="add-modal__time-separator">→</span>
+                <div className="add-modal__time-field">
+                  <span className="add-modal__time-label">Duration</span>
+                  <select
+                    value={data.duration_minutes || 30}
+                    onChange={e => updateData({ duration_minutes: Number(e.target.value) })}
+                  >
+                    <option value={15}>15 min</option>
+                    <option value={30}>30 min</option>
+                    <option value={45}>45 min</option>
+                    <option value={60}>1 hour</option>
+                    <option value={90}>1.5 hours</option>
+                    <option value={120}>2 hours</option>
+                  </select>
+                </div>
+              </div>
             </div>
           )}
 

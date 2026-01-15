@@ -35,9 +35,9 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
         type="button"
         className="emoji-picker__trigger"
         onClick={() => setIsOpen(!isOpen)}
+        title="Change icon"
       >
         <span className="emoji-picker__value">{value || '✨'}</span>
-        <span className="emoji-picker__label">Change</span>
       </button>
 
       {isOpen && (
