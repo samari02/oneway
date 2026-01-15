@@ -18,7 +18,7 @@ interface HabitListProps {
 type ViewMode = 'list' | 'visual' | 'calendar'
 
 // Calendar constants
-const HOUR_HEIGHT = 60 // pixels per hour (increased for better visibility)
+const HOUR_HEIGHT = 80 // pixels per hour (increased for better visibility)
 const START_HOUR = 0 // midnight
 const END_HOUR = 24 // midnight (full day)
 const TOTAL_HOURS = END_HOUR - START_HOUR
@@ -40,7 +40,17 @@ function timeToMinutes(time: string): number {
 
 export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDelete, onMarkViolated, onCreateHabit, onUpdateHabitTime }: HabitListProps) {
   const [currentTime, setCurrentTime] = useState(getCurrentTime)
-  const [viewMode, setViewMode] = useState<ViewMode>('visual') // Timeline view by default
+  
+  // Persist viewMode in localStorage to survive re-renders and re-mounts
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem('clarity-habit-view-mode')
+    return (saved as ViewMode) || 'visual'
+  })
+  
+  // Save viewMode to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('clarity-habit-view-mode', viewMode)
+  }, [viewMode])
   
   // Drag state for calendar
   const [isDragging, setIsDragging] = useState(false)
@@ -48,6 +58,7 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
   const [dragEnd, setDragEnd] = useState<{ y: number; time: string } | null>(null)
   const [draggingHabit, setDraggingHabit] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
+  const [hasMoved, setHasMoved] = useState(false) // Track if mouse actually moved (to distinguish click from drag)
   
   // Optimistic position updates (to prevent flash back to old position)
   const [optimisticTimes, setOptimisticTimes] = useState<Record<string, string>>({})
@@ -113,10 +124,21 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
       setDragEnd({ y: snappedY, time })
     }
     
+    // Activate habit drag only after mouse has moved enough (5px threshold)
+    if (pendingDragRef.current && !draggingHabit) {
+      const moveDistance = Math.abs(rawY - pendingDragRef.current.startY)
+      if (moveDistance > 5) {
+        setDraggingHabit(pendingDragRef.current.habitId)
+        setDragOffset(pendingDragRef.current.offset)
+        setHasMoved(true)
+      }
+    }
+    
     if (draggingHabit) {
       const habitRawY = rawY - dragOffset
       const habitSnappedY = snapY(habitRawY)
       setDragEnd({ y: habitSnappedY, time: yToTime(habitSnappedY) })
+      setHasMoved(true) // Mark that we actually moved (it's a real drag, not a click)
     }
   }, [isDragging, dragStart, draggingHabit, dragOffset, yToTime, snapY])
 
@@ -133,7 +155,8 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
       }
     }
     
-    if (draggingHabit && dragEnd && onUpdateHabitTime) {
+    // Only update time if mouse actually moved (real drag, not just a click)
+    if (draggingHabit && dragEnd && onUpdateHabitTime && hasMoved) {
       // Store optimistic position BEFORE clearing drag state
       setOptimisticTimes(prev => ({ ...prev, [draggingHabit]: dragEnd.time }))
       onUpdateHabitTime(draggingHabit, dragEnd.time)
@@ -143,9 +166,14 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
     setDragStart(null)
     setDragEnd(null)
     setDraggingHabit(null)
-  }, [isDragging, dragStart, dragEnd, draggingHabit, onCreateHabit, onUpdateHabitTime])
+    setHasMoved(false)
+    pendingDragRef.current = null
+  }, [isDragging, dragStart, dragEnd, draggingHabit, hasMoved, onCreateHabit, onUpdateHabitTime])
 
-  // Handle habit drag start
+  // Store pending drag info (don't set draggingHabit until mouse actually moves)
+  const pendingDragRef = useRef<{ habitId: string; offset: number; startY: number } | null>(null)
+  
+  // Handle habit drag start (just store info, don't change state yet)
   const handleHabitDragStart = useCallback((e: React.MouseEvent, habitId: string, habitTop: number) => {
     e.stopPropagation()
     if (!calendarGridRef.current) return
@@ -153,12 +181,10 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
     const rect = calendarGridRef.current.getBoundingClientRect()
     const y = e.clientY - rect.top
     const offset = y - habitTop
-    const snappedTop = snapY(habitTop)
     
-    setDraggingHabit(habitId)
-    setDragOffset(offset)
-    setDragEnd({ y: snappedTop, time: yToTime(snappedTop) })
-  }, [yToTime, snapY])
+    // Store pending drag info, but don't activate dragging yet
+    pendingDragRef.current = { habitId, offset, startY: y }
+  }, [])
 
   // Sync scroll between hours column and grid
   const handleCalendarScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -249,21 +275,37 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
               onClick={() => setViewMode('calendar')}
               title="Calendar view"
             >
-              📅
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
             </button>
             <button 
               className={`habit-list__view-btn ${viewMode === 'visual' ? 'habit-list__view-btn--active' : ''}`}
               onClick={() => setViewMode('visual')}
               title="Timeline view"
             >
-              ▤
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="15" y2="18"/>
+              </svg>
             </button>
             <button 
               className={`habit-list__view-btn ${viewMode === 'list' ? 'habit-list__view-btn--active' : ''}`}
               onClick={() => setViewMode('list')}
               title="List view"
             >
-              ☰
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <circle cx="4" cy="6" r="1" fill="currentColor"/>
+                <circle cx="4" cy="12" r="1" fill="currentColor"/>
+                <circle cx="4" cy="18" r="1" fill="currentColor"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -438,17 +480,28 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
                     height: `${Math.max(height, 30)}px`
                   }}
                   onClick={(e) => {
-                    if (!isBeingDragged) {
+                    // Click on card body = edit (if not dragging)
+                    if (!isBeingDragged && !hasMoved && onEdit) {
                       e.stopPropagation()
-                      isChecked ? onUncheck(habit.id) : onCheck(habit.id)
+                      onEdit(habit)
                     }
                   }}
                   onMouseDown={(e) => handleHabitDragStart(e, habit.id, topPosition)}
                 >
+                  {/* Checkbox zone = toggle */}
+                  <span 
+                    className={`habit-list__calendar-block-checkbox ${isChecked ? 'habit-list__calendar-block-checkbox--checked' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      isChecked ? onUncheck(habit.id) : onCheck(habit.id)
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()} // Prevent drag when clicking checkbox
+                  >
+                    {isChecked ? '✓' : ''}
+                  </span>
                   <span className="habit-list__calendar-block-icon">{habit.icon || '✨'}</span>
                   <span className="habit-list__calendar-block-name">{habit.name}</span>
                   <span className="habit-list__calendar-block-time">{habit.scheduled_time}</span>
-                  {isChecked && <span className="habit-list__calendar-block-check">✓</span>}
                 </div>
               )
             })}
@@ -471,8 +524,18 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
                 <div 
                   key={habit.id} 
                   className={`habit-list__visual-block ${isChecked ? 'habit-list__visual-block--done' : ''}`}
-                  onClick={() => isChecked ? onUncheck(habit.id) : onCheck(habit.id)}
+                  onClick={() => onEdit?.(habit)} // Click on card = edit
                 >
+                  {/* Checkbox zone = toggle */}
+                  <span 
+                    className={`habit-list__visual-checkbox ${isChecked ? 'habit-list__visual-checkbox--checked' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      isChecked ? onUncheck(habit.id) : onCheck(habit.id)
+                    }}
+                  >
+                    {isChecked ? '✓' : ''}
+                  </span>
                   <div className="habit-list__visual-time">{startTime}</div>
                   <div className="habit-list__visual-content">
                     <span className="habit-list__visual-icon">{habit.icon || '✨'}</span>
@@ -481,7 +544,6 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
                   {duration && (
                     <span className="habit-list__visual-duration">{duration}m</span>
                   )}
-                  {isChecked && <span className="habit-list__visual-check">✓</span>}
                 </div>
               )
             })}

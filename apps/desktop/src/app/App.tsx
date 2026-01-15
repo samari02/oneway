@@ -24,6 +24,7 @@ function TodayView() {
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
   const [showNorthStarEdit, setShowNorthStarEdit] = useState(false)
   const [showAiChat, setShowAiChat] = useState(false)
+  const [dragHabitDefaults, setDragHabitDefaults] = useState<{ time: string; duration: number } | null>(null)
 
   const handleToggle = (habitId: string) => {
     if (!user) return
@@ -68,6 +69,7 @@ function TodayView() {
       goal_id: data.goal_id,
     })
     setShowAddForm(false)
+    setDragHabitDefaults(null)
     refetchHabits()
   }
 
@@ -96,22 +98,10 @@ function TodayView() {
     toggleHabit(habitId, user.id)
   }
 
-  // Create habit from calendar drag
-  const handleCreateHabitFromDrag = async (time: string, duration: number) => {
-    if (!user) return
-    await create({
-      user_id: user.id,
-      name: 'New habit',
-      icon: '✨',
-      scheduled_time: time,
-      duration_minutes: duration,
-      is_required: false,
-      time_of_day: 'anytime',
-      habit_type: 'do',
-    })
-    refetchHabits(true) // Silent refetch to avoid unmounting HabitList
-    // Open edit modal for the newly created habit
-    // TODO: get the new habit ID and open edit modal
+  // Create habit from calendar drag - opens the modal with pre-filled time/duration
+  const handleCreateHabitFromDrag = (time: string, duration: number) => {
+    setDragHabitDefaults({ time, duration })
+    setShowAddForm(true)
   }
 
   // Update habit time from calendar drag
@@ -297,8 +287,13 @@ function TodayView() {
             {showAddForm && (
               <AddHabitModal
                 onAdd={handleAddHabit}
-                onCancel={() => setShowAddForm(false)}
+                onCancel={() => {
+                  setShowAddForm(false)
+                  setDragHabitDefaults(null)
+                }}
                 goals={goals}
+                initialTime={dragHabitDefaults?.time}
+                initialDuration={dragHabitDefaults?.duration}
               />
             )}
           </>

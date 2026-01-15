@@ -15,13 +15,13 @@ fn greet(name: &str) -> String {
 #[tauri::command]
 fn get_browsing_stats(period: Option<String>) -> BrowsingStats {
     let period_days = match period.as_deref() {
-        Some("today") => Some(1),
+        Some("today") => Some(0),  // 0 = start of today (midnight local time)
         Some("7days") => Some(7),
         Some("30days") => Some(30),
         Some("90days") => Some(90),
         _ => None, // "all" or missing
     };
-    
+
     browsing_data::get_browsing_stats(period_days)
 }
 

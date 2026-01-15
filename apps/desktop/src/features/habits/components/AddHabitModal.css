@@ -2,12 +2,13 @@
 .add-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   animation: addModalFadeIn 0.15s ease-out;
+  backdrop-filter: blur(4px);
 }
 
 @keyframes addModalFadeIn {
@@ -17,8 +18,8 @@
 
 /* Modal */
 .add-modal {
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  border-radius: 16px;
   width: 100%;
   max-width: 520px;
   min-width: 480px;
@@ -39,7 +40,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-md) var(--space-lg);
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -68,10 +69,10 @@
 
 /* Form */
 .add-modal__form {
-  padding: var(--space-lg);
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 16px;
 }
 
 /* Type Toggle */

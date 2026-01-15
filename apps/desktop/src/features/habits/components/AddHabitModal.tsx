@@ -26,6 +26,8 @@ interface AddHabitModalProps {
   onAdd: (data: HabitFormData) => Promise<void>
   onCancel: () => void
   goals?: Goal[]
+  initialTime?: string
+  initialDuration?: number
 }
 
 const DAYS = [
@@ -46,13 +48,13 @@ const COMMON_SITES = [
   { pattern: 'reddit.com', label: 'Reddit' },
 ]
 
-export function AddHabitModal({ onAdd, onCancel, goals = [] }: AddHabitModalProps) {
+export function AddHabitModal({ onAdd, onCancel, goals = [], initialTime, initialDuration }: AddHabitModalProps) {
   const [data, setData] = useState<HabitFormData>({
     name: '',
     icon: '✨',
     description: '',
-    duration_minutes: null,
-    scheduled_time: '',
+    duration_minutes: initialDuration ?? null,
+    scheduled_time: initialTime ?? '',
     is_required: false,
     time_of_day: 'morning',
     habit_type: 'do',

@@ -297,7 +297,7 @@ impl BrowsingStorage {
     }
     
     /// Calculate browsing stats from stored data
-    /// period_days: None = all data, Some(n) = last n days
+    /// period_days: None = all data, Some(0) = today only, Some(n) = last n days
     pub fn calculate_stats(&self, period_days: Option<u32>) -> BrowsingStats {
         let all_visits = self.read_visits();
         let blocks = self.read_block_events();
@@ -305,10 +305,22 @@ impl BrowsingStorage {
         
         // Filter visits by period
         let visits = if let Some(days) = period_days {
-            let cutoff_time = chrono::Local::now()
-                .checked_sub_signed(chrono::Duration::days(days as i64))
-                .unwrap()
-                .timestamp_millis();
+            let cutoff_time = if days == 0 {
+                // "Today" = start of current day (midnight local time)
+                chrono::Local::now()
+                    .date_naive()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    .and_local_timezone(chrono::Local)
+                    .unwrap()
+                    .timestamp_millis()
+            } else {
+                // "Last N days" = N days ago from now
+                chrono::Local::now()
+                    .checked_sub_signed(chrono::Duration::days(days as i64))
+                    .unwrap()
+                    .timestamp_millis()
+            };
             
             all_visits
                 .into_iter()
