@@ -10,6 +10,7 @@ interface HabitFormData {
   description: string
   duration_minutes: number | null
   scheduled_time: string
+  scheduled_end_time: string
   is_required: boolean
   time_of_day: TimeOfDay
   habit_type: HabitType
@@ -19,6 +20,28 @@ interface HabitFormData {
   blocked_sites?: string[]
   days_of_week?: number[]
   goal_id?: string
+}
+
+// Helper to calculate end time from start + duration
+function calculateEndTime(startTime: string, durationMinutes: number): string {
+  const [h, m] = startTime.split(':').map(Number)
+  const totalMinutes = h * 60 + m + durationMinutes
+  const endH = Math.floor(totalMinutes / 60) % 24
+  const endM = totalMinutes % 60
+  return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
+}
+
+// Helper to calculate duration from start and end times
+function calculateDuration(startTime: string, endTime: string): number {
+  const [sh, sm] = startTime.split(':').map(Number)
+  const [eh, em] = endTime.split(':').map(Number)
+  const startMinutes = sh * 60 + sm
+  let endMinutes = eh * 60 + em
+  // Handle overnight (end time is next day)
+  if (endMinutes <= startMinutes) {
+    endMinutes += 24 * 60
+  }
+  return endMinutes - startMinutes
 }
 
 interface AddHabitModalProps {
@@ -48,12 +71,19 @@ const COMMON_SITES = [
 ]
 
 export function AddHabitModal({ onAdd, onCancel, goals = [], initialTime, initialDuration }: AddHabitModalProps) {
+  // Calculate initial end time from initialTime + initialDuration
+  const defaultStartTime = initialTime || '08:00'
+  const defaultEndTime = initialTime && initialDuration 
+    ? calculateEndTime(initialTime, initialDuration)
+    : calculateEndTime(defaultStartTime, initialDuration || 30)
+
   const [data, setData] = useState<HabitFormData>({
     name: '',
     icon: '✨',
     description: '',
-    duration_minutes: initialDuration ?? null,
-    scheduled_time: initialTime ?? '',
+    duration_minutes: initialDuration ?? 30,
+    scheduled_time: defaultStartTime,
+    scheduled_end_time: defaultEndTime,
     is_required: false,
     time_of_day: 'morning',
     habit_type: 'do',
@@ -130,13 +160,26 @@ export function AddHabitModal({ onAdd, onCancel, goals = [], initialTime, initia
             <button
               type="button"
               className={`add-modal__type-btn add-modal__type-btn--avoid ${data.habit_type === 'avoid' ? 'add-modal__type-btn--active' : ''}`}
-              onClick={() => updateData({ 
-                habit_type: 'avoid',
-                avoid_category: 'digital',
-                time_start: '06:00',
-                time_end: '08:00',
-                icon: '🛡️'
-              })}
+              onClick={() => {
+                // Use initialTime/initialDuration from calendar drag if available
+                const startTime = initialTime || '06:00'
+                const endTime = initialTime && initialDuration
+                  ? (() => {
+                      const [h, m] = initialTime.split(':').map(Number)
+                      const totalMinutes = h * 60 + m + initialDuration
+                      const endH = Math.floor(totalMinutes / 60) % 24
+                      const endM = totalMinutes % 60
+                      return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
+                    })()
+                  : '08:00'
+                updateData({ 
+                  habit_type: 'avoid',
+                  avoid_category: 'digital',
+                  time_start: startTime,
+                  time_end: endTime,
+                  icon: '🛡️'
+                })
+              }}
             >
               <span>🛡️</span> Avoid
             </button>
@@ -165,30 +208,35 @@ export function AddHabitModal({ onAdd, onCancel, goals = [], initialTime, initia
           {!isBoundary && (
             <div className="add-modal__field">
               <label>When</label>
-              <div className="add-modal__time-interval">
-                <div className="add-modal__time-field">
-                  <span className="add-modal__time-label">Start</span>
-                  <input
-                    type="time"
-                    value={data.scheduled_time || '08:00'}
-                    onChange={e => updateData({ scheduled_time: e.target.value })}
-                  />
-                </div>
-                <span className="add-modal__time-separator">→</span>
-                <div className="add-modal__time-field">
-                  <span className="add-modal__time-label">Duration</span>
-                  <select
-                    value={data.duration_minutes || 30}
-                    onChange={e => updateData({ duration_minutes: Number(e.target.value) })}
-                  >
-                    <option value={15}>15 min</option>
-                    <option value={30}>30 min</option>
-                    <option value={45}>45 min</option>
-                    <option value={60}>1 hour</option>
-                    <option value={90}>1.5 hours</option>
-                    <option value={120}>2 hours</option>
-                  </select>
-                </div>
+              <div className="add-modal__time-range">
+                <input
+                  type="time"
+                  value={data.scheduled_time}
+                  onChange={e => {
+                    const newStart = e.target.value
+                    // Recalculate end time to maintain same duration
+                    const duration = calculateDuration(data.scheduled_time, data.scheduled_end_time)
+                    const newEnd = calculateEndTime(newStart, duration)
+                    updateData({ 
+                      scheduled_time: newStart,
+                      scheduled_end_time: newEnd,
+                      duration_minutes: duration
+                    })
+                  }}
+                />
+                <span>→</span>
+                <input
+                  type="time"
+                  value={data.scheduled_end_time}
+                  onChange={e => {
+                    const newEnd = e.target.value
+                    const duration = calculateDuration(data.scheduled_time, newEnd)
+                    updateData({ 
+                      scheduled_end_time: newEnd,
+                      duration_minutes: duration
+                    })
+                  }}
+                />
               </div>
             </div>
           )}

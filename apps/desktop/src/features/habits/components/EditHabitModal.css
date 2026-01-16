@@ -315,3 +315,34 @@
   font-weight: 500;
   padding-bottom: 10px;
 }
+
+/* Time Range (Start → End) */
+.edit-modal__time-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.edit-modal__time-range input {
+  flex: 1;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  font-size: 14px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: all 0.15s ease;
+}
+
+.edit-modal__time-range input:focus {
+  outline: none;
+  border-color: var(--color-mint);
+  box-shadow: 0 0 0 3px rgba(125, 216, 196, 0.15);
+}
+
+.edit-modal__time-range > span {
+  color: var(--text-muted);
+  font-size: 16px;
+  font-weight: 500;
+}

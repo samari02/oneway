@@ -7,6 +7,7 @@ interface UseHabitsResult {
   loading: boolean
   error: Error | null
   refetch: (silent?: boolean) => Promise<void>
+  optimisticRemove: (habitId: string) => void
 }
 
 export function useHabits(userId: string | undefined): UseHabitsResult {
@@ -42,5 +43,10 @@ export function useHabits(userId: string | undefined): UseHabitsResult {
     fetch(false) // Initial fetch shows loading
   }, [fetch])
 
-  return { habits, loading, error, refetch: fetch }
+  // Optimistic remove: instantly remove from UI before server confirms
+  const optimisticRemove = useCallback((habitId: string) => {
+    setHabits(prev => prev.filter(h => h.id !== habitId))
+  }, [])
+
+  return { habits, loading, error, refetch: fetch, optimisticRemove }
 }

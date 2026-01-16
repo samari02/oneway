@@ -6,6 +6,7 @@ import { OnboardingFlow, useOnboardingStatus, useUserSettings, saveOnboardingDat
 import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
+import { BoundariesView } from '@/features/boundaries'
 import { Mascot, type MascotMood } from '@/features/mascot'
 import { AICompanion } from '@/features/ai-companion'
 import { GoalsBar, useGoals } from '@/features/goals'
@@ -16,7 +17,7 @@ import './App.css'
 function TodayView() {
   const { user } = useAuth()
   const { settings, refetch: refetchSettings } = useUserSettings(user?.id)
-  const { habits, loading: habitsLoading, refetch: refetchHabits } = useHabits(user?.id)
+  const { habits, loading: habitsLoading, refetch: refetchHabits, optimisticRemove } = useHabits(user?.id)
   const { checkedIds, toggleHabit } = useTodayCheckIns(user?.id)
   const { create, update, remove } = useHabitActions()
   const { goals, create: createGoal, update: updateGoal, remove: removeGoal } = useGoals(user?.id)
@@ -81,11 +82,13 @@ function TodayView() {
   }
 
   const handleDeleteHabit = async (habitId: string) => {
+    optimisticRemove(habitId) // Remove from UI immediately
     try {
       await remove(habitId)
-      refetchHabits()
+      // No refetch needed - optimistic update already done
     } catch (err) {
       console.error('Failed to delete habit:', err)
+      refetchHabits(true) // Restore on error
     }
   }
 
@@ -304,9 +307,9 @@ function TodayView() {
         <EditHabitModal
           habit={editingHabit}
           onSave={handleEditHabit}
-          onDelete={async (habitId) => {
-            await handleDeleteHabit(habitId)
-            setEditingHabit(null)
+          onDelete={(habitId) => {
+            setEditingHabit(null) // Close modal first to avoid glitch
+            handleDeleteHabit(habitId)
           }}
           onCancel={() => setEditingHabit(null)}
         />
@@ -356,6 +359,8 @@ function Dashboard() {
         return <TodayView />
       case 'stats':
         return <StatsView />
+      case 'boundaries':
+        return user ? <BoundariesView userId={user.id} /> : null
       case 'settings':
         return <SettingsView />
       default:

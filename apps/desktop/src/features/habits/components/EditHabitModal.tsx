@@ -3,6 +3,28 @@ import type { Habit } from '@oneway/shared'
 import { EmojiPicker } from './EmojiPicker'
 import './EditHabitModal.css'
 
+// Helper to calculate end time from start + duration
+function calculateEndTime(startTime: string, durationMinutes: number): string {
+  const [h, m] = startTime.split(':').map(Number)
+  const totalMinutes = h * 60 + m + durationMinutes
+  const endH = Math.floor(totalMinutes / 60) % 24
+  const endM = totalMinutes % 60
+  return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
+}
+
+// Helper to calculate duration from start and end times
+function calculateDuration(startTime: string, endTime: string): number {
+  const [sh, sm] = startTime.split(':').map(Number)
+  const [eh, em] = endTime.split(':').map(Number)
+  const startMinutes = sh * 60 + sm
+  let endMinutes = eh * 60 + em
+  // Handle overnight (end time is next day)
+  if (endMinutes <= startMinutes) {
+    endMinutes += 24 * 60
+  }
+  return endMinutes - startMinutes
+}
+
 interface EditHabitModalProps {
   habit: Habit
   onSave: (updates: Partial<Habit>) => void
@@ -14,23 +36,28 @@ export function EditHabitModal({ habit, onSave, onDelete, onCancel }: EditHabitM
   const [name, setName] = useState(habit.name)
   const [icon, setIcon] = useState(habit.icon || '✨')
   const [description, setDescription] = useState(habit.description || '')
-  const [durationMinutes, setDurationMinutes] = useState(habit.duration_minutes?.toString() || '')
-  const [scheduledTime, setScheduledTime] = useState(habit.scheduled_time || '')
+  const [scheduledTime, setScheduledTime] = useState(habit.scheduled_time || '08:00')
+  const [scheduledEndTime, setScheduledEndTime] = useState(() => {
+    if (habit.scheduled_time && habit.duration_minutes) {
+      return calculateEndTime(habit.scheduled_time, habit.duration_minutes)
+    }
+    return calculateEndTime(habit.scheduled_time || '08:00', habit.duration_minutes || 30)
+  })
   const [isRequired, setIsRequired] = useState(habit.is_required || false)
-  const [timeOfDay, setTimeOfDay] = useState<'morning' | 'evening' | 'anytime'>(habit.time_of_day || 'anytime')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
 
+    const duration = calculateDuration(scheduledTime, scheduledEndTime)
+
     onSave({
       name: name.trim(),
       icon,
       description: description.trim() || undefined,
-      duration_minutes: durationMinutes ? parseInt(durationMinutes) : undefined,
+      duration_minutes: duration,
       scheduled_time: scheduledTime || undefined,
       is_required: isRequired,
-      time_of_day: timeOfDay,
     })
   }
 
@@ -74,41 +101,25 @@ export function EditHabitModal({ habit, onSave, onDelete, onCancel }: EditHabitM
           {/* Time interval */}
           <div className="edit-modal__field">
             <label>When</label>
-            <div className="edit-modal__time-interval">
-              <div className="edit-modal__time-field">
-                <span className="edit-modal__time-label">Start</span>
-                <input
-                  type="time"
-                  value={scheduledTime || '08:00'}
-                  onChange={e => setScheduledTime(e.target.value)}
-                />
-              </div>
-              <span className="edit-modal__time-separator">→</span>
-              <div className="edit-modal__time-field">
-                <span className="edit-modal__time-label">Duration</span>
-                <select
-                  value={durationMinutes || '30'}
-                  onChange={e => setDurationMinutes(e.target.value)}
-                >
-                  <option value="15">15 min</option>
-                  <option value="30">30 min</option>
-                  <option value="45">45 min</option>
-                  <option value="60">1 hour</option>
-                  <option value="90">1.5 hours</option>
-                  <option value="120">2 hours</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="edit-modal__row">
-            <div className="edit-modal__field">
-              <label>Time of day</label>
-              <select value={timeOfDay} onChange={e => setTimeOfDay(e.target.value as typeof timeOfDay)}>
-                <option value="anytime">Anytime</option>
-                <option value="morning">Morning</option>
-                <option value="evening">Evening</option>
-              </select>
+            <div className="edit-modal__time-range">
+              <input
+                type="time"
+                value={scheduledTime}
+                onChange={e => {
+                  const newStart = e.target.value
+                  // Recalculate end time to maintain same duration
+                  const duration = calculateDuration(scheduledTime, scheduledEndTime)
+                  const newEnd = calculateEndTime(newStart, duration)
+                  setScheduledTime(newStart)
+                  setScheduledEndTime(newEnd)
+                }}
+              />
+              <span>→</span>
+              <input
+                type="time"
+                value={scheduledEndTime}
+                onChange={e => setScheduledEndTime(e.target.value)}
+              />
             </div>
           </div>
 

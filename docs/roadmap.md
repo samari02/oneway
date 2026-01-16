@@ -1,7 +1,12 @@
 # Roadmap — Clarity
 
-## ✅ Phase 0: Foundations (Done)
+> Vision : Un copilote qui t'aide à voir clair dans ta vie digitale.
 
+---
+
+## ✅ Completed
+
+### Foundations
 - [x] Monorepo setup (pnpm workspace)
 - [x] `packages/shared` — types de base
 - [x] Supabase project + tables + RLS
@@ -9,123 +14,158 @@
 - [x] Auth (email/password)
 - [x] Concept & Vision doc
 
----
-
-## ✅ Phase 1: Habit Management (Done)
-
-> Objectif : Pouvoir créer, voir et compléter ses habits quotidiens.
-
-### 1.1 Backend ready
-- [x] Vérifier/ajuster schéma Supabase pour habits
-- [x] API layer dans features/habits/api
-
-### 1.2 UI Habits
-- [x] Liste des habits (fetch depuis Supabase)
-- [x] Créer un habit (AddHabitForm)
+### Habits & Calendar
+- [x] CRUD habits (create, edit, delete)
 - [x] Check/uncheck habit du jour
-- [ ] Éditer / Supprimer un habit (V2)
-- [ ] Afficher streak par habit (V2)
+- [x] Calendar view avec drag & drop
+- [x] Timeline view (visual)
+- [x] Scheduled times + duration
 
-### 1.3 Design refresh
-- [x] Passer au nouveau design (Clarity vibes)
-- [x] Palette mint/pastels
-- [x] Typo rounded (Nunito)
+### North Star & Goals
+- [x] North Star goal (direction de vie)
+- [x] Goals layer avec progress
+- [x] AI refinement (OpenAI)
+
+### Stats & Browsing
+- [x] Chrome extension (history collection)
+- [x] Native messaging (extension ↔ desktop)
+- [x] Browsing stats (top sites, time distribution)
+- [x] Site classification (productive/neutral/distracting)
+- [x] Period filtering (today, 7d, 30d, all)
+
+### AI Companion (Aoi)
+- [x] Empathetic coach with context
+- [x] Chat history
+- [x] Integrated in header
+
+### Design & UX
+- [x] Clarity design system (mint/pastels)
+- [x] Mascot (Aoi) with moods
+- [x] Dark mode support
+- [x] Modal polish (consistent styling)
 
 ---
 
-## 📦 Phase 2: Chrome Extension
+## 🎯 Phase 1: Fermer la Boucle (Current)
 
-> Objectif : Bloquer les sites dans Chrome, contrôlé par l'app.
+> Objectif : Connecter Boundaries ↔ Extension pour un blocking effectif.
 
-### 2.1 Extension setup
-- [ ] Manifest V3 scaffold
-- [ ] Build pipeline (vite/rollup)
-- [ ] `@oneway/shared` integration
+### 1.1 Boundaries Management (UI)
+- [x] Vue dédiée "Boundaries" dans sidebar
+- [x] Liste des boundaries avec:
+  - Site/pattern (ex: twitter.com, *.reddit.com)
+  - Horaires (time_start → time_end)
+  - Mode (block / awareness)
+  - Raison (pourquoi cette boundary)
+- [x] CRUD boundaries (create, edit, delete)
+- [x] Stats par boundary (blocks today, bypasses this week, respect rate)
+- [ ] Quick-add depuis Browsing stats ("Block this site")
 
-### 2.2 Blocking core
-- [ ] `declarativeNetRequest` rules
-- [ ] Block page custom (avec mascotte)
-- [ ] Sync rules depuis Supabase
+### 1.2 Sync Boundaries → Extension
+- [ ] Native message `SYNC_BOUNDARIES` (desktop → extension)
+- [ ] Extension reçoit et stocke les rules
+- [ ] Time-based blocking (respecter les horaires)
+- [ ] Refresh automatique quand boundary modifiée
 
-### 2.3 Communication App ↔ Extension
-- [ ] Extension lit blocking_state depuis Supabase
-- [ ] Refresh rules quand habits complétés
+### 1.3 Block Page Redesign
+- [ ] Design Clarity (mint, bg-elevated)
+- [ ] Mascotte Aoi avec message encourageant
+- [ ] Afficher la raison de la boundary
+- [ ] Bypass avec tracking (guided mode)
+
+### 1.4 Mode Awareness
+- [ ] Option par boundary: block vs awareness
+- [ ] Toast/notification au lieu de bloquer
+- [ ] "Tu visites Twitter. C'est dans tes boundaries."
+- [ ] L'user décide, Clarity informe
+
+### 1.5 Stats: Boundary Violations
+- [ ] Compter les violations par boundary
+- [ ] Afficher dans Stats (violations today, this week)
+- [ ] Correlation avec habits dans Aoi
 
 ---
 
-## 🔒 Phase 3: Blocking Logic
+## 🧠 Phase 2: Intelligence
 
-> Objectif : Connecter habits et blocking (mode strict).
+> Objectif : Aoi devient proactive et fait des connexions.
 
-### 3.1 Blocking state
-- [ ] UI toggle mode (Gentle/Guided/Strict)
-- [ ] Sauvegarder mode dans user_settings
-- [ ] Logic : habits required → unlock
+### 2.1 Pattern Insights
+- [ ] Détecter corrélations (skip habit → more browsing)
+- [ ] Aoi suggère des insights automatiquement
+- [ ] Weekly digest des patterns
 
-### 3.2 Block screen
-- [ ] Design block page (Clarity style)
-- [ ] Afficher progression routine
-- [ ] Bypass selon mode (clic / confirm / challenge)
+### 2.2 Focus Blocks
+- [ ] Créneaux protégés dans le calendrier
+- [ ] Blocking renforcé pendant focus time
+- [ ] Intégration avec habits (ex: "Deep Work 9h-12h")
 
-### 3.3 Evening curfew
+### 2.3 Proactive Aoi
+- [ ] Un message par jour (bien choisi)
+- [ ] Célébrer les wins ("3 jours de streak!")
+- [ ] Alerter doucement ("Tu te couches tard ces jours-ci")
+
+### 2.4 Evening Wind-down
 - [ ] Config heure de couvre-feu
-- [ ] Block automatique le soir
+- [ ] Écran qui se "réchauffe" visuellement
+- [ ] Blocages progressifs
+- [ ] Suggestion: "Prêt à fermer?"
+
+### 2.5 Notifications macOS
+- [ ] Rappels habits (configurable)
+- [ ] Alertes boundary violations
+- [ ] Summary fin de journée
 
 ---
 
-## 🎨 Phase 4: Polish V1
+## 🌟 Phase 3: Écosystème
 
-> Objectif : App utilisable au quotidien.
+> Objectif : Clarity devient un hub de bien-être digital.
 
-### 4.1 Notifications
-- [ ] Notifications macOS (rappels habits)
-- [ ] Config heures de notification
+### 3.1 Intégrations Santé
+- [ ] Apple Health / Google Fit (sommeil)
+- [ ] Strava (workouts auto-trackés)
+- [ ] Aoi connecte les dots (sommeil ↔ habits)
 
-### 4.2 Stats basiques
-- [x] Streak global (basé sur required habits)
-- [x] Best streak (record)
-- [x] Weekly summary (X/7 jours)
-- [x] Monthly summary (X/30 jours)
-- [x] Per-habit stats (14 jours)
-- [x] Mascotte avec message encourageant
+### 3.2 Mobile Companion
+- [ ] App read-only (voir habits, check/uncheck)
+- [ ] Push notifications
+- [ ] Sync avec desktop
 
-### 4.3 Onboarding
-- [ ] Flow onboarding (problèmes → goals → mode)
-- [ ] Setup auto des habits suggérés
-- [ ] Setup auto des sites à bloquer
+### 3.3 Weekly Review
+- [ ] Aoi prépare un résumé chaque dimanche
+- [ ] Points forts, points à améliorer
+- [ ] Suggestions pour la semaine
 
-### 4.4 Finitions
-- [ ] Menubar icon (optionnel)
-- [ ] Error handling propre
-- [ ] Multi-device sync vérifié
+### 3.4 Advanced Blocking
+- [ ] Mode Strict (challenge pour bypass)
+- [ ] Scheduled blocking (ex: weekends only)
+- [ ] Whitelist par contexte (work vs personal)
 
----
-
-## 🚀 Phase 5: Distribution
-
-- [ ] Build production Tauri (.app)
-- [ ] Publish extension Chrome Web Store
-- [ ] Landing page simple
+### 3.5 Distribution
+- [ ] Build production Tauri (.app, .dmg)
+- [ ] Chrome Web Store (extension)
+- [ ] Landing page
 - [ ] Dogfooding intensif
 
 ---
 
-## 🔮 Backlog V2+
+## 🔮 Backlog (Future)
 
-- [ ] Pattern insights
-- [ ] Mascotte animée (états)
-- [ ] Évolution du personnage
+- [ ] Mascotte animée (états dynamiques)
+- [ ] Évolution du personnage (grandit avec streaks)
 - [ ] Routines nommées (matin/soir)
 - [ ] Deep linking (magic link → app)
 - [ ] Best Self profile détaillé
-- [ ] Suggestions intelligentes
+- [ ] Communauté (opt-in, anonyme)
+- [ ] API pour développeurs
 
 ---
 
 ## Current Focus
 
 ```
-Phase 4 — Polish V1
+Phase 1.2 — Sync Boundaries → Extension
 ```
 
-Stats basiques ✅ → Prochaine action : Tasks / Calendar view / Chrome Extension.
+Prochaine action : Implémenter la synchronisation boundaries → extension pour le blocking effectif.

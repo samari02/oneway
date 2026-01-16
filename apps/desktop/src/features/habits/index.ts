@@ -1,6 +1,7 @@
 // API
 export { 
-  getHabits, 
+  getHabits,
+  getAvoidHabits,
   createHabit, 
   updateHabit,
   checkHabit, 

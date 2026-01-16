@@ -25,6 +25,19 @@ export async function getHabits(userId: string): Promise<Habit[]> {
   return data ?? []
 }
 
+export async function getAvoidHabits(userId: string): Promise<Habit[]> {
+  const { data, error } = await supabase
+    .from('habits')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .eq('habit_type', 'avoid')
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return data ?? []
+}
+
 export interface CreateHabitData {
   user_id: string
   name: string
