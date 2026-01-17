@@ -1,10 +1,17 @@
+"use strict";
 /**
  * Content Script - Aoi Widget
  *
  * Injects Aoi mascot into every page as a floating companion.
  * Shows protection status, nudges, and coaching messages.
+ *
+ * Note: This file must be self-contained (no imports) because
+ * Chrome content scripts don't support ES modules.
  */
-import { log } from '../shared/utils';
+// Inline log function (can't import in content scripts)
+function log(...args) {
+    console.log(`[Clarity ${new Date().toISOString()}]`, ...args);
+}
 // Don't inject on extension pages or chrome:// pages
 const EXCLUDED_URLS = [
     'chrome://',

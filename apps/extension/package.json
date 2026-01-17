@@ -5,13 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite build --watch --mode development",
-    "build": "tsc && vite build && npm run copy-files",
+    "build": "tsc && vite build && npm run build:content && npm run copy-files",
+    "build:content": "esbuild src/content/content-script.ts --bundle --outfile=dist/content-script.js --format=iife --target=chrome100",
     "copy-files": "cp manifest.json dist/ && cp public/rules.json dist/ && cp src/ui/block-screen/index.html dist/block-screen.html && cp src/ui/block-screen/block-screen.css dist/ && cp src/ui/popup/index.html dist/popup.html && mkdir -p dist/icons && (cp public/icons/*.png dist/icons/ 2>/dev/null || true)",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",
     "@types/node": "^25.0.6",
+    "esbuild": "^0.20.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.11"
   },

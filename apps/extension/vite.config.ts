@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
 
+// Build config for extension
+// Note: Content scripts need IIFE format, service worker needs ES modules
 export default defineConfig({
   build: {
     outDir: 'dist',
@@ -8,7 +10,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         'service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
-        'content-script': resolve(__dirname, 'src/content/content-script.ts'),
         'block-screen': resolve(__dirname, 'src/ui/block-screen/block-screen.ts'),
         'popup': resolve(__dirname, 'src/ui/popup/popup.ts')
       },
