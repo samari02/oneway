@@ -6,7 +6,7 @@
  */
 
 import { log } from '../shared/utils'
-import type { CategorizedVisit, BlockEvent } from '../shared/types'
+import type { CategorizedVisit, BlockEvent, ProtectionStatus } from '../shared/types'
 
 // Native host identifier (must match the manifest)
 const HOST_NAME = 'com.clarity.app'
@@ -26,6 +26,15 @@ export type MessageToDesktop =
   | { type: 'BLOCK_EVENT'; data: BlockEvent }
   | { type: 'HISTORY_SYNC'; data: { visits: CategorizedVisit[] } }
   | { type: 'PING' }
+  | { type: 'PROTECTION_STATUS'; data: ProtectionStatusPayload }
+
+// Protection status payload for desktop
+export interface ProtectionStatusPayload {
+  incognitoEnabled: boolean
+  safeSearchEnforced: boolean
+  searchFilterActive: boolean
+  blockedSearchesToday: number
+}
 
 export type MessageFromDesktop =
   | { type: 'AUTH_STATUS'; data: { authenticated: boolean; user: { id: string; email: string } | null } }
@@ -105,6 +114,9 @@ export function connectToDesktopApp(): boolean {
     sendToDesktop({ type: 'PING' })
     sendToDesktop({ type: 'GET_AUTH_STATUS' })
     sendToDesktop({ type: 'GET_CONFIG' })
+    
+    // Send protection status to desktop
+    sendProtectionStatusToDesktop()
     
     log('Connected to desktop app')
     return true
@@ -328,5 +340,47 @@ export async function getConnectionStatus(): Promise<{
     connected: desktopAppConnected || false,
     authenticated: isAuthenticated || false,
     user: user || null
+  }
+}
+
+/**
+ * Send protection status to desktop app
+ * Called on connection and periodically
+ */
+export async function sendProtectionStatusToDesktop() {
+  if (!isConnected) {
+    return
+  }
+  
+  try {
+    // Check incognito access
+    let incognitoEnabled = false
+    try {
+      incognitoEnabled = await chrome.extension.isAllowedIncognitoAccess()
+    } catch (e) {
+      log('Could not check incognito access:', e)
+    }
+    
+    // Get blocked searches count for today
+    const today = new Date().toISOString().split('T')[0]
+    const key = `blockedSearches_${today}`
+    const data = await chrome.storage.local.get(key)
+    const blockedSearchesToday = data[key] || 0
+    
+    const statusPayload: ProtectionStatusPayload = {
+      incognitoEnabled,
+      safeSearchEnforced: true, // Always true (rules.json enforces it)
+      searchFilterActive: true, // Always active
+      blockedSearchesToday
+    }
+    
+    sendToDesktop({
+      type: 'PROTECTION_STATUS',
+      data: statusPayload
+    })
+    
+    log('Sent protection status to desktop:', statusPayload)
+  } catch (error) {
+    log('Error sending protection status:', error)
   }
 }

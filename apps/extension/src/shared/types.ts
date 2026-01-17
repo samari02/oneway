@@ -135,3 +135,12 @@ export interface HistoryCollectionStatus {
   totalVisits: number
   periodDays: number
 }
+
+// Protection status for desktop app
+export interface ProtectionStatus {
+  extensionConnected: boolean
+  incognitoEnabled: boolean
+  safeSearchEnforced: boolean
+  searchFilterActive: boolean
+  blockedSearchesToday: number
+}

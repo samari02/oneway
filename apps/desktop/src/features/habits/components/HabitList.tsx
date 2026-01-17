@@ -431,20 +431,25 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
                       </span>
                       <div className="habit-list__boundaries-timeline-track">
                         {calendarMode === 'day' ? (
-                          // Day view: single bar
+                          // Day view: single bar showing active hours
                           <div 
                             className="habit-list__boundaries-timeline-bar"
                             style={{ left: `${startPercent}%`, width: `${widthPercent}%` }}
                           />
                         ) : (
-                          // Week view: bars for each day (for now, show same pattern)
-                          // TODO: Support per-day schedules
+                          // Week view: show time range within each day cell
                           getWeekDays.map(day => (
                             <div 
                               key={day.dayNumber}
                               className="habit-list__boundaries-timeline-day-cell"
                             >
-                              <div className="habit-list__boundaries-timeline-bar habit-list__boundaries-timeline-bar--day" />
+                              <div 
+                                className="habit-list__boundaries-timeline-bar habit-list__boundaries-timeline-bar--day"
+                                style={{ 
+                                  left: `${startPercent}%`, 
+                                  width: `${widthPercent}%` 
+                                }}
+                              />
                             </div>
                           ))
                         )}

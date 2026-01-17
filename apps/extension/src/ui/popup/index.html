@@ -296,6 +296,52 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    /* Incognito Warning */
+    .popup__incognito-warning {
+      background: rgba(245, 158, 11, 0.3);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .popup__incognito-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .popup__incognito-text {
+      flex: 1;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .popup__incognito-text strong {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    .popup__incognito-text span {
+      opacity: 0.85;
+    }
+
+    .btn-incognito {
+      padding: 6px 12px;
+      background: white;
+      color: #f59e0b;
+      font-size: 11px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-incognito:hover {
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 <body>
@@ -319,6 +365,16 @@
         <span>Time saved:</span>
         <span class="popup__stat-value">~0 min</span>
       </div>
+    </div>
+
+    <!-- Incognito Warning (if not enabled) -->
+    <div class="popup__incognito-warning" id="incognito-warning" style="display: none;">
+      <div class="popup__incognito-icon">⚠️</div>
+      <div class="popup__incognito-text">
+        <strong>Incognito not protected</strong>
+        <span>Enable in chrome://extensions to stay protected</span>
+      </div>
+      <button class="btn-incognito" id="btn-setup-incognito">Setup</button>
     </div>
 
     <!-- History Permission Request (if not enabled) -->

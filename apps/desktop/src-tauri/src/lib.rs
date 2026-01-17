@@ -45,6 +45,12 @@ fn get_site_classifications() -> std::collections::HashMap<String, String> {
     browsing_data::get_site_classifications()
 }
 
+/// Get extension connection and protection status
+#[tauri::command]
+fn get_extension_status() -> native_host::ExtensionStatus {
+    native_host::get_extension_status()
+}
+
 /// Check if running as native messaging host
 pub fn is_native_host_mode() -> bool {
     std::env::args().any(|arg| arg == "--native-host")
@@ -64,7 +70,8 @@ pub fn run() {
             get_browsing_stats, 
             clear_browsing_data,
             save_site_classifications,
-            get_site_classifications
+            get_site_classifications,
+            get_extension_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

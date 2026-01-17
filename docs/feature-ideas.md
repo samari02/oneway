@@ -82,6 +82,14 @@
 - [ ] **Progressive unlock** — plus de temps débloqué si streak
 - [ ] **Emergency bypass** — avec friction et logging
 
+### Safeguards & Protection avancée
+- [ ] **DNS-level blocking** — Backup au niveau réseau via hosts file ou DNS custom (ex: Pi-hole, NextDNS). Fonctionne même sans extension.
+- [ ] **Health check & alertes** — L'extension vérifie périodiquement que les règles sont actives. Si protection down → alerte dans desktop app.
+- [ ] **Alerte incognito persistante** — Notification récurrente tant que l'extension n'est pas activée en incognito.
+- [ ] **"Panic mode"** — Si protection désactivée → bloquer TOUT accès internet jusqu'à résolution (mode optionnel ultra-strict).
+- [ ] **Tamper detection** — Détecter si l'extension est désactivée/supprimée et alerter.
+- [ ] **Multi-navigateur** — Développer l'extension pour Firefox, Edge.
+
 ---
 
 ## 🎨 Mascotte & Animations

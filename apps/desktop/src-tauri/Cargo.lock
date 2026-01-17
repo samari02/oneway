@@ -54,6 +54,7 @@ dependencies = [
  "chrono",
  "dirs 5.0.1",
  "lazy_static",
+ "once_cell",
  "serde",
  "serde_json",
  "tauri",

@@ -8,8 +8,74 @@
 
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read, Write};
+use std::fs;
+use std::path::PathBuf;
 
 use crate::browsing_data::{self, StoredVisit};
+
+/// Global state for extension connection status
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ExtensionStatus {
+    pub connected: bool,
+    pub last_seen: i64,
+    pub incognito_enabled: bool,
+    pub safe_search_enforced: bool,
+    pub search_filter_active: bool,
+    pub blocked_searches_today: i32,
+}
+
+/// Get the path to the extension status file (shared between processes)
+fn get_status_file_path() -> PathBuf {
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    home.join(".clarity").join("extension-status.json")
+}
+
+/// Get the current extension status (reads from shared file)
+pub fn get_extension_status() -> ExtensionStatus {
+    let path = get_status_file_path();
+    
+    if let Ok(contents) = fs::read_to_string(&path) {
+        if let Ok(status) = serde_json::from_str::<ExtensionStatus>(&contents) {
+            return status;
+        }
+    }
+    
+    ExtensionStatus::default()
+}
+
+/// Save extension status to shared file
+fn save_extension_status(status: &ExtensionStatus) {
+    let path = get_status_file_path();
+    
+    // Ensure directory exists
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    
+    if let Ok(json) = serde_json::to_string_pretty(status) {
+        let _ = fs::write(&path, json);
+    }
+}
+
+/// Update extension status (called when we receive messages)
+fn update_extension_seen() {
+    let mut status = get_extension_status();
+    status.connected = true;
+    status.last_seen = chrono::Utc::now().timestamp_millis();
+    save_extension_status(&status);
+}
+
+/// Update protection status from extension
+fn update_protection_status(data: &ProtectionStatusData) {
+    let mut status = get_extension_status();
+    status.connected = true;
+    status.last_seen = chrono::Utc::now().timestamp_millis();
+    status.incognito_enabled = data.incognito_enabled;
+    status.safe_search_enforced = data.safe_search_enforced;
+    status.search_filter_active = data.search_filter_active;
+    status.blocked_searches_today = data.blocked_searches_today;
+    save_extension_status(&status);
+}
 
 /// Message received from the Chrome extension
 #[derive(Debug, Deserialize)]
@@ -32,6 +98,21 @@ pub enum IncomingMessage {
     
     #[serde(rename = "HISTORY_SYNC")]
     HistorySync { data: HistorySyncData },
+    
+    #[serde(rename = "PROTECTION_STATUS")]
+    ProtectionStatus { data: ProtectionStatusData },
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct ProtectionStatusData {
+    #[serde(rename = "incognitoEnabled")]
+    pub incognito_enabled: bool,
+    #[serde(rename = "safeSearchEnforced")]
+    pub safe_search_enforced: bool,
+    #[serde(rename = "searchFilterActive")]
+    pub search_filter_active: bool,
+    #[serde(rename = "blockedSearchesToday")]
+    pub blocked_searches_today: i32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -165,6 +246,9 @@ pub fn write_message(msg: &OutgoingMessage) -> io::Result<()> {
 
 /// Handle an incoming message and return a response
 pub fn handle_message(msg: IncomingMessage) -> OutgoingMessage {
+    // Update last seen timestamp for any message
+    update_extension_seen();
+    
     match msg {
         IncomingMessage::Ping => {
             eprintln!("[NativeHost] Received PING");
@@ -240,6 +324,15 @@ pub fn handle_message(msg: IncomingMessage) -> OutgoingMessage {
                 .collect();
             
             browsing_data::store_history_batch(visits);
+            
+            OutgoingMessage::Ack
+        }
+        
+        IncomingMessage::ProtectionStatus { data } => {
+            eprintln!("[NativeHost] Received PROTECTION_STATUS: incognito={}, safesearch={}", 
+                data.incognito_enabled, data.safe_search_enforced);
+            
+            update_protection_status(&data);
             
             OutgoingMessage::Ack
         }

@@ -1,0 +1,146 @@
+.incognito-setup-modal {
+  background: var(--bg-elevated);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+}
+
+.incognito-setup-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.incognito-setup-modal__icon {
+  font-size: 28px;
+}
+
+.incognito-setup-modal__header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.incognito-setup-modal__content {
+  margin-bottom: 24px;
+}
+
+.incognito-setup-modal__intro {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.incognito-setup-modal__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.incognito-setup-modal__step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.incognito-setup-modal__step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-mint);
+  color: var(--text-on-accent);
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.incognito-setup-modal__step-content {
+  flex: 1;
+}
+
+.incognito-setup-modal__step-content strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.incognito-setup-modal__step-content p {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+.incognito-setup-modal__step-content code {
+  background: var(--bg-surface);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--accent-mint);
+}
+
+.incognito-setup-modal__note {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg-surface);
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.incognito-setup-modal__note-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.incognito-setup-modal__note p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.incognito-setup-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.incognito-setup-modal__btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.incognito-setup-modal__btn--secondary {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.incognito-setup-modal__btn--secondary:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.incognito-setup-modal__btn--primary {
+  background: var(--accent-mint);
+  color: var(--text-on-accent);
+}
+
+.incognito-setup-modal__btn--primary:hover {
+  opacity: 0.9;
+}

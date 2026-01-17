@@ -4,6 +4,7 @@
  */
 import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL } from '../shared/constants';
 import { extractDomain, matchesPattern, log } from '../shared/utils';
+import { isExplicitSearch, extractSearchQuery, isSearchEngine, incrementBlockedSearches, getBlockedSearchesToday } from './search-filter';
 import { requestHistoryPermission, importHistory, recordVisit, getCollectionStatus, calculateHistoryStats } from './history-collector';
 import { connectToDesktopApp, isDesktopAppConnected, getConnectionStatus, sendNavigationEvent, sendHistorySync } from './native-messaging';
 // NOTE: Supabase sync temporarily disabled
@@ -100,7 +101,30 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
         tabId: details.tabId
     };
     log('Navigation detected:', event.domain, 'on tab', details.tabId);
-    // Check if should be blocked
+    // Check for explicit search queries FIRST (before other blocking rules)
+    if (isSearchEngine(details.url)) {
+        const query = extractSearchQuery(details.url);
+        if (query) {
+            const { isExplicit, matchedTerm } = isExplicitSearch(query);
+            if (isExplicit) {
+                log('Blocking explicit search:', query, '(matched:', matchedTerm, ')');
+                const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(details.url)}&reason=${encodeURIComponent('Search blocked for your protection')}&tabId=${details.tabId}&type=search`;
+                chrome.tabs.update(details.tabId, { url: blockUrl });
+                // Track blocked search
+                await incrementBlockedSearches();
+                // Log block event
+                await logBlockEvent({
+                    url: details.url,
+                    domain: event.domain,
+                    reason: 'Explicit search blocked',
+                    action: 'blocked',
+                    timestamp: Date.now()
+                });
+                return; // Stop processing
+            }
+        }
+    }
+    // Check if should be blocked by regular rules
     const decision = await shouldBlock(event.url, details.tabId);
     if (decision.shouldBlock) {
         log('Blocking:', event.domain, decision.reason);
@@ -269,6 +293,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success });
         return true;
     }
+    // Protection status for desktop app
+    if (message.type === 'GET_PROTECTION_STATUS') {
+        getProtectionStatus().then(sendResponse);
+        return true;
+    }
 });
 /**
  * Handle bypass request
@@ -331,4 +360,28 @@ async function getHistoryStats() {
 // Periodic sync - temporarily disabled until we implement fetch-based API
 // chrome.alarms.create('sync-to-supabase', { periodInMinutes: 30 })
 // chrome.alarms.create('cleanup-history', { periodInMinutes: 1440 })
+/**
+ * Get protection status for desktop app
+ */
+async function getProtectionStatus() {
+    // Check if running in incognito context
+    // Note: This only tells us if THIS context is incognito, not if extension is allowed in incognito
+    // The real check needs to be done via chrome.extension.isAllowedIncognitoAccess
+    let incognitoEnabled = false;
+    try {
+        incognitoEnabled = await chrome.extension.isAllowedIncognitoAccess();
+    }
+    catch (e) {
+        log('Could not check incognito access:', e);
+    }
+    // Get blocked searches count
+    const blockedSearchesToday = await getBlockedSearchesToday();
+    return {
+        extensionConnected: true, // If we can respond, we're connected
+        incognitoEnabled,
+        safeSearchEnforced: true, // Always true since we have the rules.json
+        searchFilterActive: true, // Always active
+        blockedSearchesToday
+    };
+}
 log('Service worker loaded');

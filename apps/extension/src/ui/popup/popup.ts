@@ -2,6 +2,21 @@
  * Popup UI Logic
  */
 
+// Check incognito access
+chrome.extension.isAllowedIncognitoAccess().then((allowed) => {
+  const warningEl = document.getElementById('incognito-warning')!
+  if (!allowed) {
+    warningEl.style.display = 'flex'
+  }
+})
+
+// Setup incognito button
+document.getElementById('btn-setup-incognito')?.addEventListener('click', () => {
+  // Can't open chrome:// URLs directly, show instructions
+  const extensionId = chrome.runtime.id
+  alert(`To enable incognito protection:\n\n1. Open chrome://extensions\n2. Find "Clarity - Focus & Flow"\n3. Click "Details"\n4. Enable "Allow in incognito"\n\nYour extension ID: ${extensionId}`)
+})
+
 // Get status from background
 chrome.runtime.sendMessage({ type: 'GET_STATUS' }, (response) => {
   if (response) {

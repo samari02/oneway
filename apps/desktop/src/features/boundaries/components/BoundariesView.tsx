@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useBoundaries } from '../hooks/useBoundaries'
 import { useBoundaryActions } from '../hooks/useBoundaryActions'
+import { useExtensionStatus } from '../hooks/useExtensionStatus'
 import { AddBoundaryModal } from './AddBoundaryModal'
 import { EditBoundaryModal } from './EditBoundaryModal'
+import { IncognitoSetupModal } from './IncognitoSetupModal'
 import type { Boundary } from '@oneway/shared'
 import './BoundariesView.css'
 
@@ -13,8 +15,10 @@ interface BoundariesViewProps {
 export function BoundariesView({ userId }: BoundariesViewProps) {
   const { boundaries, stats, loading, refetch, optimisticRemove, optimisticToggle } = useBoundaries(userId)
   const { remove, toggle } = useBoundaryActions()
+  const { status: extensionStatus } = useExtensionStatus()
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingBoundary, setEditingBoundary] = useState<Boundary | null>(null)
+  const [showIncognitoSetup, setShowIncognitoSetup] = useState(false)
 
   const activeBoundaries = boundaries.filter(b => b.is_active)
   const inactiveBoundaries = boundaries.filter(b => !b.is_active)
@@ -116,6 +120,62 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
           + Add Rule
         </button>
       </header>
+
+      {/* Protection Status */}
+      <section className="boundaries-view__protection">
+        <h2 className="boundaries-view__section-title">Protection Status</h2>
+        <div className="boundaries-view__protection-grid">
+          <div className={`boundaries-view__protection-item ${extensionStatus?.connected ? 'boundaries-view__protection-item--ok' : 'boundaries-view__protection-item--warn'}`}>
+            <span className="boundaries-view__protection-icon">
+              {extensionStatus?.connected ? '✅' : '⚠️'}
+            </span>
+            <div className="boundaries-view__protection-info">
+              <span className="boundaries-view__protection-label">Extension</span>
+              <span className="boundaries-view__protection-value">
+                {extensionStatus?.connected ? 'Connected' : 'Not connected'}
+              </span>
+            </div>
+          </div>
+
+          <div className={`boundaries-view__protection-item ${extensionStatus?.incognitoEnabled ? 'boundaries-view__protection-item--ok' : 'boundaries-view__protection-item--warn'}`}>
+            <span className="boundaries-view__protection-icon">
+              {extensionStatus?.incognitoEnabled ? '✅' : '⚠️'}
+            </span>
+            <div className="boundaries-view__protection-info">
+              <span className="boundaries-view__protection-label">Incognito</span>
+              <span className="boundaries-view__protection-value">
+                {extensionStatus?.incognitoEnabled ? 'Protected' : 'Not enabled'}
+              </span>
+            </div>
+            {!extensionStatus?.incognitoEnabled && (
+              <button 
+                className="boundaries-view__protection-action"
+                onClick={() => setShowIncognitoSetup(true)}
+              >
+                Setup
+              </button>
+            )}
+          </div>
+
+          <div className="boundaries-view__protection-item boundaries-view__protection-item--ok">
+            <span className="boundaries-view__protection-icon">✅</span>
+            <div className="boundaries-view__protection-info">
+              <span className="boundaries-view__protection-label">SafeSearch</span>
+              <span className="boundaries-view__protection-value">Enforced</span>
+            </div>
+          </div>
+
+          <div className="boundaries-view__protection-item boundaries-view__protection-item--ok">
+            <span className="boundaries-view__protection-icon">✅</span>
+            <div className="boundaries-view__protection-info">
+              <span className="boundaries-view__protection-label">Search Filter</span>
+              <span className="boundaries-view__protection-value">
+                Active {extensionStatus?.blockedSearchesToday ? `(${extensionStatus.blockedSearchesToday} blocked today)` : ''}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Quick Stats */}
       <div className="boundaries-view__stats">
@@ -285,6 +345,10 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
           }}
           onCancel={() => setEditingBoundary(null)}
         />
+      )}
+
+      {showIncognitoSetup && (
+        <IncognitoSetupModal onClose={() => setShowIncognitoSetup(false)} />
       )}
     </div>
   )
