@@ -369,6 +369,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     getProtectionStatus().then(sendResponse)
     return true
   }
+  
+  // Aoi widget status for content script
+  if (message.type === 'GET_AOI_STATUS') {
+    getAoiStatus(sender.tab?.url).then(sendResponse)
+    return true
+  }
+  
+  // Open popup (for Aoi widget click)
+  if (message.type === 'OPEN_POPUP') {
+    // Can't programmatically open popup, but we can focus the extension
+    chrome.action.openPopup?.() // Only works in some Chrome versions
+    sendResponse({ success: true })
+    return true
+  }
 })
 
 /**
@@ -471,6 +485,84 @@ async function getProtectionStatus(): Promise<ProtectionStatus> {
     safeSearchEnforced: true, // Always true since we have the rules.json
     searchFilterActive: true, // Always active
     blockedSearchesToday
+  }
+}
+
+/**
+ * Get Aoi widget status for content script
+ */
+async function getAoiStatus(url?: string): Promise<{
+  alertLevel: 'ok' | 'warning' | 'critical'
+  isDistraction: boolean
+  siteCategory: string
+}> {
+  // Check protection status first
+  const protectionStatus = await getProtectionStatus()
+  
+  // Check if desktop is connected (via last heartbeat check)
+  // For now, we'll consider it OK if extension is working
+  // The real heartbeat check would need to come from the native messaging module
+  
+  // Determine if current site is a distraction
+  let isDistraction = false
+  let siteCategory = 'productive'
+  
+  if (url) {
+    const domain = extractDomain(url)
+    
+    // List of known distraction domains
+    const distractionDomains = [
+      // Social media
+      'twitter.com', 'x.com', 'facebook.com', 'instagram.com', 'tiktok.com',
+      'linkedin.com', 'snapchat.com', 'threads.net',
+      // Video/Entertainment
+      'youtube.com', 'netflix.com', 'twitch.tv', 'hulu.com', 'disneyplus.com',
+      'primevideo.com', 'hbomax.com',
+      // News/Forums
+      'reddit.com', 'news.ycombinator.com', 'hackernews.com',
+      // Gaming
+      'twitch.tv', 'discord.com',
+      // Other time sinks
+      'buzzfeed.com', '9gag.com', 'imgur.com'
+    ]
+    
+    const neutralDomains = [
+      // Work tools - not distraction but not productive browsing
+      'gmail.com', 'mail.google.com', 'outlook.com', 'slack.com'
+    ]
+    
+    // Check if domain matches any distraction
+    isDistraction = distractionDomains.some(d => 
+      domain === d || domain.endsWith('.' + d)
+    )
+    
+    const isNeutral = neutralDomains.some(d => 
+      domain === d || domain.endsWith('.' + d)
+    )
+    
+    if (isDistraction) {
+      siteCategory = 'distraction'
+    } else if (isNeutral) {
+      siteCategory = 'neutral'
+    } else {
+      siteCategory = 'productive'
+    }
+  }
+  
+  // Determine alert level
+  // For now, always OK since we're the extension and we're running
+  // The real alert level would come from heartbeat system but that's 
+  // desktop-side. Here we just care about whether extension is working.
+  let alertLevel: 'ok' | 'warning' | 'critical' = 'ok'
+  
+  // If incognito not enabled and we're in incognito, that's a warning
+  // But we can't easily detect if we're in incognito from service worker
+  // The content script runs in both contexts
+  
+  return {
+    alertLevel,
+    isDistraction,
+    siteCategory
   }
 }
 

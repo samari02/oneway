@@ -8,7 +8,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         'service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
-        // 'content-script': resolve(__dirname, 'src/content/content-script.ts'), // Disabled for now
+        'content-script': resolve(__dirname, 'src/content/content-script.ts'),
         'block-screen': resolve(__dirname, 'src/ui/block-screen/block-screen.ts'),
         'popup': resolve(__dirname, 'src/ui/popup/popup.ts')
       },
