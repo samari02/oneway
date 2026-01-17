@@ -6,7 +6,7 @@ import { OnboardingFlow, useOnboardingStatus, useUserSettings, saveOnboardingDat
 import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
-import { BoundariesView } from '@/features/boundaries'
+import { BoundariesView, ProtectionAlert, useExtensionStatus } from '@/features/boundaries'
 import { Mascot, type MascotMood } from '@/features/mascot'
 import { AICompanion } from '@/features/ai-companion'
 import { GoalsBar, useGoals } from '@/features/goals'
@@ -367,6 +367,7 @@ function TodayView() {
 
 function Dashboard() {
   const { user } = useAuth()
+  const { status: extensionStatus } = useExtensionStatus()
   const [currentView, setCurrentView] = useState<ViewType>('today')
   const [sidebarPinned, setSidebarPinned] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -436,6 +437,13 @@ function Dashboard() {
           </button>
         </div>
       </div>
+      
+      {/* Global Protection Alert - shows on all views when protection is compromised */}
+      {extensionStatus?.alertLevel !== 'ok' && currentView !== 'boundaries' && (
+        <div className="app-layout__alert">
+          <ProtectionAlert status={extensionStatus} />
+        </div>
+      )}
       
       <div className="app-layout__body">
         <Sidebar 

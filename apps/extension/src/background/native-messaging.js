@@ -13,6 +13,9 @@ let isConnected = false;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY = 5000;
+// Heartbeat configuration
+const HEARTBEAT_INTERVAL_MS = 60000; // Send heartbeat every 60 seconds
+let heartbeatInterval = null;
 const messageHandlers = [];
 /**
  * Register a handler for messages from desktop
@@ -48,6 +51,8 @@ export function connectToDesktopApp() {
         port.onDisconnect.addListener(() => {
             const error = chrome.runtime.lastError?.message || 'Unknown error';
             log('Disconnected from desktop app:', error);
+            // Stop heartbeat
+            stopHeartbeat();
             port = null;
             isConnected = false;
             // Update storage
@@ -73,6 +78,8 @@ export function connectToDesktopApp() {
         sendToDesktop({ type: 'GET_CONFIG' });
         // Send protection status to desktop
         sendProtectionStatusToDesktop();
+        // Start heartbeat system
+        startHeartbeat();
         log('Connected to desktop app');
         return true;
     }
@@ -87,6 +94,8 @@ export function connectToDesktopApp() {
  * Disconnect from Desktop App
  */
 export function disconnectFromDesktopApp() {
+    // Stop heartbeat first
+    stopHeartbeat();
     if (port) {
         port.disconnect();
         port = null;
@@ -297,5 +306,72 @@ export async function sendProtectionStatusToDesktop() {
     }
     catch (error) {
         log('Error sending protection status:', error);
+    }
+}
+/**
+ * Start the heartbeat system
+ * Sends periodic heartbeats to desktop to confirm extension is alive
+ */
+export function startHeartbeat() {
+    // Clear any existing interval
+    stopHeartbeat();
+    log('Starting heartbeat system (interval: ' + HEARTBEAT_INTERVAL_MS + 'ms)');
+    // Send first heartbeat immediately
+    sendHeartbeat();
+    // Then send periodically
+    heartbeatInterval = setInterval(() => {
+        sendHeartbeat();
+    }, HEARTBEAT_INTERVAL_MS);
+}
+/**
+ * Stop the heartbeat system
+ */
+export function stopHeartbeat() {
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+        log('Heartbeat system stopped');
+    }
+}
+/**
+ * Send a single heartbeat to desktop
+ */
+async function sendHeartbeat() {
+    if (!isConnected) {
+        log('Cannot send heartbeat: not connected');
+        return;
+    }
+    try {
+        // Gather protection status
+        let incognitoEnabled = false;
+        try {
+            incognitoEnabled = await chrome.extension.isAllowedIncognitoAccess();
+        }
+        catch (e) {
+            // Ignore errors
+        }
+        // Get blocked searches count for today
+        const today = new Date().toISOString().split('T')[0];
+        const key = `blockedSearches_${today}`;
+        const data = await chrome.storage.local.get(key);
+        const blockedSearchesToday = data[key] || 0;
+        // Get extension version from manifest
+        const manifest = chrome.runtime.getManifest();
+        const heartbeatPayload = {
+            timestamp: Date.now(),
+            incognitoEnabled,
+            safeSearchEnforced: true,
+            searchFilterActive: true,
+            blockedSearchesToday,
+            extensionVersion: manifest.version
+        };
+        sendToDesktop({
+            type: 'HEARTBEAT',
+            data: heartbeatPayload
+        });
+        log('Heartbeat sent:', new Date().toISOString());
+    }
+    catch (error) {
+        log('Error sending heartbeat:', error);
     }
 }

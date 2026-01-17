@@ -122,6 +122,26 @@
   overflow: hidden;
 }
 
+/* Global protection alert - positioned below titlebar */
+.app-layout__alert {
+  position: fixed;
+  top: 38px;
+  left: 60px; /* Sidebar collapsed width */
+  right: 0;
+  z-index: 150;
+  padding: var(--space-sm) var(--space-lg);
+  transition: left 0.25s ease;
+}
+
+.app-layout--sidebar-pinned .app-layout__alert {
+  left: 160px; /* Sidebar expanded width */
+}
+
+.app-layout__body:has(.sidebar:hover) ~ .app-layout__alert,
+.app-layout__body:has(.sidebar:hover) + .app-layout__alert {
+  left: 160px;
+}
+
 .app-layout__body {
   display: flex;
   flex: 1;

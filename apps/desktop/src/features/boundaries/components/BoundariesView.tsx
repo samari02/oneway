@@ -5,6 +5,7 @@ import { useExtensionStatus } from '../hooks/useExtensionStatus'
 import { AddBoundaryModal } from './AddBoundaryModal'
 import { EditBoundaryModal } from './EditBoundaryModal'
 import { IncognitoSetupModal } from './IncognitoSetupModal'
+import { ProtectionAlert } from './ProtectionAlert'
 import type { Boundary } from '@oneway/shared'
 import './BoundariesView.css'
 
@@ -106,8 +107,35 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
     )
   }
 
+  // Helper to get icon based on alert level
+  const getAlertIcon = (level: string | undefined) => {
+    switch (level) {
+      case 'ok': return '✅'
+      case 'warning': return '⚠️'
+      case 'critical': return '🚨'
+      default: return '❓'
+    }
+  }
+
+  // Format time since last heartbeat
+  const getHeartbeatStatus = () => {
+    if (!extensionStatus?.lastHeartbeat) return 'Never'
+    
+    const elapsed = Date.now() - extensionStatus.lastHeartbeat
+    const seconds = Math.floor(elapsed / 1000)
+    
+    if (seconds < 60) return `${seconds}s ago`
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `${minutes}m ago`
+    const hours = Math.floor(minutes / 60)
+    return `${hours}h ago`
+  }
+
   return (
     <div className="boundaries-view">
+      {/* Protection Alert Banner */}
+      <ProtectionAlert status={extensionStatus} />
+      
       <header className="boundaries-view__header">
         <div className="boundaries-view__title">
           <span className="boundaries-view__icon">🛡️</span>
@@ -125,19 +153,31 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
       <section className="boundaries-view__protection">
         <h2 className="boundaries-view__section-title">Protection Status</h2>
         <div className="boundaries-view__protection-grid">
-          <div className={`boundaries-view__protection-item ${extensionStatus?.connected ? 'boundaries-view__protection-item--ok' : 'boundaries-view__protection-item--warn'}`}>
+          {/* Extension Connection */}
+          <div className={`boundaries-view__protection-item boundaries-view__protection-item--${extensionStatus?.alertLevel || 'critical'}`}>
             <span className="boundaries-view__protection-icon">
-              {extensionStatus?.connected ? '✅' : '⚠️'}
+              {getAlertIcon(extensionStatus?.alertLevel)}
             </span>
             <div className="boundaries-view__protection-info">
               <span className="boundaries-view__protection-label">Extension</span>
               <span className="boundaries-view__protection-value">
-                {extensionStatus?.connected ? 'Connected' : 'Not connected'}
+                {extensionStatus?.alertLevel === 'ok' 
+                  ? 'Connected' 
+                  : extensionStatus?.alertLevel === 'warning'
+                    ? 'Unstable'
+                    : 'Not connected'
+                }
               </span>
+              {extensionStatus?.lastHeartbeat && extensionStatus.alertLevel === 'ok' && (
+                <span className="boundaries-view__protection-detail">
+                  Heartbeat: {getHeartbeatStatus()}
+                </span>
+              )}
             </div>
           </div>
 
-          <div className={`boundaries-view__protection-item ${extensionStatus?.incognitoEnabled ? 'boundaries-view__protection-item--ok' : 'boundaries-view__protection-item--warn'}`}>
+          {/* Incognito Mode */}
+          <div className={`boundaries-view__protection-item ${extensionStatus?.incognitoEnabled ? 'boundaries-view__protection-item--ok' : 'boundaries-view__protection-item--warning'}`}>
             <span className="boundaries-view__protection-icon">
               {extensionStatus?.incognitoEnabled ? '✅' : '⚠️'}
             </span>
@@ -157,21 +197,27 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
             )}
           </div>
 
+          {/* SafeSearch */}
           <div className="boundaries-view__protection-item boundaries-view__protection-item--ok">
             <span className="boundaries-view__protection-icon">✅</span>
             <div className="boundaries-view__protection-info">
               <span className="boundaries-view__protection-label">SafeSearch</span>
               <span className="boundaries-view__protection-value">Enforced</span>
+              <span className="boundaries-view__protection-detail">8 search engines</span>
             </div>
           </div>
 
+          {/* Search Filter */}
           <div className="boundaries-view__protection-item boundaries-view__protection-item--ok">
             <span className="boundaries-view__protection-icon">✅</span>
             <div className="boundaries-view__protection-info">
               <span className="boundaries-view__protection-label">Search Filter</span>
-              <span className="boundaries-view__protection-value">
-                Active {extensionStatus?.blockedSearchesToday ? `(${extensionStatus.blockedSearchesToday} blocked today)` : ''}
-              </span>
+              <span className="boundaries-view__protection-value">Active</span>
+              {extensionStatus?.blockedSearchesToday !== undefined && extensionStatus.blockedSearchesToday > 0 && (
+                <span className="boundaries-view__protection-detail">
+                  {extensionStatus.blockedSearchesToday} blocked today
+                </span>
+              )}
             </div>
           </div>
         </div>

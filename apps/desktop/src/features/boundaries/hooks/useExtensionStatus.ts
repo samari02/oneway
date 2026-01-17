@@ -1,13 +1,20 @@
 import { useState, useEffect, useCallback } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 
+// Alert levels for protection status
+export type AlertLevel = 'ok' | 'warning' | 'critical'
+
 export interface ExtensionStatus {
   connected: boolean
   lastSeen: number
+  lastHeartbeat: number
+  heartbeatCount: number
   incognitoEnabled: boolean
   safeSearchEnforced: boolean
   searchFilterActive: boolean
   blockedSearchesToday: number
+  extensionVersion: string | null
+  alertLevel: AlertLevel
 }
 
 interface UseExtensionStatusResult {
@@ -27,25 +34,27 @@ export function useExtensionStatus(): UseExtensionStatusResult {
       const result = await invoke<{
         connected: boolean
         last_seen: number
+        last_heartbeat: number
+        heartbeat_count: number
         incognito_enabled: boolean
         safe_search_enforced: boolean
         search_filter_active: boolean
         blocked_searches_today: number
+        extension_version: string | null
+        alert_level: AlertLevel
       }>('get_extension_status')
       
-      // Check if extension is still "connected" (seen in last 5 minutes)
-      // We use a longer timeout because the native host process may have exited
-      // but the extension is still active
-      const isRecentlyConnected = result.connected && 
-        (Date.now() - result.last_seen < 5 * 60 * 1000)
-      
       setStatus({
-        connected: isRecentlyConnected,
+        connected: result.connected,
         lastSeen: result.last_seen,
+        lastHeartbeat: result.last_heartbeat,
+        heartbeatCount: result.heartbeat_count,
         incognitoEnabled: result.incognito_enabled,
         safeSearchEnforced: result.safe_search_enforced,
         searchFilterActive: result.search_filter_active,
-        blockedSearchesToday: result.blocked_searches_today
+        blockedSearchesToday: result.blocked_searches_today,
+        extensionVersion: result.extension_version,
+        alertLevel: result.alert_level
       })
       setError(null)
     } catch (e) {
@@ -58,8 +67,8 @@ export function useExtensionStatus(): UseExtensionStatusResult {
   useEffect(() => {
     fetch()
     
-    // Poll every 10 seconds
-    const interval = setInterval(fetch, 10000)
+    // Poll every 5 seconds (faster to detect issues quicker)
+    const interval = setInterval(fetch, 5000)
     return () => clearInterval(interval)
   }, [fetch])
 

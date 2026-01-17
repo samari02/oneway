@@ -243,40 +243,57 @@ if (isSearchEngine(details.url)) {
 
 ---
 
-## 4. Protection Status
+## 4. Protection Status & Heartbeat System
 
-### Extension → Desktop
+### Heartbeat Protocol
 
-Message envoyé au connect :
+L'extension envoie un **heartbeat** toutes les 60 secondes pour confirmer qu'elle est active.
 
 ```typescript
+// Message HEARTBEAT envoyé toutes les 60s
 {
-  type: 'PROTECTION_STATUS',
+  type: 'HEARTBEAT',
   data: {
+    timestamp: number,           // Unix timestamp ms
     incognitoEnabled: boolean,
     safeSearchEnforced: boolean,
     searchFilterActive: boolean,
-    blockedSearchesToday: number
+    blockedSearchesToday: number,
+    extensionVersion: string
   }
 }
 ```
 
+### Alert Levels
+
+Le desktop app calcule dynamiquement un niveau d'alerte basé sur le temps depuis le dernier heartbeat :
+
+| Level | Condition | Description |
+|-------|-----------|-------------|
+| `ok` | < 90 secondes | Protection active |
+| `warning` | 90s - 5min | Connexion instable |
+| `critical` | > 5 minutes | Protection compromise |
+
 ### Desktop Storage
 
-Rust global state via `once_cell::Lazy<Mutex<...>>` :
+Fichier partagé : `~/.clarity/extension-status.json`
 
 ```rust
 pub struct ExtensionStatus {
   pub connected: bool,
   pub last_seen: i64,
+  pub last_heartbeat: i64,        // Timestamp du dernier heartbeat
+  pub heartbeat_count: u32,       // Nombre total de heartbeats reçus
   pub incognito_enabled: bool,
   pub safe_search_enforced: bool,
   pub search_filter_active: bool,
   pub blocked_searches_today: i32,
+  pub extension_version: Option<String>,
+  pub alert_level: AlertLevel,    // ok | warning | critical
 }
 ```
 
-### Frontend Query
+### Frontend Hook
 
 ```typescript
 const { status } = useExtensionStatus()
@@ -284,11 +301,30 @@ const { status } = useExtensionStatus()
 // status = {
 //   connected: true,
 //   lastSeen: 1705512345678,
+//   lastHeartbeat: 1705512345678,
+//   heartbeatCount: 42,
 //   incognitoEnabled: false,
 //   safeSearchEnforced: true,
 //   searchFilterActive: true,
-//   blockedSearchesToday: 3
+//   blockedSearchesToday: 3,
+//   extensionVersion: "0.1.0",
+//   alertLevel: "ok"
 // }
+```
+
+### Protection Alert UI
+
+Quand `alertLevel !== 'ok'`, une bannière d'alerte s'affiche :
+
+- **Global** : En haut de l'app (toutes les vues sauf Boundaries)
+- **BoundariesView** : Section Protection Status avec détails
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 🚨 Protection Compromised                                    │
+│ No signal from extension for 5m 30s. Please check that      │
+│ the extension is enabled.                      [Check Extension] │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -348,9 +384,32 @@ const incognitoEnabled = await chrome.extension.isAllowedIncognitoAccess()
 
 ## Évolutions futures
 
-### Phase 2 — Safeguards & Resilience
+### Phase 2 — Safeguards & Resilience ✅ IMPLEMENTED
 
-#### DNS-Level Blocking (Backup)
+#### Health Check & Alertes ✅
+L'extension envoie un heartbeat toutes les 60 secondes.
+
+**Implémentation** :
+- Extension : `startHeartbeat()` dans `native-messaging.ts`
+- Desktop : `update_heartbeat()` dans `native_host.rs`
+- UI : `ProtectionAlert` component avec 3 niveaux (ok/warning/critical)
+
+**Thresholds** :
+- OK : < 90 secondes depuis dernier heartbeat
+- Warning : 90s - 5min (connexion instable)
+- Critical : > 5min (protection compromise)
+
+**UI** :
+- Bannière globale en haut de l'app (warning orange, critical rouge avec pulse)
+- Section Protection Status dans BoundariesView avec détails heartbeat
+- Bouton "Check Extension" pour guider l'utilisateur
+
+#### Alerte Incognito ✅
+- Warning permanent dans BoundariesView si incognito non activé
+- Bouton "Setup" ouvre modal avec instructions
+- Warning aussi dans popup de l'extension
+
+#### DNS-Level Blocking (À faire)
 Protection au niveau réseau, fonctionne même sans extension Chrome.
 
 **Options** :
@@ -364,26 +423,6 @@ Protection au niveau réseau, fonctionne même sans extension Chrome.
 127.0.0.1 xvideos.com
 ...
 ```
-
-#### Health Check & Alertes
-L'extension vérifie périodiquement que les règles de protection sont actives.
-
-**Flow** :
-1. Extension envoie heartbeat toutes les X minutes
-2. Desktop app vérifie la réception
-3. Si pas de heartbeat depuis Y minutes → alerte urgente
-4. Si règles désactivées → alerte + notification système
-
-**UI** :
-- Badge rouge dans le tray icon
-- Notification système macOS/Windows
-- Modal bloquant dans l'app desktop
-
-#### Alerte Incognito Persistante
-Tant que l'extension n'est pas activée en incognito :
-- Notification récurrente (toutes les heures?)
-- Badge permanent dans BoundariesView
-- Impossible de marquer comme "vu" - doit être résolu
 
 ### Phase 3 — Modes de Strictness
 

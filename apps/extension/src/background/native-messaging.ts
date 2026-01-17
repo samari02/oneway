@@ -18,6 +18,10 @@ let reconnectAttempts = 0
 const MAX_RECONNECT_ATTEMPTS = 5
 const RECONNECT_DELAY = 5000
 
+// Heartbeat configuration
+const HEARTBEAT_INTERVAL_MS = 60_000 // Send heartbeat every 60 seconds
+let heartbeatInterval: ReturnType<typeof setInterval> | null = null
+
 // Message types
 export type MessageToDesktop = 
   | { type: 'GET_AUTH_STATUS' }
@@ -27,6 +31,7 @@ export type MessageToDesktop =
   | { type: 'HISTORY_SYNC'; data: { visits: CategorizedVisit[] } }
   | { type: 'PING' }
   | { type: 'PROTECTION_STATUS'; data: ProtectionStatusPayload }
+  | { type: 'HEARTBEAT'; data: HeartbeatPayload }
 
 // Protection status payload for desktop
 export interface ProtectionStatusPayload {
@@ -34,6 +39,16 @@ export interface ProtectionStatusPayload {
   safeSearchEnforced: boolean
   searchFilterActive: boolean
   blockedSearchesToday: number
+}
+
+// Heartbeat payload - includes protection status + timestamp
+export interface HeartbeatPayload {
+  timestamp: number
+  incognitoEnabled: boolean
+  safeSearchEnforced: boolean
+  searchFilterActive: boolean
+  blockedSearchesToday: number
+  extensionVersion: string
 }
 
 export type MessageFromDesktop =
@@ -87,6 +102,9 @@ export function connectToDesktopApp(): boolean {
       const error = chrome.runtime.lastError?.message || 'Unknown error'
       log('Disconnected from desktop app:', error)
       
+      // Stop heartbeat
+      stopHeartbeat()
+      
       port = null
       isConnected = false
       
@@ -118,6 +136,9 @@ export function connectToDesktopApp(): boolean {
     // Send protection status to desktop
     sendProtectionStatusToDesktop()
     
+    // Start heartbeat system
+    startHeartbeat()
+    
     log('Connected to desktop app')
     return true
     
@@ -133,6 +154,9 @@ export function connectToDesktopApp(): boolean {
  * Disconnect from Desktop App
  */
 export function disconnectFromDesktopApp() {
+  // Stop heartbeat first
+  stopHeartbeat()
+  
   if (port) {
     port.disconnect()
     port = null
@@ -382,5 +406,82 @@ export async function sendProtectionStatusToDesktop() {
     log('Sent protection status to desktop:', statusPayload)
   } catch (error) {
     log('Error sending protection status:', error)
+  }
+}
+
+/**
+ * Start the heartbeat system
+ * Sends periodic heartbeats to desktop to confirm extension is alive
+ */
+export function startHeartbeat() {
+  // Clear any existing interval
+  stopHeartbeat()
+  
+  log('Starting heartbeat system (interval: ' + HEARTBEAT_INTERVAL_MS + 'ms)')
+  
+  // Send first heartbeat immediately
+  sendHeartbeat()
+  
+  // Then send periodically
+  heartbeatInterval = setInterval(() => {
+    sendHeartbeat()
+  }, HEARTBEAT_INTERVAL_MS)
+}
+
+/**
+ * Stop the heartbeat system
+ */
+export function stopHeartbeat() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval)
+    heartbeatInterval = null
+    log('Heartbeat system stopped')
+  }
+}
+
+/**
+ * Send a single heartbeat to desktop
+ */
+async function sendHeartbeat() {
+  if (!isConnected) {
+    log('Cannot send heartbeat: not connected')
+    return
+  }
+  
+  try {
+    // Gather protection status
+    let incognitoEnabled = false
+    try {
+      incognitoEnabled = await chrome.extension.isAllowedIncognitoAccess()
+    } catch (e) {
+      // Ignore errors
+    }
+    
+    // Get blocked searches count for today
+    const today = new Date().toISOString().split('T')[0]
+    const key = `blockedSearches_${today}`
+    const data = await chrome.storage.local.get(key)
+    const blockedSearchesToday = data[key] || 0
+    
+    // Get extension version from manifest
+    const manifest = chrome.runtime.getManifest()
+    
+    const heartbeatPayload: HeartbeatPayload = {
+      timestamp: Date.now(),
+      incognitoEnabled,
+      safeSearchEnforced: true,
+      searchFilterActive: true,
+      blockedSearchesToday,
+      extensionVersion: manifest.version
+    }
+    
+    sendToDesktop({
+      type: 'HEARTBEAT',
+      data: heartbeatPayload
+    })
+    
+    log('Heartbeat sent:', new Date().toISOString())
+  } catch (error) {
+    log('Error sending heartbeat:', error)
   }
 }

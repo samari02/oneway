@@ -13,15 +13,44 @@ use std::path::PathBuf;
 
 use crate::browsing_data::{self, StoredVisit};
 
+// Alert thresholds (in milliseconds)
+const ALERT_WARNING_THRESHOLD_MS: i64 = 90_000;   // 90 seconds without heartbeat = warning
+const ALERT_CRITICAL_THRESHOLD_MS: i64 = 300_000; // 5 minutes without heartbeat = critical
+
+/// Alert level for protection status
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum AlertLevel {
+    /// Everything is OK - heartbeat received recently
+    #[serde(rename = "ok")]
+    Ok,
+    /// Warning - no heartbeat for 90s-5min (extension might be sleeping)
+    #[serde(rename = "warning")]
+    Warning,
+    /// Critical - no heartbeat for 5+ min (protection likely compromised)
+    #[serde(rename = "critical")]
+    Critical,
+}
+
+impl Default for AlertLevel {
+    fn default() -> Self {
+        AlertLevel::Critical // Default to critical until we receive a heartbeat
+    }
+}
+
 /// Global state for extension connection status
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ExtensionStatus {
     pub connected: bool,
     pub last_seen: i64,
+    pub last_heartbeat: i64,
+    pub heartbeat_count: u32,
     pub incognito_enabled: bool,
     pub safe_search_enforced: bool,
     pub search_filter_active: bool,
     pub blocked_searches_today: i32,
+    pub extension_version: Option<String>,
+    #[serde(default)]
+    pub alert_level: AlertLevel,
 }
 
 /// Get the path to the extension status file (shared between processes)
@@ -30,12 +59,38 @@ fn get_status_file_path() -> PathBuf {
     home.join(".clarity").join("extension-status.json")
 }
 
+/// Compute alert level based on time since last heartbeat
+fn compute_alert_level(last_heartbeat: i64) -> AlertLevel {
+    if last_heartbeat == 0 {
+        // Never received a heartbeat
+        return AlertLevel::Critical;
+    }
+    
+    let now = chrono::Utc::now().timestamp_millis();
+    let elapsed = now - last_heartbeat;
+    
+    if elapsed < ALERT_WARNING_THRESHOLD_MS {
+        AlertLevel::Ok
+    } else if elapsed < ALERT_CRITICAL_THRESHOLD_MS {
+        AlertLevel::Warning
+    } else {
+        AlertLevel::Critical
+    }
+}
+
 /// Get the current extension status (reads from shared file)
+/// Computes alert_level dynamically based on last_heartbeat
 pub fn get_extension_status() -> ExtensionStatus {
     let path = get_status_file_path();
     
     if let Ok(contents) = fs::read_to_string(&path) {
-        if let Ok(status) = serde_json::from_str::<ExtensionStatus>(&contents) {
+        if let Ok(mut status) = serde_json::from_str::<ExtensionStatus>(&contents) {
+            // Compute alert level dynamically
+            status.alert_level = compute_alert_level(status.last_heartbeat);
+            
+            // Update connected status based on alert level
+            status.connected = status.alert_level != AlertLevel::Critical;
+            
             return status;
         }
     }
@@ -77,6 +132,39 @@ fn update_protection_status(data: &ProtectionStatusData) {
     save_extension_status(&status);
 }
 
+/// Update status from heartbeat (includes all protection data + heartbeat tracking)
+fn update_heartbeat(data: &HeartbeatData) {
+    let path = get_status_file_path();
+    
+    // Read existing status to preserve heartbeat_count
+    let mut status = if let Ok(contents) = fs::read_to_string(&path) {
+        serde_json::from_str::<ExtensionStatus>(&contents).unwrap_or_default()
+    } else {
+        ExtensionStatus::default()
+    };
+    
+    let now = chrono::Utc::now().timestamp_millis();
+    
+    // Update all fields from heartbeat
+    status.connected = true;
+    status.last_seen = now;
+    status.last_heartbeat = now;
+    status.heartbeat_count = status.heartbeat_count.saturating_add(1);
+    status.incognito_enabled = data.incognito_enabled;
+    status.safe_search_enforced = data.safe_search_enforced;
+    status.search_filter_active = data.search_filter_active;
+    status.blocked_searches_today = data.blocked_searches_today;
+    status.extension_version = Some(data.extension_version.clone());
+    status.alert_level = AlertLevel::Ok; // Heartbeat received = OK
+    
+    save_extension_status(&status);
+    
+    eprintln!("[NativeHost] Heartbeat #{} received at {}", 
+        status.heartbeat_count, 
+        chrono::Utc::now().format("%H:%M:%S")
+    );
+}
+
 /// Message received from the Chrome extension
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
@@ -101,6 +189,9 @@ pub enum IncomingMessage {
     
     #[serde(rename = "PROTECTION_STATUS")]
     ProtectionStatus { data: ProtectionStatusData },
+    
+    #[serde(rename = "HEARTBEAT")]
+    Heartbeat { data: HeartbeatData },
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -113,6 +204,21 @@ pub struct ProtectionStatusData {
     pub search_filter_active: bool,
     #[serde(rename = "blockedSearchesToday")]
     pub blocked_searches_today: i32,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct HeartbeatData {
+    pub timestamp: i64,
+    #[serde(rename = "incognitoEnabled")]
+    pub incognito_enabled: bool,
+    #[serde(rename = "safeSearchEnforced")]
+    pub safe_search_enforced: bool,
+    #[serde(rename = "searchFilterActive")]
+    pub search_filter_active: bool,
+    #[serde(rename = "blockedSearchesToday")]
+    pub blocked_searches_today: i32,
+    #[serde(rename = "extensionVersion")]
+    pub extension_version: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -333,6 +439,13 @@ pub fn handle_message(msg: IncomingMessage) -> OutgoingMessage {
                 data.incognito_enabled, data.safe_search_enforced);
             
             update_protection_status(&data);
+            
+            OutgoingMessage::Ack
+        }
+        
+        IncomingMessage::Heartbeat { data } => {
+            // Process heartbeat and update status
+            update_heartbeat(&data);
             
             OutgoingMessage::Ack
         }
