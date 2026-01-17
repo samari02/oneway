@@ -613,27 +613,27 @@
 }
 
 .habit-list__calendar-now-dot {
-  width: 12px;
-  height: 12px;
-  background: var(--color-coral);
+  width: 10px;
+  height: 10px;
+  background: var(--color-mint);
   border-radius: 50%;
-  margin-left: -6px;
-  box-shadow: 0 0 0 3px rgba(255, 155, 133, 0.3);
+  margin-left: -5px;
+  box-shadow: 0 0 0 3px rgba(125, 216, 196, 0.3);
   animation: nowPulse 2s ease-in-out infinite;
 }
 
 .habit-list__calendar-now-line {
   flex: 1;
   height: 2px;
-  background: var(--color-coral);
+  background: var(--color-mint);
 }
 
 .habit-list__calendar-now-time {
   font-size: 10px;
   font-weight: var(--font-weight-semibold);
-  color: white;
+  color: var(--bg-primary);
   padding: 2px 8px;
-  background: var(--color-coral);
+  background: var(--color-mint);
   border-radius: var(--radius-full);
   margin-right: 8px;
 }
@@ -650,6 +650,7 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  z-index: 3;
   z-index: 20;
 }
 
@@ -665,7 +666,6 @@
 /* Habit blocks */
 .habit-list__calendar-block {
   position: absolute;
-  left: 8px;
   right: 8px;
   display: flex;
   align-items: flex-start;
@@ -760,46 +760,471 @@
   border-color: var(--color-mint-dark);
 }
 
-/* Boundary blocks */
+/* Boundary blocks - floating pill on left */
 .habit-list__calendar-boundary {
   position: absolute;
-  left: 8px;
-  right: 8px;
+  left: 4px;
+  width: 56px;
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-xs);
-  padding: 6px 10px;
-  background: repeating-linear-gradient(
-    135deg,
-    rgba(255, 155, 133, 0.06),
-    rgba(255, 155, 133, 0.06) 4px,
-    rgba(255, 155, 133, 0.02) 4px,
-    rgba(255, 155, 133, 0.02) 8px
-  );
-  border: 1px dashed rgba(255, 155, 133, 0.3);
-  border-radius: var(--radius-sm);
-  pointer-events: none;
-  z-index: 1;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--color-lavender);
+  border-left: 3px solid var(--color-lavender);
+  border-radius: 8px;
+  z-index: 10;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.habit-list__calendar-boundary:hover {
+  border-color: var(--color-lavender);
+  box-shadow: 0 4px 12px rgba(184, 169, 232, 0.25);
+  transform: translateX(2px);
 }
 
 .habit-list__calendar-boundary--active {
-  background: repeating-linear-gradient(
-    135deg,
-    rgba(255, 155, 133, 0.12),
-    rgba(255, 155, 133, 0.12) 4px,
-    rgba(255, 155, 133, 0.06) 4px,
-    rgba(255, 155, 133, 0.06) 8px
-  );
-  border-color: rgba(255, 155, 133, 0.5);
+  background: rgba(184, 169, 232, 0.1);
+  border-color: var(--color-lavender);
+}
+
+.habit-list__calendar-boundary--dragging {
+  opacity: 0.9;
+  box-shadow: 0 6px 20px rgba(184, 169, 232, 0.35);
+  z-index: 100;
 }
 
 .habit-list__calendar-boundary-icon {
-  font-size: 11px;
-  opacity: 0.7;
+  font-size: 16px;
+  margin-bottom: 4px;
 }
 
 .habit-list__calendar-boundary-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.habit-list__calendar-boundary-time {
+  font-size: 9px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+/* ========================================
+   Calendar Container with Day/Week Toggle
+   ======================================== */
+
+.habit-list__calendar-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.habit-list__calendar-mode-toggle {
+  display: flex;
+  align-self: flex-end;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  border: 1px solid var(--border-light);
+}
+
+.habit-list__mode-btn {
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.habit-list__mode-btn:hover {
+  color: var(--text-primary);
+}
+
+.habit-list__mode-btn--active {
+  background: var(--color-mint);
+  color: white;
+}
+
+/* ========================================
+   Boundaries Timeline (Cold Turkey Style)
+   ======================================== */
+
+.habit-list__boundaries-timeline {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.habit-list__boundaries-timeline-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-tertiary);
+}
+
+.habit-list__boundaries-timeline-title {
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+}
+
+.habit-list__boundaries-timeline-content {
+  padding: 12px 0;
+}
+
+/* Time axis (hours or days) */
+.habit-list__boundaries-timeline-axis {
+  display: flex;
+  align-items: center;
+  padding: 0 16px 8px;
+  gap: 0;
+}
+
+.habit-list__timeline-hour {
+  flex: 1;
+  font-size: 9px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.habit-list__timeline-label-spacer {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.habit-list__timeline-day {
+  flex: 1;
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 4px;
+}
+
+.habit-list__timeline-day--today {
+  color: var(--color-mint);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Boundary rows */
+.habit-list__boundaries-timeline-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.habit-list__boundaries-timeline-row:hover {
+  background: var(--bg-tertiary);
+}
+
+.habit-list__boundaries-timeline-label {
+  width: 100px;
+  flex-shrink: 0;
   font-size: 11px;
-  color: var(--color-coral);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 12px;
+}
+
+.habit-list__boundaries-timeline-track {
+  flex: 1;
+  height: 24px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  position: relative;
+  display: flex;
+}
+
+/* Single bar for day view */
+.habit-list__boundaries-timeline-bar {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  background: var(--color-lavender);
+  border-radius: var(--radius-xs);
   opacity: 0.7;
+}
+
+/* Day cells for week view */
+.habit-list__boundaries-timeline-day-cell {
+  flex: 1;
+  height: 100%;
+  padding: 2px;
+  display: flex;
+}
+
+.habit-list__boundaries-timeline-bar--day {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--color-lavender);
+  border-radius: var(--radius-xs);
+  opacity: 0.7;
+}
+
+/* Now marker in timeline */
+.habit-list__boundaries-timeline-now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-coral);
+  z-index: 5;
+}
+
+/* ========================================
+   Week View Calendar
+   ======================================== */
+
+.habit-list__week {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.habit-list__week-header {
+  display: flex;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-tertiary);
+}
+
+.habit-list__week-hour-spacer {
+  width: 50px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-light);
+}
+
+.habit-list__week-day-header {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 4px;
+  border-right: 1px solid var(--border-light);
+}
+
+.habit-list__week-day-header:last-child {
+  border-right: none;
+}
+
+.habit-list__week-day-header--today {
+  background: rgba(125, 216, 196, 0.1);
+}
+
+.habit-list__week-day-name {
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.habit-list__week-day-number {
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.habit-list__week-day-header--today .habit-list__week-day-name,
+.habit-list__week-day-header--today .habit-list__week-day-number {
+  color: var(--color-mint);
+}
+
+.habit-list__week-scroll {
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.habit-list__week-grid {
+  display: flex;
+  position: relative;
+}
+
+.habit-list__week-hours {
+  width: 50px;
+  flex-shrink: 0;
+  position: relative;
+  background: var(--bg-tertiary);
+  border-right: 1px solid var(--border-light);
+}
+
+.habit-list__week-hour-label {
+  position: absolute;
+  left: 0;
+  right: 8px;
+  text-align: right;
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  transform: translateY(-50%);
+}
+
+.habit-list__week-day-column {
+  flex: 1;
+  position: relative;
+  border-right: 1px solid var(--border-light);
+  cursor: crosshair;
+  user-select: none;
+}
+
+.habit-list__week-day-column:last-child {
+  border-right: none;
+}
+
+.habit-list__week-day-column--today {
+  background: rgba(125, 216, 196, 0.03);
+}
+
+.habit-list__week-hour-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border-light);
+  pointer-events: none;
+}
+
+/* Now marker in week view */
+.habit-list__week-now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-mint);
+  z-index: 15;
+  pointer-events: none;
+}
+
+.habit-list__week-now::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  background: var(--color-mint);
+  border-radius: 50%;
+}
+
+/* Week view habit blocks */
+.habit-list__week-block {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 3px 4px;
+  background: linear-gradient(135deg, rgba(125, 216, 196, 0.3) 0%, rgba(125, 216, 196, 0.2) 100%);
+  border: 1px solid rgba(125, 216, 196, 0.5);
+  border-left: 3px solid var(--color-mint);
+  border-radius: var(--radius-sm);
+  cursor: grab;
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  z-index: 5;
+}
+
+.habit-list__week-block:hover {
+  background: linear-gradient(135deg, rgba(125, 216, 196, 0.4) 0%, rgba(125, 216, 196, 0.3) 100%);
+  z-index: 10;
+}
+
+.habit-list__week-block--dragging {
+  cursor: grabbing;
+  opacity: 0.8;
+  box-shadow: var(--shadow-md);
+  z-index: 25;
+}
+
+.habit-list__week-block--done {
+  background: rgba(125, 216, 196, 0.1);
+  border-color: rgba(125, 216, 196, 0.3);
+  opacity: 0.6;
+}
+
+.habit-list__week-block--done .habit-list__week-block-name {
+  text-decoration: line-through;
+}
+
+.habit-list__week-block-checkbox {
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-mint);
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: bold;
+  color: transparent;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: rgba(125, 216, 196, 0.1);
+}
+
+.habit-list__week-block-checkbox--checked {
+  background: var(--color-mint);
+  color: white;
+  border-color: var(--color-mint);
+}
+
+.habit-list__week-block-icon {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.habit-list__week-block-name {
+  font-size: 9px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+/* Week view drag preview */
+.habit-list__week-drag-preview {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  background: rgba(125, 216, 196, 0.2);
+  border: 1px dashed var(--color-mint);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.habit-list__week-drag-time {
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-mint-dark);
+  background: var(--bg-secondary);
+  padding: 1px 4px;
+  border-radius: var(--radius-xs);
 }

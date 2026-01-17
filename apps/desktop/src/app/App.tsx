@@ -69,16 +69,17 @@ function TodayView() {
       // Goal link
       goal_id: data.goal_id,
     })
+    // Refetch data BEFORE closing modal to avoid calendar glitch
+    await refetchHabits()
     setShowAddForm(false)
     setDragHabitDefaults(null)
-    refetchHabits()
   }
 
   const handleEditHabit = async (updates: Partial<Habit>) => {
     if (!editingHabit) return
     await update(editingHabit.id, updates)
+    await refetchHabits()
     setEditingHabit(null)
-    refetchHabits()
   }
 
   const handleDeleteHabit = async (habitId: string) => {
@@ -109,7 +110,33 @@ function TodayView() {
 
   // Update habit time from calendar drag
   const handleUpdateHabitTime = async (habitId: string, newTime: string) => {
-    await update(habitId, { scheduled_time: newTime })
+    // Find the habit to check if it's a boundary
+    const habit = habits.find(h => h.id === habitId)
+    
+    if (habit?.habit_type === 'avoid') {
+      // For boundaries, update time_start and recalculate time_end
+      const oldStart = habit.time_start
+      const oldEnd = habit.time_end
+      if (oldStart && oldEnd) {
+        // Calculate duration to preserve it
+        const [sh, sm] = oldStart.split(':').map(Number)
+        const [eh, em] = oldEnd.split(':').map(Number)
+        const durationMinutes = (eh * 60 + em) - (sh * 60 + sm)
+        
+        // Calculate new end time
+        const [nh, nm] = newTime.split(':').map(Number)
+        const newEndMinutes = (nh * 60 + nm) + durationMinutes
+        const newEndH = Math.floor(newEndMinutes / 60) % 24
+        const newEndM = newEndMinutes % 60
+        const newEndTime = `${String(newEndH).padStart(2, '0')}:${String(newEndM).padStart(2, '0')}`
+        
+        await update(habitId, { time_start: newTime, time_end: newEndTime })
+      }
+    } else {
+      // For regular habits, just update scheduled_time
+      await update(habitId, { scheduled_time: newTime })
+    }
+    
     refetchHabits(true) // Silent refetch to avoid unmounting HabitList
   }
 

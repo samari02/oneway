@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { Habit } from '@oneway/shared'
 import { HabitItem } from './HabitItem'
 import './HabitList.css'
@@ -11,11 +11,12 @@ interface HabitListProps {
   onEdit?: (habit: Habit) => void
   onDelete?: (habitId: string) => void
   onMarkViolated?: (habitId: string) => void
-  onCreateHabit?: (time: string, duration: number) => void
+  onCreateHabit?: (time: string, duration: number, dayOffset?: number) => void
   onUpdateHabitTime?: (habitId: string, newTime: string) => void
 }
 
 type ViewMode = 'list' | 'visual' | 'calendar'
+type CalendarMode = 'day' | 'week'
 
 // Calendar constants
 const HOUR_HEIGHT = 80 // pixels per hour (increased for better visibility)
@@ -47,10 +48,43 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
     return (saved as ViewMode) || 'visual'
   })
   
+  // Calendar mode (day/week) - also persisted
+  const [calendarMode, setCalendarMode] = useState<CalendarMode>(() => {
+    const saved = localStorage.getItem('clarity-calendar-mode')
+    return (saved as CalendarMode) || 'day'
+  })
+  
   // Save viewMode to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('clarity-habit-view-mode', viewMode)
   }, [viewMode])
+  
+  // Save calendarMode to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('clarity-calendar-mode', calendarMode)
+  }, [calendarMode])
+  
+  // Week view helpers
+  const getWeekDays = useMemo(() => {
+    const today = new Date()
+    const dayOfWeek = today.getDay() // 0 = Sunday
+    const monday = new Date(today)
+    monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7)) // Go to Monday
+    
+    const days = []
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(monday)
+      date.setDate(monday.getDate() + i)
+      days.push({
+        date,
+        dayName: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+        dayNumber: date.getDate(),
+        isToday: date.toDateString() === today.toDateString(),
+        dayOffset: i - ((dayOfWeek + 6) % 7) // Offset from today
+      })
+    }
+    return days
+  }, [])
   
   // Drag state for calendar
   const [isDragging, setIsDragging] = useState(false)
@@ -325,7 +359,113 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
 
       {/* Calendar View */}
       {viewMode === 'calendar' && (
-        <div className="habit-list__calendar">
+        <div className="habit-list__calendar-container">
+          {/* Day/Week Toggle */}
+          <div className="habit-list__calendar-mode-toggle">
+            <button 
+              className={`habit-list__mode-btn ${calendarMode === 'day' ? 'habit-list__mode-btn--active' : ''}`}
+              onClick={() => setCalendarMode('day')}
+            >
+              Day
+            </button>
+            <button 
+              className={`habit-list__mode-btn ${calendarMode === 'week' ? 'habit-list__mode-btn--active' : ''}`}
+              onClick={() => setCalendarMode('week')}
+            >
+              Week
+            </button>
+          </div>
+
+          {/* Boundaries Timeline (Cold Turkey style) */}
+          {boundaries.length > 0 && (
+            <div className="habit-list__boundaries-timeline">
+              <div className="habit-list__boundaries-timeline-header">
+                <span className="habit-list__boundaries-timeline-title">Boundaries</span>
+              </div>
+              <div className="habit-list__boundaries-timeline-content">
+                {/* Time axis */}
+                <div className="habit-list__boundaries-timeline-axis">
+                  {calendarMode === 'day' ? (
+                    // Day view: hours on X axis
+                    <>
+                      {Array.from({ length: 13 }, (_, i) => {
+                        const hour = i * 2
+                        return (
+                          <span key={hour} className="habit-list__timeline-hour">
+                            {hour === 0 ? '12am' : hour === 12 ? '12pm' : hour < 12 ? `${hour}am` : `${hour - 12}pm`}
+                          </span>
+                        )
+                      })}
+                    </>
+                  ) : (
+                    // Week view: days on X axis
+                    <>
+                      <span className="habit-list__timeline-label-spacer" />
+                      {getWeekDays.map(day => (
+                        <span 
+                          key={day.dayNumber} 
+                          className={`habit-list__timeline-day ${day.isToday ? 'habit-list__timeline-day--today' : ''}`}
+                        >
+                          {day.dayName} {day.dayNumber}
+                        </span>
+                      ))}
+                    </>
+                  )}
+                </div>
+                
+                {/* Boundary rows */}
+                {boundaries.map(b => {
+                  const startMin = b.time_start ? timeToMinutes(b.time_start) : 0
+                  const endMin = b.time_end ? timeToMinutes(b.time_end) : 1440
+                  const startPercent = (startMin / 1440) * 100
+                  const widthPercent = ((endMin - startMin) / 1440) * 100
+                  
+                  return (
+                    <div 
+                      key={b.id} 
+                      className="habit-list__boundaries-timeline-row"
+                      onClick={() => onEdit?.(b)}
+                    >
+                      <span className="habit-list__boundaries-timeline-label">
+                        {b.icon || '🛡️'} {b.name}
+                      </span>
+                      <div className="habit-list__boundaries-timeline-track">
+                        {calendarMode === 'day' ? (
+                          // Day view: single bar
+                          <div 
+                            className="habit-list__boundaries-timeline-bar"
+                            style={{ left: `${startPercent}%`, width: `${widthPercent}%` }}
+                          />
+                        ) : (
+                          // Week view: bars for each day (for now, show same pattern)
+                          // TODO: Support per-day schedules
+                          getWeekDays.map(day => (
+                            <div 
+                              key={day.dayNumber}
+                              className="habit-list__boundaries-timeline-day-cell"
+                            >
+                              <div className="habit-list__boundaries-timeline-bar habit-list__boundaries-timeline-bar--day" />
+                            </div>
+                          ))
+                        )}
+                        {/* Now marker (day view only) */}
+                        {calendarMode === 'day' && (
+                          <div 
+                            className="habit-list__boundaries-timeline-now"
+                            style={{ left: `${(timeToMinutes(currentTime) / 1440) * 100}%` }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Day View Calendar */}
+          {calendarMode === 'day' && (
+          <div className="habit-list__calendar">
           {/* Hour labels column - syncs with scroll */}
           <div className="habit-list__calendar-hours" ref={hoursColumnRef}>
             <div className="habit-list__calendar-hours-inner" style={{ height: `${GRID_HEIGHT + GRID_PADDING * 2}px` }}>
@@ -418,95 +558,377 @@ export function HabitList({ habits, checkedIds, onCheck, onUncheck, onEdit, onDe
               </div>
             )}
 
-            {/* Boundary blocks (background) */}
-            {boundaries.map(b => {
-              if (!b.time_start || !b.time_end) return null
+            {/* Boundary and Habit blocks */}
+            {(() => {
+              // Calculate columns for overlapping boundaries
+              const boundaryPositions: { id: string; start: number; end: number; column: number }[] = []
               
-              const startMin = timeToMinutes(b.time_start)
-              const endMin = timeToMinutes(b.time_end)
-              const gridStart = START_HOUR * 60
-              const gridEnd = END_HOUR * 60
+              boundaries.forEach(b => {
+                if (!b.time_start || !b.time_end) return
+                const displayStartTime = optimisticTimes[b.id] || b.time_start
+                const start = timeToMinutes(displayStartTime)
+                const end = timeToMinutes(b.time_end)
+                
+                // Find which column to place this boundary
+                let column = 0
+                while (boundaryPositions.some(bp => 
+                  bp.column === column && 
+                  !(end <= bp.start || start >= bp.end) // Check overlap
+                )) {
+                  column++
+                }
+                
+                boundaryPositions.push({ id: b.id, start, end, column })
+              })
               
-              const visibleStart = Math.max(startMin, gridStart)
-              const visibleEnd = Math.min(endMin, gridEnd)
-              
-              if (visibleStart >= visibleEnd) return null
-              
-              const topPosition = GRID_PADDING + ((visibleStart - gridStart) / 60) * HOUR_HEIGHT
-              const height = ((visibleEnd - visibleStart) / 60) * HOUR_HEIGHT
-              const isActive = activeBoundaries.some(ab => ab.id === b.id)
-              
-              return (
-                <div
-                  key={b.id}
-                  className={`habit-list__calendar-boundary ${isActive ? 'habit-list__calendar-boundary--active' : ''}`}
-                  style={{ top: `${topPosition}px`, height: `${height}px` }}
-                >
-                  <span className="habit-list__calendar-boundary-icon">{b.icon || '🛡️'}</span>
-                  <span className="habit-list__calendar-boundary-name">{b.name}</span>
-                </div>
-              )
-            })}
-
-            {/* Habit blocks */}
-            {doHabits.map(habit => {
-              if (!habit.scheduled_time) return null
-              
-              // Use optimistic time if available, otherwise use database time
-              const displayTime = optimisticTimes[habit.id] || habit.scheduled_time
-              const habitMinutes = timeToMinutes(displayTime)
-              const startMinutes = START_HOUR * 60
-              const endMinutes = END_HOUR * 60
-              
-              if (habitMinutes < startMinutes || habitMinutes > endMinutes) return null
-              
-              let topPosition = GRID_PADDING + ((habitMinutes - startMinutes) / 60) * HOUR_HEIGHT
-              const duration = habit.duration_minutes || 30
-              const height = (duration / 60) * HOUR_HEIGHT
-              const isChecked = checkedIds.has(habit.id)
-              const isBeingDragged = draggingHabit === habit.id
-              
-              // Use drag position if being dragged (already includes padding from snap)
-              if (isBeingDragged && dragEnd) {
-                topPosition = GRID_PADDING + dragEnd.y
-              }
+              const maxColumns = boundaryPositions.length > 0 
+                ? Math.max(...boundaryPositions.map(bp => bp.column + 1))
+                : 0
+              const pillWidth = 56
+              const pillGap = 4
+              const habitsLeftOffset = maxColumns > 0 
+                ? 4 + maxColumns * (pillWidth + pillGap) + 4
+                : 8
               
               return (
-                <div
-                  key={habit.id}
-                  className={`habit-list__calendar-block ${isChecked ? 'habit-list__calendar-block--done' : ''} ${isBeingDragged ? 'habit-list__calendar-block--dragging' : ''}`}
-                  style={{ 
-                    top: `${topPosition}px`,
-                    height: `${Math.max(height, 30)}px`
-                  }}
-                  onClick={(e) => {
-                    // Click on card body = edit (if not dragging)
-                    if (!isBeingDragged && !hasMoved && onEdit) {
-                      e.stopPropagation()
-                      onEdit(habit)
+                <>
+                  {/* Boundary pills */}
+                  {boundaries.map(b => {
+                    if (!b.time_start || !b.time_end) return null
+                    
+                    const displayStartTime = optimisticTimes[b.id] || b.time_start
+                    const startMin = timeToMinutes(displayStartTime)
+                    const endMin = timeToMinutes(b.time_end)
+                    const duration = endMin - startMin
+                    const gridStart = START_HOUR * 60
+                    const gridEnd = END_HOUR * 60
+                    
+                    const visibleStart = Math.max(startMin, gridStart)
+                    const visibleEnd = Math.min(startMin + duration, gridEnd)
+                    
+                    if (visibleStart >= visibleEnd) return null
+                    
+                    let topPosition = GRID_PADDING + ((visibleStart - gridStart) / 60) * HOUR_HEIGHT
+                    const height = ((visibleEnd - visibleStart) / 60) * HOUR_HEIGHT
+                    const isActive = activeBoundaries.some(ab => ab.id === b.id)
+                    const isBeingDragged = draggingHabit === b.id
+                    
+                    // Get column for this boundary
+                    const boundaryPos = boundaryPositions.find(bp => bp.id === b.id)
+                    const column = boundaryPos?.column || 0
+                    const leftOffset = 4 + column * (pillWidth + pillGap)
+                    
+                    // Use drag position if being dragged
+                    if (isBeingDragged && dragEnd) {
+                      topPosition = GRID_PADDING + dragEnd.y
                     }
-                  }}
-                  onMouseDown={(e) => handleHabitDragStart(e, habit.id, topPosition)}
-                >
-                  {/* Checkbox zone = toggle */}
-                  <span 
-                    className={`habit-list__calendar-block-checkbox ${isChecked ? 'habit-list__calendar-block-checkbox--checked' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      isChecked ? onUncheck(habit.id) : onCheck(habit.id)
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()} // Prevent drag when clicking checkbox
-                  >
-                    {isChecked ? '✓' : ''}
-                  </span>
-                  <span className="habit-list__calendar-block-icon">{habit.icon || '✨'}</span>
-                  <span className="habit-list__calendar-block-name">{habit.name}</span>
-                  <span className="habit-list__calendar-block-time">{habit.scheduled_time}</span>
-                </div>
+                    
+                    return (
+                      <div
+                        key={b.id}
+                        className={`habit-list__calendar-boundary ${isActive ? 'habit-list__calendar-boundary--active' : ''} ${isBeingDragged ? 'habit-list__calendar-boundary--dragging' : ''}`}
+                        style={{ 
+                          top: `${topPosition}px`, 
+                          height: `${Math.max(height, 60)}px`,
+                          left: `${leftOffset}px`
+                        }}
+                        onClick={(e) => {
+                          if (!isBeingDragged && !hasMoved && onEdit) {
+                            e.stopPropagation()
+                            onEdit(b)
+                          }
+                        }}
+                        onMouseDown={(e) => handleHabitDragStart(e, b.id, topPosition)}
+                      >
+                        <span className="habit-list__calendar-boundary-icon">{b.icon || '🛡️'}</span>
+                        <span className="habit-list__calendar-boundary-name">{b.name}</span>
+                        <span className="habit-list__calendar-boundary-time">{b.time_start}–{b.time_end}</span>
+                      </div>
+                    )
+                  })}
+                  
+                  {/* Habit blocks */}
+                  {doHabits.map(habit => {
+                    if (!habit.scheduled_time) return null
+                    
+                    const displayTime = optimisticTimes[habit.id] || habit.scheduled_time
+                    const habitMinutes = timeToMinutes(displayTime)
+                    const startMinutes = START_HOUR * 60
+                    const endMinutes = END_HOUR * 60
+                    
+                    if (habitMinutes < startMinutes || habitMinutes > endMinutes) return null
+                    
+                    let topPosition = GRID_PADDING + ((habitMinutes - startMinutes) / 60) * HOUR_HEIGHT
+                    const duration = habit.duration_minutes || 30
+                    const height = (duration / 60) * HOUR_HEIGHT
+                    const isChecked = checkedIds.has(habit.id)
+                    const isBeingDragged = draggingHabit === habit.id
+                    
+                    if (isBeingDragged && dragEnd) {
+                      topPosition = GRID_PADDING + dragEnd.y
+                    }
+                    
+                    return (
+                      <div
+                        key={habit.id}
+                        className={`habit-list__calendar-block ${isChecked ? 'habit-list__calendar-block--done' : ''} ${isBeingDragged ? 'habit-list__calendar-block--dragging' : ''}`}
+                        style={{ 
+                          top: `${topPosition}px`,
+                          height: `${Math.max(height, 30)}px`,
+                          left: `${habitsLeftOffset}px`
+                        }}
+                        onClick={(e) => {
+                          if (!isBeingDragged && !hasMoved && onEdit) {
+                            e.stopPropagation()
+                            onEdit(habit)
+                          }
+                        }}
+                        onMouseDown={(e) => handleHabitDragStart(e, habit.id, topPosition)}
+                      >
+                        <span 
+                          className={`habit-list__calendar-block-checkbox ${isChecked ? 'habit-list__calendar-block-checkbox--checked' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            isChecked ? onUncheck(habit.id) : onCheck(habit.id)
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        >
+                          {isChecked ? '✓' : ''}
+                        </span>
+                        <span className="habit-list__calendar-block-icon">{habit.icon || '✨'}</span>
+                        <span className="habit-list__calendar-block-name">{habit.name}</span>
+                        <span className="habit-list__calendar-block-time">{habit.scheduled_time}</span>
+                      </div>
+                    )
+                  })}
+                </>
               )
-            })}
+            })()}
             </div>
           </div>
+        </div>
+          )}
+
+          {/* Week View Calendar */}
+          {calendarMode === 'week' && (
+            <div className="habit-list__week">
+              {/* Week header */}
+              <div className="habit-list__week-header">
+                <div className="habit-list__week-hour-spacer" />
+                {getWeekDays.map(day => (
+                  <div 
+                    key={day.dayNumber} 
+                    className={`habit-list__week-day-header ${day.isToday ? 'habit-list__week-day-header--today' : ''}`}
+                  >
+                    <span className="habit-list__week-day-name">{day.dayName}</span>
+                    <span className="habit-list__week-day-number">{day.dayNumber}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Week grid */}
+              <div className="habit-list__week-scroll">
+                <div className="habit-list__week-grid">
+                  {/* Hour labels */}
+                  <div className="habit-list__week-hours">
+                    {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => {
+                      const hour = START_HOUR + i
+                      return (
+                        <div 
+                          key={hour} 
+                          className="habit-list__week-hour-label"
+                          style={{ top: `${GRID_PADDING + i * HOUR_HEIGHT}px` }}
+                        >
+                          {String(hour).padStart(2, '0')}:00
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Day columns */}
+                  {getWeekDays.map((day, dayIndex) => (
+                    <div 
+                      key={day.dayNumber} 
+                      className={`habit-list__week-day-column ${day.isToday ? 'habit-list__week-day-column--today' : ''}`}
+                      style={{ height: `${GRID_HEIGHT + GRID_PADDING * 2}px` }}
+                      onMouseDown={(e) => {
+                        // Allow creating habits on any day
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        const rawY = e.clientY - rect.top
+                        const snappedY = snapY(rawY)
+                        const time = yToTime(snappedY)
+                        
+                        setIsDragging(true)
+                        setDragStart({ y: snappedY, time })
+                        setDragEnd({ y: snappedY, time })
+                        // Store day offset for habit creation
+                        ;(window as unknown as Record<string, number>).__habitDayOffset = day.dayOffset
+                      }}
+                      onMouseMove={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        const rawY = Math.max(0, Math.min(GRID_HEIGHT, e.clientY - rect.top))
+                        const snappedY = snapY(rawY)
+                        const time = yToTime(snappedY)
+                        
+                        if (isDragging) {
+                          setDragEnd({ y: snappedY, time })
+                        }
+                        
+                        // Activate habit drag only after mouse has moved enough
+                        if (pendingDragRef.current && !draggingHabit) {
+                          const moveDistance = Math.abs(rawY - pendingDragRef.current.startY)
+                          if (moveDistance > 5) {
+                            setDraggingHabit(pendingDragRef.current.habitId)
+                            setDragOffset(pendingDragRef.current.offset)
+                            setHasMoved(true)
+                          }
+                        }
+                        
+                        if (draggingHabit) {
+                          const habitRawY = rawY - dragOffset
+                          const habitSnappedY = snapY(habitRawY)
+                          setDragEnd({ y: habitSnappedY, time: yToTime(habitSnappedY) })
+                          setHasMoved(true)
+                        }
+                      }}
+                      onMouseUp={() => {
+                        if (isDragging && dragStart && dragEnd && onCreateHabit) {
+                          const startMinutes = timeToMinutes(dragStart.time)
+                          const endMinutes = timeToMinutes(dragEnd.time)
+                          const duration = Math.abs(endMinutes - startMinutes)
+                          
+                          if (duration >= 15) {
+                            const startTime = startMinutes < endMinutes ? dragStart.time : dragEnd.time
+                            const dayOffset = (window as unknown as Record<string, number>).__habitDayOffset || 0
+                            onCreateHabit(startTime, duration, dayOffset)
+                          }
+                        }
+                        
+                        if (draggingHabit && dragEnd && onUpdateHabitTime && hasMoved) {
+                          setOptimisticTimes(prev => ({ ...prev, [draggingHabit]: dragEnd.time }))
+                          onUpdateHabitTime(draggingHabit, dragEnd.time)
+                        }
+                        
+                        setIsDragging(false)
+                        setDragStart(null)
+                        setDragEnd(null)
+                        setDraggingHabit(null)
+                        setHasMoved(false)
+                        pendingDragRef.current = null
+                      }}
+                      onMouseLeave={() => {
+                        // Clean up if mouse leaves column while dragging
+                        if (isDragging || draggingHabit) {
+                          setIsDragging(false)
+                          setDragStart(null)
+                          setDragEnd(null)
+                          setDraggingHabit(null)
+                          setHasMoved(false)
+                          pendingDragRef.current = null
+                        }
+                      }}
+                    >
+                      {/* Hour lines */}
+                      {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => (
+                        <div 
+                          key={`hour-${i}`} 
+                          className="habit-list__week-hour-line"
+                          style={{ top: `${GRID_PADDING + i * HOUR_HEIGHT}px` }}
+                        />
+                      ))}
+
+                      {/* Now marker (only on today) */}
+                      {day.isToday && (() => {
+                        const nowMinutes = timeToMinutes(currentTime)
+                        const topPosition = GRID_PADDING + ((nowMinutes - START_HOUR * 60) / 60) * HOUR_HEIGHT
+                        return (
+                          <div 
+                            className="habit-list__week-now"
+                            style={{ top: `${topPosition}px` }}
+                          />
+                        )
+                      })()}
+
+                      {/* Habits for this day (currently shows all habits on each day) */}
+                      {/* TODO: Filter by day_of_week when we add that field */}
+                      {doHabits.map(habit => {
+                        if (!habit.scheduled_time) return null
+                        
+                        const displayTime = optimisticTimes[habit.id] || habit.scheduled_time
+                        const habitMinutes = timeToMinutes(displayTime)
+                        const startMinutes = START_HOUR * 60
+                        const endMinutes = END_HOUR * 60
+                        
+                        if (habitMinutes < startMinutes || habitMinutes > endMinutes) return null
+                        
+                        let topPosition = GRID_PADDING + ((habitMinutes - startMinutes) / 60) * HOUR_HEIGHT
+                        const duration = habit.duration_minutes || 30
+                        const height = (duration / 60) * HOUR_HEIGHT
+                        const isChecked = checkedIds.has(habit.id)
+                        const isBeingDragged = draggingHabit === habit.id
+                        
+                        if (isBeingDragged && dragEnd) {
+                          topPosition = GRID_PADDING + dragEnd.y
+                        }
+                        
+                        return (
+                          <div
+                            key={habit.id}
+                            className={`habit-list__week-block ${isChecked ? 'habit-list__week-block--done' : ''} ${isBeingDragged ? 'habit-list__week-block--dragging' : ''}`}
+                            style={{ 
+                              top: `${topPosition}px`,
+                              height: `${Math.max(height, 24)}px`
+                            }}
+                            onClick={(e) => {
+                              if (!isBeingDragged && !hasMoved && onEdit) {
+                                e.stopPropagation()
+                                onEdit(habit)
+                              }
+                            }}
+                            onMouseDown={(e) => {
+                              e.stopPropagation()
+                              const rect = e.currentTarget.parentElement!.getBoundingClientRect()
+                              const y = e.clientY - rect.top
+                              const offset = y - topPosition
+                              pendingDragRef.current = { habitId: habit.id, offset, startY: y }
+                            }}
+                          >
+                            <span 
+                              className={`habit-list__week-block-checkbox ${isChecked ? 'habit-list__week-block-checkbox--checked' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                isChecked ? onUncheck(habit.id) : onCheck(habit.id)
+                              }}
+                              onMouseDown={(e) => e.stopPropagation()}
+                            >
+                              {isChecked ? '✓' : ''}
+                            </span>
+                            <span className="habit-list__week-block-icon">{habit.icon || '✨'}</span>
+                            <span className="habit-list__week-block-name">{habit.name}</span>
+                          </div>
+                        )
+                      })}
+
+                      {/* Drag preview for this day */}
+                      {isDragging && dragStart && dragEnd && (window as unknown as Record<string, number>).__habitDayOffset === day.dayOffset && (
+                        <div
+                          className="habit-list__week-drag-preview"
+                          style={{
+                            top: `${GRID_PADDING + Math.min(dragStart.y, dragEnd.y)}px`,
+                            height: `${Math.abs(dragEnd.y - dragStart.y)}px`
+                          }}
+                        >
+                          <span className="habit-list__week-drag-time">
+                            {dragStart.y < dragEnd.y ? dragStart.time : dragEnd.time}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
