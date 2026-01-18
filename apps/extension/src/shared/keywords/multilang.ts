@@ -7,25 +7,38 @@
 
 /** Japanese explicit terms */
 export const JAPANESE_KEYWORDS = [
-  // Kanji/Hiragana
+  // Katakana
   'エロ',        // ero
   'アダルト',    // adult
-  '無修正',      // uncensored
   'セックス',    // sex
-  'おっぱい',    // oppai (breasts)
   'ヌード',      // nude
-  '裸',          // naked
   'ポルノ',      // porno
-  'AV',          // adult video (common abbreviation)
   'エッチ',      // ecchi (lewd)
+  'フェラ',      // fellatio
+  'オナニー',    // masturbation
+  
+  // Hiragana (same words, different script - users try both!)
+  'えろ',        // ero (hiragana)
+  'せっくす',    // sex (hiragana)
+  'えっち',      // ecchi (hiragana)
+  'おなにー',    // masturbation (hiragana)
+  
+  // Kanji
+  '無修正',      // uncensored
+  'おっぱい',    // oppai (breasts)
+  '裸',          // naked
+  'AV',          // adult video (common abbreviation)
   '痴女',        // slut
   '熟女',        // mature woman
   '素人',        // amateur
-  'フェラ',      // fellatio
   '中出し',      // creampie
+  '巨乳',        // big breasts
+  '美乳',        // beautiful breasts
+  '潮吹き',      // squirting
+  '乱交',        // orgy
   
   // Romaji (romanized Japanese)
-  'ero', 'ecchi', 'hentai', 'oppai',
+  'ero', 'ecchi', 'hentai', 'oppai', 'paizuri',
 ] as const
 
 /** Chinese explicit terms (Simplified + Traditional) */
@@ -185,7 +198,17 @@ export const MULTILANG_KEYWORDS_SET = new Set(
 )
 
 /**
+ * Normalize repeated characters in any script (including CJK)
+ * えろろろ → えろ, порнооо → порно
+ */
+function normalizeRepeatedChars(text: string): string {
+  // Remove any character repeated 2+ times in a row
+  return text.replace(/(.)\1+/g, '$1')
+}
+
+/**
  * Check if query contains multilingual explicit keywords
+ * Also handles repeated character evasion (えろろろ → えろ)
  */
 export function checkMultilangKeywords(query: string): {
   found: boolean
@@ -193,17 +216,33 @@ export function checkMultilangKeywords(query: string): {
   matchedTerms: string[]
 } {
   const normalizedQuery = query.toLowerCase()
+  // Also check with repeated chars removed for evasion detection
+  const deduplicatedQuery = normalizeRepeatedChars(normalizedQuery)
+  
   const matchedTerms: string[] = []
+  let evasionDetected = false
   
   for (const keyword of ALL_MULTILANG_KEYWORDS) {
-    if (normalizedQuery.includes(keyword.toLowerCase())) {
+    const keywordLower = keyword.toLowerCase()
+    
+    // Check original query
+    if (normalizedQuery.includes(keywordLower)) {
       matchedTerms.push(keyword)
+    }
+    // Check deduplicated query (catches えろろろ → えろ)
+    else if (deduplicatedQuery.includes(keywordLower)) {
+      matchedTerms.push(keyword + ' (evasion)')
+      evasionDetected = true
     }
   }
   
+  // Higher score if evasion was attempted
+  const baseScore = matchedTerms.length > 0 ? 50 : 0
+  const evasionBonus = evasionDetected ? 15 : 0
+  
   return {
     found: matchedTerms.length > 0,
-    score: matchedTerms.length > 0 ? 50 : 0, // High score for foreign explicit terms
+    score: baseScore + evasionBonus,
     matchedTerms
   }
 }

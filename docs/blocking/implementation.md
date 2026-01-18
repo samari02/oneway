@@ -124,7 +124,7 @@ const safe = analyzeSuspiciousCombinations('breast cancer research')
 
 ```typescript
 // 11 langues supportées
-JAPANESE_KEYWORDS   // エロ, 無修正, AV...
+JAPANESE_KEYWORDS   // エロ + えろ (katakana + hiragana), 無修正, AV...
 CHINESE_KEYWORDS    // 色情, 裸体, 性爱...
 SPANISH_KEYWORDS    // porno, desnuda, sexo...
 GERMAN_KEYWORDS     // nackt, ficken, titten...
@@ -141,6 +141,10 @@ import { checkMultilangKeywords } from '../shared/keywords'
 
 const result = checkMultilangKeywords('エロ動画')
 // { found: true, score: 50, matchedTerms: ['エロ'] }
+
+// Détection avec caractères répétés (anti-évasion)
+checkMultilangKeywords('えろろろ')   // → えろ détecté (score: 65)
+checkMultilangKeywords('порнооо')    // → порно détecté (score: 65)
 ```
 
 ### 1.3 Normalizer (`lib/normalizer.ts`)
@@ -155,15 +159,21 @@ normalizeQuery('p0rn')  // → { normalized: 'porn', evasionScore: 5 }
 normalizeQuery('s3x')   // → { normalized: 'sex', evasionScore: 5 }
 normalizeQuery('@ss')   // → { normalized: 'ass', evasionScore: 5 }
 
+// Caractères répétés (TOUS les scripts - très important!)
+normalizeQuery('pooooorno')  // → { normalized: 'porno', evasionScore: 15 }
+normalizeQuery('sexxxy')     // → { normalized: 'sexy', evasionScore: 10 }
+
 // Espacement
 normalizeQuery('p o r n')  // → { normalized: 'porn', evasionScore: 15 }
 
 // Cyrillic lookalikes (рorn avec р russe)
 normalizeQuery('рorn')  // → { normalized: 'porn', evasionScore: 5 }
 
-// Typos intentionnels
-normalizeQuery('pron')  // → { normalized: 'porn', evasionScore: 10 }
-normalizeQuery('pr0n')  // → { normalized: 'porn', evasionScore: 10 }
+// Typos intentionnels (liste étendue)
+normalizeQuery('pron')   // → porn
+normalizeQuery('pr0n')   // → porn
+normalizeQuery('porno')  // → porn (normalisé)
+normalizeQuery('porrrn') // → porn
 
 // Check rapide
 hasEvasionIndicators('p0rn')  // → true
@@ -172,6 +182,7 @@ hasEvasionIndicators('cats')  // → false
 
 **Techniques détectées :**
 - `character_substitution` : 0→o, 3→e, $→s, @→a, etc.
+- `repeated_characters` : Regex `(.)\1+` réduit TOUT répété à 1 (fonctionne sur tous les scripts)
 - `spaced_characters` : p o r n → porn
 - `repeated_characters` : porrrn → porn
 - `typo_correction` : pron, prn, pr0n → porn

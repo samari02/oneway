@@ -72,7 +72,7 @@ const CHAR_SUBSTITUTIONS: Record<string, string> = {
  * Maps typo → correct spelling
  */
 const TYPO_CORRECTIONS: Record<string, string> = {
-  // Porn variations
+  // Porn variations (including repeated chars that might slip through)
   'pron': 'porn',
   'prn': 'porn',
   'pr0n': 'porn',
@@ -80,37 +80,51 @@ const TYPO_CORRECTIONS: Record<string, string> = {
   'porm': 'porn',
   'potn': 'porn',
   'porrn': 'porn',
+  'pornn': 'porn',
+  'porno': 'porn',  // Normalize porno to porn for matching
+  'pornno': 'porn',
+  'porrrn': 'porn',
   
   // Sex variations
   's3x': 'sex',
   'sexx': 'sex',
   'seks': 'sex',
   'secks': 'sex',
+  'seex': 'sex',
+  'sexxx': 'sex',
   
   // XXX variations
   'x x x': 'xxx',
   'triple x': 'xxx',
+  'xxxx': 'xxx',
+  'xxxxx': 'xxx',
   
   // Nude variations
   'nud3': 'nude',
   'nood': 'nude',
   'nuude': 'nude',
+  'nuuude': 'nude',
   
   // Naked variations
   'nak3d': 'naked',
   'nakd': 'naked',
   'naket': 'naked',
+  'nakked': 'naked',
   
   // Other common typos
   'bewbs': 'boobs',
   'b00bs': 'boobs',
+  'boobss': 'boobs',
   't1ts': 'tits',
+  'titts': 'tits',
   'a$$': 'ass',
   '@ss': 'ass',
+  'asss': 'ass',
   'f@p': 'fap',
   'fapp': 'fap',
   'h3ntai': 'hentai',
   'h entai': 'hentai',
+  'hentaii': 'hentai',
 }
 
 /**
@@ -155,12 +169,18 @@ export function normalizeQuery(query: string): {
     }
   }
   
-  // 3. Remove repeated characters (porrrn → porn)
+  // 3. Remove repeated characters aggressively (pooooorno → porno → porn)
   const beforeDedup = normalized
-  normalized = normalized.replace(/(.)\1{2,}/g, '$1$1') // Max 2 repeated chars
+  
+  // First pass: reduce any 2+ repeated chars to 1 (very aggressive)
+  // This catches: pooorno → porno, sexxxy → sexy, etc.
+  normalized = normalized.replace(/(.)\1+/g, '$1')
+  
   if (normalized !== beforeDedup) {
     detectedTechniques.push('repeated_characters')
-    evasionScore += 5
+    // More repeated chars = higher evasion score
+    const repeatCount = (beforeDedup.match(/(.)\1+/g) || []).length
+    evasionScore += Math.min(repeatCount * 5, 25)
   }
   
   // 4. Apply typo corrections
