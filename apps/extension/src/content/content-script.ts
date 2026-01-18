@@ -935,3 +935,65 @@ if (shouldInject()) {
     createAoiWidget()
   }
 }
+
+// ============================================================================
+// PAGE CONTENT ANALYSIS — Layer 3
+// Analyzes page content for explicit material
+// ============================================================================
+
+import { analyzePage, isSPALikely } from './page-analyzer'
+
+const ANALYSIS_DELAY_MS = 500        // Wait for initial render
+const SPA_RECHECK_DELAY_MS = 1500    // Recheck for SPAs
+let hasAnalyzed = false
+let pageAnalysisScore = 0
+
+/**
+ * Run page analysis and send results to background
+ */
+async function runPageAnalysis(isRecheck: boolean = false): Promise<void> {
+  // Skip if already analyzed with high score (already sent to background)
+  if (hasAnalyzed && pageAnalysisScore >= 70 && !isRecheck) {
+    return
+  }
+  
+  try {
+    const result = analyzePage()
+    pageAnalysisScore = result.score
+    
+    // Only send to background if score is significant
+    if (result.score >= 10 || result.isExplicit) {
+      log(`[PageAnalysis] Score: ${result.score}, Explicit: ${result.isExplicit}, Reasons: ${result.reasons.join(', ')}`)
+      
+      chrome.runtime.sendMessage({
+        type: 'PAGE_ANALYSIS_RESULT',
+        data: {
+          url: window.location.href,
+          domain: getCurrentDomain(),
+          result,
+          timestamp: Date.now(),
+          isRecheck
+        }
+      })
+    }
+    
+    hasAnalyzed = true
+    
+    // If this was initial analysis and looks like SPA, schedule recheck
+    if (!isRecheck && isSPALikely() && result.score < 70) {
+      log('[PageAnalysis] SPA detected, scheduling recheck...')
+      setTimeout(() => runPageAnalysis(true), SPA_RECHECK_DELAY_MS)
+    }
+    
+  } catch (error) {
+    log('[PageAnalysis] Error:', error)
+  }
+}
+
+// Run analysis when page is ready
+if (shouldInject()) {
+  // Wait a bit for page to render
+  setTimeout(() => {
+    runPageAnalysis(false)
+  }, ANALYSIS_DELAY_MS)
+}

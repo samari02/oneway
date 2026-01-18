@@ -433,7 +433,103 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleAoiPreferencesUpdate(message.data).then(sendResponse)
     return true
   }
+  
+  // Page content analysis result from content script (Layer 3)
+  if (message.type === 'PAGE_ANALYSIS_RESULT') {
+    handlePageAnalysisResult(message.data, sender).then(sendResponse)
+    return true
+  }
 })
+
+/**
+ * Handle page content analysis result from content script (Layer 3)
+ */
+async function handlePageAnalysisResult(
+  data: {
+    url: string
+    domain: string
+    result: {
+      score: number
+      isExplicit: boolean
+      reasons: string[]
+      detectedMeta: string[]
+      keywordMatches: number
+      imageTextRatio: number
+      hasSafeContext: boolean
+      analysisTimeMs: number
+    }
+    timestamp: number
+    isRecheck: boolean
+  },
+  sender: chrome.runtime.MessageSender
+): Promise<{ action: 'allow' | 'warn' | 'block' }> {
+  const { url, domain, result, isRecheck } = data
+  const tabId = sender.tab?.id
+  
+  if (!tabId) {
+    return { action: 'allow' }
+  }
+  
+  log(`[ContentAnalysis] ${domain} — Score: ${result.score}, Explicit: ${result.isExplicit}, Recheck: ${isRecheck}`)
+  
+  // Get thresholds (lower in heightened mode)
+  const heightened = await getHeightenedMode()
+  const blockThreshold = heightened?.active ? 35 : 70
+  const warnThreshold = heightened?.active ? 15 : 30
+  
+  // Determine action
+  let action: 'allow' | 'warn' | 'block' = 'allow'
+  
+  if (result.score >= blockThreshold || result.isExplicit) {
+    action = 'block'
+    log(`🛑 [ContentAnalysis] BLOCKING ${domain} — Score: ${result.score}, Reasons: ${result.reasons.join(', ')}`)
+    
+    // Redirect to block screen
+    const reason = result.reasons[0] || 'Explicit content detected'
+    const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(url)}&reason=${encodeURIComponent(reason)}&tabId=${tabId}&type=content`
+    
+    chrome.tabs.update(tabId, { url: blockUrl })
+    
+    // Log block event
+    await logBlockEvent({
+      url,
+      domain,
+      reason: `Content analysis (score: ${result.score}, reasons: ${result.reasons.join(', ')})`,
+      action: 'blocked',
+      timestamp: Date.now()
+    })
+    
+    // Update daily stats
+    await incrementContentBlockStat()
+    
+  } else if (result.score >= warnThreshold) {
+    action = 'warn'
+    log(`⚠️ [ContentAnalysis] WARNING for ${domain} — Score: ${result.score}`)
+    // For now just log; could inject warning UI in future
+  }
+  
+  return { action }
+}
+
+/**
+ * Increment content block daily stat
+ */
+async function incrementContentBlockStat(): Promise<void> {
+  const today = new Date().toISOString().split('T')[0]
+  const key = 'contentBlockingDailyStats'
+  
+  const data = await chrome.storage.local.get(key)
+  const stats = data[key] || { date: today, blockedSites: 0 }
+  
+  // Reset if new day
+  if (stats.date !== today) {
+    stats.date = today
+    stats.blockedSites = 0
+  }
+  
+  stats.blockedSites++
+  await chrome.storage.local.set({ [key]: stats })
+}
 
 /**
  * Handle Aoi preferences update from content script

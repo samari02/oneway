@@ -394,7 +394,7 @@ async function restoreBadgeState(): Promise<void> {
 
 ---
 
-## Phase 4 : Content Analysis (🔜 À implémenter)
+## Phase 4 : Content Analysis (✅ Implémenté)
 
 > Documentation détaillée : **[content-analysis.md](./content-analysis.md)**
 
@@ -475,7 +475,7 @@ if (isSearchEngine(details.url)) {
 | 1 | Types & Keywords | `types.ts`, `keywords/*`, `normalizer.ts` | ✅ Done |
 | 2 | Search Intelligence | `search-intelligence.ts` | ✅ Done |
 | 3 | Heightened Mode UI | Badge, popup section, notifications | ✅ Done |
-| 4 | Content Analysis | `page-analyzer.ts` | 🔜 Next |
+| 4 | Content Analysis | `page-analyzer.ts` | ✅ Done |
 | 5 | Hard Blocklist | `rules.json` (~500 domaines) | 🔜 |
 | 6 | Desktop Integration | Native messaging sync | 🔜 |
 

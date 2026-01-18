@@ -236,6 +236,35 @@ export interface ContentAnalysisResult {
   reasons: string[]
   detectedMeta: string[]     // Meta tags found (rating, age restriction)
   keywordMatches: number     // Number of explicit keywords in body
+  imageTextRatio: number     // Media to text ratio
+  hasSafeContext: boolean    // Safe context detected (medical, educational)
+  analysisTimeMs: number     // Performance tracking
+}
+
+/** Message sent from content script to background */
+export interface PageAnalysisMessage {
+  type: 'PAGE_ANALYSIS_RESULT'
+  data: {
+    url: string
+    domain: string
+    result: ContentAnalysisResult
+    timestamp: number
+    isRecheck: boolean       // True if this is the SPA recheck
+  }
+}
+
+/** Thresholds for content analysis */
+export interface ContentAnalysisThresholds {
+  blockScore: number         // Score to trigger block (default: 70)
+  warnScore: number          // Score to trigger warning (default: 30)
+  heightenedBlockScore: number  // Block score in heightened mode (default: 35)
+  heightenedWarnScore: number   // Warn score in heightened mode (default: 15)
+}
+
+/** Whitelist for skipping analysis */
+export interface ContentAnalysisWhitelist {
+  domains: string[]          // Domains to skip (e.g., google.com)
+  safeDomains: string[]      // Known safe domains (e.g., wikipedia.org)
 }
 
 /** Combined analysis result */
