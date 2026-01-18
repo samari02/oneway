@@ -17,6 +17,64 @@ document.getElementById('btn-setup-incognito')?.addEventListener('click', () => 
   alert(`To enable incognito protection:\n\n1. Open chrome://extensions\n2. Find "Clarity - Focus & Flow"\n3. Click "Details"\n4. Enable "Allow in incognito"\n\nYour extension ID: ${extensionId}`)
 })
 
+// ============================================================================
+// HEIGHTENED MODE STATUS
+// ============================================================================
+
+let heightenedTimerInterval: ReturnType<typeof setInterval> | null = null
+
+// Fetch intelligent blocking status
+chrome.runtime.sendMessage({ type: 'GET_INTELLIGENT_BLOCKING_STATUS' }, (status) => {
+  if (!status) return
+  
+  const heightenedSection = document.getElementById('heightened-section')!
+  const timerEl = document.getElementById('heightened-timer')!
+  const blockedEl = document.getElementById('blocked-searches')!
+  const warningsEl = document.getElementById('warnings-count')!
+  const activationsEl = document.getElementById('activations-count')!
+  
+  // Update stats
+  blockedEl.textContent = status.blockedSearchesToday.toString()
+  warningsEl.textContent = status.warningsToday.toString()
+  activationsEl.textContent = status.heightenedActivationsToday.toString()
+  
+  // Show/hide heightened section
+  if (status.heightenedMode.active && status.heightenedMode.expiresAt) {
+    heightenedSection.classList.add('active')
+    
+    // Start countdown timer
+    updateHeightenedTimer(status.heightenedMode.expiresAt, timerEl)
+    heightenedTimerInterval = setInterval(() => {
+      updateHeightenedTimer(status.heightenedMode.expiresAt!, timerEl)
+    }, 1000)
+  } else {
+    heightenedSection.classList.remove('active')
+  }
+})
+
+/**
+ * Update the countdown timer display
+ */
+function updateHeightenedTimer(expiresAt: number, timerEl: HTMLElement): void {
+  const now = Date.now()
+  const remaining = Math.max(0, expiresAt - now)
+  
+  if (remaining <= 0) {
+    timerEl.textContent = 'Terminé'
+    if (heightenedTimerInterval) {
+      clearInterval(heightenedTimerInterval)
+      heightenedTimerInterval = null
+    }
+    // Reload popup to refresh state
+    setTimeout(() => window.location.reload(), 1000)
+    return
+  }
+  
+  const minutes = Math.floor(remaining / 60000)
+  const seconds = Math.floor((remaining % 60000) / 1000)
+  timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
 // Get status from background
 chrome.runtime.sendMessage({ type: 'GET_STATUS' }, (response) => {
   if (response) {

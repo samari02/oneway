@@ -11,7 +11,8 @@
     "webNavigation",
     "tabs",
     "scripting",
-    "nativeMessaging"
+    "nativeMessaging",
+    "notifications"
   ],
   
   "optional_permissions": [

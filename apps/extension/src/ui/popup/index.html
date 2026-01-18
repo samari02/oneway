@@ -342,6 +342,75 @@
     .btn-incognito:hover {
       transform: translateY(-1px);
     }
+
+    /* Heightened Mode Alert */
+    .popup__heightened {
+      background: rgba(239, 68, 68, 0.3);
+      border: 1px solid rgba(239, 68, 68, 0.6);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .popup__heightened.active {
+      display: block;
+    }
+
+    .popup__heightened-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .popup__heightened-icon {
+      font-size: 18px;
+    }
+
+    .popup__heightened-title {
+      font-size: 13px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .popup__heightened-timer {
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .popup__heightened-desc {
+      font-size: 11px;
+      opacity: 0.9;
+      line-height: 1.4;
+    }
+
+    .popup__heightened-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 11px;
+    }
+
+    .popup__heightened-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .popup__heightened-stat-value {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .popup__heightened-stat-label {
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
@@ -375,6 +444,32 @@
         <span>Enable in chrome://extensions to stay protected</span>
       </div>
       <button class="btn-incognito" id="btn-setup-incognito">Setup</button>
+    </div>
+
+    <!-- Heightened Mode Alert (when active) -->
+    <div class="popup__heightened" id="heightened-section">
+      <div class="popup__heightened-header">
+        <span class="popup__heightened-icon">🔥</span>
+        <span class="popup__heightened-title">Protection Renforcée</span>
+        <span class="popup__heightened-timer" id="heightened-timer">--:--</span>
+      </div>
+      <div class="popup__heightened-desc">
+        Activité suspecte détectée. Seuils de blocage abaissés.
+      </div>
+      <div class="popup__heightened-stats">
+        <div class="popup__heightened-stat">
+          <span class="popup__heightened-stat-value" id="blocked-searches">0</span>
+          <span class="popup__heightened-stat-label">Bloqués</span>
+        </div>
+        <div class="popup__heightened-stat">
+          <span class="popup__heightened-stat-value" id="warnings-count">0</span>
+          <span class="popup__heightened-stat-label">Avertis</span>
+        </div>
+        <div class="popup__heightened-stat">
+          <span class="popup__heightened-stat-value" id="activations-count">0</span>
+          <span class="popup__heightened-stat-label">Activations</span>
+        </div>
+      </div>
     </div>
 
     <!-- History Permission Request (if not enabled) -->

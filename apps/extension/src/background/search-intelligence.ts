@@ -177,6 +177,15 @@ async function activateHeightenedMode(reason: string, triggerScore: number): Pro
   
   log('🔥 Heightened mode ACTIVATED:', reason, 'score:', triggerScore)
   
+  // Update badge to show red indicator
+  await updateBadge(true)
+  
+  // Show notification
+  await showHeightenedNotification()
+  
+  // Increment daily stats
+  await incrementHeightenedActivation()
+  
   // TODO: Notify desktop app via native messaging
 }
 
@@ -189,7 +198,60 @@ async function deactivateHeightenedMode(): Promise<void> {
     [STORAGE_KEYS.THRESHOLDS]: DEFAULT_THRESHOLDS
   })
   
+  // Clear badge
+  await updateBadge(false)
+  
   log('✅ Heightened mode deactivated')
+}
+
+// ============================================================================
+// BADGE & NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Update extension badge based on heightened mode
+ */
+async function updateBadge(isHeightened: boolean): Promise<void> {
+  if (isHeightened) {
+    // Red badge with "!" when heightened
+    await chrome.action.setBadgeText({ text: '!' })
+    await chrome.action.setBadgeBackgroundColor({ color: '#EF4444' }) // red-500
+    await chrome.action.setBadgeTextColor({ color: '#FFFFFF' })
+  } else {
+    // Clear badge when normal
+    await chrome.action.setBadgeText({ text: '' })
+  }
+}
+
+/**
+ * Show browser notification when heightened mode activates
+ */
+async function showHeightenedNotification(): Promise<void> {
+  // Check if we have notification permission
+  const hasPermission = await chrome.permissions.contains({ permissions: ['notifications'] })
+  
+  if (!hasPermission) {
+    log('No notification permission, skipping notification')
+    return
+  }
+  
+  chrome.notifications.create('heightened-mode', {
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL('icons/icon-128.png'),
+    title: '⚠️ Mode Protection Renforcée',
+    message: 'Clarity a détecté une activité suspecte. Seuils de blocage abaissés pour 30 min.',
+    priority: 2,
+    requireInteraction: false
+  })
+}
+
+/**
+ * Increment heightened activation counter
+ */
+async function incrementHeightenedActivation(): Promise<void> {
+  const stats = await getDailyStats()
+  stats.heightenedActivations++
+  await chrome.storage.local.set({ [STORAGE_KEYS.DAILY_STATS]: stats })
 }
 
 /**
@@ -452,6 +514,7 @@ export {
   deactivateHeightenedMode,
   getDailyStats,
   getThresholds,
+  updateBadge,
   DEFAULT_THRESHOLDS,
   HEIGHTENED_THRESHOLDS
 }

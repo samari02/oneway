@@ -17,7 +17,8 @@ import {
   analyzeSearch,
   shouldAnalyzeSearch,
   getHeightenedMode,
-  getDailyStats
+  getDailyStats,
+  updateBadge
 } from './search-intelligence'
 import {
   requestHistoryPermission,
@@ -63,6 +64,9 @@ chrome.runtime.onInstalled.addListener(async () => {
   await chrome.storage.local.set(defaultData)
   log('Default storage initialized', defaultData)
   
+  // Restore badge state if heightened mode is active
+  await restoreBadgeState()
+  
   // Try to connect to desktop app (with delay to avoid startup issues)
   setTimeout(async () => {
     try {
@@ -76,8 +80,12 @@ chrome.runtime.onInstalled.addListener(async () => {
 })
 
 // On startup, try to connect to desktop app
-chrome.runtime.onStartup.addListener(() => {
+chrome.runtime.onStartup.addListener(async () => {
   log('Extension started')
+  
+  // Restore badge state if heightened mode is active
+  await restoreBadgeState()
+  
   setTimeout(async () => {
     try {
       connectToDesktopApp()
@@ -88,6 +96,16 @@ chrome.runtime.onStartup.addListener(() => {
     }
   }, 2000)
 })
+
+/**
+ * Restore badge state based on heightened mode
+ * Called on extension install/startup to ensure badge reflects current state
+ */
+async function restoreBadgeState(): Promise<void> {
+  const heightened = await getHeightenedMode()
+  await updateBadge(heightened?.active || false)
+  log('Badge state restored:', heightened?.active ? 'heightened' : 'normal')
+}
 
 /**
  * Sync existing local history to desktop app
