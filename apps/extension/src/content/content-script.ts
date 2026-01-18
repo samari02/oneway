@@ -47,6 +47,7 @@ const STATUS_CHECK_INTERVAL = 30_000 // Check status every 30s
 // Hidden state
 let isHidden = false
 const HIDDEN_DOMAINS_KEY = 'clarity_hidden_domains'
+const HIDDEN_GLOBAL_KEY = 'clarity_hidden_global'
 
 /**
  * Get current domain
@@ -56,16 +57,39 @@ function getCurrentDomain(): string {
 }
 
 /**
- * Check if widget should be hidden on this domain
+ * Check if widget should be hidden (globally or on this domain)
  */
-async function isHiddenOnDomain(): Promise<boolean> {
-  const domain = getCurrentDomain()
+async function shouldBeHidden(): Promise<{ hidden: boolean; reason: 'global' | 'domain' | null }> {
   try {
-    const result = await chrome.storage.local.get(HIDDEN_DOMAINS_KEY)
+    const result = await chrome.storage.local.get([HIDDEN_GLOBAL_KEY, HIDDEN_DOMAINS_KEY])
+    
+    // Check global hide first
+    if (result[HIDDEN_GLOBAL_KEY] === true) {
+      return { hidden: true, reason: 'global' }
+    }
+    
+    // Check domain-specific hide
     const hiddenDomains: string[] = result[HIDDEN_DOMAINS_KEY] || []
-    return hiddenDomains.includes(domain)
+    const domain = getCurrentDomain()
+    if (hiddenDomains.includes(domain)) {
+      return { hidden: true, reason: 'domain' }
+    }
+    
+    return { hidden: false, reason: null }
   } catch {
-    return false
+    return { hidden: false, reason: null }
+  }
+}
+
+/**
+ * Set global hidden state
+ */
+async function setGlobalHidden(hidden: boolean): Promise<void> {
+  try {
+    await chrome.storage.local.set({ [HIDDEN_GLOBAL_KEY]: hidden })
+    log(`Aoi ${hidden ? 'hidden' : 'shown'} globally`)
+  } catch (error) {
+    log('Error setting global hidden state:', error)
   }
 }
 
@@ -113,11 +137,13 @@ async function createAoiWidget(): Promise<void> {
   widget.innerHTML = getWidgetHTML()
   shadow.appendChild(widget)
   
-  // Check if hidden on this domain
-  isHidden = await isHiddenOnDomain()
+  // Check if hidden (globally or on this domain)
+  const hideStatus = await shouldBeHidden()
+  isHidden = hideStatus.hidden
+  hiddenReason = hideStatus.reason
   if (isHidden) {
     widget.classList.add('hidden')
-    log(`Aoi hidden on ${getCurrentDomain()}`)
+    log(`Aoi hidden (${hiddenReason}) on ${getCurrentDomain()}`)
   }
   
   // Add to page
@@ -505,9 +531,16 @@ function getWidgetStyles(): string {
       font-size: 14px;
     }
     
-    .aoi-menu-item--hide:hover {
+    .aoi-menu-item--hide-global:hover,
+    .aoi-menu-item--hide-domain:hover {
       background: #fef2f2;
       color: #dc2626;
+    }
+    
+    .aoi-menu-divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 4px 0;
     }
     
     /* Arrow on menu */
@@ -627,8 +660,12 @@ function getWidgetHTML(): string {
       <div class="aoi-time-badge"></div>
     </div>
     <div class="aoi-menu">
-      <div class="aoi-menu-item aoi-menu-item--hide" data-action="hide">
-        <span class="aoi-menu-item-icon">👁</span>
+      <div class="aoi-menu-item aoi-menu-item--hide-global" data-action="hide-global">
+        <span class="aoi-menu-item-icon">🌐</span>
+        <span>Hide everywhere</span>
+      </div>
+      <div class="aoi-menu-item aoi-menu-item--hide-domain" data-action="hide-domain">
+        <span class="aoi-menu-item-icon">📍</span>
         <span>Hide on this site</span>
       </div>
     </div>
@@ -638,6 +675,9 @@ function getWidgetHTML(): string {
   `
 }
 
+// Track why Aoi is hidden (to know what to undo on restore)
+let hiddenReason: 'global' | 'domain' | null = null
+
 /**
  * Setup widget event listeners
  */
@@ -646,7 +686,8 @@ function setupWidgetEvents(shadow: ShadowRoot): void {
   const bubble = shadow.querySelector('.aoi-bubble') as HTMLElement
   const menu = shadow.querySelector('.aoi-menu') as HTMLElement
   const restore = shadow.querySelector('.aoi-restore') as HTMLElement
-  const hideItem = shadow.querySelector('.aoi-menu-item--hide') as HTMLElement
+  const hideGlobalItem = shadow.querySelector('.aoi-menu-item--hide-global') as HTMLElement
+  const hideDomainItem = shadow.querySelector('.aoi-menu-item--hide-domain') as HTMLElement
   
   if (!bubble || !widget || !restore || !menu) return
   
@@ -667,14 +708,28 @@ function setupWidgetEvents(shadow: ShadowRoot): void {
     }
   })
   
-  // Click on "Hide on this site" option
-  hideItem?.addEventListener('click', async (e) => {
+  // Click on "Hide everywhere" option
+  hideGlobalItem?.addEventListener('click', async (e) => {
     e.stopPropagation()
     menuOpen = false
     menu.classList.remove('open')
     
-    // Hide Aoi on this domain
+    // Hide Aoi globally
     isHidden = true
+    hiddenReason = 'global'
+    widget.classList.add('hidden')
+    await setGlobalHidden(true)
+  })
+  
+  // Click on "Hide on this site" option
+  hideDomainItem?.addEventListener('click', async (e) => {
+    e.stopPropagation()
+    menuOpen = false
+    menu.classList.remove('open')
+    
+    // Hide Aoi on this domain only
+    isHidden = true
+    hiddenReason = 'domain'
     widget.classList.add('hidden')
     await toggleHiddenOnDomain(true)
   })
@@ -683,7 +738,14 @@ function setupWidgetEvents(shadow: ShadowRoot): void {
   restore.addEventListener('click', async () => {
     isHidden = false
     widget.classList.remove('hidden')
-    await toggleHiddenOnDomain(false)
+    
+    // Undo the appropriate hide action
+    if (hiddenReason === 'global') {
+      await setGlobalHidden(false)
+    } else if (hiddenReason === 'domain') {
+      await toggleHiddenOnDomain(false)
+    }
+    hiddenReason = null
   })
   
   // Close menu when clicking outside
