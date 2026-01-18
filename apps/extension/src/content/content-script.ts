@@ -44,10 +44,57 @@ let pageLoadTime = Date.now()
 let lastStatusCheck = 0
 const STATUS_CHECK_INTERVAL = 30_000 // Check status every 30s
 
+// Hidden state
+let isHidden = false
+const HIDDEN_DOMAINS_KEY = 'clarity_hidden_domains'
+
+/**
+ * Get current domain
+ */
+function getCurrentDomain(): string {
+  return window.location.hostname.replace(/^www\./, '')
+}
+
+/**
+ * Check if widget should be hidden on this domain
+ */
+async function isHiddenOnDomain(): Promise<boolean> {
+  const domain = getCurrentDomain()
+  try {
+    const result = await chrome.storage.local.get(HIDDEN_DOMAINS_KEY)
+    const hiddenDomains: string[] = result[HIDDEN_DOMAINS_KEY] || []
+    return hiddenDomains.includes(domain)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Toggle hidden state for current domain
+ */
+async function toggleHiddenOnDomain(hidden: boolean): Promise<void> {
+  const domain = getCurrentDomain()
+  try {
+    const result = await chrome.storage.local.get(HIDDEN_DOMAINS_KEY)
+    let hiddenDomains: string[] = result[HIDDEN_DOMAINS_KEY] || []
+    
+    if (hidden && !hiddenDomains.includes(domain)) {
+      hiddenDomains.push(domain)
+    } else if (!hidden) {
+      hiddenDomains = hiddenDomains.filter(d => d !== domain)
+    }
+    
+    await chrome.storage.local.set({ [HIDDEN_DOMAINS_KEY]: hiddenDomains })
+    log(`Aoi ${hidden ? 'hidden' : 'shown'} on ${domain}`)
+  } catch (error) {
+    log('Error toggling hidden state:', error)
+  }
+}
+
 /**
  * Create and inject the Aoi widget
  */
-function createAoiWidget(): void {
+async function createAoiWidget(): Promise<void> {
   // Create container
   const container = document.createElement('div')
   container.id = 'clarity-aoi-widget'
@@ -66,20 +113,37 @@ function createAoiWidget(): void {
   widget.innerHTML = getWidgetHTML()
   shadow.appendChild(widget)
   
+  // Check if hidden on this domain
+  isHidden = await isHiddenOnDomain()
+  if (isHidden) {
+    widget.classList.add('hidden')
+    log(`Aoi hidden on ${getCurrentDomain()}`)
+  }
+  
   // Add to page
   document.body.appendChild(container)
   
   // Setup event listeners
   setupWidgetEvents(shadow)
   
-  // Initial status check
-  updateAoiStatus(shadow)
+  // Initial status check (only if visible)
+  if (!isHidden) {
+    updateAoiStatus(shadow)
+  }
   
   // Periodic status updates
-  setInterval(() => updateAoiStatus(shadow), STATUS_CHECK_INTERVAL)
+  setInterval(() => {
+    if (!isHidden) {
+      updateAoiStatus(shadow)
+    }
+  }, STATUS_CHECK_INTERVAL)
   
   // Track time on page
-  setInterval(() => updateTimeOnSite(shadow), 60_000) // Every minute
+  setInterval(() => {
+    if (!isHidden) {
+      updateTimeOnSite(shadow)
+    }
+  }, 60_000) // Every minute
   
   log('Aoi widget injected')
 }
@@ -394,6 +458,71 @@ function getWidgetStyles(): string {
       background: #f59e0b;
     }
     
+    /* Options menu */
+    .aoi-menu {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      padding: 6px 0;
+      min-width: 140px;
+      opacity: 0;
+      transform: translateY(8px) scale(0.95);
+      pointer-events: none;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 10;
+    }
+    
+    .aoi-menu.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    
+    .aoi-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    
+    .aoi-menu-item:hover {
+      background: #f3f4f6;
+    }
+    
+    .aoi-menu-item-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    
+    .aoi-menu-item--hide:hover {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+    
+    /* Arrow on menu */
+    .aoi-menu::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      right: 18px;
+      width: 12px;
+      height: 12px;
+      background: white;
+      transform: rotate(45deg);
+      box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
     /* Minimize state */
     .aoi-widget.minimized .aoi-bubble {
       width: 32px;
@@ -402,6 +531,69 @@ function getWidgetStyles(): string {
     
     .aoi-widget.minimized .aoi-character {
       transform: scale(0.6);
+    }
+    
+    /* Hidden state */
+    .aoi-widget.hidden .aoi-bubble {
+      opacity: 0;
+      transform: scale(0.3);
+      pointer-events: none;
+    }
+    
+    .aoi-widget.hidden .aoi-restore {
+      opacity: 0.4;
+      pointer-events: auto;
+    }
+    
+    .aoi-widget.hidden .aoi-restore:hover {
+      opacity: 1;
+    }
+    
+    /* Restore button (visible when hidden) */
+    .aoi-restore {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8f5f2 0%, #d4f0ea 100%);
+      border: 1px solid rgba(125, 216, 196, 0.5);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .aoi-restore:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(125, 216, 196, 0.3);
+    }
+    
+    .aoi-restore-icon {
+      width: 14px;
+      height: 14px;
+      background: linear-gradient(180deg, #c4b5fd 0%, #a78bfa 100%);
+      border-radius: 50%;
+      position: relative;
+    }
+    
+    /* Mini sprout on restore button */
+    .aoi-restore-icon::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 5px;
+      background: #6ee7b7;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
     }
   `
 }
@@ -434,6 +626,15 @@ function getWidgetHTML(): string {
       <div class="aoi-message">Protection active ✓</div>
       <div class="aoi-time-badge"></div>
     </div>
+    <div class="aoi-menu">
+      <div class="aoi-menu-item aoi-menu-item--hide" data-action="hide">
+        <span class="aoi-menu-item-icon">👁</span>
+        <span>Hide on this site</span>
+      </div>
+    </div>
+    <div class="aoi-restore" title="Show Aoi">
+      <div class="aoi-restore-icon"></div>
+    </div>
   `
 }
 
@@ -441,21 +642,55 @@ function getWidgetHTML(): string {
  * Setup widget event listeners
  */
 function setupWidgetEvents(shadow: ShadowRoot): void {
+  const widget = shadow.querySelector('.aoi-widget') as HTMLElement
   const bubble = shadow.querySelector('.aoi-bubble') as HTMLElement
+  const menu = shadow.querySelector('.aoi-menu') as HTMLElement
+  const restore = shadow.querySelector('.aoi-restore') as HTMLElement
+  const hideItem = shadow.querySelector('.aoi-menu-item--hide') as HTMLElement
   
-  if (!bubble) return
+  if (!bubble || !widget || !restore || !menu) return
   
-  // Click to toggle details or take action
-  bubble.addEventListener('click', () => {
+  let menuOpen = false
+  
+  // Click on Aoi to toggle menu
+  bubble.addEventListener('click', (e) => {
+    e.stopPropagation()
     const status = bubble.dataset.status as AoiStatus
     
     if (status === 'alert') {
       // Open extension popup for alert issues
       chrome.runtime.sendMessage({ type: 'OPEN_POPUP' })
     } else {
-      // Toggle minimized state
-      const widget = shadow.querySelector('.aoi-widget') as HTMLElement
-      widget?.classList.toggle('minimized')
+      // Toggle options menu
+      menuOpen = !menuOpen
+      menu.classList.toggle('open', menuOpen)
+    }
+  })
+  
+  // Click on "Hide on this site" option
+  hideItem?.addEventListener('click', async (e) => {
+    e.stopPropagation()
+    menuOpen = false
+    menu.classList.remove('open')
+    
+    // Hide Aoi on this domain
+    isHidden = true
+    widget.classList.add('hidden')
+    await toggleHiddenOnDomain(true)
+  })
+  
+  // Click on restore button to show Aoi again
+  restore.addEventListener('click', async () => {
+    isHidden = false
+    widget.classList.remove('hidden')
+    await toggleHiddenOnDomain(false)
+  })
+  
+  // Close menu when clicking outside
+  document.addEventListener('click', () => {
+    if (menuOpen) {
+      menuOpen = false
+      menu.classList.remove('open')
     }
   })
 }
