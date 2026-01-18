@@ -144,3 +144,19 @@ export interface ProtectionStatus {
   searchFilterActive: boolean
   blockedSearchesToday: number
 }
+
+// Aoi widget preferences
+export interface AoiPreferences {
+  hiddenGlobal: boolean
+  hiddenDomains: string[]
+}
+
+// Messages for Aoi preferences sync
+export interface AoiPreferencesUpdateMessage extends Message {
+  type: 'AOI_PREFERENCES_UPDATE'
+  data: AoiPreferences
+}
+
+export interface GetAoiPreferencesMessage extends Message {
+  type: 'GET_AOI_PREFERENCES'
+}

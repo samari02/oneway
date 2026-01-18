@@ -6,7 +6,7 @@
  */
 
 import { log } from '../shared/utils'
-import type { CategorizedVisit, BlockEvent, ProtectionStatus } from '../shared/types'
+import type { CategorizedVisit, BlockEvent, ProtectionStatus, AoiPreferences } from '../shared/types'
 
 // Native host identifier (must match the manifest)
 const HOST_NAME = 'com.clarity.app'
@@ -32,6 +32,8 @@ export type MessageToDesktop =
   | { type: 'PING' }
   | { type: 'PROTECTION_STATUS'; data: ProtectionStatusPayload }
   | { type: 'HEARTBEAT'; data: HeartbeatPayload }
+  | { type: 'AOI_PREFERENCES_UPDATE'; data: AoiPreferences }
+  | { type: 'GET_AOI_PREFERENCES' }
 
 // Protection status payload for desktop
 export interface ProtectionStatusPayload {
@@ -55,6 +57,7 @@ export type MessageFromDesktop =
   | { type: 'AUTH_STATUS'; data: { authenticated: boolean; user: { id: string; email: string } | null } }
   | { type: 'CONFIG_UPDATE'; data: { mode: string; rules: any[]; isActive: boolean } }
   | { type: 'SYNC_REQUEST'; data: { since: number } }
+  | { type: 'AOI_PREFERENCES'; data: AoiPreferences }
   | { type: 'ACK' }
   | { type: 'PONG' }
   | { type: 'ERROR'; data: { message: string } }
@@ -132,6 +135,7 @@ export function connectToDesktopApp(): boolean {
     sendToDesktop({ type: 'PING' })
     sendToDesktop({ type: 'GET_AUTH_STATUS' })
     sendToDesktop({ type: 'GET_CONFIG' })
+    sendToDesktop({ type: 'GET_AOI_PREFERENCES' })
     
     // Send protection status to desktop
     sendProtectionStatusToDesktop()
@@ -222,6 +226,10 @@ function handleMessageFromDesktop(message: MessageFromDesktop) {
       log('Desktop app is alive')
       break
       
+    case 'AOI_PREFERENCES':
+      handleAoiPreferences(message.data)
+      break
+      
     case 'ERROR':
       log('Error from desktop app:', message.data.message)
       break
@@ -251,6 +259,36 @@ async function handleConfigUpdate(data: { mode: string; rules: any[]; isActive: 
     rules: data.rules,
     isActive: data.isActive
   })
+}
+
+/**
+ * Handle Aoi preferences from desktop
+ * Updates local storage with preferences from Supabase
+ */
+async function handleAoiPreferences(data: AoiPreferences) {
+  log('Aoi preferences from desktop:', data)
+  
+  await chrome.storage.local.set({
+    clarity_hidden_global: data.hiddenGlobal,
+    clarity_hidden_domains: data.hiddenDomains
+  })
+  
+  log('Aoi preferences synced to local storage')
+}
+
+/**
+ * Send Aoi preferences update to desktop (for Supabase sync)
+ */
+export function sendAoiPreferencesUpdate(preferences: AoiPreferences) {
+  if (isConnected) {
+    sendToDesktop({
+      type: 'AOI_PREFERENCES_UPDATE',
+      data: preferences
+    })
+    log('Sent Aoi preferences update to desktop:', preferences)
+  } else {
+    log('Cannot send Aoi preferences: not connected to desktop')
+  }
 }
 
 /**

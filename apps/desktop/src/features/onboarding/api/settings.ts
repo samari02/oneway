@@ -16,6 +16,14 @@ export interface UserSettings {
   north_star_goal?: string
   north_star_icon?: string
   north_star_created_at?: string
+  // Aoi widget preferences
+  aoi_hidden_global?: boolean
+  aoi_hidden_domains?: string[]
+}
+
+export interface AoiPreferences {
+  hiddenGlobal: boolean
+  hiddenDomains: string[]
 }
 
 export async function getUserSettings(userId: string): Promise<UserSettings | null> {
@@ -78,4 +86,43 @@ export async function saveOnboardingData(
 
     if (habitsError) throw new Error(habitsError.message)
   }
+}
+
+/**
+ * Get Aoi preferences for a user
+ */
+export async function getAoiPreferences(userId: string): Promise<AoiPreferences> {
+  const { data, error } = await supabase
+    .from('user_settings')
+    .select('aoi_hidden_global, aoi_hidden_domains')
+    .eq('user_id', userId)
+    .single()
+
+  if (error && error.code !== 'PGRST116') {
+    throw new Error(error.message)
+  }
+
+  return {
+    hiddenGlobal: data?.aoi_hidden_global ?? false,
+    hiddenDomains: data?.aoi_hidden_domains ?? [],
+  }
+}
+
+/**
+ * Update Aoi preferences for a user
+ */
+export async function updateAoiPreferences(
+  userId: string,
+  preferences: AoiPreferences
+): Promise<void> {
+  const { error } = await supabase
+    .from('user_settings')
+    .upsert({
+      user_id: userId,
+      aoi_hidden_global: preferences.hiddenGlobal,
+      aoi_hidden_domains: preferences.hiddenDomains,
+      updated_at: new Date().toISOString(),
+    })
+
+  if (error) throw new Error(error.message)
 }

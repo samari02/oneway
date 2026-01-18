@@ -88,6 +88,9 @@ async function setGlobalHidden(hidden: boolean): Promise<void> {
   try {
     await chrome.storage.local.set({ [HIDDEN_GLOBAL_KEY]: hidden })
     log(`Aoi ${hidden ? 'hidden' : 'shown'} globally`)
+    
+    // Sync to desktop/Supabase
+    await syncPreferencesToDesktop()
   } catch (error) {
     log('Error setting global hidden state:', error)
   }
@@ -110,8 +113,32 @@ async function toggleHiddenOnDomain(hidden: boolean): Promise<void> {
     
     await chrome.storage.local.set({ [HIDDEN_DOMAINS_KEY]: hiddenDomains })
     log(`Aoi ${hidden ? 'hidden' : 'shown'} on ${domain}`)
+    
+    // Sync to desktop/Supabase
+    await syncPreferencesToDesktop()
   } catch (error) {
     log('Error toggling hidden state:', error)
+  }
+}
+
+/**
+ * Sync current preferences to desktop app (for Supabase persistence)
+ */
+async function syncPreferencesToDesktop(): Promise<void> {
+  try {
+    const result = await chrome.storage.local.get([HIDDEN_GLOBAL_KEY, HIDDEN_DOMAINS_KEY])
+    const preferences = {
+      hiddenGlobal: result[HIDDEN_GLOBAL_KEY] || false,
+      hiddenDomains: result[HIDDEN_DOMAINS_KEY] || []
+    }
+    
+    // Send to service worker → desktop app → Supabase
+    chrome.runtime.sendMessage({
+      type: 'AOI_PREFERENCES_UPDATE',
+      data: preferences
+    })
+  } catch (error) {
+    log('Error syncing preferences to desktop:', error)
   }
 }
 

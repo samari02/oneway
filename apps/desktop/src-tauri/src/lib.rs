@@ -51,6 +51,26 @@ fn get_extension_status() -> native_host::ExtensionStatus {
     native_host::get_extension_status()
 }
 
+/// Get Aoi widget preferences (from local file, synced by native host)
+#[tauri::command]
+fn get_aoi_preferences() -> native_host::AoiPreferencesData {
+    native_host::get_aoi_preferences()
+}
+
+/// Save Aoi widget preferences (to local file, will be read by native host)
+#[tauri::command]
+fn save_aoi_preferences(hidden_global: bool, hidden_domains: Vec<String>) -> Result<(), String> {
+    let prefs = native_host::AoiPreferencesData {
+        hidden_global,
+        hidden_domains,
+    };
+    
+    // Save to local file (native host will read this)
+    native_host::save_aoi_preferences_external(&prefs);
+    
+    Ok(())
+}
+
 /// Check if running as native messaging host
 pub fn is_native_host_mode() -> bool {
     std::env::args().any(|arg| arg == "--native-host")
@@ -71,7 +91,9 @@ pub fn run() {
             clear_browsing_data,
             save_site_classifications,
             get_site_classifications,
-            get_extension_status
+            get_extension_status,
+            get_aoi_preferences,
+            save_aoi_preferences
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

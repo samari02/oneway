@@ -132,6 +132,56 @@ fn update_protection_status(data: &ProtectionStatusData) {
     save_extension_status(&status);
 }
 
+/// Get the path to the Aoi preferences file
+fn get_aoi_preferences_path() -> PathBuf {
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    home.join(".clarity").join("aoi-preferences.json")
+}
+
+/// Get current Aoi preferences (reads from local file)
+pub fn get_aoi_preferences() -> AoiPreferencesData {
+    let path = get_aoi_preferences_path();
+    
+    if let Ok(contents) = fs::read_to_string(&path) {
+        if let Ok(prefs) = serde_json::from_str::<AoiPreferencesData>(&contents) {
+            return prefs;
+        }
+    }
+    
+    // Default: Aoi visible everywhere
+    AoiPreferencesData {
+        hidden_global: false,
+        hidden_domains: vec![],
+    }
+}
+
+/// Save Aoi preferences to local file (internal use)
+fn save_aoi_preferences(prefs: &AoiPreferencesData) {
+    save_aoi_preferences_to_file(prefs);
+}
+
+/// Save Aoi preferences to local file (can be called from lib.rs)
+pub fn save_aoi_preferences_external(prefs: &AoiPreferencesData) {
+    save_aoi_preferences_to_file(prefs);
+}
+
+/// Internal function to save Aoi preferences to file
+fn save_aoi_preferences_to_file(prefs: &AoiPreferencesData) {
+    let path = get_aoi_preferences_path();
+    
+    // Ensure directory exists
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    
+    if let Ok(json) = serde_json::to_string_pretty(prefs) {
+        let _ = fs::write(&path, json);
+    }
+    
+    eprintln!("[NativeHost] Aoi preferences saved: global={}, domains={:?}", 
+        prefs.hidden_global, prefs.hidden_domains);
+}
+
 /// Update status from heartbeat (includes all protection data + heartbeat tracking)
 fn update_heartbeat(data: &HeartbeatData) {
     let path = get_status_file_path();
@@ -192,6 +242,12 @@ pub enum IncomingMessage {
     
     #[serde(rename = "HEARTBEAT")]
     Heartbeat { data: HeartbeatData },
+    
+    #[serde(rename = "AOI_PREFERENCES_UPDATE")]
+    AoiPreferencesUpdate { data: AoiPreferencesData },
+    
+    #[serde(rename = "GET_AOI_PREFERENCES")]
+    GetAoiPreferences,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -247,6 +303,14 @@ pub struct HistorySyncData {
     pub visits: Vec<NavigationEventData>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AoiPreferencesData {
+    #[serde(rename = "hiddenGlobal")]
+    pub hidden_global: bool,
+    #[serde(rename = "hiddenDomains")]
+    pub hidden_domains: Vec<String>,
+}
+
 /// Message sent to the Chrome extension
 #[derive(Debug, Serialize)]
 #[serde(tag = "type")]
@@ -262,6 +326,9 @@ pub enum OutgoingMessage {
     
     #[serde(rename = "SYNC_REQUEST")]
     SyncRequest { data: SyncRequestData },
+    
+    #[serde(rename = "AOI_PREFERENCES")]
+    AoiPreferences { data: AoiPreferencesData },
     
     #[serde(rename = "ACK")]
     Ack,
@@ -448,6 +515,27 @@ pub fn handle_message(msg: IncomingMessage) -> OutgoingMessage {
             update_heartbeat(&data);
             
             OutgoingMessage::Ack
+        }
+        
+        IncomingMessage::AoiPreferencesUpdate { data } => {
+            eprintln!("[NativeHost] Received AOI_PREFERENCES_UPDATE: global={}, domains={:?}", 
+                data.hidden_global, data.hidden_domains);
+            
+            // Save preferences locally
+            save_aoi_preferences(&data);
+            
+            // TODO: Sync to Supabase (requires async handling)
+            // For now, just save locally
+            
+            OutgoingMessage::Ack
+        }
+        
+        IncomingMessage::GetAoiPreferences => {
+            eprintln!("[NativeHost] Received GET_AOI_PREFERENCES");
+            
+            let prefs = get_aoi_preferences();
+            
+            OutgoingMessage::AoiPreferences { data: prefs }
         }
     }
 }

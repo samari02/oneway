@@ -26,7 +26,8 @@ import {
   getConnectionStatus,
   sendNavigationEvent,
   sendBlockEvent,
-  sendHistorySync
+  sendHistorySync,
+  sendAoiPreferencesUpdate
 } from './native-messaging'
 
 // NOTE: Supabase sync temporarily disabled
@@ -383,7 +384,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true })
     return true
   }
+  
+  // Aoi preferences update from content script → sync to desktop → Supabase
+  if (message.type === 'AOI_PREFERENCES_UPDATE') {
+    handleAoiPreferencesUpdate(message.data).then(sendResponse)
+    return true
+  }
 })
+
+/**
+ * Handle Aoi preferences update from content script
+ * Forwards to desktop app for Supabase sync
+ */
+async function handleAoiPreferencesUpdate(data: { hiddenGlobal: boolean; hiddenDomains: string[] }) {
+  log('Aoi preferences update:', data)
+  
+  // Save locally as backup
+  await chrome.storage.local.set({
+    clarity_hidden_global: data.hiddenGlobal,
+    clarity_hidden_domains: data.hiddenDomains
+  })
+  
+  // Send to desktop app if connected (for Supabase sync)
+  if (isDesktopAppConnected()) {
+    sendAoiPreferencesUpdate(data)
+    log('Aoi preferences sent to desktop')
+    return { success: true, synced: true }
+  } else {
+    log('Aoi preferences saved locally (desktop not connected)')
+    return { success: true, synced: false }
+  }
+}
 
 /**
  * Handle bypass request
