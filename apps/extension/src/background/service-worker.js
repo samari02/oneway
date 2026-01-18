@@ -6,7 +6,7 @@ import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL } from '../shared/con
 import { extractDomain, matchesPattern, log } from '../shared/utils';
 import { isExplicitSearch, extractSearchQuery, isSearchEngine, incrementBlockedSearches, getBlockedSearchesToday } from './search-filter';
 import { requestHistoryPermission, importHistory, recordVisit, getCollectionStatus, calculateHistoryStats } from './history-collector';
-import { connectToDesktopApp, isDesktopAppConnected, getConnectionStatus, sendNavigationEvent, sendHistorySync } from './native-messaging';
+import { connectToDesktopApp, isDesktopAppConnected, getConnectionStatus, sendNavigationEvent, sendHistorySync, sendAoiPreferencesUpdate } from './native-messaging';
 // NOTE: Supabase sync temporarily disabled
 // Supabase client is not compatible with Chrome extension service workers
 // TODO: Use fetch-based API calls instead of Supabase client
@@ -310,7 +310,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: true });
         return true;
     }
+    // Aoi preferences update from content script → sync to desktop → Supabase
+    if (message.type === 'AOI_PREFERENCES_UPDATE') {
+        handleAoiPreferencesUpdate(message.data).then(sendResponse);
+        return true;
+    }
 });
+/**
+ * Handle Aoi preferences update from content script
+ * Forwards to desktop app for Supabase sync
+ */
+async function handleAoiPreferencesUpdate(data) {
+    log('Aoi preferences update:', data);
+    // Save locally as backup
+    await chrome.storage.local.set({
+        clarity_hidden_global: data.hiddenGlobal,
+        clarity_hidden_domains: data.hiddenDomains
+    });
+    // Send to desktop app if connected (for Supabase sync)
+    if (isDesktopAppConnected()) {
+        sendAoiPreferencesUpdate(data);
+        log('Aoi preferences sent to desktop');
+        return { success: true, synced: true };
+    }
+    else {
+        log('Aoi preferences saved locally (desktop not connected)');
+        return { success: true, synced: false };
+    }
+}
 /**
  * Handle bypass request
  */

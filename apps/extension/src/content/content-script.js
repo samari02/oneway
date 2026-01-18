@@ -29,10 +29,99 @@ function shouldInject() {
 let pageLoadTime = Date.now();
 let lastStatusCheck = 0;
 const STATUS_CHECK_INTERVAL = 30000; // Check status every 30s
+// Hidden state
+let isHidden = false;
+const HIDDEN_DOMAINS_KEY = 'clarity_hidden_domains';
+const HIDDEN_GLOBAL_KEY = 'clarity_hidden_global';
+/**
+ * Get current domain
+ */
+function getCurrentDomain() {
+    return window.location.hostname.replace(/^www\./, '');
+}
+/**
+ * Check if widget should be hidden (globally or on this domain)
+ */
+async function shouldBeHidden() {
+    try {
+        const result = await chrome.storage.local.get([HIDDEN_GLOBAL_KEY, HIDDEN_DOMAINS_KEY]);
+        // Check global hide first
+        if (result[HIDDEN_GLOBAL_KEY] === true) {
+            return { hidden: true, reason: 'global' };
+        }
+        // Check domain-specific hide
+        const hiddenDomains = result[HIDDEN_DOMAINS_KEY] || [];
+        const domain = getCurrentDomain();
+        if (hiddenDomains.includes(domain)) {
+            return { hidden: true, reason: 'domain' };
+        }
+        return { hidden: false, reason: null };
+    }
+    catch {
+        return { hidden: false, reason: null };
+    }
+}
+/**
+ * Set global hidden state
+ */
+async function setGlobalHidden(hidden) {
+    try {
+        await chrome.storage.local.set({ [HIDDEN_GLOBAL_KEY]: hidden });
+        log(`Aoi ${hidden ? 'hidden' : 'shown'} globally`);
+        // Sync to desktop/Supabase
+        await syncPreferencesToDesktop();
+    }
+    catch (error) {
+        log('Error setting global hidden state:', error);
+    }
+}
+/**
+ * Toggle hidden state for current domain
+ */
+async function toggleHiddenOnDomain(hidden) {
+    const domain = getCurrentDomain();
+    try {
+        const result = await chrome.storage.local.get(HIDDEN_DOMAINS_KEY);
+        let hiddenDomains = result[HIDDEN_DOMAINS_KEY] || [];
+        if (hidden && !hiddenDomains.includes(domain)) {
+            hiddenDomains.push(domain);
+        }
+        else if (!hidden) {
+            hiddenDomains = hiddenDomains.filter(d => d !== domain);
+        }
+        await chrome.storage.local.set({ [HIDDEN_DOMAINS_KEY]: hiddenDomains });
+        log(`Aoi ${hidden ? 'hidden' : 'shown'} on ${domain}`);
+        // Sync to desktop/Supabase
+        await syncPreferencesToDesktop();
+    }
+    catch (error) {
+        log('Error toggling hidden state:', error);
+    }
+}
+/**
+ * Sync current preferences to desktop app (for Supabase persistence)
+ */
+async function syncPreferencesToDesktop() {
+    try {
+        const result = await chrome.storage.local.get([HIDDEN_GLOBAL_KEY, HIDDEN_DOMAINS_KEY]);
+        const preferences = {
+            hiddenGlobal: result[HIDDEN_GLOBAL_KEY] || false,
+            hiddenDomains: result[HIDDEN_DOMAINS_KEY] || []
+        };
+        // Send to service worker → desktop app → Supabase
+        chrome.runtime.sendMessage({
+            type: 'AOI_PREFERENCES_UPDATE',
+            data: preferences
+        });
+    }
+    catch (error) {
+        log('Error syncing preferences to desktop:', error);
+    }
+}
 /**
  * Create and inject the Aoi widget
  */
-function createAoiWidget() {
+async function createAoiWidget() {
     // Create container
     const container = document.createElement('div');
     container.id = 'clarity-aoi-widget';
@@ -47,16 +136,34 @@ function createAoiWidget() {
     widget.className = 'aoi-widget';
     widget.innerHTML = getWidgetHTML();
     shadow.appendChild(widget);
+    // Check if hidden (globally or on this domain)
+    const hideStatus = await shouldBeHidden();
+    isHidden = hideStatus.hidden;
+    hiddenReason = hideStatus.reason;
+    if (isHidden) {
+        widget.classList.add('hidden');
+        log(`Aoi hidden (${hiddenReason}) on ${getCurrentDomain()}`);
+    }
     // Add to page
     document.body.appendChild(container);
     // Setup event listeners
     setupWidgetEvents(shadow);
-    // Initial status check
-    updateAoiStatus(shadow);
+    // Initial status check (only if visible)
+    if (!isHidden) {
+        updateAoiStatus(shadow);
+    }
     // Periodic status updates
-    setInterval(() => updateAoiStatus(shadow), STATUS_CHECK_INTERVAL);
+    setInterval(() => {
+        if (!isHidden) {
+            updateAoiStatus(shadow);
+        }
+    }, STATUS_CHECK_INTERVAL);
     // Track time on page
-    setInterval(() => updateTimeOnSite(shadow), 60000); // Every minute
+    setInterval(() => {
+        if (!isHidden) {
+            updateTimeOnSite(shadow);
+        }
+    }, 60000); // Every minute
     log('Aoi widget injected');
 }
 /**
@@ -369,6 +476,78 @@ function getWidgetStyles() {
       background: #f59e0b;
     }
     
+    /* Options menu */
+    .aoi-menu {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      padding: 6px 0;
+      min-width: 140px;
+      opacity: 0;
+      transform: translateY(8px) scale(0.95);
+      pointer-events: none;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 10;
+    }
+    
+    .aoi-menu.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    
+    .aoi-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    
+    .aoi-menu-item:hover {
+      background: #f3f4f6;
+    }
+    
+    .aoi-menu-item-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    
+    .aoi-menu-item--hide-global:hover,
+    .aoi-menu-item--hide-domain:hover {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+    
+    .aoi-menu-divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 4px 0;
+    }
+    
+    /* Arrow on menu */
+    .aoi-menu::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      right: 18px;
+      width: 12px;
+      height: 12px;
+      background: white;
+      transform: rotate(45deg);
+      box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
     /* Minimize state */
     .aoi-widget.minimized .aoi-bubble {
       width: 32px;
@@ -377,6 +556,69 @@ function getWidgetStyles() {
     
     .aoi-widget.minimized .aoi-character {
       transform: scale(0.6);
+    }
+    
+    /* Hidden state */
+    .aoi-widget.hidden .aoi-bubble {
+      opacity: 0;
+      transform: scale(0.3);
+      pointer-events: none;
+    }
+    
+    .aoi-widget.hidden .aoi-restore {
+      opacity: 0.4;
+      pointer-events: auto;
+    }
+    
+    .aoi-widget.hidden .aoi-restore:hover {
+      opacity: 1;
+    }
+    
+    /* Restore button (visible when hidden) */
+    .aoi-restore {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8f5f2 0%, #d4f0ea 100%);
+      border: 1px solid rgba(125, 216, 196, 0.5);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .aoi-restore:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(125, 216, 196, 0.3);
+    }
+    
+    .aoi-restore-icon {
+      width: 14px;
+      height: 14px;
+      background: linear-gradient(180deg, #c4b5fd 0%, #a78bfa 100%);
+      border-radius: 50%;
+      position: relative;
+    }
+    
+    /* Mini sprout on restore button */
+    .aoi-restore-icon::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 5px;
+      background: #6ee7b7;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
     }
   `;
 }
@@ -408,26 +650,90 @@ function getWidgetHTML() {
       <div class="aoi-message">Protection active ✓</div>
       <div class="aoi-time-badge"></div>
     </div>
+    <div class="aoi-menu">
+      <div class="aoi-menu-item aoi-menu-item--hide-global" data-action="hide-global">
+        <span class="aoi-menu-item-icon">🌐</span>
+        <span>Hide everywhere</span>
+      </div>
+      <div class="aoi-menu-item aoi-menu-item--hide-domain" data-action="hide-domain">
+        <span class="aoi-menu-item-icon">📍</span>
+        <span>Hide on this site</span>
+      </div>
+    </div>
+    <div class="aoi-restore" title="Show Aoi">
+      <div class="aoi-restore-icon"></div>
+    </div>
   `;
 }
+// Track why Aoi is hidden (to know what to undo on restore)
+let hiddenReason = null;
 /**
  * Setup widget event listeners
  */
 function setupWidgetEvents(shadow) {
+    const widget = shadow.querySelector('.aoi-widget');
     const bubble = shadow.querySelector('.aoi-bubble');
-    if (!bubble)
+    const menu = shadow.querySelector('.aoi-menu');
+    const restore = shadow.querySelector('.aoi-restore');
+    const hideGlobalItem = shadow.querySelector('.aoi-menu-item--hide-global');
+    const hideDomainItem = shadow.querySelector('.aoi-menu-item--hide-domain');
+    if (!bubble || !widget || !restore || !menu)
         return;
-    // Click to toggle details or take action
-    bubble.addEventListener('click', () => {
+    let menuOpen = false;
+    // Click on Aoi to toggle menu
+    bubble.addEventListener('click', (e) => {
+        e.stopPropagation();
         const status = bubble.dataset.status;
         if (status === 'alert') {
             // Open extension popup for alert issues
             chrome.runtime.sendMessage({ type: 'OPEN_POPUP' });
         }
         else {
-            // Toggle minimized state
-            const widget = shadow.querySelector('.aoi-widget');
-            widget?.classList.toggle('minimized');
+            // Toggle options menu
+            menuOpen = !menuOpen;
+            menu.classList.toggle('open', menuOpen);
+        }
+    });
+    // Click on "Hide everywhere" option
+    hideGlobalItem?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        menuOpen = false;
+        menu.classList.remove('open');
+        // Hide Aoi globally
+        isHidden = true;
+        hiddenReason = 'global';
+        widget.classList.add('hidden');
+        await setGlobalHidden(true);
+    });
+    // Click on "Hide on this site" option
+    hideDomainItem?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        menuOpen = false;
+        menu.classList.remove('open');
+        // Hide Aoi on this domain only
+        isHidden = true;
+        hiddenReason = 'domain';
+        widget.classList.add('hidden');
+        await toggleHiddenOnDomain(true);
+    });
+    // Click on restore button to show Aoi again
+    restore.addEventListener('click', async () => {
+        isHidden = false;
+        widget.classList.remove('hidden');
+        // Undo the appropriate hide action
+        if (hiddenReason === 'global') {
+            await setGlobalHidden(false);
+        }
+        else if (hiddenReason === 'domain') {
+            await toggleHiddenOnDomain(false);
+        }
+        hiddenReason = null;
+    });
+    // Close menu when clicking outside
+    document.addEventListener('click', () => {
+        if (menuOpen) {
+            menuOpen = false;
+            menu.classList.remove('open');
         }
     });
 }

@@ -14,6 +14,12 @@ import {
   getBlockedSearchesToday
 } from './search-filter'
 import {
+  analyzeSearch,
+  shouldAnalyzeSearch,
+  getHeightenedMode,
+  getDailyStats
+} from './search-intelligence'
+import {
   requestHistoryPermission,
   importHistory,
   recordVisit,
@@ -136,31 +142,44 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   
   log('Navigation detected:', event.domain, 'on tab', details.tabId)
   
-  // Check for explicit search queries FIRST (before other blocking rules)
+  // Check for explicit/suspicious search queries FIRST (before other blocking rules)
+  // Uses the intelligent search analysis engine (Layer 2)
   if (isSearchEngine(details.url)) {
     const query = extractSearchQuery(details.url)
-    if (query) {
-      const { isExplicit, matchedTerm } = isExplicitSearch(query)
-      if (isExplicit) {
-        log('Blocking explicit search:', query, '(matched:', matchedTerm, ')')
+    if (query && shouldAnalyzeSearch(query)) {
+      const analysisResult = await analyzeSearch(query)
+      
+      if (analysisResult.action === 'block') {
+        log('🛑 BLOCKING search:', query.slice(0, 50), '(score:', analysisResult.score, ')')
         
-        const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(details.url)}&reason=${encodeURIComponent('Search blocked for your protection')}&tabId=${details.tabId}&type=search`
+        const reason = analysisResult.matchedTerms.length > 0
+          ? `Search blocked: ${analysisResult.matchedTerms[0]}`
+          : 'Search blocked for your protection'
+        
+        const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(details.url)}&reason=${encodeURIComponent(reason)}&tabId=${details.tabId}&type=search`
         
         chrome.tabs.update(details.tabId, { url: blockUrl })
         
-        // Track blocked search
+        // Track blocked search (legacy counter)
         await incrementBlockedSearches()
         
         // Log block event
         await logBlockEvent({
           url: details.url,
           domain: event.domain,
-          reason: 'Explicit search blocked',
+          reason: `Intelligent block (score: ${analysisResult.score}, flags: ${analysisResult.flags.join(', ')})`,
           action: 'blocked',
           timestamp: Date.now()
         })
         
         return // Stop processing
+      }
+      
+      if (analysisResult.action === 'warn') {
+        log('⚠️ WARNING for search:', query.slice(0, 50), '(score:', analysisResult.score, ')')
+        // TODO: Inject warning UI via content script
+        // For now, just log and continue
+        // In Phase 3, we'll show a toast/banner on the search results page
       }
     }
   }
@@ -318,6 +337,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   if (message.type === 'GET_COLLECTION_STATUS') {
     getCollectionStatus().then(sendResponse)
+    return true
+  }
+  
+  // Intelligent Blocking Status
+  if (message.type === 'GET_INTELLIGENT_BLOCKING_STATUS') {
+    getIntelligentBlockingStatus().then(sendResponse)
     return true
   }
   
@@ -516,6 +541,34 @@ async function getProtectionStatus(): Promise<ProtectionStatus> {
     safeSearchEnforced: true, // Always true since we have the rules.json
     searchFilterActive: true, // Always active
     blockedSearchesToday
+  }
+}
+
+/**
+ * Get intelligent blocking status (Layer 2 stats)
+ */
+async function getIntelligentBlockingStatus() {
+  const dailyStats = await getDailyStats()
+  const heightenedMode = await getHeightenedMode()
+  const blockedSearches = await getBlockedSearchesToday()
+  
+  return {
+    // Daily counters
+    blockedSearchesToday: blockedSearches,
+    warningsToday: dailyStats.warnings,
+    heightenedActivationsToday: dailyStats.heightenedActivations,
+    
+    // Heightened mode status
+    heightenedMode: {
+      active: heightenedMode?.active || false,
+      activatedAt: heightenedMode?.activatedAt || null,
+      expiresAt: heightenedMode?.expiresAt || null,
+      reason: heightenedMode?.reason || null
+    },
+    
+    // Feature status
+    intelligentBlockingActive: true,
+    version: '2.0' // Phase 2 implementation
   }
 }
 

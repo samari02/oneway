@@ -180,7 +180,7 @@ hasEvasionIndicators('cats')  // → false
 
 ---
 
-## Phase 2 : Search Intelligence (🔜 À implémenter)
+## Phase 2 : Search Intelligence (✅ Implémenté)
 
 ### 2.1 Fichier `background/search-intelligence.ts`
 

@@ -76,6 +76,7 @@ export function connectToDesktopApp() {
         sendToDesktop({ type: 'PING' });
         sendToDesktop({ type: 'GET_AUTH_STATUS' });
         sendToDesktop({ type: 'GET_CONFIG' });
+        sendToDesktop({ type: 'GET_AOI_PREFERENCES' });
         // Send protection status to desktop
         sendProtectionStatusToDesktop();
         // Start heartbeat system
@@ -154,6 +155,9 @@ function handleMessageFromDesktop(message) {
         case 'PONG':
             log('Desktop app is alive');
             break;
+        case 'AOI_PREFERENCES':
+            handleAoiPreferences(message.data);
+            break;
         case 'ERROR':
             log('Error from desktop app:', message.data.message);
             break;
@@ -179,6 +183,33 @@ async function handleConfigUpdate(data) {
         rules: data.rules,
         isActive: data.isActive
     });
+}
+/**
+ * Handle Aoi preferences from desktop
+ * Updates local storage with preferences from Supabase
+ */
+async function handleAoiPreferences(data) {
+    log('Aoi preferences from desktop:', data);
+    await chrome.storage.local.set({
+        clarity_hidden_global: data.hiddenGlobal,
+        clarity_hidden_domains: data.hiddenDomains
+    });
+    log('Aoi preferences synced to local storage');
+}
+/**
+ * Send Aoi preferences update to desktop (for Supabase sync)
+ */
+export function sendAoiPreferencesUpdate(preferences) {
+    if (isConnected) {
+        sendToDesktop({
+            type: 'AOI_PREFERENCES_UPDATE',
+            data: preferences
+        });
+        log('Sent Aoi preferences update to desktop:', preferences);
+    }
+    else {
+        log('Cannot send Aoi preferences: not connected to desktop');
+    }
 }
 /**
  * Handle sync request from desktop
