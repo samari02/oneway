@@ -328,51 +328,67 @@ function analyzeBehavior(session: SearchSession, currentScore: number): {
 
 ---
 
-## Phase 3 : Heightened Mode (🔜 À implémenter)
+## Phase 3 : Heightened Mode UI (✅ Implémenté)
+
+Feedback visuel quand le mode protection renforcée est actif.
+
+### 3.1 Badge Extension
 
 ```typescript
-// background/heightened-mode.ts
+// search-intelligence.ts
 
-export async function activateHeightenedMode(reason: string, score: number) {
-  const state: HeightenedModeState = {
-    active: true,
-    activatedAt: Date.now(),
-    expiresAt: Date.now() + 30 * 60 * 1000, // 30 minutes
-    reason,
-    triggerScore: score,
-    originalThresholds: await getThresholds()
-  }
-  
-  // Lower thresholds during heightened mode
-  const heightenedThresholds: SearchThresholds = {
-    warnScore: 10,      // Was 20
-    blockScore: 30,     // Was 50
-    // ... etc
-  }
-  
-  await chrome.storage.local.set({
-    heightenedMode: state,
-    searchThresholds: heightenedThresholds
-  })
-  
-  // Notify desktop app
-  if (isDesktopAppConnected()) {
-    sendHeightenedModeAlert(state)
+async function updateBadge(isHeightened: boolean): Promise<void> {
+  if (isHeightened) {
+    await chrome.action.setBadgeText({ text: '!' })
+    await chrome.action.setBadgeBackgroundColor({ color: '#EF4444' })
+  } else {
+    await chrome.action.setBadgeText({ text: '' })
   }
 }
+```
 
-export async function checkHeightenedMode(): Promise<HeightenedModeState | null> {
-  const { heightenedMode } = await chrome.storage.local.get('heightenedMode')
-  
-  if (!heightenedMode?.active) return null
-  
-  // Check if expired
-  if (heightenedMode.expiresAt && Date.now() > heightenedMode.expiresAt) {
-    await deactivateHeightenedMode()
-    return null
-  }
-  
-  return heightenedMode
+### 3.2 Popup Section
+
+Nouvelle section dans la popup quand heightened mode actif :
+
+```html
+<!-- popup/index.html -->
+<div class="popup__heightened" id="heightened-section">
+  <div class="popup__heightened-header">
+    <span>🔥</span>
+    <span>Protection Renforcée</span>
+    <span id="heightened-timer">28:45</span>  <!-- Countdown -->
+  </div>
+  <div class="popup__heightened-stats">
+    <span>Bloqués: 3</span>
+    <span>Avertis: 2</span>
+    <span>Activations: 1</span>
+  </div>
+</div>
+```
+
+### 3.3 Notification Browser
+
+```typescript
+async function showHeightenedNotification(): Promise<void> {
+  chrome.notifications.create('heightened-mode', {
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL('icons/icon-128.png'),
+    title: '⚠️ Mode Protection Renforcée',
+    message: 'Clarity a détecté une activité suspecte. Seuils abaissés pour 30 min.',
+    priority: 2
+  })
+}
+```
+
+### 3.4 État restauré au startup
+
+```typescript
+// service-worker.ts
+
+async function restoreBadgeState(): Promise<void> {
+  const heightened = await getHeightenedMode()
+  await updateBadge(heightened?.active || false)
 }
 ```
 
@@ -380,104 +396,38 @@ export async function checkHeightenedMode(): Promise<HeightenedModeState | null>
 
 ## Phase 4 : Content Analysis (🔜 À implémenter)
 
-### 4.1 URL Analysis
+> Documentation détaillée : **[content-analysis.md](./content-analysis.md)**
 
-```typescript
-// background/content-analyzer.ts
+Layer 3 du système — analyse le contenu HTML des pages.
 
-export function analyzeUrl(url: string): UrlAnalysisResult {
-  const urlLower = url.toLowerCase()
-  let score = 0
-  const reasons: string[] = []
-  const suspiciousParts: string[] = []
-  
-  // Check TLD
-  const suspiciousTLDs = ['.xxx', '.adult', '.sex', '.porn']
-  for (const tld of suspiciousTLDs) {
-    if (urlLower.includes(tld)) {
-      score += 80
-      reasons.push(`Suspicious TLD: ${tld}`)
-      suspiciousParts.push(tld)
-    }
-  }
-  
-  // Check path and query params
-  const urlObj = new URL(url)
-  const pathAndQuery = urlObj.pathname + urlObj.search
-  
-  // Use our keyword detection
-  const explicit = getExplicitKeywordScore(pathAndQuery)
-  if (explicit.found) {
-    score += explicit.score
-    reasons.push(`Explicit keyword in URL: ${explicit.matchedTerms.join(', ')}`)
-    suspiciousParts.push(...explicit.matchedTerms)
-  }
-  
-  return {
-    score,
-    isSuspicious: score >= 30,
-    reasons,
-    suspiciousParts
-  }
-}
-```
+### Résumé
 
-### 4.2 Content Script (Page Analysis)
+| Signal | Score |
+|--------|-------|
+| Meta `rating=adult` | +100 (instant block) |
+| Title explicite | +60 |
+| Body keywords (5+) | +10-50 |
+| Image/text ratio élevé | +20-40 |
+| URL path suspect | +30 |
+| Liens suspects | +5-30 |
 
-```typescript
-// content/page-analyzer.ts
+### Seuils
 
-export function analyzePage(): ContentAnalysisResult {
-  let score = 0
-  const reasons: string[] = []
-  const detectedMeta: string[] = []
-  
-  // 1. Check meta tags
-  const ratingMeta = document.querySelector('meta[name="rating"]')
-  if (ratingMeta?.getAttribute('content')?.toLowerCase() === 'adult') {
-    score += 100
-    detectedMeta.push('rating=adult')
-    reasons.push('Adult rating meta tag')
-  }
-  
-  // 2. Check Open Graph age restriction
-  const ogAge = document.querySelector('meta[property="og:restrictions:age"]')
-  if (ogAge?.getAttribute('content') === '18+') {
-    score += 80
-    detectedMeta.push('og:restrictions:age=18+')
-    reasons.push('18+ age restriction')
-  }
-  
-  // 3. Check title
-  const title = document.title.toLowerCase()
-  const titleResult = getExplicitKeywordScore(title)
-  if (titleResult.found) {
-    score += titleResult.score
-    reasons.push(`Explicit keyword in title: ${titleResult.matchedTerms.join(', ')}`)
-  }
-  
-  // 4. Sample body content (first 5000 chars)
-  const bodyText = document.body.innerText.slice(0, 5000).toLowerCase()
-  let keywordCount = 0
-  for (const keyword of ALL_EXPLICIT_KEYWORDS) {
-    if (bodyText.includes(keyword.toLowerCase())) {
-      keywordCount++
-    }
-  }
-  if (keywordCount > 3) {
-    score += keywordCount * 5
-    reasons.push(`Multiple explicit keywords in body: ${keywordCount}`)
-  }
-  
-  return {
-    score,
-    isExplicit: score >= 50,
-    reasons,
-    detectedMeta,
-    keywordMatches: keywordCount
-  }
-}
-```
+| Score | Action |
+|-------|--------|
+| >= 70 | BLOCK |
+| 30-69 | WARN |
+| < 30 | ALLOW |
+
+### Steps d'implémentation
+
+1. **Types & Structure** — `shared/types.ts`
+2. **Page Analyzer** — `content/page-analyzer.ts`
+3. **Communication** — Content ↔ Background messaging
+4. **Background Handler** — Logique de décision
+5. **Performance** — Cache, whitelist, throttling
+
+Voir [content-analysis.md](./content-analysis.md) pour l'algorithme complet et les exemples.
 
 ---
 
@@ -523,11 +473,19 @@ if (isSearchEngine(details.url)) {
 | Phase | Description | Fichiers | Statut |
 |-------|-------------|----------|--------|
 | 1 | Types & Keywords | `types.ts`, `keywords/*`, `normalizer.ts` | ✅ Done |
-| 2 | Search Intelligence | `search-intelligence.ts` | 🔜 Next |
-| 3 | Heightened Mode | `heightened-mode.ts` | 🔜 |
-| 4 | Content Analysis | `content-analyzer.ts`, `page-analyzer.ts` | 🔜 |
-| 5 | Hard Blocklist | `rules.json` (enrichir) | 🔜 |
-| 6 | Desktop Integration | Native messaging | 🔜 |
+| 2 | Search Intelligence | `search-intelligence.ts` | ✅ Done |
+| 3 | Heightened Mode UI | Badge, popup section, notifications | ✅ Done |
+| 4 | Content Analysis | `page-analyzer.ts` | 🔜 Next |
+| 5 | Hard Blocklist | `rules.json` (~500 domaines) | 🔜 |
+| 6 | Desktop Integration | Native messaging sync | 🔜 |
+
+### Documentation
+
+| Document | Description |
+|----------|-------------|
+| [intelligent-blocking.md](./intelligent-blocking.md) | Architecture conceptuelle (3 layers) |
+| [implementation.md](./implementation.md) | Ce fichier — guide technique |
+| [content-analysis.md](./content-analysis.md) | Algorithme Layer 3 détaillé |
 
 ---
 
