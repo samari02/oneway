@@ -43,10 +43,29 @@ const WHITELISTED_DOMAINS = [
   'ecosia.org', 'qwant.com', 'startpage.com',
   // Social (may have explicit content but handled separately)
   'twitter.com', 'x.com', 'facebook.com', 'instagram.com',
-  'reddit.com', 'tiktok.com',
+  'reddit.com', 'tiktok.com', 'linkedin.com',
   // Work tools
   'github.com', 'gitlab.com', 'stackoverflow.com', 'notion.so',
-  'slack.com', 'discord.com', 'figma.com', 'linear.app'
+  'slack.com', 'discord.com', 'figma.com', 'linear.app',
+  'trello.com', 'asana.com', 'jira.atlassian.com',
+  // Email
+  'gmail.com', 'mail.google.com', 'outlook.com', 'outlook.live.com',
+  // Shopping (legitimate)
+  'amazon.com', 'amazon.co.jp', 'amazon.fr', 'amazon.de',
+  'ebay.com', 'etsy.com', 'aliexpress.com',
+  // Banking / Finance (often have minimal text, lots of UI elements)
+  'paypal.com', 'stripe.com', 'wise.com',
+  // Japanese banks & services
+  'smbc.co.jp', 'mufg.jp', 'mizuhobank.co.jp', 'rakuten-bank.co.jp',
+  'japannetbank.co.jp', 'aeonbank.co.jp', 'sbigroup.co.jp',
+  // Health & supplements (legitimate)
+  'iherb.com', 'jp.iherb.com',
+  // Video (handled elsewhere)
+  'youtube.com', 'netflix.com', 'twitch.tv', 'vimeo.com',
+  // News
+  'nytimes.com', 'bbc.com', 'cnn.com', 'reuters.com',
+  // Cloud services
+  'dropbox.com', 'drive.google.com', 'onedrive.live.com'
 ] as const
 
 // ============================================================================
@@ -273,6 +292,10 @@ function analyzeBodyContent(): { score: number; reasons: string[]; matchCount: n
 
 /**
  * Analyze media to text ratio
+ * 
+ * NOTE: Media ratio alone should NOT be able to block a page.
+ * It's a supporting signal, not a primary indicator.
+ * Max score is 25 so it can't trigger block alone even in heightened mode (threshold 35).
  */
 function analyzeMediaRatio(): { score: number; reason: string; ratio: number } {
   const images = document.querySelectorAll('img').length
@@ -287,10 +310,11 @@ function analyzeMediaRatio(): { score: number; reason: string; ratio: number } {
   
   // Avoid division by zero
   if (textLength < 100) {
-    // Very little text is suspicious if there are many images
-    if (mediaCount > 10) {
+    // Very little text with many images could be a login page, app, etc.
+    // Don't score too high to avoid false positives on legitimate apps/dashboards
+    if (mediaCount > 20) {
       return {
-        score: 40,
+        score: 20,  // Reduced from 40 - can't block alone
         reason: `High media count (${mediaCount}) with minimal text`,
         ratio: mediaCount
       }
@@ -304,14 +328,15 @@ function analyzeMediaRatio(): { score: number; reason: string; ratio: number } {
   let score = 0
   let reason = ''
   
+  // Reduced scores - media ratio is a supporting signal, not primary
   if (ratio > 30) {
-    score = 40
+    score = 25  // Reduced from 40
     reason = `Very high media/text ratio: ${ratio.toFixed(1)}`
   } else if (ratio > 15) {
-    score = 20
+    score = 15  // Reduced from 20
     reason = `High media/text ratio: ${ratio.toFixed(1)}`
-  } else if (ratio > 5) {
-    score = 10
+  } else if (ratio > 8) {
+    score = 5   // Reduced from 10, raised threshold
     reason = `Elevated media/text ratio: ${ratio.toFixed(1)}`
   }
   
@@ -430,7 +455,36 @@ function checkSafeContext(domain: string): boolean {
  * Check if domain should skip analysis
  */
 function isWhitelistedDomain(domain: string): boolean {
-  return WHITELISTED_DOMAINS.some(d => domain.includes(d))
+  // Check explicit whitelist
+  if (WHITELISTED_DOMAINS.some(d => domain.includes(d))) {
+    return true
+  }
+  
+  // Pattern-based whitelist for common legitimate sites
+  const safePatterns = [
+    // Banks (often have -bank, bank-, kanri in domain)
+    /bank/i,
+    /kanri/i,      // Japanese for "management" - common in banking
+    /ginko/i,      // Japanese for "bank"
+    
+    // Finance
+    /finance/i,
+    /payment/i,
+    /checkout/i,
+    
+    // Government
+    /\.gov$/i,
+    /\.go\.jp$/i,
+    
+    // Education  
+    /\.edu$/i,
+    /\.ac\.jp$/i,
+    
+    // Corporate Japan
+    /\.co\.jp$/i,
+  ]
+  
+  return safePatterns.some(pattern => pattern.test(domain))
 }
 
 /**
