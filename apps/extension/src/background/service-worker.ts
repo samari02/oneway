@@ -10,6 +10,8 @@ import {
   isExplicitSearch,
   extractSearchQuery,
   isSearchEngine,
+  extractRedirectDestination,
+  isEmailTrackingUrl,
   incrementBlockedSearches,
   getBlockedSearchesToday
 } from './search-filter'
@@ -151,9 +153,31 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   // Only main frame navigations
   if (details.frameId !== 0) return
   
+  let urlToAnalyze = details.url
+  
+  // Check if this is a redirect URL (Google/Bing click tracking)
+  // If so, extract the destination URL for analysis
+  const redirectDestination = extractRedirectDestination(details.url)
+  if (redirectDestination) {
+    log('Redirect detected, destination:', redirectDestination.slice(0, 80))
+    urlToAnalyze = redirectDestination
+    
+    // Skip analysis if destination is an email tracking URL
+    if (isEmailTrackingUrl(redirectDestination)) {
+      log('Skipping email tracking URL:', redirectDestination.slice(0, 80))
+      return // Don't block email tracking links
+    }
+  }
+  
+  // Skip analysis for email tracking URLs (even if not through redirect)
+  if (isEmailTrackingUrl(details.url)) {
+    log('Skipping email tracking URL:', details.url.slice(0, 80))
+    return
+  }
+  
   const event: NavigationEvent = {
-    url: details.url,
-    domain: extractDomain(details.url),
+    url: urlToAnalyze,
+    domain: extractDomain(urlToAnalyze),
     timestamp: details.timeStamp,
     tabId: details.tabId
   }
@@ -162,6 +186,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   
   // Check for explicit/suspicious search queries FIRST (before other blocking rules)
   // Uses the intelligent search analysis engine (Layer 2)
+  // Note: isSearchEngine returns false for redirect URLs (google.com/url)
   if (isSearchEngine(details.url)) {
     const query = extractSearchQuery(details.url)
     if (query && shouldAnalyzeSearch(query)) {
@@ -478,11 +503,19 @@ async function handlePageAnalysisResult(
   const warnThreshold = heightened?.active ? 15 : 30
   
   // Determine action
+  // IMPORTANT: Require 2+ signals to block to reduce false positives
+  // A single signal (e.g., just media ratio or just one keyword in URL) should only warn
   let action: 'allow' | 'warn' | 'block' = 'allow'
+  const signalCount = result.reasons.length
   
-  if (result.score >= blockThreshold || result.isExplicit) {
+  if (result.isExplicit) {
+    // Meta tag "adult" is a strong enough signal alone
     action = 'block'
-    log(`🛑 [ContentAnalysis] BLOCKING ${domain} — Score: ${result.score}, Reasons: ${result.reasons.join(', ')}`)
+    log(`🛑 [ContentAnalysis] BLOCKING ${domain} — Explicit meta tag detected`)
+  } else if (result.score >= blockThreshold && signalCount >= 2) {
+    // Multiple signals + high score = block
+    action = 'block'
+    log(`🛑 [ContentAnalysis] BLOCKING ${domain} — Score: ${result.score}, Signals: ${signalCount}, Reasons: ${result.reasons.join(', ')}`)
     
     // Redirect to block screen
     const reason = result.reasons[0] || 'Explicit content detected'
@@ -502,10 +535,13 @@ async function handlePageAnalysisResult(
     // Update daily stats
     await incrementContentBlockStat()
     
+  } else if (result.score >= blockThreshold && signalCount === 1) {
+    // High score but only one signal = warn (could be false positive)
+    action = 'warn'
+    log(`⚠️ [ContentAnalysis] WARNING (single signal) for ${domain} — Score: ${result.score}, Reason: ${result.reasons[0]}`)
   } else if (result.score >= warnThreshold) {
     action = 'warn'
     log(`⚠️ [ContentAnalysis] WARNING for ${domain} — Score: ${result.score}`)
-    // For now just log; could inject warning UI in future
   }
   
   return { action }

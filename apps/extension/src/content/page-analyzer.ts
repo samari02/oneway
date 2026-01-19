@@ -460,6 +460,29 @@ function isWhitelistedDomain(domain: string): boolean {
     return true
   }
   
+  // Email tracking / marketing domains (often have random params that trigger false positives)
+  const emailTrackingPatterns = [
+    /\.mg\./,              // Mailgun (email.mg.*)
+    /sendgrid\.net/,
+    /mailchimp\.com/,
+    /mailgun\.org/,
+    /postmarkapp\.com/,
+    /amazonses\.com/,
+    /sparkpostmail\.com/,
+    /mandrillapp\.com/,
+    /constantcontact\.com/,
+    /campaign-archive\.com/,
+    /list-manage\.com/,
+    /click\./,
+    /track\./,
+    /links\./,
+    /go\./,
+  ]
+  
+  if (emailTrackingPatterns.some(pattern => pattern.test(domain))) {
+    return true
+  }
+  
   // Pattern-based whitelist for common legitimate sites
   const safePatterns = [
     // Banks (often have -bank, bank-, kanri in domain)

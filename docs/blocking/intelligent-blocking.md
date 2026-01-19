@@ -433,6 +433,104 @@ Le desktop peut afficher ces infos dans :
 
 ---
 
+## Protection contre les faux positifs
+
+Le système inclut plusieurs mécanismes pour éviter de bloquer des sites légitimes.
+
+### 1. Word Boundary Matching
+
+Pour les mots courts (≤3 caractères), on utilise des regex avec `\b` :
+
+```typescript
+// "nu" ne matche pas dans "nutrition"
+/\bnu\b/.test("nutrition")  // false
+/\bnu\b/.test("photo nu")   // true ✓
+```
+
+Évite les faux positifs comme :
+- "nutrition" → "nu" (Portugais/Français pour "naked")
+- "assault" → "ass"
+- "classic" → "ass"
+
+### 2. Détection des URLs de redirection
+
+Les URLs de redirection (Google, Bing) sont détectées et l'URL destination est extraite :
+
+```typescript
+// google.com/url?q=https://example.com
+// → Analyse "example.com", pas le tracking URL complet
+extractRedirectDestination(url)
+```
+
+Évite les faux positifs dus aux paramètres de tracking encodés (Base64, etc.).
+
+### 3. Whitelist des domaines de tracking email
+
+Les liens email (Mailgun, SendGrid, Mailchimp, etc.) sont whitelistés :
+
+```typescript
+const emailTrackingPatterns = [
+  /\.mg\./,           // Mailgun
+  /sendgrid\.net/,
+  /mailchimp\.com/,
+  /click\./,
+  /track\./,
+  // ...
+]
+```
+
+### 4. Whitelist par patterns
+
+Certains patterns de domaines sont automatiquement safe :
+
+```typescript
+const safePatterns = [
+  /bank/i,      // Domaines bancaires
+  /kanri/i,     // 管理 - Gestion (JP)
+  /\.gov$/,     // Gouvernement
+  /\.edu$/,     // Éducation
+  /\.co\.jp$/,  // Corporate Japon
+]
+```
+
+### 5. Safe Context Detection
+
+Si 3+ indicateurs "safe" sont détectés, le score est divisé par 3 :
+
+```typescript
+const SAFE_INDICATORS = [
+  'wikipedia', 'education', 'medical', 'research',
+  'cancer', 'health', 'science', 'academic'
+]
+```
+
+### 6. Règle des 2+ signaux
+
+**Un seul signal ne peut pas bloquer** (sauf meta tag `rating=adult`).
+
+| Signaux | Action |
+|---------|--------|
+| Meta `rating=adult` | BLOCK (exception) |
+| Score élevé + 2+ raisons | BLOCK |
+| Score élevé + 1 raison | WARN seulement |
+| Score moyen | WARN |
+
+Cela évite les faux positifs où un seul signal faible (ex: ratio média élevé) déclencherait un block.
+
+### 7. Scoring contextuel
+
+Les signaux n'ont pas tous le même poids :
+
+| Signal | Score max | Peut bloquer seul ? |
+|--------|-----------|---------------------|
+| Meta adult | 100 | ✅ Oui |
+| Title keyword | 60 | ❌ Non |
+| Body keywords | 50 | ❌ Non |
+| Media ratio | 25 | ❌ Non |
+| URL pattern | 30 | ❌ Non |
+
+---
+
 ## Fichiers d'implémentation
 
 | Fichier | Rôle |

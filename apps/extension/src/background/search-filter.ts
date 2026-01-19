@@ -114,11 +114,25 @@ export function extractSearchQuery(url: string): string | null {
 }
 
 /**
- * Check if URL is a search engine
+ * Check if URL is a search engine results page (NOT a redirect)
  */
 export function isSearchEngine(url: string): boolean {
   try {
-    const hostname = new URL(url).hostname.toLowerCase()
+    const urlObj = new URL(url)
+    const hostname = urlObj.hostname.toLowerCase()
+    const pathname = urlObj.pathname.toLowerCase()
+    
+    // Google redirect URLs are NOT search pages - they're click tracking
+    // e.g., google.com/url?q=https://example.com
+    if (hostname.includes('google.') && pathname === '/url') {
+      return false
+    }
+    
+    // Bing redirect URLs
+    if (hostname.includes('bing.com') && pathname.startsWith('/ck/')) {
+      return false
+    }
+    
     return (
       hostname.includes('google.') ||
       hostname.includes('bing.com') ||
@@ -131,6 +145,81 @@ export function isSearchEngine(url: string): boolean {
       hostname.includes('yandex.ru') ||
       hostname.includes('startpage.com')
     )
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Check if URL is a search engine redirect (click tracking URL)
+ * Returns the destination URL if it is, null otherwise
+ */
+export function extractRedirectDestination(url: string): string | null {
+  try {
+    const urlObj = new URL(url)
+    const hostname = urlObj.hostname.toLowerCase()
+    const pathname = urlObj.pathname.toLowerCase()
+    
+    // Google redirect: google.com/url?q=<destination>
+    if (hostname.includes('google.') && pathname === '/url') {
+      const destination = urlObj.searchParams.get('q') || urlObj.searchParams.get('url')
+      if (destination) {
+        return destination
+      }
+    }
+    
+    // Bing redirect: bing.com/ck/a?...&u=<encoded_destination>
+    if (hostname.includes('bing.com') && pathname.startsWith('/ck/')) {
+      const encoded = urlObj.searchParams.get('u')
+      if (encoded) {
+        // Bing uses a custom encoding, try to decode
+        try {
+          // Sometimes it's base64, sometimes URL-encoded
+          const decoded = decodeURIComponent(encoded)
+          if (decoded.startsWith('http')) {
+            return decoded
+          }
+        } catch {
+          // Ignore decode errors
+        }
+      }
+    }
+    
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Check if URL looks like an email tracking/redirect link
+ * These often contain random characters that can trigger false positives
+ */
+export function isEmailTrackingUrl(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase()
+    
+    const trackingPatterns = [
+      // Email service providers
+      /\.mg\./,              // Mailgun (email.mg.*)
+      /sendgrid\.net/,
+      /mailchimp\.com/,
+      /mailgun\.org/,
+      /postmarkapp\.com/,
+      /amazonses\.com/,
+      /sparkpostmail\.com/,
+      /mandrillapp\.com/,
+      /constantcontact\.com/,
+      /campaign-archive\.com/,  // Mailchimp archives
+      /list-manage\.com/,       // Mailchimp
+      /click\./,                // Generic click tracking
+      /track\./,                // Generic tracking
+      /email\./,                // Generic email subdomain
+      /links\./,                // Link tracking
+      /go\./,                   // Go redirects
+    ]
+    
+    return trackingPatterns.some(pattern => pattern.test(hostname))
   } catch {
     return false
   }
