@@ -97,6 +97,7 @@ export const ALL_EXPLICIT_KEYWORDS = new Set([
 
 /**
  * Check if a term is explicit and get its score
+ * Uses word boundary matching to avoid false positives (e.g., "nutrition" matching "nu")
  */
 export function getExplicitKeywordScore(normalizedQuery: string): { 
   found: boolean
@@ -107,9 +108,25 @@ export function getExplicitKeywordScore(normalizedQuery: string): {
   let totalScore = 0
   
   for (const { term, score } of EXPLICIT_KEYWORDS_WITH_SCORES) {
-    if (normalizedQuery.includes(term.toLowerCase())) {
-      matchedTerms.push(term)
-      totalScore = Math.max(totalScore, score) // Take highest score
+    // Use word boundary regex to match whole words only
+    // \b doesn't work well with non-ASCII, so we use a custom approach
+    const termLower = term.toLowerCase()
+    
+    // For short terms (<=3 chars), require word boundaries to avoid false positives
+    // For longer terms, substring match is usually safe
+    if (termLower.length <= 3) {
+      // Create regex with word boundaries
+      const regex = new RegExp(`\\b${escapeRegex(termLower)}\\b`, 'i')
+      if (regex.test(normalizedQuery)) {
+        matchedTerms.push(term)
+        totalScore = Math.max(totalScore, score)
+      }
+    } else {
+      // Longer terms: substring match is fine
+      if (normalizedQuery.includes(termLower)) {
+        matchedTerms.push(term)
+        totalScore = Math.max(totalScore, score)
+      }
     }
   }
   
@@ -118,4 +135,11 @@ export function getExplicitKeywordScore(normalizedQuery: string): {
     score: totalScore,
     matchedTerms
   }
+}
+
+/**
+ * Escape special regex characters
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

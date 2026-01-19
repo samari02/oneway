@@ -218,6 +218,22 @@ function analyzeTitle(): { score: number; reasons: string[] } {
 }
 
 /**
+ * Check if keyword matches with word boundary awareness for short words
+ */
+function keywordMatchesInText(text: string, keyword: string): boolean {
+  const keywordLower = keyword.toLowerCase()
+  
+  // Short keywords (<=3 chars): require word boundaries
+  if (keywordLower.length <= 3) {
+    const regex = new RegExp(`\\b${keywordLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+    return regex.test(text)
+  }
+  
+  // Longer keywords: substring match is fine
+  return text.includes(keywordLower)
+}
+
+/**
  * Analyze body text for explicit keywords
  */
 function analyzeBodyContent(): { score: number; reasons: string[]; matchCount: number } {
@@ -228,7 +244,7 @@ function analyzeBodyContent(): { score: number; reasons: string[]; matchCount: n
   const matchedKeywords: string[] = []
   
   for (const keyword of EXPLICIT_KEYWORDS) {
-    if (bodyText.includes(keyword.toLowerCase())) {
+    if (keywordMatchesInText(bodyText, keyword)) {
       matchCount++
       matchedKeywords.push(keyword)
     }

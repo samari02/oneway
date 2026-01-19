@@ -207,8 +207,37 @@ function normalizeRepeatedChars(text: string): string {
 }
 
 /**
+ * Escape special regex characters
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Check if keyword matches using appropriate strategy
+ * Short keywords (<=3 chars) use word boundary matching
+ * Non-ASCII keywords use includes (word boundaries don't work well)
+ */
+function keywordMatches(query: string, keyword: string): boolean {
+  const keywordLower = keyword.toLowerCase()
+  
+  // Check if keyword is ASCII (Latin characters)
+  const isAscii = /^[a-z0-9]+$/i.test(keywordLower)
+  
+  if (isAscii && keywordLower.length <= 3) {
+    // Short ASCII keywords: require word boundaries to avoid "nu" in "nutrition"
+    const regex = new RegExp(`\\b${escapeRegex(keywordLower)}\\b`, 'i')
+    return regex.test(query)
+  } else {
+    // Non-ASCII (CJK, Cyrillic, Arabic, etc.) or longer words: use includes
+    return query.includes(keywordLower)
+  }
+}
+
+/**
  * Check if query contains multilingual explicit keywords
  * Also handles repeated character evasion (えろろろ → えろ)
+ * Uses word boundary matching for short ASCII keywords to avoid false positives
  */
 export function checkMultilangKeywords(query: string): {
   found: boolean
@@ -223,14 +252,12 @@ export function checkMultilangKeywords(query: string): {
   let evasionDetected = false
   
   for (const keyword of ALL_MULTILANG_KEYWORDS) {
-    const keywordLower = keyword.toLowerCase()
-    
     // Check original query
-    if (normalizedQuery.includes(keywordLower)) {
+    if (keywordMatches(normalizedQuery, keyword)) {
       matchedTerms.push(keyword)
     }
     // Check deduplicated query (catches えろろろ → えろ)
-    else if (deduplicatedQuery.includes(keywordLower)) {
+    else if (keywordMatches(deduplicatedQuery, keyword)) {
       matchedTerms.push(keyword + ' (evasion)')
       evasionDetected = true
     }
