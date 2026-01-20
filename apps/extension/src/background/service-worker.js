@@ -4,7 +4,8 @@
  */
 import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL } from '../shared/constants';
 import { extractDomain, matchesPattern, log } from '../shared/utils';
-import { isExplicitSearch, extractSearchQuery, isSearchEngine, incrementBlockedSearches, getBlockedSearchesToday } from './search-filter';
+import { extractSearchQuery, isSearchEngine, extractRedirectDestination, isEmailTrackingUrl, incrementBlockedSearches, getBlockedSearchesToday } from './search-filter';
+import { analyzeSearch, shouldAnalyzeSearch, getHeightenedMode, getDailyStats, updateBadge, getSearchSession } from './search-intelligence';
 import { requestHistoryPermission, importHistory, recordVisit, getCollectionStatus, calculateHistoryStats } from './history-collector';
 import { connectToDesktopApp, isDesktopAppConnected, getConnectionStatus, sendNavigationEvent, sendHistorySync, sendAoiPreferencesUpdate } from './native-messaging';
 // NOTE: Supabase sync temporarily disabled
@@ -30,6 +31,8 @@ chrome.runtime.onInstalled.addListener(async () => {
     };
     await chrome.storage.local.set(defaultData);
     log('Default storage initialized', defaultData);
+    // Restore badge state if heightened mode is active
+    await restoreBadgeState();
     // Try to connect to desktop app (with delay to avoid startup issues)
     setTimeout(async () => {
         try {
@@ -43,8 +46,10 @@ chrome.runtime.onInstalled.addListener(async () => {
     }, 2000);
 });
 // On startup, try to connect to desktop app
-chrome.runtime.onStartup.addListener(() => {
+chrome.runtime.onStartup.addListener(async () => {
     log('Extension started');
+    // Restore badge state if heightened mode is active
+    await restoreBadgeState();
     setTimeout(async () => {
         try {
             connectToDesktopApp();
@@ -56,6 +61,15 @@ chrome.runtime.onStartup.addListener(() => {
         }
     }, 2000);
 });
+/**
+ * Restore badge state based on heightened mode
+ * Called on extension install/startup to ensure badge reflects current state
+ */
+async function restoreBadgeState() {
+    const heightened = await getHeightenedMode();
+    await updateBadge(heightened?.active || false);
+    log('Badge state restored:', heightened?.active ? 'heightened' : 'normal');
+}
 /**
  * Sync existing local history to desktop app
  * Called when extension starts and desktop connection is established
@@ -94,33 +108,62 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
     // Only main frame navigations
     if (details.frameId !== 0)
         return;
+    let urlToAnalyze = details.url;
+    // Check if this is a redirect URL (Google/Bing click tracking)
+    // If so, extract the destination URL for analysis
+    const redirectDestination = extractRedirectDestination(details.url);
+    if (redirectDestination) {
+        log('Redirect detected, destination:', redirectDestination.slice(0, 80));
+        urlToAnalyze = redirectDestination;
+        // Skip analysis if destination is an email tracking URL
+        if (isEmailTrackingUrl(redirectDestination)) {
+            log('Skipping email tracking URL:', redirectDestination.slice(0, 80));
+            return; // Don't block email tracking links
+        }
+    }
+    // Skip analysis for email tracking URLs (even if not through redirect)
+    if (isEmailTrackingUrl(details.url)) {
+        log('Skipping email tracking URL:', details.url.slice(0, 80));
+        return;
+    }
     const event = {
-        url: details.url,
-        domain: extractDomain(details.url),
+        url: urlToAnalyze,
+        domain: extractDomain(urlToAnalyze),
         timestamp: details.timeStamp,
         tabId: details.tabId
     };
     log('Navigation detected:', event.domain, 'on tab', details.tabId);
-    // Check for explicit search queries FIRST (before other blocking rules)
+    // Check for explicit/suspicious search queries FIRST (before other blocking rules)
+    // Uses the intelligent search analysis engine (Layer 2)
+    // Note: isSearchEngine returns false for redirect URLs (google.com/url)
     if (isSearchEngine(details.url)) {
         const query = extractSearchQuery(details.url);
-        if (query) {
-            const { isExplicit, matchedTerm } = isExplicitSearch(query);
-            if (isExplicit) {
-                log('Blocking explicit search:', query, '(matched:', matchedTerm, ')');
-                const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(details.url)}&reason=${encodeURIComponent('Search blocked for your protection')}&tabId=${details.tabId}&type=search`;
+        if (query && shouldAnalyzeSearch(query)) {
+            const analysisResult = await analyzeSearch(query);
+            if (analysisResult.action === 'block') {
+                log('🛑 BLOCKING search:', query.slice(0, 50), '(score:', analysisResult.score, ')');
+                const reason = analysisResult.matchedTerms.length > 0
+                    ? `Search blocked: ${analysisResult.matchedTerms[0]}`
+                    : 'Search blocked for your protection';
+                const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(details.url)}&reason=${encodeURIComponent(reason)}&tabId=${details.tabId}&type=search`;
                 chrome.tabs.update(details.tabId, { url: blockUrl });
-                // Track blocked search
+                // Track blocked search (legacy counter)
                 await incrementBlockedSearches();
                 // Log block event
                 await logBlockEvent({
                     url: details.url,
                     domain: event.domain,
-                    reason: 'Explicit search blocked',
+                    reason: `Intelligent block (score: ${analysisResult.score}, flags: ${analysisResult.flags.join(', ')})`,
                     action: 'blocked',
                     timestamp: Date.now()
                 });
                 return; // Stop processing
+            }
+            if (analysisResult.action === 'warn') {
+                log('⚠️ WARNING for search:', query.slice(0, 50), '(score:', analysisResult.score, ')');
+                // TODO: Inject warning UI via content script
+                // For now, just log and continue
+                // In Phase 3, we'll show a toast/banner on the search results page
             }
         }
     }
@@ -257,6 +300,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         getCollectionStatus().then(sendResponse);
         return true;
     }
+    // Intelligent Blocking Status
+    if (message.type === 'GET_INTELLIGENT_BLOCKING_STATUS') {
+        getIntelligentBlockingStatus().then(sendResponse);
+        return true;
+    }
     // Supabase sync messages - temporarily disabled
     // TODO: Implement using fetch API instead of Supabase client
     if (message.type === 'SYNC_TO_SUPABASE') {
@@ -315,7 +363,89 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         handleAoiPreferencesUpdate(message.data).then(sendResponse);
         return true;
     }
+    // Page content analysis result from content script (Layer 3)
+    if (message.type === 'PAGE_ANALYSIS_RESULT') {
+        handlePageAnalysisResult(message.data, sender).then(sendResponse);
+        return true;
+    }
+    // Get page analysis data for debug panel
+    if (message.type === 'GET_PAGE_ANALYSIS') {
+        getPageAnalysisData(message.data).then(sendResponse);
+        return true;
+    }
 });
+/**
+ * Handle page content analysis result from content script (Layer 3)
+ */
+async function handlePageAnalysisResult(data, sender) {
+    const { url, domain, result, isRecheck } = data;
+    const tabId = sender.tab?.id;
+    if (!tabId) {
+        return { action: 'allow' };
+    }
+    log(`[ContentAnalysis] ${domain} — Score: ${result.score}, Explicit: ${result.isExplicit}, Recheck: ${isRecheck}`);
+    // Store for debug panel
+    await storePageAnalysis(domain, result);
+    // Get thresholds (lower in heightened mode)
+    const heightened = await getHeightenedMode();
+    const blockThreshold = heightened?.active ? 35 : 70;
+    const warnThreshold = heightened?.active ? 15 : 30;
+    // Determine action
+    // IMPORTANT: Require 2+ signals to block to reduce false positives
+    // A single signal (e.g., just media ratio or just one keyword in URL) should only warn
+    let action = 'allow';
+    const signalCount = result.reasons.length;
+    if (result.isExplicit) {
+        // Meta tag "adult" is a strong enough signal alone
+        action = 'block';
+        log(`🛑 [ContentAnalysis] BLOCKING ${domain} — Explicit meta tag detected`);
+    }
+    else if (result.score >= blockThreshold && signalCount >= 2) {
+        // Multiple signals + high score = block
+        action = 'block';
+        log(`🛑 [ContentAnalysis] BLOCKING ${domain} — Score: ${result.score}, Signals: ${signalCount}, Reasons: ${result.reasons.join(', ')}`);
+        // Redirect to block screen
+        const reason = result.reasons[0] || 'Explicit content detected';
+        const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(url)}&reason=${encodeURIComponent(reason)}&tabId=${tabId}&type=content`;
+        chrome.tabs.update(tabId, { url: blockUrl });
+        // Log block event
+        await logBlockEvent({
+            url,
+            domain,
+            reason: `Content analysis (score: ${result.score}, reasons: ${result.reasons.join(', ')})`,
+            action: 'blocked',
+            timestamp: Date.now()
+        });
+        // Update daily stats
+        await incrementContentBlockStat();
+    }
+    else if (result.score >= blockThreshold && signalCount === 1) {
+        // High score but only one signal = warn (could be false positive)
+        action = 'warn';
+        log(`⚠️ [ContentAnalysis] WARNING (single signal) for ${domain} — Score: ${result.score}, Reason: ${result.reasons[0]}`);
+    }
+    else if (result.score >= warnThreshold) {
+        action = 'warn';
+        log(`⚠️ [ContentAnalysis] WARNING for ${domain} — Score: ${result.score}`);
+    }
+    return { action };
+}
+/**
+ * Increment content block daily stat
+ */
+async function incrementContentBlockStat() {
+    const today = new Date().toISOString().split('T')[0];
+    const key = 'contentBlockingDailyStats';
+    const data = await chrome.storage.local.get(key);
+    const stats = data[key] || { date: today, blockedSites: 0 };
+    // Reset if new day
+    if (stats.date !== today) {
+        stats.date = today;
+        stats.blockedSites = 0;
+    }
+    stats.blockedSites++;
+    await chrome.storage.local.set({ [key]: stats });
+}
 /**
  * Handle Aoi preferences update from content script
  * Forwards to desktop app for Supabase sync
@@ -424,6 +554,30 @@ async function getProtectionStatus() {
     };
 }
 /**
+ * Get intelligent blocking status (Layer 2 stats)
+ */
+async function getIntelligentBlockingStatus() {
+    const dailyStats = await getDailyStats();
+    const heightenedMode = await getHeightenedMode();
+    const blockedSearches = await getBlockedSearchesToday();
+    return {
+        // Daily counters
+        blockedSearchesToday: blockedSearches,
+        warningsToday: dailyStats.warnings,
+        heightenedActivationsToday: dailyStats.heightenedActivations,
+        // Heightened mode status
+        heightenedMode: {
+            active: heightenedMode?.active || false,
+            activatedAt: heightenedMode?.activatedAt || null,
+            expiresAt: heightenedMode?.expiresAt || null,
+            reason: heightenedMode?.reason || null
+        },
+        // Feature status
+        intelligentBlockingActive: true,
+        version: '2.0' // Phase 2 implementation
+    };
+}
+/**
  * Get Aoi widget status for content script
  */
 async function getAoiStatus(url) {
@@ -482,5 +636,61 @@ async function getAoiStatus(url) {
         isDistraction,
         siteCategory
     };
+}
+/**
+ * Get page analysis data for the debug panel
+ */
+async function getPageAnalysisData(data) {
+    const { domain } = data;
+    try {
+        const storageKey = `pageAnalysis_${domain}`;
+        const stored = await chrome.storage.local.get([storageKey, 'lastPageAnalyses']);
+        let pageAnalysis = stored[storageKey] || null;
+        const recentAnalyses = stored.lastPageAnalyses || [];
+        const recentForDomain = recentAnalyses.find((a) => a.domain === domain);
+        if (recentForDomain && (!pageAnalysis || recentForDomain.timestamp > pageAnalysis.timestamp)) {
+            pageAnalysis = recentForDomain;
+        }
+        const searchSession = await getSearchSession();
+        const heightenedMode = await getHeightenedMode();
+        const dailyStats = await getDailyStats();
+        return {
+            pageAnalysis: pageAnalysis?.result || { score: 0, reasons: [], isExplicit: false },
+            searchSession: {
+                searches: searchSession.searches.slice(-5),
+                totalScore: searchSession.totalScore,
+                peakScore: searchSession.peakScore
+            },
+            heightenedMode: heightenedMode || { active: false },
+            dailyStats
+        };
+    }
+    catch (error) {
+        log('Error getting page analysis data:', error);
+        return {
+            pageAnalysis: { score: 0, reasons: [], isExplicit: false },
+            searchSession: { searches: [], totalScore: 0, peakScore: 0 },
+            heightenedMode: { active: false },
+            dailyStats: { blockedSearches: 0, warnings: 0, heightenedActivations: 0 }
+        };
+    }
+}
+/**
+ * Store page analysis results for debug panel
+ */
+async function storePageAnalysis(domain, result) {
+    const storageKey = `pageAnalysis_${domain}`;
+    const data = {
+        domain,
+        result,
+        timestamp: Date.now()
+    };
+    await chrome.storage.local.set({ [storageKey]: data });
+    const { lastPageAnalyses = [] } = await chrome.storage.local.get('lastPageAnalyses');
+    lastPageAnalyses.unshift(data);
+    if (lastPageAnalyses.length > 20) {
+        lastPageAnalyses.pop();
+    }
+    await chrome.storage.local.set({ lastPageAnalyses });
 }
 log('Service worker loaded');

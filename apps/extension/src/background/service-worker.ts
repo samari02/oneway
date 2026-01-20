@@ -20,7 +20,8 @@ import {
   shouldAnalyzeSearch,
   getHeightenedMode,
   getDailyStats,
-  updateBadge
+  updateBadge,
+  getSearchSession
 } from './search-intelligence'
 import {
   requestHistoryPermission,
@@ -464,6 +465,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handlePageAnalysisResult(message.data, sender).then(sendResponse)
     return true
   }
+  
+  // Get page analysis data for debug panel
+  if (message.type === 'GET_PAGE_ANALYSIS') {
+    getPageAnalysisData(message.data).then(sendResponse)
+    return true
+  }
 })
 
 /**
@@ -496,6 +503,9 @@ async function handlePageAnalysisResult(
   }
   
   log(`[ContentAnalysis] ${domain} — Score: ${result.score}, Explicit: ${result.isExplicit}, Recheck: ${isRecheck}`)
+  
+  // Store for debug panel
+  await storePageAnalysis(domain, result)
   
   // Get thresholds (lower in heightened mode)
   const heightened = await getHeightenedMode()
@@ -798,6 +808,75 @@ async function getAoiStatus(url?: string): Promise<{
     isDistraction,
     siteCategory
   }
+}
+
+/**
+ * Get page analysis data for the debug panel
+ */
+async function getPageAnalysisData(data: { url: string; domain: string }): Promise<{
+  pageAnalysis: { score: number; reasons: string[]; isExplicit: boolean }
+  searchSession: { searches: any[]; totalScore: number; peakScore: number }
+  heightenedMode: { active: boolean; expiresAt?: number | null }
+  dailyStats: { blockedSearches: number; warnings: number; heightenedActivations: number }
+}> {
+  const { domain } = data
+  
+  try {
+    const storageKey = `pageAnalysis_${domain}`
+    const stored = await chrome.storage.local.get([storageKey, 'lastPageAnalyses'])
+    
+    let pageAnalysis = stored[storageKey] || null
+    
+    const recentAnalyses = stored.lastPageAnalyses || []
+    const recentForDomain = recentAnalyses.find((a: any) => a.domain === domain)
+    if (recentForDomain && (!pageAnalysis || recentForDomain.timestamp > pageAnalysis.timestamp)) {
+      pageAnalysis = recentForDomain
+    }
+    
+    const searchSession = await getSearchSession()
+    const heightenedMode = await getHeightenedMode()
+    const dailyStats = await getDailyStats()
+    
+    return {
+      pageAnalysis: pageAnalysis?.result || { score: 0, reasons: [], isExplicit: false },
+      searchSession: {
+        searches: searchSession.searches.slice(-5),
+        totalScore: searchSession.totalScore,
+        peakScore: searchSession.peakScore
+      },
+      heightenedMode: heightenedMode || { active: false },
+      dailyStats
+    }
+  } catch (error) {
+    log('Error getting page analysis data:', error)
+    return {
+      pageAnalysis: { score: 0, reasons: [], isExplicit: false },
+      searchSession: { searches: [], totalScore: 0, peakScore: 0 },
+      heightenedMode: { active: false },
+      dailyStats: { blockedSearches: 0, warnings: 0, heightenedActivations: 0 }
+    }
+  }
+}
+
+/**
+ * Store page analysis results for debug panel
+ */
+async function storePageAnalysis(domain: string, result: any): Promise<void> {
+  const storageKey = `pageAnalysis_${domain}`
+  const data = {
+    domain,
+    result,
+    timestamp: Date.now()
+  }
+  
+  await chrome.storage.local.set({ [storageKey]: data })
+  
+  const { lastPageAnalyses = [] } = await chrome.storage.local.get('lastPageAnalyses')
+  lastPageAnalyses.unshift(data)
+  if (lastPageAnalyses.length > 20) {
+    lastPageAnalyses.pop()
+  }
+  await chrome.storage.local.set({ lastPageAnalyses })
 }
 
 log('Service worker loaded')

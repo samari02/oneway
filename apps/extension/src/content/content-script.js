@@ -1,4 +1,3 @@
-"use strict";
 /**
  * Content Script - Aoi Widget
  *
@@ -548,6 +547,218 @@ function getWidgetStyles() {
       box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
     }
     
+    .aoi-menu-item--analysis:hover {
+      background: #ecfdf5;
+      color: #059669;
+    }
+    
+    /* Analysis Panel */
+    .aoi-analysis-panel {
+      position: absolute;
+      bottom: calc(100% + 12px);
+      right: 0;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+      padding: 16px;
+      width: 300px;
+      opacity: 0;
+      transform: translateY(8px) scale(0.95);
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 11;
+      font-size: 12px;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+    
+    .aoi-analysis-panel.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    
+    .aoi-analysis-panel::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      right: 20px;
+      width: 12px;
+      height: 12px;
+      background: white;
+      transform: rotate(45deg);
+      box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .aoi-analysis-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .aoi-analysis-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .aoi-analysis-close {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: none;
+      background: #f3f4f6;
+      color: #6b7280;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s ease;
+    }
+    
+    .aoi-analysis-close:hover {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    
+    .aoi-analysis-score {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    
+    .aoi-analysis-score.warning {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+    
+    .aoi-analysis-score.danger {
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    }
+    
+    .aoi-score-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #059669;
+      line-height: 1;
+    }
+    
+    .aoi-analysis-score.warning .aoi-score-value {
+      color: #d97706;
+    }
+    
+    .aoi-analysis-score.danger .aoi-score-value {
+      color: #dc2626;
+    }
+    
+    .aoi-score-details { flex: 1; }
+    
+    .aoi-score-label {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    
+    .aoi-score-action {
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+    }
+    
+    .aoi-analysis-section { margin-bottom: 12px; }
+    
+    .aoi-analysis-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    
+    .aoi-analysis-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 10px;
+      background: #f9fafb;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    
+    .aoi-analysis-item-icon {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .aoi-analysis-item-content { flex: 1; min-width: 0; }
+    
+    .aoi-analysis-item-label {
+      color: #374151;
+      font-weight: 500;
+      word-break: break-word;
+    }
+    
+    .aoi-analysis-item-value {
+      color: #6b7280;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    
+    .aoi-analysis-item-score {
+      font-weight: 600;
+      color: #059669;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    
+    .aoi-analysis-item-score.positive { color: #dc2626; }
+    
+    .aoi-analysis-empty {
+      color: #9ca3af;
+      font-style: italic;
+      text-align: center;
+      padding: 12px;
+    }
+    
+    .aoi-analysis-mode {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    
+    .aoi-analysis-mode.normal {
+      background: #ecfdf5;
+      color: #059669;
+    }
+    
+    .aoi-analysis-mode.heightened {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+    
     /* Minimize state */
     .aoi-widget.minimized .aoi-bubble {
       width: 32px;
@@ -651,13 +862,30 @@ function getWidgetHTML() {
       <div class="aoi-time-badge"></div>
     </div>
     <div class="aoi-menu">
+      <div class="aoi-menu-item aoi-menu-item--analysis" data-action="show-analysis">
+        <span class="aoi-menu-item-icon">🔍</span>
+        <span>Show analysis</span>
+      </div>
+      <div class="aoi-menu-divider"></div>
+      <div class="aoi-menu-item aoi-menu-item--hide-domain" data-action="hide-domain">
+        <span class="aoi-menu-item-icon">📍</span>
+        <span>Hide on this site</span>
+      </div>
       <div class="aoi-menu-item aoi-menu-item--hide-global" data-action="hide-global">
         <span class="aoi-menu-item-icon">🌐</span>
         <span>Hide everywhere</span>
       </div>
-      <div class="aoi-menu-item aoi-menu-item--hide-domain" data-action="hide-domain">
-        <span class="aoi-menu-item-icon">📍</span>
-        <span>Hide on this site</span>
+    </div>
+    <div class="aoi-analysis-panel">
+      <div class="aoi-analysis-header">
+        <div class="aoi-analysis-title">
+          <span>🔍</span>
+          <span>Blocking Analysis</span>
+        </div>
+        <button class="aoi-analysis-close">✕</button>
+      </div>
+      <div class="aoi-analysis-content">
+        <div class="aoi-analysis-empty">Loading...</div>
       </div>
     </div>
     <div class="aoi-restore" title="Show Aoi">
@@ -677,9 +905,13 @@ function setupWidgetEvents(shadow) {
     const restore = shadow.querySelector('.aoi-restore');
     const hideGlobalItem = shadow.querySelector('.aoi-menu-item--hide-global');
     const hideDomainItem = shadow.querySelector('.aoi-menu-item--hide-domain');
+    const analysisItem = shadow.querySelector('.aoi-menu-item--analysis');
+    const analysisPanel = shadow.querySelector('.aoi-analysis-panel');
+    const analysisClose = shadow.querySelector('.aoi-analysis-close');
     if (!bubble || !widget || !restore || !menu)
         return;
     let menuOpen = false;
+    let analysisPanelOpen = false;
     // Click on Aoi to toggle menu
     bubble.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -689,10 +921,32 @@ function setupWidgetEvents(shadow) {
             chrome.runtime.sendMessage({ type: 'OPEN_POPUP' });
         }
         else {
+            // Close analysis panel if open
+            if (analysisPanelOpen) {
+                analysisPanelOpen = false;
+                analysisPanel?.classList.remove('open');
+            }
             // Toggle options menu
             menuOpen = !menuOpen;
             menu.classList.toggle('open', menuOpen);
         }
+    });
+    // Click on "Show Analysis" option
+    analysisItem?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        menuOpen = false;
+        menu.classList.remove('open');
+        // Open analysis panel
+        analysisPanelOpen = true;
+        analysisPanel?.classList.add('open');
+        // Fetch and display analysis data
+        await updateAnalysisPanel(shadow);
+    });
+    // Click on close button in analysis panel
+    analysisClose?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        analysisPanelOpen = false;
+        analysisPanel?.classList.remove('open');
     });
     // Click on "Hide everywhere" option
     hideGlobalItem?.addEventListener('click', async (e) => {
@@ -729,13 +983,160 @@ function setupWidgetEvents(shadow) {
         }
         hiddenReason = null;
     });
-    // Close menu when clicking outside
+    // Close menu/panel when clicking outside
     document.addEventListener('click', () => {
         if (menuOpen) {
             menuOpen = false;
             menu.classList.remove('open');
         }
+        if (analysisPanelOpen) {
+            analysisPanelOpen = false;
+            analysisPanel?.classList.remove('open');
+        }
     });
+    // Prevent clicks inside panel from closing it
+    analysisPanel?.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+}
+/**
+ * Fetch and update the analysis panel with current blocking data
+ */
+async function updateAnalysisPanel(shadow) {
+    const contentDiv = shadow.querySelector('.aoi-analysis-content');
+    if (!contentDiv)
+        return;
+    try {
+        const response = await chrome.runtime.sendMessage({
+            type: 'GET_PAGE_ANALYSIS',
+            data: { url: window.location.href, domain: getCurrentDomain() }
+        });
+        if (!response) {
+            contentDiv.innerHTML = renderAnalysisEmpty();
+            return;
+        }
+        contentDiv.innerHTML = renderAnalysisContent(response);
+    }
+    catch (error) {
+        log('Error fetching analysis:', error);
+        contentDiv.innerHTML = `<div class="aoi-analysis-empty">Could not load analysis</div>`;
+    }
+}
+function renderAnalysisEmpty() {
+    return `
+    <div class="aoi-analysis-score">
+      <div class="aoi-score-value">0</div>
+      <div class="aoi-score-details">
+        <div class="aoi-score-label">Page Score</div>
+        <div class="aoi-score-action">✓ No issues detected</div>
+      </div>
+    </div>
+    <div class="aoi-analysis-section">
+      <div class="aoi-analysis-section-title">Signals Detected</div>
+      <div class="aoi-analysis-empty">No signals on this page</div>
+    </div>
+  `;
+}
+function renderAnalysisContent(data) {
+    const { pageAnalysis, searchSession, heightenedMode, dailyStats } = data;
+    const pageScore = pageAnalysis?.score || 0;
+    let scoreClass = '';
+    let actionText = '✓ Allowed';
+    if (pageScore >= 70) {
+        scoreClass = 'danger';
+        actionText = '✕ Would be blocked';
+    }
+    else if (pageScore >= 30) {
+        scoreClass = 'warning';
+        actionText = '⚠ Warning level';
+    }
+    let signalsHtml = '';
+    if (pageAnalysis?.reasons && pageAnalysis.reasons.length > 0) {
+        signalsHtml = pageAnalysis.reasons.map((reason) => `
+      <div class="aoi-analysis-item">
+        <div class="aoi-analysis-item-icon">⚡</div>
+        <div class="aoi-analysis-item-content">
+          <div class="aoi-analysis-item-label">${escapeHtml(reason)}</div>
+        </div>
+      </div>
+    `).join('');
+    }
+    else {
+        signalsHtml = `<div class="aoi-analysis-empty">No signals on this page</div>`;
+    }
+    let sessionHtml = '';
+    if (searchSession?.searches?.length > 0) {
+        const recentSearches = searchSession.searches.slice(-3);
+        sessionHtml = `
+      <div class="aoi-analysis-section">
+        <div class="aoi-analysis-section-title">Recent Searches (Session)</div>
+        ${recentSearches.map((s) => `
+          <div class="aoi-analysis-item">
+            <div class="aoi-analysis-item-icon">🔍</div>
+            <div class="aoi-analysis-item-content">
+              <div class="aoi-analysis-item-label">${escapeHtml(s.query?.slice(0, 30) || '...')}</div>
+              <div class="aoi-analysis-item-value">Flags: ${s.flags?.join(', ') || 'none'}</div>
+            </div>
+            <div class="aoi-analysis-item-score ${s.score > 0 ? 'positive' : ''}">+${s.score || 0}</div>
+          </div>
+        `).join('')}
+        <div class="aoi-analysis-item">
+          <div class="aoi-analysis-item-icon">Σ</div>
+          <div class="aoi-analysis-item-content">
+            <div class="aoi-analysis-item-label">Session Total</div>
+          </div>
+          <div class="aoi-analysis-item-score ${searchSession.totalScore > 20 ? 'positive' : ''}">${searchSession.totalScore || 0}</div>
+        </div>
+      </div>
+    `;
+    }
+    const modeHtml = heightenedMode?.active
+        ? `<div class="aoi-analysis-mode heightened">🔥 Heightened (${Math.ceil((heightenedMode.expiresAt - Date.now()) / 60000)}min)</div>`
+        : `<div class="aoi-analysis-mode normal">✓ Normal Mode</div>`;
+    let statsHtml = '';
+    if (dailyStats) {
+        statsHtml = `
+      <div class="aoi-analysis-section">
+        <div class="aoi-analysis-section-title">Today's Stats</div>
+        <div class="aoi-analysis-item">
+          <div class="aoi-analysis-item-icon">🛑</div>
+          <div class="aoi-analysis-item-content"><div class="aoi-analysis-item-label">Blocked</div></div>
+          <div class="aoi-analysis-item-score">${dailyStats.blockedSearches || 0}</div>
+        </div>
+        <div class="aoi-analysis-item">
+          <div class="aoi-analysis-item-icon">⚠️</div>
+          <div class="aoi-analysis-item-content"><div class="aoi-analysis-item-label">Warnings</div></div>
+          <div class="aoi-analysis-item-score">${dailyStats.warnings || 0}</div>
+        </div>
+      </div>
+    `;
+    }
+    return `
+    <div class="aoi-analysis-score ${scoreClass}">
+      <div class="aoi-score-value">${pageScore}</div>
+      <div class="aoi-score-details">
+        <div class="aoi-score-label">Page Score</div>
+        <div class="aoi-score-action">${actionText}</div>
+      </div>
+    </div>
+    ${modeHtml}
+    <div class="aoi-analysis-section">
+      <div class="aoi-analysis-section-title">Signals (${pageAnalysis?.reasons?.length || 0})</div>
+      ${signalsHtml}
+    </div>
+    ${sessionHtml}
+    ${statsHtml}
+  `;
+}
+function escapeHtml(str) {
+    if (!str)
+        return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 /**
  * Update Aoi's status based on current context
@@ -876,4 +1277,56 @@ if (shouldInject()) {
     else {
         createAoiWidget();
     }
+}
+// ============================================================================
+// PAGE CONTENT ANALYSIS — Layer 3
+// Analyzes page content for explicit material
+// ============================================================================
+import { analyzePage, isSPALikely } from './page-analyzer';
+const ANALYSIS_DELAY_MS = 500; // Wait for initial render
+const SPA_RECHECK_DELAY_MS = 1500; // Recheck for SPAs
+let hasAnalyzed = false;
+let pageAnalysisScore = 0;
+/**
+ * Run page analysis and send results to background
+ */
+async function runPageAnalysis(isRecheck = false) {
+    // Skip if already analyzed with high score (already sent to background)
+    if (hasAnalyzed && pageAnalysisScore >= 70 && !isRecheck) {
+        return;
+    }
+    try {
+        const result = analyzePage();
+        pageAnalysisScore = result.score;
+        // Only send to background if score is significant
+        if (result.score >= 10 || result.isExplicit) {
+            log(`[PageAnalysis] Score: ${result.score}, Explicit: ${result.isExplicit}, Reasons: ${result.reasons.join(', ')}`);
+            chrome.runtime.sendMessage({
+                type: 'PAGE_ANALYSIS_RESULT',
+                data: {
+                    url: window.location.href,
+                    domain: getCurrentDomain(),
+                    result,
+                    timestamp: Date.now(),
+                    isRecheck
+                }
+            });
+        }
+        hasAnalyzed = true;
+        // If this was initial analysis and looks like SPA, schedule recheck
+        if (!isRecheck && isSPALikely() && result.score < 70) {
+            log('[PageAnalysis] SPA detected, scheduling recheck...');
+            setTimeout(() => runPageAnalysis(true), SPA_RECHECK_DELAY_MS);
+        }
+    }
+    catch (error) {
+        log('[PageAnalysis] Error:', error);
+    }
+}
+// Run analysis when page is ready
+if (shouldInject()) {
+    // Wait a bit for page to render
+    setTimeout(() => {
+        runPageAnalysis(false);
+    }, ANALYSIS_DELAY_MS);
 }
