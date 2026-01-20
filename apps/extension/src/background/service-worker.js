@@ -639,38 +639,206 @@ async function getAoiStatus(url) {
 }
 /**
  * Get page analysis data for the debug panel
+ * Returns detailed layer-by-layer breakdown of the blocking algorithm
  */
 async function getPageAnalysisData(data) {
-    const { domain } = data;
+    const { url, domain } = data;
     try {
-        const storageKey = `pageAnalysis_${domain}`;
-        const stored = await chrome.storage.local.get([storageKey, 'lastPageAnalyses']);
-        let pageAnalysis = stored[storageKey] || null;
-        const recentAnalyses = stored.lastPageAnalyses || [];
-        const recentForDomain = recentAnalyses.find((a) => a.domain === domain);
-        if (recentForDomain && (!pageAnalysis || recentForDomain.timestamp > pageAnalysis.timestamp)) {
-            pageAnalysis = recentForDomain;
-        }
+        // Get all storage data
+        const storage = await chrome.storage.local.get([
+            `pageAnalysis_${domain}`,
+            'lastPageAnalyses',
+            STORAGE_KEYS.RULES,
+            STORAGE_KEYS.IS_ACTIVE
+        ]);
+        const rules = storage[STORAGE_KEYS.RULES] || DEFAULT_BLOCKLIST;
         const searchSession = await getSearchSession();
         const heightenedMode = await getHeightenedMode();
         const dailyStats = await getDailyStats();
+        // Determine thresholds
+        const isHeightened = heightenedMode?.active || false;
+        const thresholds = {
+            warn: isHeightened ? 15 : 30,
+            block: isHeightened ? 35 : 70
+        };
+        // === LAYER 1: Hard Blocklist Check ===
+        let layer1Blocked = false;
+        let matchedRule = null;
+        for (const rule of rules) {
+            if (matchesPattern(url, rule.pattern)) {
+                if (rule.action === 'block') {
+                    layer1Blocked = true;
+                    matchedRule = {
+                        pattern: rule.pattern,
+                        reason: rule.reason || 'Blocked by rule',
+                        category: rule.category || 'unknown'
+                    };
+                    break;
+                }
+            }
+        }
+        const layer1 = {
+            checked: true,
+            blocked: layer1Blocked,
+            matchedRule
+        };
+        // === LAYER 2: Search Intelligence ===
+        const searchEngines = ['google.com', 'bing.com', 'duckduckgo.com', 'yahoo.com', 'ecosia.org', 'qwant.com', 'startpage.com', 'brave.com', 'yandex.'];
+        const isSearchEngineSite = searchEngines.some(se => domain.includes(se));
+        const lastSearch = searchSession.searches.length > 0
+            ? searchSession.searches[searchSession.searches.length - 1]
+            : null;
+        // Determine action based on score
+        const getActionFromScore = (score, flags) => {
+            if (score >= 50)
+                return 'block';
+            if (score >= 20)
+                return 'warn';
+            return 'allow';
+        };
+        const layer2 = {
+            isSearchEngine: isSearchEngineSite,
+            lastSearch: lastSearch ? {
+                query: lastSearch.query || '',
+                score: lastSearch.score || 0,
+                action: getActionFromScore(lastSearch.score || 0, lastSearch.flags || []),
+                flags: lastSearch.flags || []
+            } : null,
+            sessionScore: searchSession.totalScore,
+            searchCount: searchSession.searches.length
+        };
+        // === LAYER 3: Content Analysis ===
+        const storageKey = `pageAnalysis_${domain}`;
+        let pageAnalysis = storage[storageKey]?.result || null;
+        // Check recent analyses too
+        const recentAnalyses = storage.lastPageAnalyses || [];
+        const recentForDomain = recentAnalyses.find((a) => a.domain === domain);
+        if (recentForDomain?.result && (!pageAnalysis || recentForDomain.timestamp > (storage[storageKey]?.timestamp || 0))) {
+            pageAnalysis = recentForDomain.result;
+        }
+        // Build checks array from reasons
+        const checks = [];
+        if (pageAnalysis) {
+            // Parse reasons to create structured checks
+            const reasons = pageAnalysis.reasons || [];
+            // Domain whitelist check
+            const whitelistReason = reasons.find((r) => r.includes('whitelist'));
+            checks.push({
+                name: 'Domain Whitelist',
+                score: 0,
+                detail: whitelistReason || (pageAnalysis.score === 0 ? 'Not whitelisted' : 'Checked'),
+                status: whitelistReason ? 'pass' : 'pass'
+            });
+            // Meta tags check
+            const metaReason = reasons.find((r) => r.toLowerCase().includes('meta') || r.includes('rating'));
+            checks.push({
+                name: 'Meta Tags',
+                score: metaReason ? (metaReason.includes('Adult') ? 100 : 50) : 0,
+                detail: metaReason || 'No adult meta tags',
+                status: metaReason ? 'fail' : 'pass'
+            });
+            // Title check  
+            const titleReason = reasons.find((r) => r.toLowerCase().includes('title'));
+            checks.push({
+                name: 'Page Title',
+                score: titleReason ? 60 : 0,
+                detail: titleReason || 'No explicit keywords in title',
+                status: titleReason ? 'fail' : 'pass'
+            });
+            // Body content check
+            const bodyReason = reasons.find((r) => r.toLowerCase().includes('keyword') && !r.toLowerCase().includes('url') && !r.toLowerCase().includes('title'));
+            checks.push({
+                name: 'Body Content',
+                score: bodyReason ? (bodyReason.includes('High') ? 50 : bodyReason.includes('Multiple') ? 40 : 25) : 0,
+                detail: bodyReason || `${pageAnalysis.keywordMatches || 0} keywords scanned`,
+                status: bodyReason ? (bodyReason.includes('High') ? 'fail' : 'warn') : 'pass'
+            });
+            // URL path check
+            const urlReason = reasons.find((r) => r.toLowerCase().includes('url'));
+            checks.push({
+                name: 'URL Path',
+                score: urlReason ? 30 : 0,
+                detail: urlReason || 'No suspicious patterns',
+                status: urlReason ? 'warn' : 'pass'
+            });
+            // Media ratio check
+            const mediaReason = reasons.find((r) => r.toLowerCase().includes('media') || r.toLowerCase().includes('ratio'));
+            checks.push({
+                name: 'Media/Text Ratio',
+                score: mediaReason ? 20 : 0,
+                detail: mediaReason || `Ratio: ${pageAnalysis.imageTextRatio?.toFixed(1) || '0'}`,
+                status: mediaReason ? 'warn' : 'pass'
+            });
+            // Links check
+            const linkReason = reasons.find((r) => r.toLowerCase().includes('link'));
+            checks.push({
+                name: 'Suspicious Links',
+                score: linkReason ? 15 : 0,
+                detail: linkReason || 'No suspicious links',
+                status: linkReason ? 'warn' : 'pass'
+            });
+            // Safe context
+            const safeReason = reasons.find((r) => r.toLowerCase().includes('safe context'));
+            if (safeReason || pageAnalysis.hasSafeContext) {
+                checks.push({
+                    name: 'Safe Context',
+                    score: 0,
+                    detail: safeReason || 'Educational/medical context detected',
+                    status: 'pass'
+                });
+            }
+        }
+        else {
+            // No analysis yet
+            checks.push({
+                name: 'Analysis Status',
+                score: 0,
+                detail: 'Page not yet analyzed (analysis pending or domain skipped)',
+                status: 'pass'
+            });
+        }
+        const layer3 = {
+            analyzed: !!pageAnalysis,
+            totalScore: pageAnalysis?.score || 0,
+            isExplicit: pageAnalysis?.isExplicit || false,
+            checks
+        };
+        // === Final Decision ===
+        let finalDecision = 'allow';
+        if (layer1Blocked) {
+            finalDecision = 'block';
+        }
+        else if (layer3.isExplicit || layer3.totalScore >= thresholds.block) {
+            finalDecision = 'block';
+        }
+        else if (layer3.totalScore >= thresholds.warn) {
+            finalDecision = 'warn';
+        }
         return {
-            pageAnalysis: pageAnalysis?.result || { score: 0, reasons: [], isExplicit: false },
-            searchSession: {
-                searches: searchSession.searches.slice(-5),
-                totalScore: searchSession.totalScore,
-                peakScore: searchSession.peakScore
-            },
+            url,
+            domain,
+            timestamp: Date.now(),
+            layer1,
+            layer2,
+            layer3,
             heightenedMode: heightenedMode || { active: false },
+            thresholds,
+            finalDecision,
             dailyStats
         };
     }
     catch (error) {
         log('Error getting page analysis data:', error);
         return {
-            pageAnalysis: { score: 0, reasons: [], isExplicit: false },
-            searchSession: { searches: [], totalScore: 0, peakScore: 0 },
+            url,
+            domain,
+            timestamp: Date.now(),
+            layer1: { checked: false, blocked: false, matchedRule: null },
+            layer2: { isSearchEngine: false, lastSearch: null, sessionScore: 0, searchCount: 0 },
+            layer3: { analyzed: false, totalScore: 0, isExplicit: false, checks: [] },
             heightenedMode: { active: false },
+            thresholds: { warn: 30, block: 70 },
+            finalDecision: 'allow',
             dailyStats: { blockedSearches: 0, warnings: 0, heightenedActivations: 0 }
         };
     }

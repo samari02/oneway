@@ -759,6 +759,149 @@ function getWidgetStyles() {
       color: #dc2626;
     }
     
+    /* Decision badge */
+    .aoi-analysis-decision {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #059669;
+    }
+    
+    .aoi-analysis-decision.warning {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      color: #d97706;
+    }
+    
+    .aoi-analysis-decision.danger {
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      color: #dc2626;
+    }
+    
+    .aoi-decision-icon { font-size: 16px; }
+    
+    .aoi-analysis-domain {
+      font-size: 11px;
+      color: #9ca3af;
+      text-align: center;
+      margin-bottom: 12px;
+      font-family: monospace;
+    }
+    
+    /* Layers */
+    .aoi-analysis-layer {
+      margin-bottom: 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    .aoi-layer-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .aoi-layer-number {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #6b7280;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .aoi-layer-title {
+      flex: 1;
+      font-weight: 600;
+      font-size: 12px;
+      color: #374151;
+    }
+    
+    .aoi-layer-status {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #ecfdf5;
+      color: #059669;
+    }
+    
+    .aoi-layer-status.warn {
+      background: #fffbeb;
+      color: #d97706;
+    }
+    
+    .aoi-layer-status.fail {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+    
+    .aoi-layer-content {
+      padding: 8px;
+    }
+    
+    .aoi-analysis-item.pass {
+      background: #f0fdf4;
+      border-left: 3px solid #22c55e;
+    }
+    
+    .aoi-analysis-item.warn {
+      background: #fffbeb;
+      border-left: 3px solid #f59e0b;
+    }
+    
+    .aoi-analysis-item.fail {
+      background: #fef2f2;
+      border-left: 3px solid #ef4444;
+    }
+    
+    .aoi-analysis-item.thresholds {
+      background: #f3f4f6;
+      border-left: 3px solid #6b7280;
+      margin-top: 6px;
+    }
+    
+    /* Stats row */
+    .aoi-analysis-stats {
+      display: flex;
+      justify-content: space-around;
+      padding: 10px;
+      background: #f9fafb;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    
+    .aoi-stat {
+      text-align: center;
+    }
+    
+    .aoi-stat-value {
+      display: block;
+      font-size: 18px;
+      font-weight: 700;
+      color: #374151;
+    }
+    
+    .aoi-stat-label {
+      font-size: 10px;
+      color: #9ca3af;
+      text-transform: uppercase;
+    }
+    
     /* Minimize state */
     .aoi-widget.minimized .aoi-bubble {
       width: 32px;
@@ -1024,107 +1167,165 @@ async function updateAnalysisPanel(shadow) {
 }
 function renderAnalysisEmpty() {
     return `
-    <div class="aoi-analysis-score">
-      <div class="aoi-score-value">0</div>
-      <div class="aoi-score-details">
-        <div class="aoi-score-label">Page Score</div>
-        <div class="aoi-score-action">✓ No issues detected</div>
-      </div>
-    </div>
-    <div class="aoi-analysis-section">
-      <div class="aoi-analysis-section-title">Signals Detected</div>
-      <div class="aoi-analysis-empty">No signals on this page</div>
-    </div>
+    <div class="aoi-analysis-empty">Loading analysis...</div>
   `;
 }
 function renderAnalysisContent(data) {
-    const { pageAnalysis, searchSession, heightenedMode, dailyStats } = data;
-    const pageScore = pageAnalysis?.score || 0;
-    let scoreClass = '';
-    let actionText = '✓ Allowed';
-    if (pageScore >= 70) {
-        scoreClass = 'danger';
-        actionText = '✕ Would be blocked';
-    }
-    else if (pageScore >= 30) {
-        scoreClass = 'warning';
-        actionText = '⚠ Warning level';
-    }
-    let signalsHtml = '';
-    if (pageAnalysis?.reasons && pageAnalysis.reasons.length > 0) {
-        signalsHtml = pageAnalysis.reasons.map((reason) => `
-      <div class="aoi-analysis-item">
-        <div class="aoi-analysis-item-icon">⚡</div>
-        <div class="aoi-analysis-item-content">
-          <div class="aoi-analysis-item-label">${escapeHtml(reason)}</div>
-        </div>
-      </div>
-    `).join('');
-    }
-    else {
-        signalsHtml = `<div class="aoi-analysis-empty">No signals on this page</div>`;
-    }
-    let sessionHtml = '';
-    if (searchSession?.searches?.length > 0) {
-        const recentSearches = searchSession.searches.slice(-3);
-        sessionHtml = `
-      <div class="aoi-analysis-section">
-        <div class="aoi-analysis-section-title">Recent Searches (Session)</div>
-        ${recentSearches.map((s) => `
-          <div class="aoi-analysis-item">
-            <div class="aoi-analysis-item-icon">🔍</div>
-            <div class="aoi-analysis-item-content">
-              <div class="aoi-analysis-item-label">${escapeHtml(s.query?.slice(0, 30) || '...')}</div>
-              <div class="aoi-analysis-item-value">Flags: ${s.flags?.join(', ') || 'none'}</div>
-            </div>
-            <div class="aoi-analysis-item-score ${s.score > 0 ? 'positive' : ''}">+${s.score || 0}</div>
-          </div>
-        `).join('')}
-        <div class="aoi-analysis-item">
-          <div class="aoi-analysis-item-icon">Σ</div>
-          <div class="aoi-analysis-item-content">
-            <div class="aoi-analysis-item-label">Session Total</div>
-          </div>
-          <div class="aoi-analysis-item-score ${searchSession.totalScore > 20 ? 'positive' : ''}">${searchSession.totalScore || 0}</div>
-        </div>
-      </div>
-    `;
-    }
+    const { domain, layer1, layer2, layer3, heightenedMode, thresholds, finalDecision, dailyStats } = data;
+    // Decision badge
+    const decisionClass = finalDecision === 'block' ? 'danger' : finalDecision === 'warn' ? 'warning' : '';
+    const decisionText = finalDecision === 'block' ? '✕ BLOCKED' : finalDecision === 'warn' ? '⚠ WARNING' : '✓ ALLOWED';
+    const decisionIcon = finalDecision === 'block' ? '🛑' : finalDecision === 'warn' ? '⚠️' : '✅';
+    // Mode indicator
     const modeHtml = heightenedMode?.active
-        ? `<div class="aoi-analysis-mode heightened">🔥 Heightened (${Math.ceil((heightenedMode.expiresAt - Date.now()) / 60000)}min)</div>`
+        ? `<div class="aoi-analysis-mode heightened">🔥 Heightened Mode (${Math.ceil((heightenedMode.expiresAt - Date.now()) / 60000)}min left)</div>`
         : `<div class="aoi-analysis-mode normal">✓ Normal Mode</div>`;
-    let statsHtml = '';
-    if (dailyStats) {
-        statsHtml = `
-      <div class="aoi-analysis-section">
-        <div class="aoi-analysis-section-title">Today's Stats</div>
-        <div class="aoi-analysis-item">
-          <div class="aoi-analysis-item-icon">🛑</div>
-          <div class="aoi-analysis-item-content"><div class="aoi-analysis-item-label">Blocked</div></div>
-          <div class="aoi-analysis-item-score">${dailyStats.blockedSearches || 0}</div>
-        </div>
-        <div class="aoi-analysis-item">
-          <div class="aoi-analysis-item-icon">⚠️</div>
-          <div class="aoi-analysis-item-content"><div class="aoi-analysis-item-label">Warnings</div></div>
-          <div class="aoi-analysis-item-score">${dailyStats.warnings || 0}</div>
+    // === LAYER 1: Blocklist ===
+    const layer1Status = layer1.blocked ? 'fail' : 'pass';
+    const layer1Icon = layer1.blocked ? '🚫' : '✓';
+    const layer1Html = `
+    <div class="aoi-analysis-layer">
+      <div class="aoi-layer-header">
+        <span class="aoi-layer-number">1</span>
+        <span class="aoi-layer-title">Hard Blocklist</span>
+        <span class="aoi-layer-status ${layer1Status}">${layer1Icon}</span>
+      </div>
+      <div class="aoi-layer-content">
+        ${layer1.blocked
+        ? `<div class="aoi-analysis-item fail">
+              <div class="aoi-analysis-item-icon">🚫</div>
+              <div class="aoi-analysis-item-content">
+                <div class="aoi-analysis-item-label">Domain blocked</div>
+                <div class="aoi-analysis-item-value">${escapeHtml(layer1.matchedRule?.pattern || '')}</div>
+                <div class="aoi-analysis-item-value">${escapeHtml(layer1.matchedRule?.reason || '')}</div>
+              </div>
+            </div>`
+        : `<div class="aoi-analysis-item pass">
+              <div class="aoi-analysis-item-icon">✓</div>
+              <div class="aoi-analysis-item-content">
+                <div class="aoi-analysis-item-label">Domain not on blocklist</div>
+                <div class="aoi-analysis-item-value">${escapeHtml(domain)}</div>
+              </div>
+            </div>`}
+      </div>
+    </div>
+  `;
+    // === LAYER 2: Search Intelligence ===
+    const layer2HasActivity = layer2.searchCount > 0;
+    const layer2Html = `
+    <div class="aoi-analysis-layer">
+      <div class="aoi-layer-header">
+        <span class="aoi-layer-number">2</span>
+        <span class="aoi-layer-title">Search Intelligence</span>
+        <span class="aoi-layer-status ${layer2HasActivity && layer2.sessionScore > 20 ? 'warn' : 'pass'}">
+          ${layer2.isSearchEngine ? '🔍' : '—'}
+        </span>
+      </div>
+      <div class="aoi-layer-content">
+        ${layer2.isSearchEngine
+        ? `<div class="aoi-analysis-item">
+              <div class="aoi-analysis-item-icon">🔍</div>
+              <div class="aoi-analysis-item-content">
+                <div class="aoi-analysis-item-label">Search engine detected</div>
+              </div>
+            </div>`
+        : ''}
+        ${layer2.lastSearch
+        ? `<div class="aoi-analysis-item ${layer2.lastSearch.score > 30 ? 'warn' : ''}">
+              <div class="aoi-analysis-item-icon">💬</div>
+              <div class="aoi-analysis-item-content">
+                <div class="aoi-analysis-item-label">Last search: "${escapeHtml(layer2.lastSearch.query.slice(0, 25))}${layer2.lastSearch.query.length > 25 ? '...' : ''}"</div>
+                <div class="aoi-analysis-item-value">
+                  Score: ${layer2.lastSearch.score} → ${layer2.lastSearch.action.toUpperCase()}
+                  ${layer2.lastSearch.flags && layer2.lastSearch.flags.length > 0 ? `<br>Flags: ${layer2.lastSearch.flags.join(', ')}` : ''}
+                </div>
+              </div>
+              <div class="aoi-analysis-item-score ${layer2.lastSearch.score > 0 ? 'positive' : ''}">${layer2.lastSearch.score}</div>
+            </div>`
+        : `<div class="aoi-analysis-item">
+              <div class="aoi-analysis-item-icon">—</div>
+              <div class="aoi-analysis-item-content">
+                <div class="aoi-analysis-item-label">No recent searches in session</div>
+              </div>
+            </div>`}
+        ${layer2HasActivity
+        ? `<div class="aoi-analysis-item">
+              <div class="aoi-analysis-item-icon">Σ</div>
+              <div class="aoi-analysis-item-content">
+                <div class="aoi-analysis-item-label">Session total (${layer2.searchCount} searches)</div>
+              </div>
+              <div class="aoi-analysis-item-score ${layer2.sessionScore > 20 ? 'positive' : ''}">${layer2.sessionScore}</div>
+            </div>`
+        : ''}
+      </div>
+    </div>
+  `;
+    // === LAYER 3: Content Analysis ===
+    const layer3Status = layer3.isExplicit ? 'fail' : layer3.totalScore >= thresholds.warn ? 'warn' : 'pass';
+    const layer3Html = `
+    <div class="aoi-analysis-layer">
+      <div class="aoi-layer-header">
+        <span class="aoi-layer-number">3</span>
+        <span class="aoi-layer-title">Content Analysis</span>
+        <span class="aoi-layer-status ${layer3Status}">
+          ${layer3.totalScore}
+        </span>
+      </div>
+      <div class="aoi-layer-content">
+        ${!layer3.analyzed
+        ? `<div class="aoi-analysis-item">
+              <div class="aoi-analysis-item-icon">⏳</div>
+              <div class="aoi-analysis-item-content">
+                <div class="aoi-analysis-item-label">Analysis pending or skipped</div>
+              </div>
+            </div>`
+        : layer3.checks.map((check) => `
+            <div class="aoi-analysis-item ${check.status}">
+              <div class="aoi-analysis-item-icon">${check.status === 'pass' ? '✓' : check.status === 'warn' ? '⚠' : '✕'}</div>
+              <div class="aoi-analysis-item-content">
+                <div class="aoi-analysis-item-label">${escapeHtml(check.name)}</div>
+                <div class="aoi-analysis-item-value">${escapeHtml(check.detail)}</div>
+              </div>
+              ${check.score > 0 ? `<div class="aoi-analysis-item-score positive">+${check.score}</div>` : ''}
+            </div>
+          `).join('')}
+        <div class="aoi-analysis-item thresholds">
+          <div class="aoi-analysis-item-icon">📊</div>
+          <div class="aoi-analysis-item-content">
+            <div class="aoi-analysis-item-label">Thresholds</div>
+            <div class="aoi-analysis-item-value">Warn: ${thresholds.warn} | Block: ${thresholds.block}</div>
+          </div>
         </div>
       </div>
-    `;
-    }
+    </div>
+  `;
+    // === Stats ===
+    const statsHtml = dailyStats ? `
+    <div class="aoi-analysis-stats">
+      <div class="aoi-stat">
+        <span class="aoi-stat-value">${dailyStats.blockedSearches || 0}</span>
+        <span class="aoi-stat-label">blocked</span>
+      </div>
+      <div class="aoi-stat">
+        <span class="aoi-stat-value">${dailyStats.warnings || 0}</span>
+        <span class="aoi-stat-label">warnings</span>
+      </div>
+      <div class="aoi-stat">
+        <span class="aoi-stat-value">${dailyStats.heightenedActivations || 0}</span>
+        <span class="aoi-stat-label">heightened</span>
+      </div>
+    </div>
+  ` : '';
     return `
-    <div class="aoi-analysis-score ${scoreClass}">
-      <div class="aoi-score-value">${pageScore}</div>
-      <div class="aoi-score-details">
-        <div class="aoi-score-label">Page Score</div>
-        <div class="aoi-score-action">${actionText}</div>
-      </div>
+    <div class="aoi-analysis-decision ${decisionClass}">
+      <span class="aoi-decision-icon">${decisionIcon}</span>
+      <span class="aoi-decision-text">${decisionText}</span>
     </div>
     ${modeHtml}
-    <div class="aoi-analysis-section">
-      <div class="aoi-analysis-section-title">Signals (${pageAnalysis?.reasons?.length || 0})</div>
-      ${signalsHtml}
-    </div>
-    ${sessionHtml}
+    <div class="aoi-analysis-domain">${escapeHtml(domain)}</div>
+    ${layer1Html}
+    ${layer2Html}
+    ${layer3Html}
     ${statsHtml}
   `;
 }
