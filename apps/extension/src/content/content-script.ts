@@ -520,7 +520,7 @@ function getWidgetStyles(): string {
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
       padding: 6px 0;
-      min-width: 140px;
+      min-width: 180px;
       opacity: 0;
       transform: translateY(8px) scale(0.95);
       pointer-events: none;
@@ -597,14 +597,14 @@ function getWidgetStyles(): string {
       border-radius: 14px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
       padding: 16px;
-      width: 300px;
+      width: 340px;
       opacity: 0;
       transform: translateY(8px) scale(0.95);
       pointer-events: none;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 11;
       font-size: 12px;
-      max-height: 420px;
+      max-height: 520px;
       overflow-y: auto;
     }
     
