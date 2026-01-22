@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useAuth } from '../../auth'
 import { useStats } from '../hooks/useStats'
 import { StreakCard } from './StreakCard'
@@ -13,11 +13,18 @@ import './StatsView.css'
 type TabType = 'habits' | 'browsing'
 
 export function StatsView() {
-  const [activeTab, setActiveTab] = useState<TabType>('habits')
+  const [activeTab, setActiveTab] = useState<TabType>('browsing') // Default to browsing
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('today')
   const [resetCounter, setResetCounter] = useState(0) // Increments on every global period click
+  const [isHeaderMinimized, setIsHeaderMinimized] = useState(false)
   const { user } = useAuth()
   const { stats, loading, error } = useStats(user?.id)
+  
+  // Track scroll to minimize header
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const scrollTop = e.currentTarget.scrollTop
+    setIsHeaderMinimized(scrollTop > 50)
+  }, [])
 
   // Handle global period change - always reset individual overrides
   const handleGlobalPeriodChange = (period: Period) => {
@@ -36,24 +43,15 @@ export function StatsView() {
 
   return (
     <div className="stats-view">
-      <header className="stats-view__header">
+      <header className={`stats-view__header ${isHeaderMinimized ? 'stats-view__header--minimized' : ''}`}>
         <div className="stats-view__title-row">
           <span className="stats-view__icon">💎</span>
           <h1>Statistics</h1>
         </div>
         <p className="stats-view__subtitle">Track your progress</p>
         
-        {/* Tabs */}
+        {/* Tabs - Browsing first */}
         <div className="stats-view__tabs">
-          <button
-            className={`stats-view__tab ${activeTab === 'habits' ? 'stats-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('habits')}
-          >
-            <svg className="stats-view__tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2L12 6M12 18L12 22M4.93 4.93L7.76 7.76M16.24 16.24L19.07 19.07M2 12H6M18 12H22M4.93 19.07L7.76 16.24M16.24 7.76L19.07 4.93"/>
-            </svg>
-            <span>habits</span>
-          </button>
           <button
             className={`stats-view__tab ${activeTab === 'browsing' ? 'stats-view__tab--active' : ''}`}
             onClick={() => setActiveTab('browsing')}
@@ -64,13 +62,22 @@ export function StatsView() {
             </svg>
             <span>browsing</span>
           </button>
+          <button
+            className={`stats-view__tab ${activeTab === 'habits' ? 'stats-view__tab--active' : ''}`}
+            onClick={() => setActiveTab('habits')}
+          >
+            <svg className="stats-view__tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2L12 6M12 18L12 22M4.93 4.93L7.76 7.76M16.24 16.24L19.07 19.07M2 12H6M18 12H22M4.93 19.07L7.76 16.24M16.24 7.76L19.07 4.93"/>
+            </svg>
+            <span>habits</span>
+          </button>
         </div>
 
         {/* Period Selector */}
         <PeriodSelector selected={selectedPeriod} onChange={handleGlobalPeriodChange} />
       </header>
 
-      <div className="stats-view__tab-content">
+      <div className="stats-view__tab-content" onScroll={handleScroll}>
         {activeTab === 'habits' ? (
           <HabitsContent 
             stats={stats} 
