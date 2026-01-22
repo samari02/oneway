@@ -90,27 +90,20 @@
   animation: fadeSlideIn 0.4s ease-out backwards;
 }
 
-.browsing-view__section--mascot-hero {
-  animation-delay: 0ms;
-  display: flex;
-  justify-content: center;
-  padding-bottom: var(--space-sm);
-}
-
 .browsing-view__section--hero {
-  animation-delay: 50ms;
+  animation-delay: 0ms;
 }
 
 .browsing-view__section--heatmap {
-  animation-delay: 150ms;
+  animation-delay: 100ms;
 }
 
 .browsing-view__section--sites {
-  animation-delay: 250ms;
+  animation-delay: 200ms;
 }
 
 .browsing-view__section--source {
-  animation-delay: 350ms;
+  animation-delay: 300ms;
 }
 
 @keyframes fadeSlideIn {

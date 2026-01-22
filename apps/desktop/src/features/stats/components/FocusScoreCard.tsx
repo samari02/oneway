@@ -1,4 +1,4 @@
-import { MiniMascot, type MiniMascotMood } from './MiniMascot'
+import { Mascot, type MascotMood } from '../../mascot'
 import { CardPeriodMenu } from './CardPeriodMenu'
 import type { Period } from './PeriodSelector'
 import './FocusScoreCard.css'
@@ -34,10 +34,18 @@ export function FocusScoreCard({ score, trend, period, defaultPeriod, onPeriodCh
     return 'low'
   }
 
-  const getMascotMood = (): MiniMascotMood => {
-    if (score >= 70) return 'happy'
-    if (score >= 40) return 'focused'
-    return 'worried'
+  const getMascotMood = (): MascotMood => {
+    if (score >= 80) return 'proud'
+    if (score >= 60) return 'happy'
+    if (score >= 40) return 'encouraging'
+    return 'thinking'
+  }
+
+  const getMascotMessage = () => {
+    if (score >= 80) return "Incredible focus! You're crushing it!"
+    if (score >= 60) return "Good balance! A few less distractions and you'll be golden"
+    if (score >= 40) return "Room for improvement! Try blocking some distracting sites"
+    return "Let's work on reducing those distractions together"
   }
 
   const getPeriodLabel = () => {
@@ -61,7 +69,7 @@ export function FocusScoreCard({ score, trend, period, defaultPeriod, onPeriodCh
         />
       )}
       <div className="focus-score-card__mascot">
-        <MiniMascot mood={getMascotMood()} size={48} />
+        <Mascot mood={getMascotMood()} size="small" showMessage={false} />
       </div>
       <div className="focus-score-card__content">
         <div className={`focus-score-card__score focus-score-card__score--${getScoreColor()}`}>
@@ -78,7 +86,7 @@ export function FocusScoreCard({ score, trend, period, defaultPeriod, onPeriodCh
           <span className="focus-score-card__trend-label">{getTrendLabel()}</span>
         </div>
         <div className="focus-score-card__explanation">
-          Based on productive vs distracting sites
+          {getMascotMessage()}
         </div>
       </div>
     </div>

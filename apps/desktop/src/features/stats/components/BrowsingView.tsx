@@ -8,9 +8,7 @@ import { TimeDistributionCard } from './TimeDistributionCard'
 import { TopSitesCard } from './TopSitesCard'
 import { BrowsingHeatmapCard } from './BrowsingHeatmapCard'
 import { DataSourceCard } from './DataSourceCard'
-import { Mascot, type MascotMood } from '../../mascot'
 import type { Period } from './PeriodSelector'
-import type { SiteVisit } from '../hooks/useBrowsingStats'
 import type { SiteCategory } from './SiteClassificationModal'
 import './BrowsingView.css'
 
@@ -105,29 +103,6 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
     )
   }
 
-  // Determine mascot mood based on focus score
-  const getMascotMood = (): MascotMood => {
-    const score = cardStats.focusScore?.focusScore || stats.focusScore
-    if (score >= 80) return 'proud'
-    if (score >= 60) return 'happy'
-    if (score >= 40) return 'encouraging'
-    return 'thinking'
-  }
-
-  const getMascotMessage = () => {
-    const score = cardStats.focusScore?.focusScore || stats.focusScore
-    if (score >= 80) {
-      return "Incredible focus today! You're crushing it!"
-    }
-    if (score >= 60) {
-      return "Good balance! A few less distractions and you'll be golden"
-    }
-    if (score >= 40) {
-      return "Room for improvement! Try blocking some distracting sites"
-    }
-    return "Let's work on reducing those distractions together"
-  }
-
   const handleClassificationSave = async (classifications: Record<string, SiteCategory>) => {
     console.log('[BrowsingView] ========== SAVE START ==========')
     console.log('[BrowsingView] Received classifications:', classifications)
@@ -154,15 +129,6 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
   return (
     <div className="browsing-view">
       <div className="browsing-view__content">
-        {/* Mascot Message - Now at top */}
-        <section className="browsing-view__section browsing-view__section--mascot-hero">
-          <Mascot 
-            mood={getMascotMood()} 
-            message={getMascotMessage()}
-            size="medium"
-          />
-        </section>
-
         {/* Top Row: Focus Score + Time Distribution */}
         <section className="browsing-view__section browsing-view__section--hero">
           <div className="browsing-view__hero-grid">
