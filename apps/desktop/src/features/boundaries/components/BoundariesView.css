@@ -41,33 +41,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   flex-shrink: 0;
 }
 
 .boundaries-view__protection-icon .boundaries-icon {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
 }
 
 /* Check icon with green background */
 .boundaries-view__protection-item--ok .boundaries-view__protection-icon {
-  background: linear-gradient(135deg, #7DD8C4 0%, #5BB5A0 100%);
-  box-shadow: 0 3px 10px rgba(125, 216, 196, 0.35);
+  background: var(--accent);
 }
 
 /* Warning icon with yellow/orange background */
 .boundaries-view__protection-item--warning .boundaries-view__protection-icon {
-  background: linear-gradient(135deg, #FFD93D 0%, #F5A623 100%);
-  box-shadow: 0 3px 10px rgba(245, 166, 35, 0.35);
+  background: #F5A623;
 }
 
 /* Critical icon with red background */
 .boundaries-view__protection-item--critical .boundaries-view__protection-icon {
-  background: linear-gradient(135deg, #FF8A65 0%, #E74C3C 100%);
-  box-shadow: 0 3px 10px rgba(231, 76, 60, 0.35);
+  background: #E74C3C;
 }
 
 /* Icon in empty state */

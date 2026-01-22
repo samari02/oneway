@@ -216,13 +216,19 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
               <span className="boundaries-view__protection-value">
                 {extensionStatus?.incognitoEnabled ? 'Protected' : 'Not enabled'}
               </span>
+              <span className="boundaries-view__protection-detail">
+                {extensionStatus?.incognitoEnabled 
+                  ? 'Extension active in private browsing'
+                  : 'Private browsing is not protected'
+                }
+              </span>
             </div>
             {!extensionStatus?.incognitoEnabled && (
               <button 
                 className="boundaries-view__protection-action"
                 onClick={() => setShowIncognitoSetup(true)}
               >
-                Setup
+                Enable
               </button>
             )}
           </div>
