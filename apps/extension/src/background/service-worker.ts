@@ -28,7 +28,8 @@ import {
   importHistory,
   recordVisit,
   getCollectionStatus,
-  calculateHistoryStats
+  calculateHistoryStats,
+  recategorizeHistory
 } from './history-collector'
 import {
   connectToDesktopApp,
@@ -381,6 +382,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   if (message.type === 'GET_COLLECTION_STATUS') {
     getCollectionStatus().then(sendResponse)
+    return true
+  }
+  
+  if (message.type === 'RECATEGORIZE_HISTORY') {
+    recategorizeHistory().then(sendResponse)
     return true
   }
   

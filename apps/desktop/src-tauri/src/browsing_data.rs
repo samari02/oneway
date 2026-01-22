@@ -486,7 +486,20 @@ fn get_data_dir() -> PathBuf {
 /// Check if a string looks like a valid domain name
 /// Filters out GPS coordinates like "35.4034841,139.2772499,1135m"
 fn is_valid_domain(domain: &str) -> bool {
-    // Must contain a dot
+    // Allow localhost and local IPs (development)
+    if domain == "localhost" || domain.starts_with("localhost:") ||
+       domain == "127.0.0.1" || domain.starts_with("127.0.0.1:") {
+        return true;
+    }
+    
+    // Allow dev domains (dev.*, staging.*, *.local, etc.)
+    if domain.starts_with("dev.") || domain.starts_with("staging.") || 
+       domain.starts_with("preview.") || domain.ends_with(".local") ||
+       domain.ends_with(".test") {
+        return true;
+    }
+    
+    // Must contain a dot for regular domains
     if !domain.contains('.') {
         return false;
     }

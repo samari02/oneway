@@ -26,6 +26,7 @@ const DOMAIN_CATEGORIES: Record<string, Category> = {
   'reddit.com': 'social_media',
   'linkedin.com': 'social_media',
   'snapchat.com': 'social_media',
+  'threads.net': 'social_media',
   
   // News
   'nytimes.com': 'news',
@@ -35,6 +36,7 @@ const DOMAIN_CATEGORIES: Record<string, Category> = {
   'lefigaro.fr': 'news',
   'theguardian.com': 'news',
   'reuters.com': 'news',
+  'news.google.com': 'news',
   
   // Video/Entertainment
   'youtube.com': 'video',
@@ -46,19 +48,71 @@ const DOMAIN_CATEGORIES: Record<string, Category> = {
   
   // Shopping
   'amazon.com': 'shopping',
+  'amazon.fr': 'shopping',
+  'amazon.co.jp': 'shopping',
   'ebay.com': 'shopping',
   'aliexpress.com': 'shopping',
   
-  // Work/Productivity
+  // === GOOGLE SERVICES ===
+  // Productive (work tools)
+  'docs.google.com': 'work',
+  'drive.google.com': 'work',
+  'sheets.google.com': 'work',
+  'slides.google.com': 'work',
+  'calendar.google.com': 'work',
+  'meet.google.com': 'work',
+  'chat.google.com': 'work',
+  'mail.google.com': 'work',
+  'contacts.google.com': 'work',
+  'keep.google.com': 'work',
+  'sites.google.com': 'work',
+  'forms.google.com': 'work',
+  'cloud.google.com': 'work',
+  'console.cloud.google.com': 'work',
+  'colab.research.google.com': 'work',
+  'analytics.google.com': 'work',
+  'tagmanager.google.com': 'work',
+  'search.google.com': 'work',  // Google Search Console
+  'admin.google.com': 'work',
+  'classroom.google.com': 'work',
+  'jamboard.google.com': 'work',
+  // Neutral (search/browse)
+  'google.com': 'other',         // Main search - neutral
+  'www.google.com': 'other',
+  'google.fr': 'other',
+  'google.co.jp': 'other',
+  'images.google.com': 'other',  // Image search - neutral
+  'maps.google.com': 'other',    // Maps - neutral
+  'translate.google.com': 'other',
+  'books.google.com': 'other',
+  'scholar.google.com': 'work',  // Scholar is productive
+  'photos.google.com': 'other',
+  'play.google.com': 'other',
+  
+  // Work/Productivity (other)
   'github.com': 'work',
+  'gitlab.com': 'work',
+  'bitbucket.org': 'work',
   'stackoverflow.com': 'work',
   'notion.so': 'work',
   'figma.com': 'work',
-  'docs.google.com': 'work',
-  'drive.google.com': 'work',
+  'linear.app': 'work',
   'slack.com': 'work',
   'discord.com': 'work',
   'zoom.us': 'work',
+  'vercel.com': 'work',
+  'netlify.com': 'work',
+  'render.com': 'work',
+  'railway.app': 'work',
+  'supabase.com': 'work',
+  'localhost': 'work',           // Local dev = work!
+  '127.0.0.1': 'work',
+  
+  // Learning
+  'udemy.com': 'work',
+  'coursera.org': 'work',
+  'khanacademy.org': 'work',
+  'codecademy.com': 'work',
 }
 
 /**
@@ -66,17 +120,33 @@ const DOMAIN_CATEGORIES: Record<string, Category> = {
  * Returns 'other' if not in known categories
  */
 export function categorizeDomain(domain: string): Category {
-  // Remove www. prefix
-  const cleanDomain = domain.replace(/^www\./, '')
+  // Remove www. prefix and port
+  const cleanDomain = domain.replace(/^www\./, '').replace(/:\d+$/, '')
   
-  // Exact match
+  // Handle localhost with any port
+  if (cleanDomain === 'localhost' || cleanDomain === '127.0.0.1') {
+    return 'work'
+  }
+  
+  // Handle custom dev domains (common patterns)
+  if (cleanDomain.includes('.local') || 
+      cleanDomain.includes('.test') || 
+      cleanDomain.includes('.dev.') ||
+      cleanDomain.startsWith('dev.') ||
+      cleanDomain.startsWith('staging.') ||
+      cleanDomain.startsWith('preview.')) {
+    return 'work'
+  }
+  
+  // Exact match first
   if (DOMAIN_CATEGORIES[cleanDomain]) {
     return DOMAIN_CATEGORIES[cleanDomain]
   }
   
-  // Check if subdomain of known domain
+  // Check if subdomain of known domain (e.g., mail.google.com → google.com)
   for (const [knownDomain, category] of Object.entries(DOMAIN_CATEGORIES)) {
-    if (cleanDomain.endsWith(knownDomain)) {
+    // Match subdomain (cleanDomain ends with .knownDomain)
+    if (cleanDomain.endsWith('.' + knownDomain)) {
       return category
     }
   }
@@ -365,4 +435,36 @@ export async function getCollectionStatus(): Promise<{
     lastImport: historyLastImport,
     periodDays: historyPeriodDays
   }
+}
+
+/**
+ * Re-categorize all existing history with updated rules
+ * Call this after updating DOMAIN_CATEGORIES
+ */
+export async function recategorizeHistory(): Promise<{ updated: number; total: number }> {
+  const { navigationHistory = [] } = await chrome.storage.local.get('navigationHistory')
+  
+  let updatedCount = 0
+  
+  const recategorized = navigationHistory.map((visit: CategorizedVisit) => {
+    const newCategory = categorizeDomain(visit.domain)
+    const newIsDistraction = isDistraction(newCategory)
+    
+    if (visit.category !== newCategory) {
+      updatedCount++
+      log(`Recategorized ${visit.domain}: ${visit.category} → ${newCategory}`)
+    }
+    
+    return {
+      ...visit,
+      category: newCategory,
+      isDistraction: newIsDistraction
+    }
+  })
+  
+  await chrome.storage.local.set({ navigationHistory: recategorized })
+  
+  log(`Recategorized ${updatedCount} of ${navigationHistory.length} visits`)
+  
+  return { updated: updatedCount, total: navigationHistory.length }
 }

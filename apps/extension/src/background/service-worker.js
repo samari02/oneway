@@ -6,7 +6,7 @@ import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL } from '../shared/con
 import { extractDomain, matchesPattern, log } from '../shared/utils';
 import { extractSearchQuery, isSearchEngine, extractRedirectDestination, isEmailTrackingUrl, incrementBlockedSearches, getBlockedSearchesToday } from './search-filter';
 import { analyzeSearch, shouldAnalyzeSearch, getHeightenedMode, getDailyStats, updateBadge, getSearchSession } from './search-intelligence';
-import { requestHistoryPermission, importHistory, recordVisit, getCollectionStatus, calculateHistoryStats } from './history-collector';
+import { requestHistoryPermission, importHistory, recordVisit, getCollectionStatus, calculateHistoryStats, recategorizeHistory } from './history-collector';
 import { connectToDesktopApp, isDesktopAppConnected, getConnectionStatus, sendNavigationEvent, sendHistorySync, sendAoiPreferencesUpdate } from './native-messaging';
 // NOTE: Supabase sync temporarily disabled
 // Supabase client is not compatible with Chrome extension service workers
@@ -298,6 +298,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     if (message.type === 'GET_COLLECTION_STATUS') {
         getCollectionStatus().then(sendResponse);
+        return true;
+    }
+    if (message.type === 'RECATEGORIZE_HISTORY') {
+        recategorizeHistory().then(sendResponse);
         return true;
     }
     // Intelligent Blocking Status
