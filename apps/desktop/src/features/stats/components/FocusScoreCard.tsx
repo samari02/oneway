@@ -55,6 +55,9 @@ export function FocusScoreCard({ score, trend, period, defaultPeriod, onPeriodCh
       case '7days': return '7d'
       case '30days': return '30d'
       case '90days': return '90d'
+      case '180days': return '6m'
+      case '365days': return '1y'
+      case 'all': return 'All'
       default: return null
     }
   }

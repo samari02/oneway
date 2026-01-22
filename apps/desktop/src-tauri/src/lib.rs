@@ -11,7 +11,7 @@ fn greet(name: &str) -> String {
 
 /// Get browsing stats from local storage
 /// Called by React frontend to display insights
-/// period: "today" | "7days" | "30days" | "90days" | "all"
+/// period: "today" | "7days" | "30days" | "90days" | "180days" | "365days" | "all"
 #[tauri::command]
 fn get_browsing_stats(period: Option<String>) -> BrowsingStats {
     let period_days = match period.as_deref() {
@@ -19,6 +19,8 @@ fn get_browsing_stats(period: Option<String>) -> BrowsingStats {
         Some("7days") => Some(7),
         Some("30days") => Some(30),
         Some("90days") => Some(90),
+        Some("180days") => Some(180),
+        Some("365days") => Some(365),
         _ => None, // "all" or missing
     };
 

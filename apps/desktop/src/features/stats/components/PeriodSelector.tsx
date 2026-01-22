@@ -1,6 +1,6 @@
 import './PeriodSelector.css'
 
-export type Period = 'today' | '7days' | '30days' | '90days'
+export type Period = 'today' | '7days' | '30days' | '90days' | '180days' | '365days' | 'all'
 
 interface PeriodSelectorProps {
   selected: Period
@@ -12,6 +12,9 @@ const PERIODS: { value: Period; label: string }[] = [
   { value: '7days', label: '7d' },
   { value: '30days', label: '30d' },
   { value: '90days', label: '90d' },
+  { value: '180days', label: '6m' },
+  { value: '365days', label: '1y' },
+  { value: 'all', label: 'All' },
 ]
 
 export function PeriodSelector({ selected, onChange }: PeriodSelectorProps) {

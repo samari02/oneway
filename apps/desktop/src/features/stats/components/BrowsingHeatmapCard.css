@@ -43,12 +43,18 @@
 
 .browsing-heatmap-card__months {
   display: flex;
-  gap: 4px;
+  gap: 3px;
+  overflow-x: auto;
+}
+
+.browsing-heatmap-card__months::-webkit-scrollbar {
+  display: none;
 }
 
 .browsing-heatmap-card__month-cell {
-  flex: 1;
-  font-size: 11px;
+  flex: 0 0 auto;
+  width: 18px; /* Match week width */
+  font-size: 10px;
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: visible;
@@ -84,20 +90,35 @@
   visibility: hidden;
 }
 
-/* Weeks container - responsive columns */
+/* Weeks container - scrollable if needed */
 .browsing-heatmap-card__weeks {
   display: flex;
   gap: 3px;
+  overflow-x: auto;
+  padding-bottom: 4px; /* Space for scrollbar */
 }
 
-/* Each week column - fills available space equally */
+/* Hide scrollbar but keep functionality */
+.browsing-heatmap-card__weeks::-webkit-scrollbar {
+  height: 4px;
+}
+
+.browsing-heatmap-card__weeks::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.browsing-heatmap-card__weeks::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 2px;
+}
+
+/* Each week column - fixed size */
 .browsing-heatmap-card__week {
-  flex: 1;
+  flex: 0 0 auto; /* Don't shrink */
   display: flex;
   flex-direction: column;
   gap: 3px;
-  min-width: 0; /* Allow shrinking */
-  max-width: 28px; /* Smaller squares */
+  width: 18px; /* Fixed width */
 }
 
 .browsing-heatmap-card__square {
@@ -126,13 +147,14 @@
 
 /* Future days - dashed outline */
 .browsing-heatmap-card__square--future {
-  background: transparent;
-  border: 1.5px dashed var(--border-light);
-  opacity: 0.4;
+  background: rgba(125, 216, 196, 0.08);
+  border: 2px dashed rgba(125, 216, 196, 0.4);
+  opacity: 1;
 }
 
 .browsing-heatmap-card__square--future:hover {
-  opacity: 0.6;
+  background: rgba(125, 216, 196, 0.15);
+  border-color: rgba(125, 216, 196, 0.6);
   transform: scale(1.1);
 }
 

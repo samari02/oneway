@@ -13,6 +13,9 @@ const PERIODS: { value: Period; label: string }[] = [
   { value: '7days', label: 'Last 7 days' },
   { value: '30days', label: 'Last 30 days' },
   { value: '90days', label: 'Last 90 days' },
+  { value: '180days', label: 'Last 6 months' },
+  { value: '365days', label: 'Last year' },
+  { value: 'all', label: 'All time' },
 ]
 
 export function CardPeriodMenu({ currentPeriod, onPeriodChange, defaultPeriod }: CardPeriodMenuProps) {
@@ -41,6 +44,9 @@ export function CardPeriodMenu({ currentPeriod, onPeriodChange, defaultPeriod }:
       case '7days': return '7D'
       case '30days': return '30D'
       case '90days': return '90D'
+      case '180days': return '6M'
+      case '365days': return '1Y'
+      case 'all': return 'All'
       default: return 'All'
     }
   }

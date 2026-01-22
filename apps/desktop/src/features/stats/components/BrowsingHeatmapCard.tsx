@@ -17,6 +17,9 @@ function getPeriodDays(period: Period): number {
     case '7days': return 7
     case '30days': return 30
     case '90days': return 90
+    case '180days': return 180
+    case '365days': return 365
+    case 'all': return 365 // Default to 1 year for "all" view
     default: return 30
   }
 }
