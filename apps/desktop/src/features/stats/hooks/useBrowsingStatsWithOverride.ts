@@ -47,8 +47,9 @@ export function useBrowsingStatsWithOverride(
   const [cardStats, setCardStats] = useState<CardStats>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
-  // showLoading: true for initial load, false for background refresh
+  // showLoading: true for initial load, false for period changes/background refresh
   async function fetchAllCardStats(showLoading = true) {
     if (showLoading) {
       setLoading(true)
@@ -91,8 +92,13 @@ export function useBrowsingStatsWithOverride(
   useEffect(() => {
     if (!userId) return
 
-    // Initial fetch with loading indicator
-    fetchAllCardStats(true)
+    // Only show loading on initial load, not on period changes
+    const shouldShowLoading = isInitialLoad
+    fetchAllCardStats(shouldShowLoading)
+    
+    if (isInitialLoad) {
+      setIsInitialLoad(false)
+    }
 
     // Background refresh every 60 seconds (silent, no loading state)
     const interval = setInterval(() => fetchAllCardStats(false), 60000)
