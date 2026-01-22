@@ -6,22 +6,22 @@
 
 /* Custom SVG Icons */
 .boundaries-icon {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   display: inline-block;
   vertical-align: middle;
 }
 
 .boundaries-icon--check {
-  color: var(--accent);
+  color: white;
 }
 
 .boundaries-icon--warning {
-  color: #F5A623;
+  color: white;
 }
 
 .boundaries-icon--alert {
-  color: #E74C3C;
+  color: white;
 }
 
 .boundaries-icon--shield {
@@ -30,24 +30,62 @@
   height: 28px;
 }
 
-
 /* Icon in header */
 .boundaries-view__icon .boundaries-icon {
   width: 28px;
   height: 28px;
 }
 
-/* Icon in protection status */
+/* Icon in protection status - with colored background square */
+.boundaries-view__protection-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
 .boundaries-view__protection-icon .boundaries-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Check icon with green background */
+.boundaries-view__protection-item--ok .boundaries-view__protection-icon {
+  background: linear-gradient(135deg, #7DD8C4 0%, #5BB5A0 100%);
+  box-shadow: 0 3px 10px rgba(125, 216, 196, 0.35);
+}
+
+/* Warning icon with yellow/orange background */
+.boundaries-view__protection-item--warning .boundaries-view__protection-icon {
+  background: linear-gradient(135deg, #FFD93D 0%, #F5A623 100%);
+  box-shadow: 0 3px 10px rgba(245, 166, 35, 0.35);
+}
+
+/* Critical icon with red background */
+.boundaries-view__protection-item--critical .boundaries-view__protection-icon {
+  background: linear-gradient(135deg, #FF8A65 0%, #E74C3C 100%);
+  box-shadow: 0 3px 10px rgba(231, 76, 60, 0.35);
 }
 
 /* Icon in empty state */
+.boundaries-view__empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(125, 216, 196, 0.15) 0%, rgba(91, 181, 160, 0.1) 100%);
+  margin: 0 auto var(--space-md);
+}
+
 .boundaries-view__empty-icon .boundaries-icon {
-  width: 48px;
-  height: 48px;
-  opacity: 0.8;
+  width: 40px;
+  height: 40px;
+  color: var(--accent);
 }
 
 .boundaries-view__loading {
