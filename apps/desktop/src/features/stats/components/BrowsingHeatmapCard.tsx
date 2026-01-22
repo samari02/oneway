@@ -48,35 +48,54 @@ export function BrowsingHeatmapCard({ dailyScores, period, defaultPeriod, onPeri
     scoreMap.set(day.date, day.score)
   })
 
-  // Generate exactly periodDays days, ending at today
+  // Generate days: past days with data + future days (outline)
   const today = new Date()
   today.setHours(12, 0, 0, 0)
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   
-  const days: { date: string; score: number; dayOfWeek: number }[] = []
+  // Calculate how many future days to show (complete current week + rest of month)
+  const todayDayOfWeek = today.getDay() // 0 = Sunday
+  const daysUntilEndOfWeek = todayDayOfWeek === 0 ? 0 : 7 - todayDayOfWeek
+  const futureDays = daysUntilEndOfWeek + 7 // Complete week + one more week
   
+  const days: { date: string; score: number; dayOfWeek: number; isFuture?: boolean }[] = []
+  
+  // Past days (including today)
   for (let i = periodDays - 1; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(today.getDate() - i)
-    // Use local date to match user's timezone
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
     const dateStr = `${year}-${month}-${day}`
     const score = scoreMap.get(dateStr) ?? 0
-    const dayOfWeek = date.getDay() // 0 = Sunday
-    days.push({ date: dateStr, score, dayOfWeek })
+    const dayOfWeek = date.getDay()
+    days.push({ date: dateStr, score, dayOfWeek, isFuture: false })
+  }
+  
+  // Future days (after today)
+  for (let i = 1; i <= futureDays; i++) {
+    const date = new Date(today)
+    date.setDate(today.getDate() + i)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
+    const dayOfWeek = date.getDay()
+    days.push({ date: dateStr, score: 0, dayOfWeek, isFuture: true })
   }
 
   // Group into weeks (each week is Mon-Sun)
   // A week column contains 7 cells, some may be empty at start/end
-  const numWeeks = Math.ceil(periodDays / 7) + 1
-  const weeks: { date: string; score: number; isEmpty?: boolean }[][] = []
+  const totalDays = periodDays + futureDays
+  const numWeeks = Math.ceil(totalDays / 7) + 1
+  const weeks: { date: string; score: number; isEmpty?: boolean; isFuture?: boolean; isToday?: boolean }[][] = []
   
   // Start from first day, figure out which week column it belongs to
   let dayIndex = 0
   
   for (let week = 0; week < numWeeks && dayIndex < days.length; week++) {
-    const weekDays: { date: string; score: number; isEmpty?: boolean }[] = []
+    const weekDays: { date: string; score: number; isEmpty?: boolean; isFuture?: boolean; isToday?: boolean }[] = []
     
     // For first week, add empty cells before the first day
     if (week === 0) {
@@ -91,7 +110,12 @@ export function BrowsingHeatmapCard({ dailyScores, period, defaultPeriod, onPeri
     // Add actual days
     while (weekDays.length < 7 && dayIndex < days.length) {
       const day = days[dayIndex]
-      weekDays.push({ date: day.date, score: day.score })
+      weekDays.push({ 
+        date: day.date, 
+        score: day.score, 
+        isFuture: day.isFuture,
+        isToday: day.date === todayStr
+      })
       dayIndex++
     }
     
@@ -172,14 +196,23 @@ export function BrowsingHeatmapCard({ dailyScores, period, defaultPeriod, onPeri
                   className={`browsing-heatmap-card__square ${
                     day.isEmpty 
                       ? 'browsing-heatmap-card__square--empty' 
-                      : `browsing-heatmap-card__square--level-${getScoreLevel(day.score)}`
-                  }`}
+                      : day.isFuture
+                        ? 'browsing-heatmap-card__square--future'
+                        : `browsing-heatmap-card__square--level-${getScoreLevel(day.score)}`
+                  } ${day.isToday ? 'browsing-heatmap-card__square--today' : ''}`}
                 >
-                  {!day.isEmpty && day.date && (
+                  {!day.isEmpty && day.date && !day.isFuture && (
                     <div className="browsing-heatmap-card__tooltip">
                       <span className="browsing-heatmap-card__tooltip-day">{getDayName(day.date)}</span>
                       <span className="browsing-heatmap-card__tooltip-date">{formatDate(day.date)}</span>
                       <span className="browsing-heatmap-card__tooltip-score">{day.score}%</span>
+                    </div>
+                  )}
+                  {day.isFuture && day.date && (
+                    <div className="browsing-heatmap-card__tooltip">
+                      <span className="browsing-heatmap-card__tooltip-day">{getDayName(day.date)}</span>
+                      <span className="browsing-heatmap-card__tooltip-date">{formatDate(day.date)}</span>
+                      <span className="browsing-heatmap-card__tooltip-score">Upcoming</span>
                     </div>
                   )}
                 </div>

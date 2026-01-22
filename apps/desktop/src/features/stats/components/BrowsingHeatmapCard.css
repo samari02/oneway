@@ -126,14 +126,19 @@
 
 /* Future days - dashed outline */
 .browsing-heatmap-card__square--future {
-  background: rgba(125, 216, 196, 0.05);
-  border: 1.5px dashed var(--text-muted);
-  opacity: 0.5;
-  cursor: default;
+  background: transparent;
+  border: 1.5px dashed var(--border-light);
+  opacity: 0.4;
 }
 
 .browsing-heatmap-card__square--future:hover {
-  transform: none;
+  opacity: 0.6;
+  transform: scale(1.1);
+}
+
+/* Today indicator - subtle ring */
+.browsing-heatmap-card__square--today {
+  box-shadow: 0 0 0 2px var(--bg-elevated), 0 0 0 4px var(--accent);
 }
 
 /* 0% score - empty with subtle border */
