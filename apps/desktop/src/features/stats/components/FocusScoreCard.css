@@ -44,12 +44,12 @@
 .focus-score-card__mascot {
   position: relative;
   z-index: 1;
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-sm);
 }
 
-/* Scale down the mascot slightly to fit better in card */
+/* Scale up the mascot for more presence */
 .focus-score-card__mascot .mascot {
-  transform: scale(0.85);
+  transform: scale(1.1);
   transform-origin: center bottom;
 }
 

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useAuth } from '../../auth'
 import { useStats } from '../hooks/useStats'
 import { StreakCard } from './StreakCard'
@@ -12,13 +12,36 @@ import './StatsView.css'
 
 type TabType = 'habits' | 'browsing'
 
+// Storage keys for persistence
+const STORAGE_KEYS = {
+  TAB: 'stats_active_tab',
+  PERIOD: 'stats_selected_period',
+}
+
 export function StatsView() {
-  const [activeTab, setActiveTab] = useState<TabType>('browsing') // Default to browsing
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('today')
+  // Load persisted values from localStorage
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.TAB)
+    return (saved as TabType) || 'browsing'
+  })
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.PERIOD)
+    return (saved as Period) || 'today'
+  })
   const [resetCounter, setResetCounter] = useState(0) // Increments on every global period click
   const [isHeaderMinimized, setIsHeaderMinimized] = useState(false)
   const { user } = useAuth()
   const { stats, loading, error } = useStats(user?.id)
+  
+  // Persist tab changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.TAB, activeTab)
+  }, [activeTab])
+  
+  // Persist period changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.PERIOD, selectedPeriod)
+  }, [selectedPeriod])
   
   // Track scroll to minimize header
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
