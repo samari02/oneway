@@ -90,24 +90,27 @@
   animation: fadeSlideIn 0.4s ease-out backwards;
 }
 
-.browsing-view__section--hero {
+.browsing-view__section--mascot-hero {
   animation-delay: 0ms;
+  display: flex;
+  justify-content: center;
+  padding-bottom: var(--space-sm);
+}
+
+.browsing-view__section--hero {
+  animation-delay: 50ms;
 }
 
 .browsing-view__section--heatmap {
-  animation-delay: 100ms;
+  animation-delay: 150ms;
 }
 
 .browsing-view__section--sites {
-  animation-delay: 200ms;
+  animation-delay: 250ms;
 }
 
 .browsing-view__section--source {
-  animation-delay: 300ms;
-}
-
-.browsing-view__section--mascot {
-  animation-delay: 400ms;
+  animation-delay: 350ms;
 }
 
 @keyframes fadeSlideIn {

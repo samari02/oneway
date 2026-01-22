@@ -154,6 +154,15 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
   return (
     <div className="browsing-view">
       <div className="browsing-view__content">
+        {/* Mascot Message - Now at top */}
+        <section className="browsing-view__section browsing-view__section--mascot-hero">
+          <Mascot 
+            mood={getMascotMood()} 
+            message={getMascotMessage()}
+            size="medium"
+          />
+        </section>
+
         {/* Top Row: Focus Score + Time Distribution */}
         <section className="browsing-view__section browsing-view__section--hero">
           <div className="browsing-view__hero-grid">
@@ -224,15 +233,6 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
             />
           </section>
         )}
-
-        {/* Mascot Message */}
-        <section className="browsing-view__section browsing-view__section--mascot">
-          <Mascot 
-            mood={getMascotMood()} 
-            message={getMascotMessage()}
-            size="medium"
-          />
-        </section>
       </div>
     </div>
   )
