@@ -9,6 +9,36 @@ import { ProtectionAlert } from './ProtectionAlert'
 import type { Boundary } from '@oneway/shared'
 import './BoundariesView.css'
 
+// Custom SVG Icons
+const CheckIcon = () => (
+  <svg className="boundaries-icon boundaries-icon--check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
+
+const WarningIcon = () => (
+  <svg className="boundaries-icon boundaries-icon--warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+)
+
+const AlertIcon = () => (
+  <svg className="boundaries-icon boundaries-icon--alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="8" x2="12" y2="12" />
+    <line x1="12" y1="16" x2="12.01" y2="16" />
+  </svg>
+)
+
+const ShieldIcon = () => (
+  <svg className="boundaries-icon boundaries-icon--shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+)
+
+
 interface BoundariesViewProps {
   userId: string
 }
@@ -110,10 +140,10 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
   // Helper to get icon based on alert level
   const getAlertIcon = (level: string | undefined) => {
     switch (level) {
-      case 'ok': return '✅'
-      case 'warning': return '⚠️'
-      case 'critical': return '🚨'
-      default: return '❓'
+      case 'ok': return <CheckIcon />
+      case 'warning': return <WarningIcon />
+      case 'critical': return <AlertIcon />
+      default: return <AlertIcon />
     }
   }
 
@@ -138,7 +168,7 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
       
       <header className="boundaries-view__header">
         <div className="boundaries-view__title">
-          <span className="boundaries-view__icon">🛡️</span>
+          <span className="boundaries-view__icon"><ShieldIcon /></span>
           <h1>Boundaries</h1>
         </div>
         <button 
@@ -179,7 +209,7 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
           {/* Incognito Mode */}
           <div className={`boundaries-view__protection-item ${extensionStatus?.incognitoEnabled ? 'boundaries-view__protection-item--ok' : 'boundaries-view__protection-item--warning'}`}>
             <span className="boundaries-view__protection-icon">
-              {extensionStatus?.incognitoEnabled ? '✅' : '⚠️'}
+              {extensionStatus?.incognitoEnabled ? <CheckIcon /> : <WarningIcon />}
             </span>
             <div className="boundaries-view__protection-info">
               <span className="boundaries-view__protection-label">Incognito</span>
@@ -199,7 +229,7 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
 
           {/* SafeSearch */}
           <div className="boundaries-view__protection-item boundaries-view__protection-item--ok">
-            <span className="boundaries-view__protection-icon">✅</span>
+            <span className="boundaries-view__protection-icon"><CheckIcon /></span>
             <div className="boundaries-view__protection-info">
               <span className="boundaries-view__protection-label">SafeSearch</span>
               <span className="boundaries-view__protection-value">Enforced</span>
@@ -209,7 +239,7 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
 
           {/* Search Filter */}
           <div className="boundaries-view__protection-item boundaries-view__protection-item--ok">
-            <span className="boundaries-view__protection-icon">✅</span>
+            <span className="boundaries-view__protection-icon"><CheckIcon /></span>
             <div className="boundaries-view__protection-info">
               <span className="boundaries-view__protection-label">Search Filter</span>
               <span className="boundaries-view__protection-value">Active</span>
@@ -358,7 +388,7 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
       {/* Empty State */}
       {boundaries.length === 0 && (
         <div className="boundaries-view__empty">
-          <span className="boundaries-view__empty-icon">🛡️</span>
+          <span className="boundaries-view__empty-icon"><ShieldIcon /></span>
           <h3>No boundaries yet</h3>
           <p>Create rules to block distracting sites and stay focused.</p>
           <button 

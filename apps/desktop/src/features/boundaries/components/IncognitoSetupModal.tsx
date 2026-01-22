@@ -1,5 +1,22 @@
 import './IncognitoSetupModal.css'
 
+// Custom Lock Icon
+const LockIcon = () => (
+  <svg className="incognito-setup-modal__svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+)
+
+// Lightbulb Icon
+const LightbulbIcon = () => (
+  <svg className="incognito-setup-modal__svg-icon incognito-setup-modal__svg-icon--small" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="9" y1="18" x2="15" y2="18" />
+    <line x1="10" y1="22" x2="14" y2="22" />
+    <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+  </svg>
+)
+
 interface IncognitoSetupModalProps {
   onClose: () => void
 }
@@ -15,7 +32,7 @@ export function IncognitoSetupModal({ onClose }: IncognitoSetupModalProps) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="incognito-setup-modal" onClick={e => e.stopPropagation()}>
         <header className="incognito-setup-modal__header">
-          <span className="incognito-setup-modal__icon">🔒</span>
+          <span className="incognito-setup-modal__icon"><LockIcon /></span>
           <h2>Enable Protection in Incognito</h2>
         </header>
 
@@ -60,7 +77,7 @@ export function IncognitoSetupModal({ onClose }: IncognitoSetupModalProps) {
           </div>
 
           <div className="incognito-setup-modal__note">
-            <span className="incognito-setup-modal__note-icon">💡</span>
+            <span className="incognito-setup-modal__note-icon"><LightbulbIcon /></span>
             <p>
               Once enabled, Clarity will block sites and track your browsing 
               in incognito mode too. Your protection will be complete.

@@ -75,6 +75,39 @@
 .protection-alert__icon {
   font-size: 20px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* SVG Icons */
+.protection-alert__svg-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.protection-alert__svg-icon--warning {
+  color: #F5A623;
+}
+
+.protection-alert__svg-icon--alert {
+  color: #E74C3C;
+}
+
+.protection-alert--warning .protection-alert__svg-icon--warning {
+  color: #e65100;
+}
+
+[data-theme="dark"] .protection-alert--warning .protection-alert__svg-icon--warning {
+  color: #ffcc80;
+}
+
+.protection-alert--critical .protection-alert__svg-icon--alert {
+  color: #c62828;
+}
+
+[data-theme="dark"] .protection-alert--critical .protection-alert__svg-icon--alert {
+  color: #ef9a9a;
 }
 
 .protection-alert__text {

@@ -16,6 +16,20 @@
 
 .incognito-setup-modal__icon {
   font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.incognito-setup-modal__svg-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--accent);
+}
+
+.incognito-setup-modal__svg-icon--small {
+  width: 20px;
+  height: 20px;
 }
 
 .incognito-setup-modal__header h2 {
