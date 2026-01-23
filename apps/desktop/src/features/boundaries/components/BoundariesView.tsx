@@ -233,15 +233,17 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
         <div className="boundaries-view__health-header">
           <h2 className="boundaries-view__section-title">System Health</h2>
           <div className="boundaries-view__health-gauge">
-            <div 
-              className={`boundaries-view__health-bar ${
-                systemHealthPercent === 100 ? 'boundaries-view__health-bar--full' : 
-                systemHealthPercent >= 75 ? 'boundaries-view__health-bar--good' : 
-                'boundaries-view__health-bar--warning'
-              }`}
-              style={{ width: `${systemHealthPercent}%` }}
-            />
             <span className="boundaries-view__health-percent">{systemHealthPercent}%</span>
+            <div className="boundaries-view__health-bar-container">
+              <div 
+                className={`boundaries-view__health-bar ${
+                  systemHealthPercent === 100 ? 'boundaries-view__health-bar--full' : 
+                  systemHealthPercent >= 75 ? 'boundaries-view__health-bar--good' : 
+                  'boundaries-view__health-bar--warning'
+                }`}
+                style={{ width: `${systemHealthPercent}%` }}
+              />
+            </div>
           </div>
         </div>
         <div className="boundaries-view__protection-grid">
