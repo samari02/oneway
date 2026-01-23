@@ -38,6 +38,33 @@ const ShieldIcon = () => (
   </svg>
 )
 
+const InfoIcon = () => (
+  <svg className="boundaries-icon boundaries-icon--info" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </svg>
+)
+
+// Search engines with SafeSearch enforced
+const SAFESEARCH_ENGINES = [
+  'Google',
+  'Bing', 
+  'DuckDuckGo',
+  'Yahoo',
+  'Ecosia',
+  'Qwant',
+  'Brave Search',
+  'YouTube',
+]
+
+// What Search Filter catches
+const SEARCH_FILTER_INFO = [
+  'Explicit search terms',
+  'Suspicious keyword combinations',
+  'Evasion patterns (misspellings, symbols)',
+  'Behavioral patterns (frantic searching)',
+]
 
 interface BoundariesViewProps {
   userId: string
@@ -50,6 +77,8 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingBoundary, setEditingBoundary] = useState<Boundary | null>(null)
   const [showIncognitoSetup, setShowIncognitoSetup] = useState(false)
+  const [showSafeSearchInfo, setShowSafeSearchInfo] = useState(false)
+  const [showSearchFilterInfo, setShowSearchFilterInfo] = useState(false)
 
   const activeBoundaries = boundaries.filter(b => b.is_active)
   const inactiveBoundaries = boundaries.filter(b => !b.is_active)
@@ -239,8 +268,27 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
             <div className="boundaries-view__protection-info">
               <span className="boundaries-view__protection-label">SafeSearch</span>
               <span className="boundaries-view__protection-value">Enforced</span>
-              <span className="boundaries-view__protection-detail">8 search engines</span>
+              <span className="boundaries-view__protection-detail">{SAFESEARCH_ENGINES.length} search engines</span>
             </div>
+            <button 
+              className="boundaries-view__info-btn"
+              onClick={() => setShowSafeSearchInfo(!showSafeSearchInfo)}
+              title="View covered search engines"
+            >
+              <InfoIcon />
+            </button>
+            {showSafeSearchInfo && (
+              <div className="boundaries-view__info-popup">
+                <div className="boundaries-view__info-popup-header">
+                  SafeSearch enforced on:
+                </div>
+                <ul className="boundaries-view__info-popup-list">
+                  {SAFESEARCH_ENGINES.map(engine => (
+                    <li key={engine}>{engine}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* Search Filter */}
@@ -249,12 +297,32 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
             <div className="boundaries-view__protection-info">
               <span className="boundaries-view__protection-label">Search Filter</span>
               <span className="boundaries-view__protection-value">Active</span>
-              {extensionStatus?.blockedSearchesToday !== undefined && extensionStatus.blockedSearchesToday > 0 && (
-                <span className="boundaries-view__protection-detail">
-                  {extensionStatus.blockedSearchesToday} blocked today
-                </span>
-              )}
+              <span className="boundaries-view__protection-detail">
+                {extensionStatus?.blockedSearchesToday && extensionStatus.blockedSearchesToday > 0
+                  ? `${extensionStatus.blockedSearchesToday} blocked today`
+                  : 'Intelligent filtering'
+                }
+              </span>
             </div>
+            <button 
+              className="boundaries-view__info-btn"
+              onClick={() => setShowSearchFilterInfo(!showSearchFilterInfo)}
+              title="View filter details"
+            >
+              <InfoIcon />
+            </button>
+            {showSearchFilterInfo && (
+              <div className="boundaries-view__info-popup">
+                <div className="boundaries-view__info-popup-header">
+                  Detects and blocks:
+                </div>
+                <ul className="boundaries-view__info-popup-list">
+                  {SEARCH_FILTER_INFO.map(item => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </section>
