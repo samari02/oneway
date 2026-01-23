@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useBoundaries } from '../hooks/useBoundaries'
 import { useBoundaryActions } from '../hooks/useBoundaryActions'
 import { useExtensionStatus } from '../hooks/useExtensionStatus'
@@ -79,6 +79,26 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
   const [showIncognitoSetup, setShowIncognitoSetup] = useState(false)
   const [showSafeSearchInfo, setShowSafeSearchInfo] = useState(false)
   const [showSearchFilterInfo, setShowSearchFilterInfo] = useState(false)
+  
+  const safeSearchRef = useRef<HTMLDivElement>(null)
+  const searchFilterRef = useRef<HTMLDivElement>(null)
+  
+  // Close popups when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (safeSearchRef.current && !safeSearchRef.current.contains(e.target as Node)) {
+        setShowSafeSearchInfo(false)
+      }
+      if (searchFilterRef.current && !searchFilterRef.current.contains(e.target as Node)) {
+        setShowSearchFilterInfo(false)
+      }
+    }
+    
+    if (showSafeSearchInfo || showSearchFilterInfo) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showSafeSearchInfo, showSearchFilterInfo])
 
   const activeBoundaries = boundaries.filter(b => b.is_active)
   const inactiveBoundaries = boundaries.filter(b => !b.is_active)
@@ -263,7 +283,7 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
           </div>
 
           {/* SafeSearch */}
-          <div className="boundaries-view__protection-item boundaries-view__protection-item--ok">
+          <div ref={safeSearchRef} className="boundaries-view__protection-item boundaries-view__protection-item--ok">
             <span className="boundaries-view__protection-icon"><CheckIcon /></span>
             <div className="boundaries-view__protection-info">
               <span className="boundaries-view__protection-label">SafeSearch</span>
@@ -292,7 +312,7 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
           </div>
 
           {/* Search Filter */}
-          <div className="boundaries-view__protection-item boundaries-view__protection-item--ok">
+          <div ref={searchFilterRef} className="boundaries-view__protection-item boundaries-view__protection-item--ok">
             <span className="boundaries-view__protection-icon"><CheckIcon /></span>
             <div className="boundaries-view__protection-info">
               <span className="boundaries-view__protection-label">Search Filter</span>
