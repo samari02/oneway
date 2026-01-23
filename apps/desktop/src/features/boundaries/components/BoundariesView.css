@@ -54,17 +54,17 @@
 
 /* Check icon with green background */
 .boundaries-view__protection-item--ok .boundaries-view__protection-icon {
-  background: var(--accent);
+  background: #22C55E;
 }
 
 /* Warning icon with yellow/orange background */
 .boundaries-view__protection-item--warning .boundaries-view__protection-icon {
-  background: #F5A623;
+  background: #F59E0B;
 }
 
 /* Critical icon with red background */
 .boundaries-view__protection-item--critical .boundaries-view__protection-icon {
-  background: #E74C3C;
+  background: #EF4444;
 }
 
 /* Icon in empty state */
