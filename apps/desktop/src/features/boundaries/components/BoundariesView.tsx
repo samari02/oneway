@@ -173,10 +173,16 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
 
   // Calculate total stats
   const totalBlocks = stats.reduce((sum, s) => sum + s.blocks_today, 0)
-  const totalBypasses = stats.reduce((sum, s) => sum + s.bypasses_this_week, 0)
-  const avgRespectRate = stats.length > 0
-    ? Math.round(stats.reduce((sum, s) => sum + s.respect_rate, 0) / stats.length)
-    : 100
+
+  // Calculate System Health percentage (4 checks)
+  const systemHealthChecks = [
+    extensionStatus?.alertLevel === 'ok',  // Extension connected
+    extensionStatus?.incognitoEnabled,      // Incognito protected
+    true,                                    // SafeSearch (always on)
+    true,                                    // Search Filter (always on)
+  ]
+  const healthyChecks = systemHealthChecks.filter(Boolean).length
+  const systemHealthPercent = Math.round((healthyChecks / 4) * 100)
 
   if (loading) {
     return (
@@ -220,17 +226,24 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
           <span className="boundaries-view__icon"><ShieldIcon /></span>
           <h1>Boundaries</h1>
         </div>
-        <button 
-          className="boundaries-view__add-btn"
-          onClick={() => setShowAddModal(true)}
-        >
-          + Add Rule
-        </button>
       </header>
 
-      {/* Protection Status */}
-      <section className="boundaries-view__protection">
-        <h2 className="boundaries-view__section-title">Protection Status</h2>
+      {/* System Health Section */}
+      <section className="boundaries-view__system-health">
+        <div className="boundaries-view__health-header">
+          <h2 className="boundaries-view__section-title">System Health</h2>
+          <div className="boundaries-view__health-gauge">
+            <div 
+              className={`boundaries-view__health-bar ${
+                systemHealthPercent === 100 ? 'boundaries-view__health-bar--full' : 
+                systemHealthPercent >= 75 ? 'boundaries-view__health-bar--good' : 
+                'boundaries-view__health-bar--warning'
+              }`}
+              style={{ width: `${systemHealthPercent}%` }}
+            />
+            <span className="boundaries-view__health-percent">{systemHealthPercent}%</span>
+          </div>
+        </div>
         <div className="boundaries-view__protection-grid">
           {/* Extension Connection */}
           <div className={`boundaries-view__protection-item boundaries-view__protection-item--${extensionStatus?.alertLevel || 'critical'}`}>
@@ -345,30 +358,35 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
             )}
           </div>
         </div>
+        <p className="boundaries-view__health-note">
+          These protections work automatically in the background.
+        </p>
       </section>
 
-      {/* Quick Stats */}
-      <div className="boundaries-view__stats">
-        <div className="boundaries-view__stat-card">
-          <span className="boundaries-view__stat-value">{totalBlocks}</span>
-          <span className="boundaries-view__stat-label">blocks today</span>
+      {/* My Rules Section */}
+      <section className="boundaries-view__my-rules">
+        <div className="boundaries-view__rules-header">
+          <div>
+            <h2 className="boundaries-view__section-title">My Rules</h2>
+            <p className="boundaries-view__rules-subtitle">
+              {activeBoundaries.length} active rule{activeBoundaries.length !== 1 ? 's' : ''}
+              {totalBlocks > 0 && ` • ${totalBlocks} block${totalBlocks !== 1 ? 's' : ''} today`}
+            </p>
+          </div>
+          <button 
+            className="boundaries-view__add-btn"
+            onClick={() => setShowAddModal(true)}
+          >
+            + Add Rule
+          </button>
         </div>
-        <div className="boundaries-view__stat-card">
-          <span className="boundaries-view__stat-value">{totalBypasses}</span>
-          <span className="boundaries-view__stat-label">bypasses this week</span>
-        </div>
-        <div className="boundaries-view__stat-card">
-          <span className="boundaries-view__stat-value">{avgRespectRate}%</span>
-          <span className="boundaries-view__stat-label">respect rate</span>
-        </div>
-      </div>
 
       {/* Active Boundaries */}
       {activeBoundaries.length > 0 && (
-        <section className="boundaries-view__section">
-          <h2 className="boundaries-view__section-title">
-            Active Now ({activeBoundaries.filter(isCurrentlyActive).length})
-          </h2>
+        <div className="boundaries-view__rules-section">
+          <h3 className="boundaries-view__rules-section-title">
+            Active ({activeBoundaries.filter(isCurrentlyActive).length})
+          </h3>
           <div className="boundaries-view__list">
             {activeBoundaries.map(boundary => {
               const boundaryStats = getStatsForBoundary(boundary.id)
@@ -431,15 +449,15 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
               )
             })}
           </div>
-        </section>
+        </div>
       )}
 
       {/* Inactive Boundaries */}
       {inactiveBoundaries.length > 0 && (
-        <section className="boundaries-view__section">
-          <h2 className="boundaries-view__section-title boundaries-view__section-title--muted">
+        <div className="boundaries-view__rules-section">
+          <h3 className="boundaries-view__rules-section-title boundaries-view__rules-section-title--muted">
             Paused ({inactiveBoundaries.length})
-          </h2>
+          </h3>
           <div className="boundaries-view__list">
             {inactiveBoundaries.map(boundary => (
               <div 
@@ -476,23 +494,16 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
               </div>
             ))}
           </div>
-        </section>
-      )}
-
-      {/* Empty State */}
-      {boundaries.length === 0 && (
-        <div className="boundaries-view__empty">
-          <span className="boundaries-view__empty-icon"><ShieldIcon /></span>
-          <h3>No boundaries yet</h3>
-          <p>Create rules to block distracting sites and stay focused.</p>
-          <button 
-            className="boundaries-view__add-btn"
-            onClick={() => setShowAddModal(true)}
-          >
-            + Add your first boundary
-          </button>
         </div>
       )}
+
+      {/* Empty State for Rules */}
+      {boundaries.length === 0 && (
+        <div className="boundaries-view__empty-rules">
+          <p>No rules yet. Add your first rule to start blocking distracting sites.</p>
+        </div>
+      )}
+      </section>
 
       {/* Modals */}
       {showAddModal && (

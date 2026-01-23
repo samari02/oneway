@@ -137,9 +137,133 @@
   transform: translateY(-1px);
 }
 
-/* Protection Status */
-.boundaries-view__protection {
-  margin-bottom: 32px;
+/* System Health Section */
+.boundaries-view__system-health {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.boundaries-view__health-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.boundaries-view__health-header .boundaries-view__section-title {
+  margin: 0;
+}
+
+.boundaries-view__health-gauge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 140px;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.boundaries-view__health-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.boundaries-view__health-bar--full {
+  background: #22C55E;
+}
+
+.boundaries-view__health-bar--good {
+  background: #22C55E;
+}
+
+.boundaries-view__health-bar--warning {
+  background: #F59E0B;
+}
+
+.boundaries-view__health-percent {
+  position: absolute;
+  right: -40px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.boundaries-view__health-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 16px 0 0;
+  text-align: center;
+}
+
+/* My Rules Section */
+.boundaries-view__my-rules {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.boundaries-view__rules-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.boundaries-view__rules-header .boundaries-view__section-title {
+  margin: 0 0 4px 0;
+}
+
+.boundaries-view__rules-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.boundaries-view__rules-section {
+  margin-bottom: 20px;
+}
+
+.boundaries-view__rules-section:last-child {
+  margin-bottom: 0;
+}
+
+.boundaries-view__rules-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px 0;
+}
+
+.boundaries-view__rules-section-title--muted {
+  color: var(--text-muted);
+}
+
+.boundaries-view__empty-rules {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.boundaries-view__empty-rules p {
+  margin: 0;
+}
+
+/* Protection Status Grid */
+.boundaries-view__protection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
 .boundaries-view__protection-grid {
