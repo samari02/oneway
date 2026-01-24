@@ -7,22 +7,35 @@ import { CompletionBar } from './CompletionBar'
 import { HabitStatsCard } from './HabitStatsCard'
 import { Mascot, type MascotMood } from '../../mascot'
 import { BrowsingView } from './BrowsingView'
+import { OverviewTab } from './OverviewTab'
+import { AppsTab } from './AppsTab'
 import { PeriodSelector, type Period } from './PeriodSelector'
 import './StatsView.css'
 
-type TabType = 'habits' | 'browsing'
+// SVG Icon for Screen Time header
+const ScreenTimeIcon = () => (
+  <svg className="stats-view__header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10"/>
+    <line x1="12" y1="20" x2="12" y2="4"/>
+    <line x1="6" y1="20" x2="6" y2="14"/>
+  </svg>
+)
+
+type TabType = 'overview' | 'browsing' | 'apps' | 'habits'
 
 // Storage keys for persistence
 const STORAGE_KEYS = {
-  TAB: 'stats_active_tab',
-  PERIOD: 'stats_selected_period',
+  TAB: 'screen_time_active_tab',
+  PERIOD: 'screen_time_selected_period',
 }
 
 export function StatsView() {
   // Load persisted values from localStorage
   const [activeTab, setActiveTab] = useState<TabType>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.TAB)
-    return (saved as TabType) || 'browsing'
+    // Migrate old values
+    if (saved === 'browsing') return 'overview'
+    return (saved as TabType) || 'overview'
   })
   const [selectedPeriod, setSelectedPeriod] = useState<Period>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.PERIOD)
@@ -64,44 +77,16 @@ export function StatsView() {
     return 'thinking'
   }
 
-  return (
-    <div className="stats-view">
-      <header className={`stats-view__header ${isHeaderMinimized ? 'stats-view__header--minimized' : ''}`}>
-        <div className="stats-view__title-row">
-          <span className="stats-view__icon">💎</span>
-          <h1>Statistics</h1>
-        </div>
-        <p className="stats-view__subtitle">Track your progress</p>
-        
-        {/* Tabs - Browsing first */}
-        <div className="stats-view__tabs">
-          <button
-            className={`stats-view__tab ${activeTab === 'browsing' ? 'stats-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('browsing')}
-          >
-            <svg className="stats-view__tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-            <span>browsing</span>
-          </button>
-          <button
-            className={`stats-view__tab ${activeTab === 'habits' ? 'stats-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('habits')}
-          >
-            <svg className="stats-view__tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2L12 6M12 18L12 22M4.93 4.93L7.76 7.76M16.24 16.24L19.07 19.07M2 12H6M18 12H22M4.93 19.07L7.76 16.24M16.24 7.76L19.07 4.93"/>
-            </svg>
-            <span>habits</span>
-          </button>
-        </div>
-
-        {/* Period Selector */}
-        <PeriodSelector selected={selectedPeriod} onChange={handleGlobalPeriodChange} />
-      </header>
-
-      <div className="stats-view__tab-content" onScroll={handleScroll}>
-        {activeTab === 'habits' ? (
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return <OverviewTab period={selectedPeriod} resetTrigger={resetCounter} />
+      case 'browsing':
+        return <BrowsingView period={selectedPeriod} resetTrigger={resetCounter} />
+      case 'apps':
+        return <AppsTab period={selectedPeriod} />
+      case 'habits':
+        return (
           <HabitsContent 
             stats={stats} 
             loading={loading} 
@@ -109,9 +94,54 @@ export function StatsView() {
             mascotMood={getMascotMood()}
             period={selectedPeriod}
           />
-        ) : (
-          <BrowsingView period={selectedPeriod} resetTrigger={resetCounter} />
-        )}
+        )
+      default:
+        return null
+    }
+  }
+
+  return (
+    <div className="stats-view">
+      <header className="stats-view__header">
+        <div className="stats-view__title">
+          <span className="stats-view__icon"><ScreenTimeIcon /></span>
+          <h1>Screen Time</h1>
+        </div>
+      </header>
+
+      {/* Controls bar with tabs and period selector */}
+      <div className="stats-view__controls">
+        <div className="stats-view__tabs">
+          <button
+            className={`stats-view__tab ${activeTab === 'overview' ? 'stats-view__tab--active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            <span>Overview</span>
+          </button>
+          <button
+            className={`stats-view__tab ${activeTab === 'browsing' ? 'stats-view__tab--active' : ''}`}
+            onClick={() => setActiveTab('browsing')}
+          >
+            <span>Browsing</span>
+          </button>
+          <button
+            className={`stats-view__tab ${activeTab === 'apps' ? 'stats-view__tab--active' : ''}`}
+            onClick={() => setActiveTab('apps')}
+          >
+            <span>Apps</span>
+          </button>
+          <button
+            className={`stats-view__tab ${activeTab === 'habits' ? 'stats-view__tab--active' : ''}`}
+            onClick={() => setActiveTab('habits')}
+          >
+            <span>Habits</span>
+          </button>
+        </div>
+        <PeriodSelector selected={selectedPeriod} onChange={handleGlobalPeriodChange} />
+      </div>
+
+      <div className="stats-view__tab-content" onScroll={handleScroll}>
+        {renderTabContent()}
       </div>
     </div>
   )

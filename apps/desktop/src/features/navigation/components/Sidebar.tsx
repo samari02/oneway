@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './Sidebar.css'
 
-export type ViewType = 'today' | 'stats' | 'boundaries' | 'apps' | 'settings'
+export type ViewType = 'today' | 'screen-time' | 'boundaries' | 'settings'
 
 // Simple SVG Icons - monochrome, clean
 const Icons = {
@@ -68,9 +68,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'today', icon: Icons.today, label: 'Home' },
-  { id: 'stats', icon: Icons.stats, label: 'Stats' },
+  { id: 'screen-time', icon: Icons.stats, label: 'Screen Time' },
   { id: 'boundaries', icon: Icons.boundaries, label: 'Boundaries' },
-  { id: 'apps', icon: Icons.apps, label: 'Apps' },
   { id: 'settings', icon: Icons.settings, label: 'Settings' },
 ]
 

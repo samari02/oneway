@@ -5,36 +5,52 @@
   overflow: hidden;
 }
 
+/* Header - matches Boundaries style */
 .stats-view__header {
   flex-shrink: 0;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: var(--space-lg) var(--space-lg) var(--space-md) var(--space-lg);
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-light);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Minimized header on scroll */
-.stats-view__header--minimized {
+.stats-view__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stats-view__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stats-view__header-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--accent);
+}
+
+.stats-view__header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Controls bar with tabs and period selector */
+.stats-view__controls {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: var(--space-sm) var(--space-lg);
-}
-
-.stats-view__header--minimized .stats-view__title-row {
-  transform: scale(0.8);
-  margin-bottom: 0;
-}
-
-.stats-view__header--minimized .stats-view__icon {
-  font-size: 20px;
-}
-
-.stats-view__header--minimized h1 {
-  font-size: 20px;
-}
-
-.stats-view__header--minimized .stats-view__tabs {
-  margin-top: var(--space-xs);
-  margin-bottom: var(--space-xs);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
+  gap: var(--space-md);
 }
 
 .stats-view__tab-content {
@@ -43,64 +59,13 @@
   overflow-x: hidden;
 }
 
-.stats-view__title-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-xs);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.stats-view__icon {
-  font-size: 28px;
-  animation: iconFloat 3s ease-in-out infinite;
-  transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes iconFloat {
-  0%, 100% {
-    transform: translateY(0) rotate(-5deg);
-  }
-  50% {
-    transform: translateY(-3px) rotate(5deg);
-  }
-}
-
-.stats-view__header h1 {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.stats-view__subtitle {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin: 0 0 var(--space-lg) 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  max-height: 30px;
-}
-
-.stats-view__header--minimized .stats-view__subtitle {
-  max-height: 0;
-  margin: 0;
-  opacity: 0;
-}
-
 /* Tabs */
 .stats-view__tabs {
   display: flex;
-  justify-content: center;
   gap: var(--space-xs);
   background: var(--bg-tertiary);
   padding: 4px;
   border-radius: var(--radius-lg);
-  max-width: 280px;
-  margin: 0 auto;
 }
 
 .stats-view__tab {

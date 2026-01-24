@@ -9,9 +9,10 @@ interface FocusScoreCardProps {
   period?: Period
   defaultPeriod: Period
   onPeriodChange?: (period: Period | null) => void
+  compact?: boolean
 }
 
-export function FocusScoreCard({ score, trend, period, defaultPeriod, onPeriodChange }: FocusScoreCardProps) {
+export function FocusScoreCard({ score, trend, period, defaultPeriod, onPeriodChange, compact = false }: FocusScoreCardProps) {
   const getTrendIcon = () => {
     switch (trend) {
       case 'up': return '↑'
@@ -63,17 +64,19 @@ export function FocusScoreCard({ score, trend, period, defaultPeriod, onPeriodCh
   }
 
   return (
-    <div className="focus-score-card">
-      {onPeriodChange && (
+    <div className={`focus-score-card ${compact ? 'focus-score-card--compact' : ''}`}>
+      {onPeriodChange && !compact && (
         <CardPeriodMenu
           currentPeriod={period}
           defaultPeriod={defaultPeriod}
           onPeriodChange={onPeriodChange}
         />
       )}
-      <div className="focus-score-card__mascot">
-        <Mascot mood={getMascotMood()} size="small" showMessage={false} />
-      </div>
+      {!compact && (
+        <div className="focus-score-card__mascot">
+          <Mascot mood={getMascotMood()} size="small" showMessage={false} />
+        </div>
+      )}
       <div className="focus-score-card__content">
         <div className={`focus-score-card__score focus-score-card__score--${getScoreColor()}`}>
           {score}
@@ -88,9 +91,11 @@ export function FocusScoreCard({ score, trend, period, defaultPeriod, onPeriodCh
           <span className="focus-score-card__trend-icon">{getTrendIcon()}</span>
           <span className="focus-score-card__trend-label">{getTrendLabel()}</span>
         </div>
-        <div className="focus-score-card__explanation">
-          {getMascotMessage()}
-        </div>
+        {!compact && (
+          <div className="focus-score-card__explanation">
+            {getMascotMessage()}
+          </div>
+        )}
       </div>
     </div>
   )

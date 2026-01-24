@@ -145,3 +145,26 @@
   font-weight: 600;
   margin-left: var(--space-xs);
 }
+
+/* Compact variant */
+.focus-score-card--compact {
+  padding: var(--space-lg);
+}
+
+.focus-score-card--compact::before {
+  width: 100px;
+  height: 100px;
+}
+
+.focus-score-card--compact .focus-score-card__score {
+  font-size: 36px;
+}
+
+.focus-score-card--compact .focus-score-card__label {
+  font-size: 14px;
+}
+
+.focus-score-card--compact .focus-score-card__trend {
+  font-size: 11px;
+  padding: 4px var(--space-xs);
+}
