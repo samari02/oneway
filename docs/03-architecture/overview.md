@@ -5,6 +5,16 @@
 
 ---
 
+## Documentation détaillée
+
+| Dossier | Contenu |
+|---------|---------|
+| [desktop/](./desktop/) | Architecture desktop Tauri (app blocking, native APIs) |
+| [extension/](./extension/) | Architecture extension browser (blocking, native messaging) |
+| [data/](./data/) | Architecture données (Supabase, storage, sync) |
+
+---
+
 ## Table des matières
 
 1. [Stack Overview](#stack-overview)

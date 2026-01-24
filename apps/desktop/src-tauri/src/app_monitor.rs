@@ -6,13 +6,54 @@
 //! Note: Uses shell commands for simplicity and robustness.
 //! Can be upgraded to native NSWorkspace bindings later for better performance.
 
+use std::collections::HashMap;
+use std::fs;
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 use std::path::PathBuf;
+use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
 
 use crate::app_data;
+
+/// Icon cache stored in ~/.clarity/icon-cache.json
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+struct IconCache {
+    /// bundle_id -> base64 PNG data URL
+    icons: HashMap<String, String>,
+}
+
+static ICON_CACHE: Lazy<Mutex<IconCache>> = Lazy::new(|| {
+    Mutex::new(load_icon_cache())
+});
+
+fn get_icon_cache_path() -> PathBuf {
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    home.join(".clarity").join("icon-cache.json")
+}
+
+fn load_icon_cache() -> IconCache {
+    let path = get_icon_cache_path();
+    if let Ok(contents) = fs::read_to_string(&path) {
+        if let Ok(cache) = serde_json::from_str(&contents) {
+            return cache;
+        }
+    }
+    IconCache::default()
+}
+
+fn save_icon_cache(cache: &IconCache) {
+    let path = get_icon_cache_path();
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    if let Ok(json) = serde_json::to_string_pretty(cache) {
+        let _ = fs::write(&path, json);
+    }
+}
 
 /// Global flag to control monitoring
 static MONITORING_ACTIVE: AtomicBool = AtomicBool::new(false);
@@ -314,13 +355,21 @@ pub fn get_app_info(bundle_id: &str) -> Option<(String, String, Option<String>)>
     Some((bundle_id.to_string(), app_name, icon_path))
 }
 
-/// Get app icon as base64 PNG
+/// Get app icon as base64 PNG (with persistent cache)
 /// Returns a data URL that can be used directly in img src
 #[cfg(target_os = "macos")]
 pub fn get_app_icon_base64(bundle_id: &str) -> Option<String> {
-    use std::fs;
     use std::io::Read;
     
+    // Check cache first
+    {
+        let cache = ICON_CACHE.lock().ok()?;
+        if let Some(icon) = cache.icons.get(bundle_id) {
+            return Some(icon.clone());
+        }
+    }
+    
+    // Not in cache, fetch it
     let icon_path = get_app_icon_path(bundle_id)?;
     
     // Create temp file for the PNG output
@@ -355,8 +404,16 @@ pub fn get_app_icon_base64(bundle_id: &str) -> Option<String> {
     // Encode as base64 data URL
     use base64::{Engine as _, engine::general_purpose::STANDARD};
     let base64_data = STANDARD.encode(&buffer);
+    let data_url = format!("data:image/png;base64,{}", base64_data);
     
-    Some(format!("data:image/png;base64,{}", base64_data))
+    // Save to cache
+    {
+        let mut cache = ICON_CACHE.lock().ok()?;
+        cache.icons.insert(bundle_id.to_string(), data_url.clone());
+        save_icon_cache(&cache);
+    }
+    
+    Some(data_url)
 }
 
 // Stub implementations for non-macOS platforms
