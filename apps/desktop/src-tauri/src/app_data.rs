@@ -216,13 +216,18 @@ pub fn app_deactivated(bundle_id: &str) {
 
 /// Add a completed session to daily usage
 fn add_to_daily_usage(data: &mut AppUsageData, session: AppSession) {
-    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+    // Use session START date, not current date
+    // This fixes the bug where overnight sessions are attributed to the wrong day
+    let session_date = chrono::DateTime::from_timestamp_millis(session.start_time)
+        .map(|dt| dt.with_timezone(&chrono::Local).format("%Y-%m-%d").to_string())
+        .unwrap_or_else(|| chrono::Local::now().format("%Y-%m-%d").to_string());
+    
     let duration = session.duration_ms.unwrap_or(0);
     
-    // Find or create today's entry
+    // Find or create the session's day entry
     let daily = data.daily_usage
         .iter_mut()
-        .find(|d| d.date == today);
+        .find(|d| d.date == session_date);
     
     if let Some(daily) = daily {
         // Update existing day
@@ -237,7 +242,7 @@ fn add_to_daily_usage(data: &mut AppUsageData, session: AppSession) {
         app_names.insert(session.bundle_id, session.app_name);
         
         data.daily_usage.push(DailyAppUsage {
-            date: today,
+            date: session_date,
             usage_by_app,
             app_names,
         });
@@ -287,12 +292,29 @@ pub fn get_app_usage_stats(period_days: Option<i32>) -> AppUsageStats {
         }
     }
     
-    // Include current session if within period
+    // Include current session only if it's within the requested period
     if let Some(ref session) = data.current_session {
-        let now = chrono::Utc::now().timestamp_millis();
-        let current_duration = now - session.start_time;
-        *usage_totals.entry(session.bundle_id.clone()).or_insert(0) += current_duration;
-        app_names.insert(session.bundle_id.clone(), session.app_name.clone());
+        let session_date = chrono::DateTime::from_timestamp_millis(session.start_time)
+            .map(|dt| dt.with_timezone(&chrono::Local).format("%Y-%m-%d").to_string())
+            .unwrap_or_default();
+        
+        // Check if session is within the requested period
+        let include_session = if cutoff_date.is_empty() {
+            true // All time - include everything
+        } else if period_days == Some(0) {
+            // Today only - session must have started today
+            session_date == cutoff_date
+        } else {
+            // N days - session must be >= cutoff
+            session_date >= cutoff_date
+        };
+        
+        if include_session {
+            let now = chrono::Utc::now().timestamp_millis();
+            let current_duration = now - session.start_time;
+            *usage_totals.entry(session.bundle_id.clone()).or_insert(0) += current_duration;
+            app_names.insert(session.bundle_id.clone(), session.app_name.clone());
+        }
     }
     
     let total_time_ms: i64 = usage_totals.values().sum();
