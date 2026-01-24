@@ -7,6 +7,7 @@ import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
 import { BoundariesView, ProtectionAlert, useExtensionStatus } from '@/features/boundaries'
+import { AppBlockingView } from '@/features/app-blocking'
 import { Mascot, type MascotMood } from '@/features/mascot'
 import { AICompanion } from '@/features/ai-companion'
 import { GoalsBar, useGoals } from '@/features/goals'
@@ -389,6 +390,8 @@ function Dashboard() {
         return <StatsView />
       case 'boundaries':
         return user ? <BoundariesView userId={user.id} /> : null
+      case 'apps':
+        return <AppBlockingView />
       case 'settings':
         return <SettingsView />
       default:

@@ -118,7 +118,7 @@
 
 .settings-button--danger {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--color-danger);
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
@@ -179,7 +179,7 @@
 /* Combined small + danger */
 .settings-button--small.settings-button--danger {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--color-danger);
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 

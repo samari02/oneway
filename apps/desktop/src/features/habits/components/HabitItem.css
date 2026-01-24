@@ -234,7 +234,7 @@
 }
 
 .habit-item__dropdown-danger {
-  color: #ef4444 !important;
+  color: var(--color-danger) !important;
 }
 
 .habit-item__dropdown-danger:hover {

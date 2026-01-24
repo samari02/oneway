@@ -1,7 +1,26 @@
+/* Page container - full height with flex layout */
 .boundaries-view {
-  padding: var(--space-lg);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Scrollable content area */
+.boundaries-view__scrollable {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Centered content inside scrollable */
+.boundaries-view__content {
   max-width: 1000px;
   margin: 0 auto;
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
 }
 
 /* Custom SVG Icons */
@@ -68,7 +87,7 @@
 
 /* Critical icon with red background */
 .boundaries-view__protection-item--critical .boundaries-view__protection-icon {
-  background: #EF4444;
+  background: var(--color-danger);
 }
 
 /* Icon in empty state */
@@ -92,15 +111,18 @@
 .boundaries-view__loading {
   color: var(--text-secondary);
   text-align: center;
-  padding: 48px;
+  padding: var(--space-2xl);
 }
 
-/* Header */
+/* Header - sticky at top */
 .boundaries-view__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  padding: var(--space-lg) var(--space-lg) var(--space-md) var(--space-lg);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .boundaries-view__title {
@@ -143,7 +165,6 @@
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
-  margin-bottom: var(--space-lg);
   box-shadow: var(--shadow-sm);
 }
 
@@ -300,7 +321,7 @@
 }
 
 .boundaries-view__protection-item--critical {
-  border-left: 3px solid #ef4444;
+  border-left: 3px solid var(--color-danger);
   background: rgba(239, 68, 68, 0.05);
 }
 
@@ -488,7 +509,7 @@
 .boundaries-view__section-title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 12px;

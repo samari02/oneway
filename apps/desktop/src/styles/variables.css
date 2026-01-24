@@ -21,17 +21,27 @@
   /* Text */
   --text-primary: #2D3748;
   --text-secondary: #718096;
+  --text-tertiary: #A0AEC0;
   --text-muted: #8B9DB5;
   --text-nav: #6B7A8F;
+  --text-on-accent: #FFFFFF;
   
   /* Borders */
   --border-light: #E2E8F0;
   --border-default: #CBD5E0;
   
-  /* Semantic */
+  /* Semantic Colors */
   --color-success: #68D391;
   --color-warning: #F6AD55;
   --color-error: #FC8181;
+  --color-danger: #EF4444;
+  
+  /* Card backgrounds (alias for elevated) */
+  --bg-card: var(--bg-elevated);
+  --bg-tertiary: #F1F5F9;
+  
+  /* Accent - Primary brand color (alias) */
+  --accent: var(--color-mint);
   
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -80,14 +90,18 @@
   /* Backgrounds - Deep navy/charcoal */
   --bg-primary: #0F1419;
   --bg-secondary: #1A1F26;
+  --bg-tertiary: #1A1F26;
   --bg-elevated: #242B33;
+  --bg-card: var(--bg-elevated);
   --bg-hover: #2A323C;
   
   /* Text - Softer whites */
   --text-primary: #E7E9EA;
   --text-secondary: #8B98A5;
+  --text-tertiary: #6E7C8A;
   --text-muted: #6E7C8A;
   --text-nav: #8B98A5;
+  --text-on-accent: #FFFFFF;
   
   /* Borders */
   --border-light: #2F3841;
@@ -97,6 +111,9 @@
   --color-mint: #6ECEB5;
   --color-mint-light: #8FDBC9;
   --color-mint-dark: #4FB99D;
+  
+  /* Accent follows mint in dark mode */
+  --accent: var(--color-mint);
   
   /* Shadows - More subtle in dark mode */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);

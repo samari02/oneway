@@ -528,6 +528,110 @@ export function Button({
 
 ---
 
+## Design System & Styling
+
+### Architecture des tokens
+
+```
+src/styles/
+├── variables.css    # Design tokens (couleurs, spacing, typo)
+└── global.css       # Reset, base styles, utilities
+```
+
+### Hiérarchie des tokens
+
+**1. Couleurs de base** (jamais utilisées directement dans les composants)
+```css
+--color-mint: #7DD8C4;
+--color-coral: #FF9B85;
+```
+
+**2. Couleurs sémantiques** (à utiliser dans les composants)
+```css
+/* Text */
+--text-primary      /* Titres, texte important */
+--text-secondary    /* Corps de texte */
+--text-muted        /* Labels, texte tertiaire */
+
+/* Backgrounds */
+--bg-primary        /* Fond de page */
+--bg-elevated       /* Cards, modals */
+--bg-hover          /* États hover */
+
+/* Borders */
+--border-light
+--border-default
+
+/* Semantic */
+--accent            /* Couleur principale (mint) */
+--color-success
+--color-warning
+--color-error
+```
+
+### Règles d'utilisation
+
+| Élément | Variable à utiliser |
+|---------|---------------------|
+| h1, h2 (titres de page) | `--text-primary` |
+| h3, section titles | `--text-primary` |
+| Labels uppercase | `--text-secondary` |
+| Body text | `--text-secondary` |
+| Placeholders, hints | `--text-muted` |
+
+### Typography globale
+
+```css
+/* global.css - styles de base pour headings */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+```
+
+### Dark mode
+
+Les variables sont redéfinies dans `[data-theme="dark"]` :
+```css
+[data-theme="dark"] {
+  --text-primary: #E7E9EA;    /* Blanc cassé */
+  --text-secondary: #8B98A5;  /* Gris clair */
+  --bg-primary: #0F1419;      /* Presque noir */
+  --bg-elevated: #242B33;     /* Gris foncé */
+}
+```
+
+### Best practices
+
+```css
+/* ✅ BON - utilise les tokens sémantiques */
+.card-title {
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+}
+
+/* ❌ MAUVAIS - hardcode des couleurs */
+.card-title {
+  color: #2D3748;
+}
+
+/* ❌ MAUVAIS - mauvais token pour le contexte */
+.section-title {
+  color: var(--text-muted);  /* Trop clair pour un titre */
+}
+```
+
+### Alias utiles
+
+Pour plus de clarté, on définit des alias sémantiques :
+```css
+:root {
+  --accent: var(--color-mint);
+}
+```
+
+---
+
 ## Naming Conventions
 
 ### Files

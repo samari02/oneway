@@ -187,7 +187,17 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
   if (loading) {
     return (
       <div className="boundaries-view">
-        <div className="boundaries-view__loading">Loading boundaries...</div>
+        <header className="boundaries-view__header">
+          <div className="boundaries-view__title">
+            <span className="boundaries-view__icon"><ShieldIcon /></span>
+            <h1>Boundaries</h1>
+          </div>
+        </header>
+        <div className="boundaries-view__scrollable">
+          <div className="boundaries-view__content">
+            <div className="boundaries-view__loading">Loading boundaries...</div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -218,9 +228,7 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
 
   return (
     <div className="boundaries-view">
-      {/* Protection Alert Banner */}
-      <ProtectionAlert status={extensionStatus} />
-      
+      {/* Sticky Header */}
       <header className="boundaries-view__header">
         <div className="boundaries-view__title">
           <span className="boundaries-view__icon"><ShieldIcon /></span>
@@ -228,8 +236,14 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
         </div>
       </header>
 
-      {/* System Health Section */}
-      <section className="boundaries-view__system-health">
+      {/* Scrollable content */}
+      <div className="boundaries-view__scrollable">
+        <div className="boundaries-view__content">
+          {/* Protection Alert Banner */}
+          <ProtectionAlert status={extensionStatus} />
+
+          {/* System Health Section */}
+          <section className="boundaries-view__system-health">
         <div className="boundaries-view__health-header">
           <h2 className="boundaries-view__section-title">System Health</h2>
           <div className="boundaries-view__health-gauge">
@@ -507,7 +521,10 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
       )}
       </section>
 
-      {/* Modals */}
+        </div>
+      </div>
+
+      {/* Modals - outside scrollable content */}
       {showAddModal && (
         <AddBoundaryModal
           userId={userId}
