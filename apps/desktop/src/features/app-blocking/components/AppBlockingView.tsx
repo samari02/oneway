@@ -119,6 +119,21 @@ export function AppBlockingView() {
   const [activeTab, setActiveTab] = useState<'blocked' | 'usage'>('blocked')
   const { fetchIcon, getIcon } = useAppIcons()
 
+  // Fetch icons for suggested apps on mount
+  useEffect(() => {
+    SUGGESTED_APPS.forEach(app => fetchIcon(app.bundleId))
+  }, [fetchIcon])
+
+  // Fetch icons for blocked apps
+  useEffect(() => {
+    config.blocked_bundle_ids.forEach(bundleId => fetchIcon(bundleId))
+  }, [config.blocked_bundle_ids, fetchIcon])
+
+  // Fetch icons for usage stats
+  useEffect(() => {
+    stats.apps.forEach(app => fetchIcon(app.bundle_id))
+  }, [stats.apps, fetchIcon])
+
   const handleToggleApp = async (bundleId: string) => {
     const isBlocked = config.blocked_bundle_ids.includes(bundleId)
     const newList = isBlocked
@@ -240,22 +255,26 @@ export function AppBlockingView() {
                 <div className="app-blocking-view__blocked-list">
                   <h3>Currently Blocked</h3>
                   <div className="app-blocking-view__app-grid">
-                    {config.blocked_bundle_ids.map(bundleId => {
-                      const suggested = SUGGESTED_APPS.find(a => a.bundleId === bundleId)
-                      return (
-                        <div key={bundleId} className="app-blocking-view__app-item app-blocking-view__app-item--blocked">
-                          <span className="app-blocking-view__app-icon">{suggested?.icon || '📦'}</span>
-                          <span className="app-blocking-view__app-name">{getAppName(bundleId)}</span>
-                          <button
-                            className="app-blocking-view__app-remove"
-                            onClick={() => handleToggleApp(bundleId)}
-                            title="Unblock"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      )
-                    })}
+                    {config.blocked_bundle_ids.map(bundleId => (
+                      <div key={bundleId} className="app-blocking-view__app-item app-blocking-view__app-item--blocked">
+                        <span className="app-blocking-view__app-icon">
+                          <AppIcon 
+                            bundleId={bundleId} 
+                            fallbackEmoji={getAppEmoji(bundleId)} 
+                            fetchIcon={fetchIcon}
+                            getIcon={getIcon}
+                          />
+                        </span>
+                        <span className="app-blocking-view__app-name">{getAppName(bundleId)}</span>
+                        <button
+                          className="app-blocking-view__app-remove"
+                          onClick={() => handleToggleApp(bundleId)}
+                          title="Unblock"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -272,7 +291,14 @@ export function AppBlockingView() {
                         className="app-blocking-view__app-item app-blocking-view__app-item--suggested"
                         onClick={() => handleToggleApp(app.bundleId)}
                       >
-                        <span className="app-blocking-view__app-icon">{app.icon}</span>
+                        <span className="app-blocking-view__app-icon">
+                          <AppIcon 
+                            bundleId={app.bundleId} 
+                            fallbackEmoji={app.icon} 
+                            fetchIcon={fetchIcon}
+                            getIcon={getIcon}
+                          />
+                        </span>
                         <span className="app-blocking-view__app-name">{app.name}</span>
                         <span className="app-blocking-view__app-add">+</span>
                       </button>
@@ -413,17 +439,27 @@ export function AppBlockingView() {
                   <div className="app-blocking-view__usage-list">
                     {stats.apps.map(app => (
                       <div key={app.bundle_id} className="app-blocking-view__usage-item">
-                        <div className="app-blocking-view__usage-info">
-                          <span className="app-blocking-view__usage-name">{app.app_name}</span>
-                          <span className="app-blocking-view__usage-time">
-                            {formatDuration(app.total_time_ms)}
-                          </span>
-                        </div>
-                        <div className="app-blocking-view__usage-bar-container">
-                          <div 
-                            className="app-blocking-view__usage-bar"
-                            style={{ width: `${Math.min(app.percentage, 100)}%` }}
+                        <span className="app-blocking-view__usage-icon">
+                          <AppIcon 
+                            bundleId={app.bundle_id} 
+                            fallbackEmoji={getAppEmoji(app.bundle_id)} 
+                            fetchIcon={fetchIcon}
+                            getIcon={getIcon}
                           />
+                        </span>
+                        <div className="app-blocking-view__usage-content">
+                          <div className="app-blocking-view__usage-info">
+                            <span className="app-blocking-view__usage-name">{app.app_name}</span>
+                            <span className="app-blocking-view__usage-time">
+                              {formatDuration(app.total_time_ms)}
+                            </span>
+                          </div>
+                          <div className="app-blocking-view__usage-bar-container">
+                            <div 
+                              className="app-blocking-view__usage-bar"
+                              style={{ width: `${Math.min(app.percentage, 100)}%` }}
+                            />
+                          </div>
                         </div>
                         {!config.blocked_bundle_ids.includes(app.bundle_id) && (
                           <button

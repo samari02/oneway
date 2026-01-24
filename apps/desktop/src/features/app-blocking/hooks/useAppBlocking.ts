@@ -44,6 +44,12 @@ export function useAppBlocking(): UseAppBlockingResult {
       setConfig(blockedApps)
       setIsMonitoring(monitoring)
       setError(null)
+      
+      // Auto-start monitoring if it should be enabled but isn't running
+      if (blockedApps.blocking_enabled && !monitoring) {
+        await invoke('start_app_monitoring')
+        setIsMonitoring(true)
+      }
     } catch (e) {
       setError(e instanceof Error ? e : new Error('Failed to fetch config'))
     } finally {
