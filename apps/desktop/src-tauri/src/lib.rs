@@ -2,9 +2,16 @@ mod browsing_data;
 mod native_host;
 mod app_data;
 mod app_monitor;
+mod supabase_sync;
 
 use browsing_data::BrowsingStats;
 use app_data::{AppUsageStats, BlockedAppsConfig};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::thread;
+use std::time::Duration;
+
+// Sync thread control
+static SYNC_RUNNING: AtomicBool = AtomicBool::new(false);
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -138,6 +145,113 @@ fn get_app_icon(bundle_id: String) -> Option<String> {
     app_monitor::get_app_icon_base64(&bundle_id)
 }
 
+// ============================================================================
+// Supabase Sync Commands
+// ============================================================================
+
+/// Set authentication for Supabase sync
+/// Called by frontend after user logs in
+#[tauri::command]
+fn set_supabase_auth(user_id: String, access_token: String) -> Result<(), String> {
+    supabase_sync::set_auth(user_id, access_token);
+    
+    // Start periodic sync if not already running
+    start_periodic_sync();
+    
+    Ok(())
+}
+
+/// Clear authentication (on logout)
+#[tauri::command]
+fn clear_supabase_auth() {
+    supabase_sync::clear_auth();
+    SYNC_RUNNING.store(false, Ordering::SeqCst);
+}
+
+/// Check if Supabase is authenticated
+#[tauri::command]
+fn is_supabase_authenticated() -> bool {
+    supabase_sync::is_authenticated()
+}
+
+/// Get count of pending sessions to sync
+#[tauri::command]
+fn get_pending_sync_count() -> usize {
+    app_data::get_pending_count()
+}
+
+/// Manually trigger sync (for testing or user-initiated)
+#[tauri::command]
+async fn sync_app_sessions_now() -> Result<usize, String> {
+    let pending = app_data::get_pending_sessions();
+    if pending.is_empty() {
+        return Ok(0);
+    }
+    
+    let start_times: Vec<i64> = pending.iter().map(|s| s.start_time).collect();
+    
+    match supabase_sync::sync_sessions(pending).await {
+        Ok(count) => {
+            // Mark as synced
+            app_data::mark_sessions_synced(&start_times);
+            Ok(count)
+        }
+        Err(e) => Err(e)
+    }
+}
+
+/// Sync blocked apps config to Supabase
+#[tauri::command]
+async fn sync_blocked_apps_now() -> Result<(), String> {
+    let config = app_data::get_blocked_apps();
+    supabase_sync::sync_blocked_apps(&config).await
+}
+
+/// Start periodic sync thread (every 10 minutes)
+fn start_periodic_sync() {
+    // Only start if not already running
+    if SYNC_RUNNING.swap(true, Ordering::SeqCst) {
+        return;
+    }
+    
+    thread::spawn(|| {
+        let rt = tokio::runtime::Runtime::new().expect("Failed to create runtime");
+        
+        while SYNC_RUNNING.load(Ordering::SeqCst) {
+            // Wait 10 minutes
+            thread::sleep(Duration::from_secs(600));
+            
+            if !SYNC_RUNNING.load(Ordering::SeqCst) {
+                break;
+            }
+            
+            if !supabase_sync::is_authenticated() {
+                continue;
+            }
+            
+            // Sync pending sessions
+            let pending = app_data::get_pending_sessions();
+            if !pending.is_empty() {
+                let start_times: Vec<i64> = pending.iter().map(|s| s.start_time).collect();
+                
+                rt.block_on(async {
+                    match supabase_sync::sync_sessions(pending).await {
+                        Ok(count) => {
+                            app_data::mark_sessions_synced(&start_times);
+                            eprintln!("[sync] Synced {} sessions", count);
+                        }
+                        Err(e) => {
+                            eprintln!("[sync] Failed to sync: {}", e);
+                        }
+                    }
+                });
+            }
+        }
+        
+        eprintln!("[sync] Periodic sync stopped");
+    });
+}
+
 /// Save Aoi widget preferences (to local file, will be read by native host)
 #[tauri::command]
 fn save_aoi_preferences(hidden_global: bool, hidden_domains: Vec<String>) -> Result<(), String> {
@@ -185,7 +299,14 @@ pub fn run() {
             stop_app_monitoring,
             is_app_monitoring_active,
             clear_app_usage_data,
-            get_app_icon
+            get_app_icon,
+            // Supabase sync
+            set_supabase_auth,
+            clear_supabase_auth,
+            is_supabase_authenticated,
+            get_pending_sync_count,
+            sync_app_sessions_now,
+            sync_blocked_apps_now
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

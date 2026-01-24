@@ -35,6 +35,9 @@ pub struct AppSession {
     pub end_time: Option<i64>,
     /// Duration in milliseconds (computed when session ends)
     pub duration_ms: Option<i64>,
+    /// When this session was synced to Supabase (None = not synced)
+    #[serde(default)]
+    pub synced_at: Option<i64>,
 }
 
 /// Daily app usage summary
@@ -51,10 +54,13 @@ pub struct DailyAppUsage {
 /// Stored app usage data
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppUsageData {
-    /// Daily usage summaries
+    /// Daily usage summaries (aggregated for display)
     pub daily_usage: Vec<DailyAppUsage>,
     /// Currently active session (if any)
     pub current_session: Option<AppSession>,
+    /// Completed sessions pending sync to Supabase
+    #[serde(default)]
+    pub pending_sessions: Vec<AppSession>,
 }
 
 /// Blocked apps configuration
@@ -182,6 +188,7 @@ pub fn app_activated(bundle_id: String, app_name: String) {
         start_time: now,
         end_time: None,
         duration_ms: None,
+        synced_at: None,
     });
     
     save_app_data(&data);
@@ -214,7 +221,7 @@ pub fn app_deactivated(bundle_id: &str) {
     }
 }
 
-/// Add a completed session to daily usage
+/// Add a completed session to daily usage and pending sync queue
 fn add_to_daily_usage(data: &mut AppUsageData, session: AppSession) {
     // Use session START date, not current date
     // This fixes the bug where overnight sessions are attributed to the wrong day
@@ -224,7 +231,19 @@ fn add_to_daily_usage(data: &mut AppUsageData, session: AppSession) {
     
     let duration = session.duration_ms.unwrap_or(0);
     
-    // Find or create the session's day entry
+    // Add to pending sessions for Supabase sync
+    data.pending_sessions.push(session.clone());
+    
+    // Keep pending sessions manageable (max 1000)
+    if data.pending_sessions.len() > 1000 {
+        // Remove oldest synced sessions first, then oldest unsynced
+        data.pending_sessions.retain(|s| s.synced_at.is_none());
+        if data.pending_sessions.len() > 1000 {
+            data.pending_sessions = data.pending_sessions.split_off(data.pending_sessions.len() - 1000);
+        }
+    }
+    
+    // Find or create the session's day entry (for aggregated display)
     let daily = data.daily_usage
         .iter_mut()
         .find(|d| d.date == session_date);
@@ -248,7 +267,7 @@ fn add_to_daily_usage(data: &mut AppUsageData, session: AppSession) {
         });
     }
     
-    // Keep only last 365 days
+    // Keep only last 365 days of aggregated data
     if data.daily_usage.len() > 365 {
         data.daily_usage.sort_by(|a, b| b.date.cmp(&a.date));
         data.daily_usage.truncate(365);
@@ -399,4 +418,59 @@ pub fn clear_app_data() -> Result<(), String> {
     *data = AppUsageData::default();
     save_app_data(&data);
     Ok(())
+}
+
+// ============================================================================
+// Supabase Sync Functions
+// ============================================================================
+
+/// Get all pending (unsynced) sessions
+pub fn get_pending_sessions() -> Vec<AppSession> {
+    let data = APP_DATA.lock().unwrap();
+    data.pending_sessions
+        .iter()
+        .filter(|s| s.synced_at.is_none() && s.end_time.is_some())
+        .cloned()
+        .collect()
+}
+
+/// Mark sessions as synced (by start_time, which is unique per session)
+pub fn mark_sessions_synced(start_times: &[i64]) {
+    let now = chrono::Utc::now().timestamp_millis();
+    let mut data = APP_DATA.lock().unwrap();
+    
+    for session in &mut data.pending_sessions {
+        if start_times.contains(&session.start_time) {
+            session.synced_at = Some(now);
+        }
+    }
+    
+    // Remove old synced sessions (keep last 100 for dedup reference)
+    let mut synced: Vec<_> = data.pending_sessions
+        .iter()
+        .filter(|s| s.synced_at.is_some())
+        .cloned()
+        .collect();
+    synced.sort_by(|a, b| b.synced_at.cmp(&a.synced_at));
+    synced.truncate(100);
+    
+    let unsynced: Vec<_> = data.pending_sessions
+        .iter()
+        .filter(|s| s.synced_at.is_none())
+        .cloned()
+        .collect();
+    
+    data.pending_sessions = unsynced;
+    data.pending_sessions.extend(synced);
+    
+    save_app_data(&data);
+}
+
+/// Get count of pending sessions
+pub fn get_pending_count() -> usize {
+    let data = APP_DATA.lock().unwrap();
+    data.pending_sessions
+        .iter()
+        .filter(|s| s.synced_at.is_none() && s.end_time.is_some())
+        .count()
 }
