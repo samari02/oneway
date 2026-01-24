@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS app_sessions (
 -- Indexes for common queries
 CREATE INDEX idx_app_sessions_user_time ON app_sessions(user_id, start_time DESC);
 CREATE INDEX idx_app_sessions_user_bundle ON app_sessions(user_id, bundle_id);
-CREATE INDEX idx_app_sessions_user_date ON app_sessions(user_id, (start_time::date));
+-- Note: date-based queries use the start_time index with range conditions
 
 -- Row Level Security
 ALTER TABLE app_sessions ENABLE ROW LEVEL SECURITY;
