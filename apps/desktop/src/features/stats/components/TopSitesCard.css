@@ -366,20 +366,9 @@
   box-shadow: 0 0 6px currentColor;
 }
 
-/* Reclassify hint - appears on hover */
+/* Reclassify hint - hidden, dropdown is sufficient */
 .top-sites-card__reclassify-hint {
-  position: absolute;
-  left: 14px;
-  font-size: 9px;
-  color: var(--text-muted);
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.top-sites-card__dot-wrapper:hover .top-sites-card__reclassify-hint {
-  opacity: 1;
+  display: none;
 }
 
 /* Reclassify dropdown */

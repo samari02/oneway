@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '../../auth'
 import { useBrowsingStatsWithOverride } from '../hooks/useBrowsingStatsWithOverride'
 import { useAppUsage, formatDuration } from '../../app-blocking/hooks/useAppUsage'
@@ -6,6 +7,7 @@ import { FocusScoreCard } from './FocusScoreCard'
 import { TopSitesCard } from './TopSitesCard'
 import type { Period } from './PeriodSelector'
 import type { SiteVisit } from '../hooks/useBrowsingStats'
+import type { SiteCategory } from './SiteClassificationModal'
 import './OverviewTab.css'
 
 interface OverviewTabProps {
@@ -38,8 +40,20 @@ function getPeriodLabel(period: Period): string {
 export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   const { user } = useAuth()
   
+  // Handle classification save (for both web sites and apps)
+  const handleClassificationSave = useCallback(async (classifications: Record<string, SiteCategory>) => {
+    if (Object.keys(classifications).length === 0) return
+    
+    try {
+      await invoke('save_site_classifications', { classifications })
+      // TODO: Also save app classifications when backend supports it
+    } catch (e) {
+      console.error('[OverviewTab] Failed to save classification:', e)
+    }
+  }, [])
+  
   // Browsing stats
-  const { cardStats, loading: browsingLoading } = useBrowsingStatsWithOverride(
+  const { cardStats, loading: browsingLoading, refetch } = useBrowsingStatsWithOverride(
     user?.id,
     period,
     {
@@ -150,6 +164,7 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
           sites={allSites}
           defaultPeriod={period}
           showSourceFilter={true}
+          onClassificationSave={handleClassificationSave}
         />
         
         {/* Quick Stats Grid */}
