@@ -21,6 +21,17 @@ function mapPeriodToAppUsage(period: Period): string {
   }
 }
 
+// Format period to display label
+function getPeriodLabel(period: Period): string {
+  switch (period) {
+    case 'today': return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+    case '7d': return 'Last 7 days'
+    case '30d': return 'Last 30 days'
+    case 'all': return 'All time'
+    default: return 'Today'
+  }
+}
+
 export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   const { user } = useAuth()
   
@@ -102,7 +113,10 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
         {/* Total Screen Time Hero */}
         <section className="overview-tab__hero">
           <div className="overview-tab__total-card">
-            <span className="overview-tab__total-label">Total Screen Time</span>
+            <div className="overview-tab__total-header">
+              <span className="overview-tab__total-label">Total Screen Time</span>
+              <span className="overview-tab__total-period">{getPeriodLabel(period)}</span>
+            </div>
             <span className="overview-tab__total-value">{formatDuration(totalTimeMs)}</span>
             <div className="overview-tab__total-breakdown">
               <span className="overview-tab__breakdown-item">
@@ -116,7 +130,7 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
             </div>
           </div>
           
-          {/* Focus Score */}
+          {/* Focus Score with Mascot */}
           {focusStats && (
             <FocusScoreCard 
               score={focusStats.focusScore} 
@@ -124,7 +138,6 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
               period={period}
               defaultPeriod={period}
               onPeriodChange={() => {}}
-              compact
             />
           )}
         </section>
