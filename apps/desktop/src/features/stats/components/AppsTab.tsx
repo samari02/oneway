@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { useAppUsage, formatDuration } from '../../app-blocking/hooks/useAppUsage'
 import type { Period } from './PeriodSelector'
@@ -21,51 +21,55 @@ function mapPeriodToAppUsage(period: Period): string {
 
 // Hook to fetch and cache app icons
 function useAppIcons() {
-  const iconsCache = new Map<string, string | null>()
-  
-  const fetchIcon = useCallback(async (bundleId: string): Promise<string | null> => {
-    if (iconsCache.has(bundleId)) {
-      return iconsCache.get(bundleId) || null
-    }
+  const [icons, setIcons] = useState<Record<string, string | null>>({})
+  const [loading, setLoading] = useState<Set<string>>(new Set())
+
+  const fetchIcon = useCallback(async (bundleId: string) => {
+    if (bundleId in icons || loading.has(bundleId)) return
+    
+    setLoading(prev => new Set(prev).add(bundleId))
     
     try {
       const iconData = await invoke<string | null>('get_app_icon', { bundleId })
-      iconsCache.set(bundleId, iconData)
-      return iconData
+      setIcons(prev => ({ ...prev, [bundleId]: iconData }))
     } catch {
-      iconsCache.set(bundleId, null)
-      return null
+      setIcons(prev => ({ ...prev, [bundleId]: null }))
+    } finally {
+      setLoading(prev => {
+        const next = new Set(prev)
+        next.delete(bundleId)
+        return next
+      })
     }
-  }, [])
-  
-  return { fetchIcon }
+  }, [icons, loading])
+
+  return { icons, fetchIcon }
 }
 
-// App icon component
-function AppIcon({ bundleId, appName }: { bundleId: string; appName: string }) {
-  const { fetchIcon } = useAppIcons()
-  
-  // For now, show emoji based on app name patterns
-  const getEmoji = () => {
-    const name = appName.toLowerCase()
-    if (name.includes('chrome') || name.includes('safari') || name.includes('firefox')) return '🌐'
-    if (name.includes('code') || name.includes('cursor') || name.includes('xcode')) return '💻'
-    if (name.includes('slack') || name.includes('teams')) return '💼'
-    if (name.includes('discord')) return '🎮'
-    if (name.includes('spotify') || name.includes('music')) return '🎵'
-    if (name.includes('mail') || name.includes('outlook')) return '📧'
-    if (name.includes('zoom') || name.includes('meet')) return '📹'
-    if (name.includes('notes') || name.includes('notion')) return '📝'
-    if (name.includes('terminal') || name.includes('iterm')) return '⬛'
-    if (name.includes('finder')) return '📁'
-    return '📦'
-  }
-  
-  return <span className="apps-tab__app-icon">{getEmoji()}</span>
+// Get fallback emoji based on app name
+function getAppEmoji(appName: string): string {
+  const name = appName.toLowerCase()
+  if (name.includes('chrome') || name.includes('safari') || name.includes('firefox')) return '🌐'
+  if (name.includes('code') || name.includes('cursor') || name.includes('xcode')) return '💻'
+  if (name.includes('slack') || name.includes('teams')) return '💼'
+  if (name.includes('discord')) return '🎮'
+  if (name.includes('spotify') || name.includes('music')) return '🎵'
+  if (name.includes('mail') || name.includes('outlook')) return '📧'
+  if (name.includes('zoom') || name.includes('meet')) return '📹'
+  if (name.includes('notes') || name.includes('notion')) return '📝'
+  if (name.includes('terminal') || name.includes('iterm')) return '⬛'
+  if (name.includes('finder')) return '📁'
+  return '📦'
 }
 
 export function AppsTab({ period }: AppsTabProps) {
   const { stats, loading, error, refetch } = useAppUsage(mapPeriodToAppUsage(period))
+  const { icons, fetchIcon } = useAppIcons()
+  
+  // Fetch icons for all apps
+  useEffect(() => {
+    stats.apps.forEach(app => fetchIcon(app.bundle_id))
+  }, [stats.apps, fetchIcon])
   
   if (loading) {
     return (
@@ -176,22 +180,31 @@ export function AppsTab({ period }: AppsTabProps) {
             Apps Used ({stats.apps.length})
           </h3>
           <div className="apps-tab__app-list">
-            {stats.apps.map((app, index) => (
-              <div key={app.bundle_id} className="apps-tab__app-item">
-                <span className="apps-tab__app-rank">{index + 1}</span>
-                <AppIcon bundleId={app.bundle_id} appName={app.app_name} />
-                <div className="apps-tab__app-info">
-                  <span className="apps-tab__app-name">{app.app_name}</span>
-                  <div className="apps-tab__app-bar-container">
-                    <div 
-                      className="apps-tab__app-bar"
-                      style={{ width: `${Math.min(app.percentage, 100)}%` }}
-                    />
+            {stats.apps.map((app, index) => {
+              const appIcon = icons[app.bundle_id]
+              return (
+                <div key={app.bundle_id} className="apps-tab__app-item">
+                  <span className="apps-tab__app-rank">{index + 1}</span>
+                  <span className="apps-tab__app-icon">
+                    {appIcon ? (
+                      <img src={appIcon} alt="" className="apps-tab__app-icon-img" />
+                    ) : (
+                      getAppEmoji(app.app_name)
+                    )}
+                  </span>
+                  <div className="apps-tab__app-info">
+                    <span className="apps-tab__app-name">{app.app_name}</span>
+                    <div className="apps-tab__app-bar-container">
+                      <div 
+                        className="apps-tab__app-bar"
+                        style={{ width: `${Math.min(app.percentage, 100)}%` }}
+                      />
+                    </div>
                   </div>
+                  <span className="apps-tab__app-time">{formatDuration(app.total_time_ms)}</span>
                 </div>
-                <span className="apps-tab__app-time">{formatDuration(app.total_time_ms)}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </section>
       </div>

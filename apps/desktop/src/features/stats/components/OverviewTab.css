@@ -77,32 +77,56 @@
 
 /* Total Card */
 .overview-tab__total-card {
-  background: linear-gradient(135deg, var(--accent) 0%, rgba(125, 216, 196, 0.8) 100%);
+  background: 
+    radial-gradient(ellipse at 100% 0%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 0% 100%, rgba(0, 0, 0, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, var(--accent) 0%, rgba(91, 181, 160, 0.95) 100%);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   color: white;
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle animated glow */
+.overview-tab__total-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+  animation: cardGlow 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes cardGlow {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+  50% { transform: translate(-10%, 10%) scale(1.1); opacity: 0.8; }
 }
 
 .overview-tab__total-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: var(--space-xs);
 }
 
 .overview-tab__total-label {
-  font-size: 13px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 .overview-tab__total-period {
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 0.85;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 1;
 }
 
 .overview-tab__total-value {
@@ -115,7 +139,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
-  margin-top: var(--space-sm);
+  margin-top: var(--space-md);
   padding-top: var(--space-sm);
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -130,6 +154,24 @@
 
 .overview-tab__breakdown-icon {
   font-size: 14px;
+}
+
+/* App icon image in activity list */
+.overview-tab__activity-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.overview-tab__app-icon-img {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: contain;
 }
 
 /* Sections */
@@ -195,10 +237,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
-}
-
-.overview-tab__activity-type {
-  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .overview-tab__activity-name {
