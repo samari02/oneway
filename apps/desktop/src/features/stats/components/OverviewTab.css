@@ -156,24 +156,6 @@
   font-size: 14px;
 }
 
-/* App icon image in activity list */
-.overview-tab__activity-icon {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.overview-tab__app-icon-img {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  object-fit: contain;
-}
-
 /* Sections */
 .overview-tab__section {
   animation: fadeSlideIn 0.4s ease-out backwards;
@@ -204,53 +186,6 @@
   letter-spacing: 0.5px;
   color: var(--text-muted);
   margin: 0 0 var(--space-md) 0;
-}
-
-/* Activity List */
-.overview-tab__activity-list {
-  background: var(--bg-elevated);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  border: 1px solid var(--border-light);
-}
-
-.overview-tab__activity-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-md);
-  border-bottom: 1px solid var(--border-light);
-}
-
-.overview-tab__activity-item:last-child {
-  border-bottom: none;
-}
-
-.overview-tab__activity-rank {
-  width: 24px;
-  height: 24px;
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  flex-shrink: 0;
-}
-
-.overview-tab__activity-name {
-  flex: 1;
-  font-size: 14px;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.overview-tab__activity-time {
-  font-size: 14px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
 }
 
 /* Stats Grid */

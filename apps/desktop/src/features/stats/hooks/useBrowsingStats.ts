@@ -6,6 +6,9 @@ export interface SiteVisit {
   visits: number
   timeSpent: number // in minutes
   category: 'productive' | 'neutral' | 'distraction'
+  source: 'web' | 'app'
+  bundleId?: string // For apps only
+  iconData?: string // Base64 icon data for apps
 }
 
 export interface DailyFocusScore {
@@ -92,6 +95,7 @@ function transformStats(rust: RustBrowsingStats): BrowsingStats {
       visits: site.visits,
       timeSpent: site.timeSpent,
       category: mapCategory(site.category),
+      source: 'web' as const,
     })),
     dailyScores: rust.dailyScores,
     totalVisits: rust.totalVisits,

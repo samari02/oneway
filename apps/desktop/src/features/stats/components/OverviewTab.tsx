@@ -1,42 +1,16 @@
-import { useState, useEffect, useCallback } from 'react'
-import { invoke } from '@tauri-apps/api/core'
+import { useMemo } from 'react'
 import { useAuth } from '../../auth'
 import { useBrowsingStatsWithOverride } from '../hooks/useBrowsingStatsWithOverride'
 import { useAppUsage, formatDuration } from '../../app-blocking/hooks/useAppUsage'
 import { FocusScoreCard } from './FocusScoreCard'
+import { TopSitesCard } from './TopSitesCard'
 import type { Period } from './PeriodSelector'
+import type { SiteVisit } from '../hooks/useBrowsingStats'
 import './OverviewTab.css'
 
 interface OverviewTabProps {
   period: Period
   resetTrigger?: number
-}
-
-// Hook to fetch and cache app icons
-function useAppIcons() {
-  const [icons, setIcons] = useState<Record<string, string | null>>({})
-  const [loading, setLoading] = useState<Set<string>>(new Set())
-
-  const fetchIcon = useCallback(async (bundleId: string) => {
-    if (bundleId in icons || loading.has(bundleId)) return
-    
-    setLoading(prev => new Set(prev).add(bundleId))
-    
-    try {
-      const iconData = await invoke<string | null>('get_app_icon', { bundleId })
-      setIcons(prev => ({ ...prev, [bundleId]: iconData }))
-    } catch {
-      setIcons(prev => ({ ...prev, [bundleId]: null }))
-    } finally {
-      setLoading(prev => {
-        const next = new Set(prev)
-        next.delete(bundleId)
-        return next
-      })
-    }
-  }, [icons, loading])
-
-  return { icons, fetchIcon }
 }
 
 // Map period to app usage period string
@@ -64,9 +38,6 @@ function getPeriodLabel(period: Period): string {
 export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   const { user } = useAuth()
   
-  // App icons - must be called before any conditional returns
-  const { icons, fetchIcon } = useAppIcons()
-  
   // Browsing stats
   const { cardStats, loading: browsingLoading } = useBrowsingStatsWithOverride(
     user?.id,
@@ -82,15 +53,27 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   // App usage stats
   const { stats: appStats, loading: appLoading } = useAppUsage(mapPeriodToAppUsage(period))
   
-  // Get top apps for icon fetching
-  const topApps = appStats.apps.slice(0, 3)
-  
-  // Fetch icons for apps
-  useEffect(() => {
-    topApps.forEach(app => fetchIcon(app.bundle_id))
-  }, [topApps, fetchIcon])
-  
   const loading = browsingLoading || appLoading
+  
+  // Combine web sites and apps into a unified list
+  const allSites = useMemo<SiteVisit[]>(() => {
+    const webSites: SiteVisit[] = (cardStats.topSites?.topSites || []).map(site => ({
+      ...site,
+      source: 'web' as const,
+    }))
+    
+    const appSites: SiteVisit[] = appStats.apps.map(app => ({
+      domain: app.app_name,
+      visits: 1, // Apps don't track visits the same way
+      timeSpent: Math.round(app.total_time_ms / 60000), // Convert ms to minutes
+      category: 'neutral' as const, // Default, will be overridable
+      source: 'app' as const,
+      bundleId: app.bundle_id,
+    }))
+    
+    // Sort by time spent descending
+    return [...webSites, ...appSites].sort((a, b) => b.timeSpent - a.timeSpent)
+  }, [cardStats.topSites, appStats.apps])
   
   if (loading) {
     return (
@@ -113,28 +96,7 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   const appTimeMs = appStats.total_time_ms || 0
   const totalTimeMs = browsingTimeMs + appTimeMs
   
-  // Get top distractions from both sources
-  const topBrowsingSites = browsingStats?.topSites?.slice(0, 3) || []
-  
-  // Combine and sort by time
-  const allDistractions = [
-    ...topBrowsingSites.map(site => ({
-      name: site.domain,
-      timeMs: site.timeSpent * 60 * 1000, // Convert minutes to ms
-      type: 'web' as const,
-      category: site.category,
-      bundleId: null as string | null,
-    })),
-    ...topApps.map(app => ({
-      name: app.app_name,
-      timeMs: app.total_time_ms,
-      type: 'app' as const,
-      category: 'app',
-      bundleId: app.bundle_id,
-    })),
-  ].sort((a, b) => b.timeMs - a.timeMs).slice(0, 5)
-  
-  const hasData = totalTimeMs > 0 || allDistractions.length > 0
+  const hasData = totalTimeMs > 0 || allSites.length > 0
   
   if (!hasData) {
     return (
@@ -183,33 +145,12 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
           )}
         </section>
         
-        {/* Top Activity */}
-        {allDistractions.length > 0 && (
-          <section className="overview-tab__section">
-            <h3 className="overview-tab__section-title">Top Activity</h3>
-            <div className="overview-tab__activity-list">
-              {allDistractions.map((item, index) => {
-                const appIcon = item.bundleId ? icons[item.bundleId] : null
-                return (
-                  <div key={`${item.type}-${item.name}`} className="overview-tab__activity-item">
-                    <span className="overview-tab__activity-rank">{index + 1}</span>
-                    <span className="overview-tab__activity-icon">
-                      {item.type === 'web' ? (
-                        '🌐'
-                      ) : appIcon ? (
-                        <img src={appIcon} alt="" className="overview-tab__app-icon-img" />
-                      ) : (
-                        '📱'
-                      )}
-                    </span>
-                    <span className="overview-tab__activity-name">{item.name}</span>
-                    <span className="overview-tab__activity-time">{formatDuration(item.timeMs)}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-        )}
+        {/* Top Sites (Web + Apps unified) */}
+        <TopSitesCard 
+          sites={allSites}
+          defaultPeriod={period}
+          showSourceFilter={true}
+        />
         
         {/* Quick Stats Grid */}
         <section className="overview-tab__section">

@@ -28,13 +28,51 @@
   letter-spacing: 0.5px;
 }
 
+/* Filters row */
+.top-sites-card__filters-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Source filter (All/Web/Apps) */
+.top-sites-card__source-filter {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: 2px;
+}
+
+.top-sites-card__source-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.top-sites-card__source-btn:hover {
+  color: var(--text-primary);
+}
+
+.top-sites-card__source-btn--active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
 /* Category filter pills */
 .top-sites-card__filters {
   display: flex;
   gap: var(--space-xs);
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: var(--space-xs);
 }
 
 .top-sites-card__filter-pill {
@@ -259,6 +297,35 @@
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   flex-shrink: 0;
+}
+
+/* Site/App icon */
+.top-sites-card__icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.top-sites-card__app-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.top-sites-card__emoji {
+  font-size: 20px;
+}
+
+/* Empty state */
+.top-sites-card__empty {
+  padding: var(--space-lg);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 .top-sites-card__info {
