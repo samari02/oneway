@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '../../auth'
 import { useBrowsingStatsWithOverride } from '../hooks/useBrowsingStatsWithOverride'
@@ -40,19 +40,25 @@ function getPeriodLabel(period: Period): string {
 export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   const { user } = useAuth()
   
-  // Handle classification save (for both web sites and apps)
-  const handleClassificationSave = useCallback(async (classifications: Record<string, SiteCategory>) => {
-    if (Object.keys(classifications).length === 0) return
-    
-    try {
-      await invoke('save_site_classifications', { classifications })
-      // TODO: Also save app classifications when backend supports it
-    } catch (e) {
-      console.error('[OverviewTab] Failed to save classification:', e)
-    }
+  // App classifications (stored locally, same system as web sites)
+  const [appClassifications, setAppClassifications] = useState<Record<string, SiteCategory>>({})
+  
+  // Load existing classifications on mount (includes both web and app)
+  useEffect(() => {
+    invoke<Record<string, string>>('get_site_classifications')
+      .then(classifications => {
+        const validClassifications: Record<string, SiteCategory> = {}
+        Object.entries(classifications).forEach(([key, value]) => {
+          if (value === 'productive' || value === 'neutral' || value === 'distraction') {
+            validClassifications[key] = value
+          }
+        })
+        setAppClassifications(validClassifications)
+      })
+      .catch(() => {})
   }, [])
   
-  // Browsing stats
+  // Browsing stats - must be before handleClassificationSave so refetch is available
   const { cardStats, loading: browsingLoading, refetch } = useBrowsingStatsWithOverride(
     user?.id,
     period,
@@ -67,6 +73,21 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   // App usage stats
   const { stats: appStats, loading: appLoading } = useAppUsage(mapPeriodToAppUsage(period))
   
+  // Handle classification save (for both web sites and apps)
+  const handleClassificationSave = useCallback(async (classifications: Record<string, SiteCategory>) => {
+    if (Object.keys(classifications).length === 0) return
+    
+    try {
+      await invoke('save_site_classifications', { classifications })
+      // Update local app classifications state immediately for instant UI feedback
+      setAppClassifications(prev => ({ ...prev, ...classifications }))
+      // Refetch to update web sites with new classifications
+      refetch()
+    } catch (e) {
+      console.error('[OverviewTab] Failed to save classification:', e)
+    }
+  }, [refetch])
+  
   const loading = browsingLoading || appLoading
   
   // Combine web sites and apps into a unified list
@@ -80,14 +101,14 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
       domain: app.app_name,
       visits: 1, // Apps don't track visits the same way
       timeSpent: Math.round(app.total_time_ms / 60000), // Convert ms to minutes
-      category: 'neutral' as const, // Default, will be overridable
+      category: appClassifications[app.app_name] || 'neutral', // Use saved classification or default
       source: 'app' as const,
       bundleId: app.bundle_id,
     }))
     
     // Sort by time spent descending
     return [...webSites, ...appSites].sort((a, b) => b.timeSpent - a.timeSpent)
-  }, [cardStats.topSites, appStats.apps])
+  }, [cardStats.topSites, appStats.apps, appClassifications])
   
   if (loading) {
     return (
