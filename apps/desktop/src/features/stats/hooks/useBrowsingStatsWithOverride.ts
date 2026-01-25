@@ -113,7 +113,8 @@ export function useBrowsingStatsWithOverride(
   ])
 
   const refetch = async () => {
-    await fetchAllCardStats()
+    // Don't show loading on refetch to avoid UI glitch and unmounting components
+    await fetchAllCardStats(false)
   }
 
   return { cardStats, loading, error, refetch }
