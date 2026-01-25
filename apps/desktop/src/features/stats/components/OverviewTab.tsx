@@ -2,6 +2,7 @@ import { useMemo, useCallback, useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '../../auth'
 import { useBrowsingStatsWithOverride } from '../hooks/useBrowsingStatsWithOverride'
+import { useCardPeriods } from '../hooks/useCardPeriods'
 import { useAppUsage, formatDuration } from '../../app-blocking/hooks/useAppUsage'
 import { FocusScoreCard } from './FocusScoreCard'
 import { TopSitesCard } from './TopSitesCard'
@@ -39,6 +40,14 @@ function getPeriodLabel(period: Period): string {
 
 export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   const { user } = useAuth()
+  const { getEffectivePeriod, setCardPeriod, resetAllOverrides } = useCardPeriods(period)
+  
+  // Reset all card overrides when global period is clicked
+  useEffect(() => {
+    if (resetTrigger > 0) {
+      resetAllOverrides()
+    }
+  }, [resetTrigger, resetAllOverrides])
   
   // App classifications (stored locally, same system as web sites)
   const [appClassifications, setAppClassifications] = useState<Record<string, SiteCategory>>({})
@@ -65,13 +74,13 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
     {
       'focus-score': period,
       'time-distribution': period,
-      'top-sites': period,
+      'top-sites': getEffectivePeriod('top-sites'),
       'heatmap': period,
     }
   )
   
-  // App usage stats
-  const { stats: appStats, loading: appLoading } = useAppUsage(mapPeriodToAppUsage(period))
+  // App usage stats - use top-sites effective period for unified view
+  const { stats: appStats, loading: appLoading } = useAppUsage(mapPeriodToAppUsage(getEffectivePeriod('top-sites')))
   
   // Handle classification save (for both web sites and apps)
   const handleClassificationSave = useCallback(async (classifications: Record<string, SiteCategory>) => {
@@ -183,7 +192,9 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
         {/* Top Sites (Web + Apps unified) */}
         <TopSitesCard 
           sites={allSites}
+          period={getEffectivePeriod('top-sites')}
           defaultPeriod={period}
+          onPeriodChange={(p) => setCardPeriod('top-sites', p)}
           showSourceFilter={true}
           onClassificationSave={handleClassificationSave}
         />

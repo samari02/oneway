@@ -1,41 +1,13 @@
 import { useEffect } from 'react'
-import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '../../auth'
 import { useBrowsingStatsWithOverride } from '../hooks/useBrowsingStatsWithOverride'
 import { useCardPeriods } from '../hooks/useCardPeriods'
-import { FocusScoreCard } from './FocusScoreCard'
+import { DistractionHeroCard } from './DistractionHeroCard'
 import { TimeDistributionCard } from './TimeDistributionCard'
-import { TopSitesCard } from './TopSitesCard'
 import { BrowsingHeatmapCard } from './BrowsingHeatmapCard'
 import { DataSourceCard } from './DataSourceCard'
 import type { Period } from './PeriodSelector'
-import type { SiteCategory } from './SiteClassificationModal'
 import './BrowsingView.css'
-
-// Map Rust category to frontend category
-function mapCategory(category: string): 'productive' | 'neutral' | 'distraction' {
-  switch (category) {
-    // User classification values (from SiteClassificationModal)
-    case 'productive':
-    // Original backend categories
-    case 'work':
-    case 'dev':
-    case 'productivity':
-      return 'productive'
-    // User classification value
-    case 'distraction':
-    // Original backend categories
-    case 'social_media':
-    case 'video':
-    case 'entertainment':
-    case 'news':
-    case 'shopping':
-      return 'distraction'
-    // 'neutral' and anything else
-    default:
-      return 'neutral'
-  }
-}
 
 interface BrowsingViewProps {
   period: Period
@@ -53,11 +25,11 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
     }
   }, [resetTrigger, resetAllOverrides])
   
-  // Get effective periods for all cards
+  // Get effective periods for cards
   const cardPeriods = {
-    'focus-score': getEffectivePeriod('focus-score'),
+    'focus-score': period, // Not used but required by hook
     'time-distribution': getEffectivePeriod('time-distribution'),
-    'top-sites': getEffectivePeriod('top-sites'),
+    'top-sites': period, // Not used but required by hook
     'heatmap': getEffectivePeriod('heatmap'),
   }
   
@@ -103,85 +75,44 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
     )
   }
 
-  const handleClassificationSave = async (classifications: Record<string, SiteCategory>) => {
-    console.log('[BrowsingView] ========== SAVE START ==========')
-    console.log('[BrowsingView] Received classifications:', classifications)
-    console.log('[BrowsingView] Type:', typeof classifications)
-    console.log('[BrowsingView] Keys:', Object.keys(classifications))
-    
-    if (Object.keys(classifications).length === 0) {
-      console.warn('[BrowsingView] Empty classifications object!')
-      return
-    }
-    
-    try {
-      console.log('[BrowsingView] Calling invoke...')
-      await invoke('save_site_classifications', { classifications })
-      console.log('[BrowsingView] ✅ invoke() completed successfully')
-      // Refetch to see updated stats
-      refetch()
-    } catch (e) {
-      console.error('[BrowsingView] ❌ Failed to save:', e)
-    }
-    console.log('[BrowsingView] ========== SAVE END ==========')
-  }
+  // Get distraction time from time distribution
+  const distractionMinutes = cardStats.timeDistribution?.timeDistribution.distraction || 0
 
   return (
     <div className="browsing-view">
       <div className="browsing-view__content">
-        {/* Top Row: Focus Score + Time Distribution */}
-        <section className="browsing-view__section browsing-view__section--hero">
-          <div className="browsing-view__hero-grid">
-            {cardStats.focusScore && (
-              <FocusScoreCard 
-                score={cardStats.focusScore.focusScore} 
-                trend={cardStats.focusScore.focusTrend as 'up' | 'down' | 'stable'}
-                period={getEffectivePeriod('focus-score')}
-                defaultPeriod={period}
-                onPeriodChange={(p) => setCardPeriod('focus-score', p)}
-              />
-            )}
-            {cardStats.timeDistribution && (
-              <TimeDistributionCard 
-                productive={cardStats.timeDistribution.timeDistribution.productive}
-                neutral={cardStats.timeDistribution.timeDistribution.neutral}
-                distraction={cardStats.timeDistribution.timeDistribution.distraction}
-                totalMinutes={cardStats.timeDistribution.totalTimeTracked}
-                topSite={cardStats.timeDistribution.topSites[0]?.domain}
-                period={getEffectivePeriod('time-distribution')}
-                defaultPeriod={period}
-                onPeriodChange={(p) => setCardPeriod('time-distribution', p)}
-              />
-            )}
-          </div>
+        {/* Distraction Hero */}
+        <section className="browsing-view__section">
+          <DistractionHeroCard
+            distractionMinutes={distractionMinutes}
+            period={getEffectivePeriod('time-distribution')}
+          />
         </section>
+
+        {/* Time Distribution */}
+        {cardStats.timeDistribution && (
+          <section className="browsing-view__section">
+            <TimeDistributionCard 
+              productive={cardStats.timeDistribution.timeDistribution.productive}
+              neutral={cardStats.timeDistribution.timeDistribution.neutral}
+              distraction={cardStats.timeDistribution.timeDistribution.distraction}
+              totalMinutes={cardStats.timeDistribution.totalTimeTracked}
+              topSite={cardStats.timeDistribution.topSites[0]?.domain}
+              period={getEffectivePeriod('time-distribution')}
+              defaultPeriod={period}
+              onPeriodChange={(p) => setCardPeriod('time-distribution', p)}
+            />
+          </section>
+        )}
 
         {/* Heatmap */}
         {cardStats.heatmap && (
-          <section className="browsing-view__section browsing-view__section--heatmap">
+          <section className="browsing-view__section">
             <BrowsingHeatmapCard 
               dailyScores={cardStats.heatmap.dailyScores}
               period={getEffectivePeriod('heatmap')}
               defaultPeriod={period}
               onPeriodChange={(p) => setCardPeriod('heatmap', p)}
-            />
-          </section>
-        )}
-
-        {/* Top Sites */}
-        {cardStats.topSites && (
-          <section className="browsing-view__section browsing-view__section--sites">
-            <TopSitesCard 
-              sites={cardStats.topSites.topSites.map(site => ({
-                domain: site.domain,
-                visits: site.visits,
-                timeSpent: site.timeSpent,
-                category: mapCategory(site.category),
-              }))}
-              period={getEffectivePeriod('top-sites')}
-              defaultPeriod={period}
-              onPeriodChange={(p) => setCardPeriod('top-sites', p)}
-              onClassificationSave={handleClassificationSave}
             />
           </section>
         )}
