@@ -100,45 +100,53 @@ export function StatsView() {
     }
   }
 
+  // Format today's date
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric'
+  })
+
   return (
     <div className="stats-view">
       <header className="stats-view__header">
-        <div className="stats-view__title">
-          <span className="stats-view__icon"><ScreenTimeIcon /></span>
-          <h1>Screen Time</h1>
+        <div className="stats-view__header-top">
+          <div className="stats-view__title">
+            <span className="stats-view__icon"><ScreenTimeIcon /></span>
+            <h1>Screen Time</h1>
+          </div>
+          <span className="stats-view__date">{today}</span>
+        </div>
+        <div className="stats-view__header-controls">
+          <div className="stats-view__tabs">
+            <button
+              className={`stats-view__tab ${activeTab === 'overview' ? 'stats-view__tab--active' : ''}`}
+              onClick={() => setActiveTab('overview')}
+            >
+              <span>Overview</span>
+            </button>
+            <button
+              className={`stats-view__tab ${activeTab === 'browsing' ? 'stats-view__tab--active' : ''}`}
+              onClick={() => setActiveTab('browsing')}
+            >
+              <span>Browsing</span>
+            </button>
+            <button
+              className={`stats-view__tab ${activeTab === 'apps' ? 'stats-view__tab--active' : ''}`}
+              onClick={() => setActiveTab('apps')}
+            >
+              <span>Apps</span>
+            </button>
+            <button
+              className={`stats-view__tab ${activeTab === 'habits' ? 'stats-view__tab--active' : ''}`}
+              onClick={() => setActiveTab('habits')}
+            >
+              <span>Habits</span>
+            </button>
+          </div>
+          <PeriodSelector selected={selectedPeriod} onChange={handleGlobalPeriodChange} />
         </div>
       </header>
-
-      {/* Controls bar with tabs and period selector */}
-      <div className="stats-view__controls">
-        <div className="stats-view__tabs">
-          <button
-            className={`stats-view__tab ${activeTab === 'overview' ? 'stats-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            <span>Overview</span>
-          </button>
-          <button
-            className={`stats-view__tab ${activeTab === 'browsing' ? 'stats-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('browsing')}
-          >
-            <span>Browsing</span>
-          </button>
-          <button
-            className={`stats-view__tab ${activeTab === 'apps' ? 'stats-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('apps')}
-          >
-            <span>Apps</span>
-          </button>
-          <button
-            className={`stats-view__tab ${activeTab === 'habits' ? 'stats-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('habits')}
-          >
-            <span>Habits</span>
-          </button>
-        </div>
-        <PeriodSelector selected={selectedPeriod} onChange={handleGlobalPeriodChange} />
-      </div>
 
       <div className="stats-view__tab-content" onScroll={handleScroll}>
         {renderTabContent()}

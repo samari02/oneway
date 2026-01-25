@@ -5,15 +5,21 @@
   overflow: hidden;
 }
 
-/* Header - matches Boundaries style */
+/* Header - Title + Tabs + Separator */
 .stats-view__header {
   flex-shrink: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   padding: var(--space-lg) var(--space-lg) var(--space-md) var(--space-lg);
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-light);
+  gap: var(--space-md);
+}
+
+.stats-view__header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .stats-view__title {
@@ -41,15 +47,16 @@
   margin: 0;
 }
 
-/* Controls bar with tabs and period selector */
-.stats-view__controls {
-  flex-shrink: 0;
+.stats-view__date {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.stats-view__header-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-sm) var(--space-lg);
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-light);
   gap: var(--space-md);
 }
 
