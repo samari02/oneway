@@ -64,6 +64,9 @@ function getPeriodLabel(period: Period): string {
 export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   const { user } = useAuth()
   
+  // App icons - must be called before any conditional returns
+  const { icons, fetchIcon } = useAppIcons()
+  
   // Browsing stats
   const { cardStats, loading: browsingLoading } = useBrowsingStatsWithOverride(
     user?.id,
@@ -78,6 +81,14 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   
   // App usage stats
   const { stats: appStats, loading: appLoading } = useAppUsage(mapPeriodToAppUsage(period))
+  
+  // Get top apps for icon fetching
+  const topApps = appStats.apps.slice(0, 3)
+  
+  // Fetch icons for apps
+  useEffect(() => {
+    topApps.forEach(app => fetchIcon(app.bundle_id))
+  }, [topApps, fetchIcon])
   
   const loading = browsingLoading || appLoading
   
@@ -102,17 +113,8 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   const appTimeMs = appStats.total_time_ms || 0
   const totalTimeMs = browsingTimeMs + appTimeMs
   
-  // App icons
-  const { icons, fetchIcon } = useAppIcons()
-  
   // Get top distractions from both sources
   const topBrowsingSites = browsingStats?.topSites?.slice(0, 3) || []
-  const topApps = appStats.apps.slice(0, 3)
-  
-  // Fetch icons for apps
-  useEffect(() => {
-    topApps.forEach(app => fetchIcon(app.bundle_id))
-  }, [topApps, fetchIcon])
   
   // Combine and sort by time
   const allDistractions = [
