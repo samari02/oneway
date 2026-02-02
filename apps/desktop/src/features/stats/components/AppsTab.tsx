@@ -8,12 +8,16 @@ interface AppsTabProps {
   period: Period
 }
 
-// Map period to app usage period string
+// Map period to app usage period string (must match Rust backend)
 function mapPeriodToAppUsage(period: Period): string {
+  // Backend expects: "today" | "7days" | "30days" | "90days" | "all"
   switch (period) {
     case 'today': return 'today'
-    case '7d': return '7d'
-    case '30d': return '30d'
+    case '7days': return '7days'
+    case '30days': return '30days'
+    case '90days': return '90days'
+    case '180days': return '90days'  // Fallback to 90 days (not supported in backend)
+    case '365days': return 'all'     // Fallback to all
     case 'all': return 'all'
     default: return 'today'
   }
