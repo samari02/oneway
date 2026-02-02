@@ -52,6 +52,7 @@ function getPeriodSuffix(period: Period): string {
 
 export function TopDistractionsCard({ sites, period, projectionSites, projectionDays, onBlock }: TopDistractionsCardProps) {
   const [blockedDomains, setBlockedDomains] = useState<Set<string>>(new Set())
+  const [showTooltip, setShowTooltip] = useState(false)
   
   // Sort by time spent descending, take top 5 (display data from selected period)
   const topDistractions = [...sites]
@@ -139,11 +140,23 @@ export function TopDistractionsCard({ sites, period, projectionSites, projection
         })}
       </div>
       
-      {topDistractions.length > 0 && totalYearlyDays > 0 && (
+      {topDistractions.length > 0 && totalYearlyDays > 0 && projectionDays > 0 && (
         <div className="top-distractions__summary">
           <span className="top-distractions__summary-icon">💡</span>
           <span className="top-distractions__summary-text">
             Block {blockedDomains.size > 0 ? 'the rest' : `these ${topDistractions.length}`} = reclaim <strong>~{totalYearlyDays} days/year</strong>
+          </span>
+          <span 
+            className="top-distractions__info"
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+          >
+            ⓘ
+            {showTooltip && (
+              <div className="top-distractions__tooltip">
+                Based on <strong>{projectionDays} days</strong> of data
+              </div>
+            )}
           </span>
         </div>
       )}

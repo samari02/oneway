@@ -289,3 +289,60 @@
 .distraction-hero__projection--good .distraction-hero__projection-text {
   color: var(--color-productive, #22c55e);
 }
+
+/* Info tooltip */
+.distraction-hero__info {
+  position: relative;
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+  cursor: help;
+  margin-left: 4px;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.distraction-hero__info:hover {
+  opacity: 1;
+}
+
+.distraction-hero__tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  z-index: 100;
+  min-width: 160px;
+}
+
+.distraction-hero__tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--border-default);
+}
+
+.distraction-hero__tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.distraction-hero__tooltip-row + .distraction-hero__tooltip-row {
+  margin-top: 6px;
+}
+
+.distraction-hero__tooltip-row strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}

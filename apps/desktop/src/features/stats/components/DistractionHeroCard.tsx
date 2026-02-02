@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Period } from './PeriodSelector'
 import './DistractionHeroCard.css'
 
@@ -10,14 +11,14 @@ interface DistractionHeroCardProps {
 }
 
 // Calculate yearly projection from all-time data
-function calculateYearlyProjection(totalMinutes: number, totalDays: number): { hours: number; days: number } {
+function calculateYearlyProjection(totalMinutes: number, totalDays: number): { hours: number; days: number; dailyAvg: number } {
   // Use actual data span for accurate daily average
   const dailyAverage = totalMinutes / Math.max(1, totalDays)
   const yearlyMinutes = dailyAverage * 365
   const yearlyHours = Math.round(yearlyMinutes / 60)
   const yearlyDays = Math.round(yearlyMinutes / 60 / 24)
   
-  return { hours: yearlyHours, days: yearlyDays }
+  return { hours: yearlyHours, days: yearlyDays, dailyAvg: Math.round(dailyAverage) }
 }
 
 function formatDuration(minutes: number): string {
@@ -83,8 +84,11 @@ export function DistractionHeroCard({
   projectionMinutes,
   projectionDays
 }: DistractionHeroCardProps) {
+  const [showTooltip, setShowTooltip] = useState(false)
+  
   // Use ALL available data for stable, accurate yearly projection
   const projection = calculateYearlyProjection(projectionMinutes, projectionDays)
+  const hasData = projectionDays > 0 && projectionMinutes > 0
   const hasSignificantTime = projectionMinutes >= 5
   
   return (
@@ -98,16 +102,35 @@ export function DistractionHeroCard({
         <span className="distraction-hero__period">{getPeriodLabel(period)}</span>
       </div>
       
-      {hasSignificantTime && (
+      {hasData && hasSignificantTime && (
         <div className="distraction-hero__projection">
           <span className="distraction-hero__projection-icon">📅</span>
           <span className="distraction-hero__projection-text">
             That's <strong>~{projection.days} days</strong> per year you could reclaim
           </span>
+          <span 
+            className="distraction-hero__info"
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+          >
+            ⓘ
+            {showTooltip && (
+              <div className="distraction-hero__tooltip">
+                <div className="distraction-hero__tooltip-row">
+                  <span>Based on</span>
+                  <strong>{projectionDays} days of data</strong>
+                </div>
+                <div className="distraction-hero__tooltip-row">
+                  <span>Daily average</span>
+                  <strong>{projection.dailyAvg} min</strong>
+                </div>
+              </div>
+            )}
+          </span>
         </div>
       )}
       
-      {!hasSignificantTime && (
+      {hasData && !hasSignificantTime && (
         <div className="distraction-hero__projection distraction-hero__projection--good">
           <span className="distraction-hero__projection-icon">✨</span>
           <span className="distraction-hero__projection-text">
