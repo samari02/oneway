@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { Period } from './PeriodSelector'
 import './TopDistractionsCard.css'
 
@@ -10,44 +10,17 @@ interface DistractionSite {
 }
 
 interface TopDistractionsCardProps {
-  sites: DistractionSite[]
+  sites: DistractionSite[]  // Display data (based on selected period)
   period: Period
+  // Projection data (based on ALL available data)
+  projectionSites: DistractionSite[]
+  projectionDays: number  // Actual days of data available
   onBlock?: (domain: string, source: 'web' | 'app', bundleId?: string) => void
 }
 
-// Calculate yearly projection from period data
-function calculateYearlyDays(minutesPerPeriod: number, period: Period): number {
-  // Get number of days in the period
-  let periodDays: number
-  
-  switch (period) {
-    case 'today':
-      periodDays = 1
-      break
-    case '7days':
-      periodDays = 7
-      break
-    case '30days':
-      periodDays = 30
-      break
-    case '90days':
-      periodDays = 90
-      break
-    case '180days':
-      periodDays = 180
-      break
-    case '365days':
-      periodDays = 365
-      break
-    case 'all':
-      periodDays = 365
-      break
-    default:
-      periodDays = 1
-  }
-  
-  // Calculate daily average, then extrapolate to yearly
-  const dailyAverage = minutesPerPeriod / periodDays
+// Calculate yearly projection from all-time data
+function calculateYearlyDays(totalMinutes: number, totalDays: number): number {
+  const dailyAverage = totalMinutes / Math.max(1, totalDays)
   const yearlyMinutes = dailyAverage * 365
   return Math.round(yearlyMinutes / 60 / 24)
 }
@@ -77,18 +50,28 @@ function getPeriodSuffix(period: Period): string {
   }
 }
 
-export function TopDistractionsCard({ sites, period, onBlock }: TopDistractionsCardProps) {
+export function TopDistractionsCard({ sites, period, projectionSites, projectionDays, onBlock }: TopDistractionsCardProps) {
   const [blockedDomains, setBlockedDomains] = useState<Set<string>>(new Set())
   
-  // Sort by time spent descending, take top 5
+  // Sort by time spent descending, take top 5 (display data from selected period)
   const topDistractions = [...sites]
     .sort((a, b) => b.timeSpent - a.timeSpent)
     .slice(0, 5)
   
-  // Calculate total time if all blocked
+  // Create a map of projection data by domain (all-time data for accurate yearly estimates)
+  const projectionByDomain = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const site of projectionSites) {
+      map.set(site.domain, site.timeSpent)
+    }
+    return map
+  }, [projectionSites])
+  
+  // Calculate total yearly days using ALL-TIME data (not period-based)
   const totalYearlyDays = topDistractions.reduce((sum, site) => {
     if (!blockedDomains.has(site.domain)) {
-      return sum + calculateYearlyDays(site.timeSpent, period)
+      const allTimeMinutes = projectionByDomain.get(site.domain) || site.timeSpent
+      return sum + calculateYearlyDays(allTimeMinutes, projectionDays)
     }
     return sum
   }, 0)
@@ -116,7 +99,9 @@ export function TopDistractionsCard({ sites, period, onBlock }: TopDistractionsC
       
       <div className="top-distractions__list">
         {topDistractions.map((site, index) => {
-          const yearlyDays = calculateYearlyDays(site.timeSpent, period)
+          // Use ALL-TIME data for yearly projection (stable, accurate)
+          const allTimeMinutes = projectionByDomain.get(site.domain) || site.timeSpent
+          const yearlyDays = calculateYearlyDays(allTimeMinutes, projectionDays)
           const isBlocked = blockedDomains.has(site.domain)
           
           return (

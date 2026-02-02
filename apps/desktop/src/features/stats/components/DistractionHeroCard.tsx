@@ -2,44 +2,17 @@ import type { Period } from './PeriodSelector'
 import './DistractionHeroCard.css'
 
 interface DistractionHeroCardProps {
-  distractionMinutes: number
+  distractionMinutes: number  // For display (based on selected period)
   period: Period
+  // Projection data (based on ALL available data, for accurate yearly estimates)
+  projectionMinutes: number
+  projectionDays: number  // Actual days of data available
 }
 
-// Calculate time reclaimed projection
-function calculateYearlyProjection(minutesPerPeriod: number, period: Period): { hours: number; days: number } {
-  // Get number of days in the period
-  let periodDays: number
-  
-  switch (period) {
-    case 'today':
-      periodDays = 1
-      break
-    case '7days':
-      periodDays = 7
-      break
-    case '30days':
-      periodDays = 30
-      break
-    case '90days':
-      periodDays = 90
-      break
-    case '180days':
-      periodDays = 180
-      break
-    case '365days':
-      periodDays = 365
-      break
-    case 'all':
-      // Assume ~365 days for "all time"
-      periodDays = 365
-      break
-    default:
-      periodDays = 1
-  }
-  
-  // Calculate daily average, then extrapolate to yearly
-  const dailyAverage = minutesPerPeriod / periodDays
+// Calculate yearly projection from all-time data
+function calculateYearlyProjection(totalMinutes: number, totalDays: number): { hours: number; days: number } {
+  // Use actual data span for accurate daily average
+  const dailyAverage = totalMinutes / Math.max(1, totalDays)
   const yearlyMinutes = dailyAverage * 365
   const yearlyHours = Math.round(yearlyMinutes / 60)
   const yearlyDays = Math.round(yearlyMinutes / 60 / 24)
@@ -106,10 +79,13 @@ function WatchingMascot() {
 
 export function DistractionHeroCard({ 
   distractionMinutes, 
-  period
+  period,
+  projectionMinutes,
+  projectionDays
 }: DistractionHeroCardProps) {
-  const projection = calculateYearlyProjection(distractionMinutes, period)
-  const hasSignificantTime = distractionMinutes >= 5
+  // Use ALL available data for stable, accurate yearly projection
+  const projection = calculateYearlyProjection(projectionMinutes, projectionDays)
+  const hasSignificantTime = projectionMinutes >= 5
   
   return (
     <div className="distraction-hero">

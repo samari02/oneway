@@ -46,6 +46,7 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
   )
 
   // Get distraction sites for TopDistractionsCard (must be before early returns)
+  // Display data: based on selected period
   const distractionSites = useMemo(() => {
     const topSites = cardStats.timeDistribution?.topSites || []
     return topSites
@@ -56,6 +57,33 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
         source: 'web' as const,
       }))
   }, [cardStats.timeDistribution])
+  
+  // Projection data: always based on ALL available data for accurate yearly estimates
+  const projectionData = useMemo(() => {
+    const allTimeSites = cardStats.allTime?.topSites || []
+    const periodStart = cardStats.allTime?.periodStart
+    const periodEnd = cardStats.allTime?.periodEnd
+    
+    // Calculate actual days of data we have
+    let totalDays = 30 // default fallback
+    if (periodStart && periodEnd) {
+      const start = new Date(periodStart)
+      const end = new Date(periodEnd)
+      totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+    }
+    
+    const sites = allTimeSites
+      .filter(site => isDistraction(site.category))
+      .map(site => ({
+        domain: site.domain,
+        timeSpent: site.timeSpent,
+        source: 'web' as const,
+      }))
+    
+    const totalMinutes = sites.reduce((sum, site) => sum + site.timeSpent, 0)
+    
+    return { sites, totalMinutes, totalDays }
+  }, [cardStats.allTime])
 
   if (loading) {
     return (
@@ -104,6 +132,8 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
           <DistractionHeroCard
             distractionMinutes={distractionMinutes}
             period={getEffectivePeriod('time-distribution')}
+            projectionMinutes={projectionData.totalMinutes}
+            projectionDays={projectionData.totalDays}
           />
         </section>
 
@@ -113,6 +143,8 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
             <TopDistractionsCard
               sites={distractionSites}
               period={getEffectivePeriod('time-distribution')}
+              projectionSites={projectionData.sites}
+              projectionDays={projectionData.totalDays}
             />
           </section>
         )}

@@ -32,6 +32,8 @@ interface CardStats {
   timeDistribution?: RustBrowsingStats
   topSites?: RustBrowsingStats
   heatmap?: RustBrowsingStats
+  // All-time data for accurate yearly projections
+  allTime?: RustBrowsingStats
 }
 
 export function useBrowsingStatsWithOverride(
@@ -58,7 +60,8 @@ export function useBrowsingStatsWithOverride(
 
     try {
       // Fetch stats for each card with its own period
-      const [focusScore, timeDistribution, topSites, heatmap] = await Promise.all([
+      // Plus "all" time data for accurate yearly projections
+      const [focusScore, timeDistribution, topSites, heatmap, allTime] = await Promise.all([
         invoke<RustBrowsingStats>('get_browsing_stats', {
           period: cardPeriods['focus-score'] || 'all'
         }),
@@ -71,6 +74,10 @@ export function useBrowsingStatsWithOverride(
         invoke<RustBrowsingStats>('get_browsing_stats', {
           period: cardPeriods['heatmap'] || 'all'
         }),
+        // Always fetch all-time data for projections (stable yearly estimates)
+        invoke<RustBrowsingStats>('get_browsing_stats', {
+          period: 'all'
+        }),
       ])
 
       setCardStats({
@@ -78,6 +85,7 @@ export function useBrowsingStatsWithOverride(
         timeDistribution,
         topSites,
         heatmap,
+        allTime,
       })
     } catch (err) {
       console.error('[useBrowsingStatsWithOverride] Error fetching stats:', err)
