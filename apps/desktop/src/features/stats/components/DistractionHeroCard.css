@@ -36,7 +36,7 @@
   background: linear-gradient(145deg, #C5B4E3 0%, #A89DC8 100%);
   border-radius: 50%;
   position: relative;
-  animation: watchCheck 3s ease-in-out infinite;
+  animation: watchCheck 4s ease-in-out infinite;
   box-shadow: 0 4px 12px rgba(165, 148, 200, 0.3);
 }
 
@@ -44,23 +44,11 @@
   0%, 100% {
     transform: rotate(0deg) translateY(0);
   }
-  15% {
-    transform: rotate(-15deg) translateY(-2px);
+  30%, 40% {
+    transform: rotate(-5deg) translateY(-1px);
   }
-  25% {
-    transform: rotate(-15deg) translateY(-2px);
-  }
-  40% {
-    transform: rotate(0deg) translateY(0);
-  }
-  55% {
-    transform: rotate(10deg) translateY(-1px);
-  }
-  65% {
-    transform: rotate(10deg) translateY(-1px);
-  }
-  80% {
-    transform: rotate(0deg) translateY(0);
+  70%, 80% {
+    transform: rotate(3deg) translateY(0);
   }
 }
 
@@ -141,7 +129,7 @@
   background: #2D3436;
   border-radius: 50%;
   top: 25%;
-  animation: eyeLookDown 3s ease-in-out infinite;
+  animation: eyeLookDown 4s ease-in-out infinite;
 }
 
 .watching-mascot__eye--left {
@@ -156,17 +144,8 @@
   0%, 100% {
     transform: translateY(0);
   }
-  15%, 25% {
-    transform: translateY(3px); /* Looking down at watch */
-  }
-  40% {
-    transform: translateY(0);
-  }
-  55%, 65% {
-    transform: translateY(2px);
-  }
-  80% {
-    transform: translateY(0);
+  30%, 40% {
+    transform: translateY(1px);
   }
 }
 
@@ -193,30 +172,18 @@
   height: 10px;
   background: linear-gradient(145deg, #C5B4E3 0%, #A89DC8 100%);
   border-radius: 10px 0 0 10px;
-  animation: armRaise 3s ease-in-out infinite;
+  animation: armRaise 4s ease-in-out infinite;
   transform-origin: right center;
 }
 
 @keyframes armRaise {
   0%, 100% {
     transform: rotate(0deg);
-    opacity: 0.7;
+    opacity: 0.8;
   }
-  15%, 25% {
-    transform: rotate(-20deg) translateY(-4px);
+  30%, 40% {
+    transform: rotate(-8deg) translateY(-1px);
     opacity: 1;
-  }
-  40% {
-    transform: rotate(0deg);
-    opacity: 0.7;
-  }
-  55%, 65% {
-    transform: rotate(-15deg) translateY(-2px);
-    opacity: 1;
-  }
-  80% {
-    transform: rotate(0deg);
-    opacity: 0.7;
   }
 }
 

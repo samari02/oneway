@@ -1,13 +1,19 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useAuth } from '../../auth'
 import { useBrowsingStatsWithOverride } from '../hooks/useBrowsingStatsWithOverride'
 import { useCardPeriods } from '../hooks/useCardPeriods'
 import { DistractionHeroCard } from './DistractionHeroCard'
+import { TopDistractionsCard } from './TopDistractionsCard'
 import { TimeDistributionCard } from './TimeDistributionCard'
 import { BrowsingHeatmapCard } from './BrowsingHeatmapCard'
 import { DataSourceCard } from './DataSourceCard'
 import type { Period } from './PeriodSelector'
 import './BrowsingView.css'
+
+// Map Rust category to check if distraction
+function isDistraction(category: string): boolean {
+  return ['distraction', 'social_media', 'video', 'entertainment', 'news', 'shopping'].includes(category)
+}
 
 interface BrowsingViewProps {
   period: Period
@@ -38,6 +44,18 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
     period,
     cardPeriods
   )
+
+  // Get distraction sites for TopDistractionsCard (must be before early returns)
+  const distractionSites = useMemo(() => {
+    const topSites = cardStats.timeDistribution?.topSites || []
+    return topSites
+      .filter(site => isDistraction(site.category))
+      .map(site => ({
+        domain: site.domain,
+        timeSpent: site.timeSpent,
+        source: 'web' as const,
+      }))
+  }, [cardStats.timeDistribution])
 
   if (loading) {
     return (
@@ -75,8 +93,8 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
     )
   }
 
-  // Get distraction time from time distribution
-  const distractionMinutes = cardStats.timeDistribution?.timeDistribution.distraction || 0
+  // Get distraction time by summing actual time from distraction sites
+  const distractionMinutes = distractionSites.reduce((sum, site) => sum + site.timeSpent, 0)
 
   return (
     <div className="browsing-view">
@@ -88,6 +106,16 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
             period={getEffectivePeriod('time-distribution')}
           />
         </section>
+
+        {/* Top Distractions */}
+        {distractionSites.length > 0 && (
+          <section className="browsing-view__section">
+            <TopDistractionsCard
+              sites={distractionSites}
+              period={getEffectivePeriod('time-distribution')}
+            />
+          </section>
+        )}
 
         {/* Time Distribution */}
         {cardStats.timeDistribution && (

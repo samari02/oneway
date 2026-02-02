@@ -8,27 +8,39 @@ interface DistractionHeroCardProps {
 
 // Calculate time reclaimed projection
 function calculateYearlyProjection(minutesPerPeriod: number, period: Period): { hours: number; days: number } {
-  let weeklyMinutes: number
+  // Get number of days in the period
+  let periodDays: number
   
   switch (period) {
     case 'today':
-      weeklyMinutes = minutesPerPeriod * 7
+      periodDays = 1
       break
-    case '7d':
-      weeklyMinutes = minutesPerPeriod
+    case '7days':
+      periodDays = 7
       break
-    case '30d':
-      weeklyMinutes = minutesPerPeriod / 4.3 // ~4.3 weeks per month
+    case '30days':
+      periodDays = 30
+      break
+    case '90days':
+      periodDays = 90
+      break
+    case '180days':
+      periodDays = 180
+      break
+    case '365days':
+      periodDays = 365
       break
     case 'all':
-      // For "all time", assume it's roughly 30 days of data
-      weeklyMinutes = minutesPerPeriod / 4.3
+      // Assume ~365 days for "all time"
+      periodDays = 365
       break
     default:
-      weeklyMinutes = minutesPerPeriod * 7
+      periodDays = 1
   }
   
-  const yearlyMinutes = weeklyMinutes * 52
+  // Calculate daily average, then extrapolate to yearly
+  const dailyAverage = minutesPerPeriod / periodDays
+  const yearlyMinutes = dailyAverage * 365
   const yearlyHours = Math.round(yearlyMinutes / 60)
   const yearlyDays = Math.round(yearlyMinutes / 60 / 24)
   
@@ -50,10 +62,13 @@ function formatDuration(minutes: number): string {
 function getPeriodLabel(period: Period): string {
   switch (period) {
     case 'today': return 'today'
-    case '7d': return 'this week'
-    case '30d': return 'this month'
+    case '7days': return 'this week'
+    case '30days': return 'this month'
+    case '90days': return 'last 3 months'
+    case '180days': return 'last 6 months'
+    case '365days': return 'this year'
     case 'all': return 'all time'
-    default: return 'today'
+    default: return ''
   }
 }
 
