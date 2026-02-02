@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useAuth, LoginForm } from '@/features/auth'
 import { useHabits, useTodayCheckIns, useHabitActions, HabitList, AddHabitModal, EditHabitModal } from '@/features/habits'
@@ -385,6 +386,28 @@ function Dashboard() {
     const saved = localStorage.getItem('clarity-theme')
     return saved === 'dark'
   })
+
+  // Auto-start app monitoring if enabled
+  useEffect(() => {
+    async function autoStartAppMonitoring() {
+      try {
+        const [config, isRunning] = await Promise.all([
+          invoke<{ blocking_enabled: boolean }>('get_blocked_apps'),
+          invoke<boolean>('is_app_monitoring_active'),
+        ])
+        
+        // Start monitoring if enabled but not running
+        if (config.blocking_enabled && !isRunning) {
+          console.log('[App] Auto-starting app monitoring...')
+          await invoke('start_app_monitoring')
+        }
+      } catch (err) {
+        console.error('[App] Failed to auto-start app monitoring:', err)
+      }
+    }
+    
+    autoStartAppMonitoring()
+  }, [])
 
   // Apply theme to document
   useEffect(() => {
