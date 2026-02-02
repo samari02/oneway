@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '../../auth'
 import { useStats } from '../hooks/useStats'
 import { StreakCard } from './StreakCard'
@@ -43,8 +44,32 @@ export function StatsView() {
   })
   const [resetCounter, setResetCounter] = useState(0) // Increments on every global period click
   const [isHeaderMinimized, setIsHeaderMinimized] = useState(false)
+  const [availableDays, setAvailableDays] = useState<number | undefined>(undefined)
   const { user } = useAuth()
   const { stats, loading, error } = useStats(user?.id)
+  
+  // Fetch available data range for period selector
+  useEffect(() => {
+    async function fetchDataRange() {
+      try {
+        const result = await invoke<{
+          periodStart?: string
+          periodEnd?: string
+        }>('get_browsing_stats', { period: 'all' })
+        
+        if (result.periodStart && result.periodEnd) {
+          const start = new Date(result.periodStart)
+          const end = new Date(result.periodEnd)
+          const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+          setAvailableDays(days)
+        }
+      } catch (err) {
+        console.error('[StatsView] Failed to fetch data range:', err)
+      }
+    }
+    
+    fetchDataRange()
+  }, [])
   
   // Persist tab changes
   useEffect(() => {
@@ -144,7 +169,11 @@ export function StatsView() {
               <span>Habits</span>
             </button>
           </div>
-          <PeriodSelector selected={selectedPeriod} onChange={handleGlobalPeriodChange} />
+          <PeriodSelector 
+            selected={selectedPeriod} 
+            onChange={handleGlobalPeriodChange}
+            availableDays={availableDays}
+          />
         </div>
       </header>
 
