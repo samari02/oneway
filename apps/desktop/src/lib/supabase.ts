@@ -1,4 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@oneway/shared'
+import {
+  SUPABASE_URL as DEFAULT_SUPABASE_URL,
+  SUPABASE_ANON_KEY as DEFAULT_SUPABASE_ANON_KEY,
+} from '@oneway/shared'
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || DEFAULT_SUPABASE_ANON_KEY
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)

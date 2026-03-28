@@ -180,3 +180,34 @@
 [data-theme="dark"] .protection-alert__button--dismiss:hover {
   background: rgba(255, 255, 255, 0.1);
 }
+
+.protection-alert__inline-help {
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="dark"] .protection-alert__inline-help {
+  border-top-color: rgba(255, 255, 255, 0.15);
+}
+
+.protection-alert__inline-help-text {
+  font-size: var(--font-size-xs);
+  margin: 0 0 var(--space-xs) 0;
+  line-height: 1.35;
+  opacity: 0.95;
+}
+
+.protection-alert__button--secondary {
+  background: transparent;
+  border: 1px solid currentColor;
+  color: inherit;
+}
+
+.protection-alert__button--secondary:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .protection-alert__button--secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+}

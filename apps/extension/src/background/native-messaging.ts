@@ -15,8 +15,31 @@ const HOST_NAME = 'com.clarity.app'
 let port: chrome.runtime.Port | null = null
 let isConnected = false
 let reconnectAttempts = 0
-const MAX_RECONNECT_ATTEMPTS = 5
-const RECONNECT_DELAY = 5000
+const RECONNECT_BASE_DELAY_MS = 5000
+/** Cap backoff so we keep retrying forever (e.g. after desktop was closed for days). */
+const RECONNECT_MAX_DELAY_MS = 5 * 60_000
+let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
+
+function clearReconnectSchedule() {
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout)
+    reconnectTimeout = null
+  }
+}
+
+function scheduleReconnect() {
+  clearReconnectSchedule()
+  const attempt = reconnectAttempts++
+  const delay = Math.min(
+    RECONNECT_BASE_DELAY_MS * Math.pow(2, Math.min(attempt, 8)),
+    RECONNECT_MAX_DELAY_MS
+  )
+  log(`Reconnect scheduled in ${delay}ms (attempt ${attempt + 1})`)
+  reconnectTimeout = setTimeout(() => {
+    reconnectTimeout = null
+    connectToDesktopApp()
+  }, delay)
+}
 
 // Heartbeat configuration
 const HEARTBEAT_INTERVAL_MS = 60_000 // Send heartbeat every 60 seconds
@@ -114,19 +137,14 @@ export function connectToDesktopApp(): boolean {
       // Update storage
       chrome.storage.local.set({ desktopAppConnected: false })
       
-      // Attempt reconnection if we haven't exceeded max attempts
-      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-        reconnectAttempts++
-        log(`Reconnect attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${RECONNECT_DELAY}ms`)
-        setTimeout(connectToDesktopApp, RECONNECT_DELAY)
-      } else {
-        log('Max reconnect attempts reached, desktop app not available')
-      }
+      // Keep retrying forever (desktop may be closed for hours/days)
+      scheduleReconnect()
     })
     
     // Connection successful
     isConnected = true
     reconnectAttempts = 0
+    clearReconnectSchedule()
     
     // Update storage
     chrome.storage.local.set({ desktopAppConnected: true })
@@ -150,6 +168,7 @@ export function connectToDesktopApp(): boolean {
     log('Failed to connect to desktop app:', error)
     isConnected = false
     chrome.storage.local.set({ desktopAppConnected: false })
+    scheduleReconnect()
     return false
   }
 }

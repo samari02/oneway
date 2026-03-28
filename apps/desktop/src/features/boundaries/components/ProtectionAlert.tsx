@@ -1,12 +1,23 @@
 /**
  * Protection Alert Component
- * 
+ *
  * Displays a banner at the top of the app when protection is compromised.
  * Three levels: ok (hidden), warning (orange), critical (red)
  */
 
+import { useState } from 'react'
+import { openUrl } from '@tauri-apps/plugin-opener'
 import { type AlertLevel, type ExtensionStatus } from '../hooks/useExtensionStatus'
 import './ProtectionAlert.css'
+
+const CHROME_EXTENSIONS_CANDIDATES: Array<[string, string]> = [
+  ['chrome://extensions/', 'Google Chrome'],
+  ['chrome://extensions/', 'Chromium'],
+  ['chrome://extensions/', 'Google Chrome Canary'],
+  ['brave://extensions/', 'Brave Browser'],
+  ['edge://extensions/', 'Microsoft Edge'],
+  ['arc://extensions/', 'Arc'],
+]
 
 // Custom SVG Icons
 const WarningIcon = () => (
@@ -31,6 +42,8 @@ interface ProtectionAlertProps {
 }
 
 export function ProtectionAlert({ status, onDismiss }: ProtectionAlertProps) {
+  const [inlineHelp, setInlineHelp] = useState(false)
+
   // Don't show if no status or everything is OK
   if (!status || status.alertLevel === 'ok') {
     return null
@@ -77,10 +90,25 @@ export function ProtectionAlert({ status, onDismiss }: ProtectionAlertProps) {
 
   const content = getAlertContent()
 
-  const handleCheckExtension = () => {
-    // Open Chrome extensions page
-    // Note: This won't work directly from Tauri, but we show instructions
-    alert('Please open chrome://extensions and check that "Clarity - Focus & Flow" is enabled.')
+  const handleCheckExtension = async () => {
+    setInlineHelp(false)
+    for (const [url, app] of CHROME_EXTENSIONS_CANDIDATES) {
+      try {
+        await openUrl(url, app)
+        return
+      } catch {
+        /* try next browser */
+      }
+    }
+    setInlineHelp(true)
+  }
+
+  const copyChromeExtensionsUrl = async () => {
+    try {
+      await navigator.clipboard.writeText('chrome://extensions/')
+    } catch {
+      setInlineHelp(true)
+    }
   }
 
   return (
@@ -93,6 +121,22 @@ export function ProtectionAlert({ status, onDismiss }: ProtectionAlertProps) {
         <div className="protection-alert__text">
           <strong className="protection-alert__title">{content.title}</strong>
           <span className="protection-alert__message">{content.message}</span>
+          {inlineHelp && content.action && (
+            <div className="protection-alert__inline-help">
+              <p className="protection-alert__inline-help-text">
+                Open your Chromium-based browser, go to the extensions page, and ensure
+                &quot;Clarity&quot; is enabled. The desktop app only clears this alert when
+                the extension sends a heartbeat (native messaging).
+              </p>
+              <button
+                type="button"
+                className="protection-alert__button protection-alert__button--secondary"
+                onClick={copyChromeExtensionsUrl}
+              >
+                Copy chrome://extensions/
+              </button>
+            </div>
+          )}
         </div>
       </div>
       

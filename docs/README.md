@@ -12,6 +12,8 @@
 - [roadmap.md](./01-vision/roadmap.md) — Ce qui est fait et ce qui reste
 
 ### [02-features/](./02-features/) — Specs des features
+- [clarity-connectivity/](./02-features/clarity-connectivity/) — Pont desktop ↔ extension, auth, heartbeats
+  - [clarity_desktop_extension_connectivity_2026-03-28.md](./02-features/clarity-connectivity/clarity_desktop_extension_connectivity_2026-03-28.md)
 - [habits-boundaries.md](./02-features/habits-boundaries.md) — Système d'habitudes
 - [north-star.md](./02-features/north-star.md) — Objectif principal
 - [ai-companion.md](./02-features/ai-companion.md) — Aoi, le coach IA
@@ -27,6 +29,9 @@
 - [browser-extension.md](./03-architecture/browser-extension.md) — Extension Chrome
 - [native-messaging.md](./03-architecture/native-messaging.md) — Communication extension ↔ desktop
 - [history-collection.md](./03-architecture/history-collection.md) — Collecte d'historique
+
+### [03-runbooks/](./03-runbooks/) — Conventions & runbooks
+- [00-documentation-naming-rules_2026-03-28.md](./03-runbooks/00-documentation-naming-rules_2026-03-28.md) — Nommage des fichiers `.md`
 
 ### [04-guides/](./04-guides/) — Comment contribuer
 - [extension-debug.md](./04-guides/extension-debug.md) — Débugger l'extension

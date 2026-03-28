@@ -2,6 +2,25 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import './LoginForm.css'
 
+function formatAuthError(err: unknown): string {
+  const msg =
+    err && typeof err === 'object' && 'message' in err
+      ? String((err as { message: unknown }).message)
+      : err instanceof Error
+        ? err.message
+        : String(err)
+  const lower = msg.toLowerCase()
+  if (
+    lower.includes('load failed') ||
+    lower.includes('failed to fetch') ||
+    lower.includes('networkerror') ||
+    lower.includes('network request failed')
+  ) {
+    return 'Cannot reach Supabase. Use the Project URL and anon/publishable key from Supabase → Settings → API. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in apps/desktop/.env.local if the defaults are wrong or the project was moved.'
+  }
+  return msg
+}
+
 export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,18 +33,25 @@ export function LoginForm() {
     setLoading(true)
     setError('')
 
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password })
-      if (error) {
-        setError(error.message)
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({ email, password })
+        if (error) {
+          setError(formatAuthError(error))
+        } else {
+          setError('Check your email to confirm your account!')
+        }
       } else {
-        setError('Check your email to confirm your account!')
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (error) {
+          setError(formatAuthError(error))
+        }
       }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setError(error.message)
-      }
+    } catch (e) {
+      setError(formatAuthError(e))
     }
     setLoading(false)
   }

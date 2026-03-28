@@ -1,7 +1,9 @@
 {
   "name": "com.clarity.app",
   "description": "Clarity Desktop App - Native Messaging Host for Chrome Extension",
-  "path": "/Applications/Clarity.app/Contents/MacOS/Clarity",
+  "path": "/Users/YOU/.clarity/clarity-native-host-runner.sh",
   "type": "stdio",
-  "allowed_origins": []
+  "allowed_origins": [
+    "chrome-extension://YOUR_EXTENSION_ID_HERE/"
+  ]
 }
