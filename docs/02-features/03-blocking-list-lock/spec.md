@@ -1,5 +1,7 @@
 # Spec: blocking list lock
 
+For **password vs friction (“game”) unlock modes** and roadmap alignment, see [`unlock-modes.md`](./unlock-modes.md).
+
 ## Data on disk
 
 **Path:** `~/.clarity/blocking-lock.json`

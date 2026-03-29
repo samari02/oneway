@@ -4,6 +4,7 @@ Protect **weakening** the block list (remove rules, turn rules off) with a **loc
 
 ## Related docs
 
+- **Unlock modes (password vs friction game, hybrid, friend):** [`unlock-modes.md`](./unlock-modes.md)
 - Sync architecture: [`../02-blocage/custom_blocking_sync_architecture_2026-03-29.md`](../02-blocage/custom_blocking_sync_architecture_2026-03-29.md)
 - UX decisions (password scope, recovery): agreed in product discussion 2026-03-29
 
@@ -58,11 +59,13 @@ stateDiagram-v2
 - [x] **Blocking** tab: `BlockingLockPanel` (set password, unlock, countdown, re-lock, change password when unlocked)
 - [x] Gate **Remove** and **toggle off** when locked (`canManageDestructive` from Rust)
 
-### Phase 2 — Recovery
+### Phase 2 — Recovery & friction
 
-- [ ] “Forgot password” → friction flow (N digit grids, count target digit per grid)
-- [ ] Rate limits / cooldown between attempts
-- [ ] Success → **set new password** (invalidate old hash)
+See [`unlock-modes.md`](./unlock-modes.md) for **password vs friction-only** and hybrid options.
+
+- [ ] **Phase 2a (optional):** Friction-only lock path (challenge to unlock; no password)
+- [ ] **Phase 2b (optional):** “Forgot password” → friction flow → **set new password** (invalidate old hash)
+- [ ] Rate limits / cooldown between attempts where relevant
 
 ### Phase 3 — Hardening (optional)
 
