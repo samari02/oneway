@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase'
 import type {
-  CommitmentLevel,
   CustomBlockingMatchMode,
   CustomBlockingRule,
   CustomBlockingRuleType,
@@ -70,8 +69,6 @@ export interface CreateCustomBlockingRuleInput {
   value: string
   match_mode?: CustomBlockingMatchMode
   note?: string | null
-  commitment_level?: CommitmentLevel
-  locked_until?: string | null
 }
 
 export async function createCustomBlockingRule(
@@ -85,8 +82,6 @@ export async function createCustomBlockingRule(
       value: input.value.trim(),
       match_mode: input.match_mode ?? 'contains',
       note: input.note?.trim() || null,
-      commitment_level: input.commitment_level ?? 'flexible',
-      locked_until: input.locked_until ?? null,
       is_active: true,
     })
     .select()
@@ -106,8 +101,6 @@ export async function createCustomBlockingRulesBatch(
     value: input.value.trim(),
     match_mode: input.match_mode ?? 'contains',
     note: input.note?.trim() || null,
-    commitment_level: input.commitment_level ?? 'flexible',
-    locked_until: input.locked_until ?? null,
     is_active: true,
   }))
   const { data, error } = await supabase.from('custom_blocking_rules').insert(rows).select()
@@ -119,8 +112,6 @@ export interface UpdateCustomBlockingRuleInput {
   value?: string
   match_mode?: CustomBlockingMatchMode
   note?: string | null
-  commitment_level?: CommitmentLevel
-  locked_until?: string | null
   is_active?: boolean
 }
 

@@ -379,8 +379,9 @@
 }
 
 .blocking-tab__toggle-inline {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  gap: 8px;
   cursor: pointer;
 }
 
@@ -389,6 +390,13 @@
   height: 18px;
   accent-color: var(--color-mint);
   cursor: pointer;
+}
+
+.blocking-tab__blocking-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 1.75rem;
 }
 
 .blocking-tab__table-remove {

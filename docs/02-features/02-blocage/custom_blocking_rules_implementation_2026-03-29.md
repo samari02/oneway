@@ -74,11 +74,7 @@ Ordre d’application : **016 puis 017** (CLI / dashboard). Les deux peuvent êt
 | `apps/extension/src/background/native-messaging.ts` | `handleConfigUpdate` ne remplace plus la blocklist par défaut ; poll `GET_CONFIG` ~60s |
 | `apps/extension/src/background/service-worker.ts` | `shouldBlock` : merge `rules` + `customBlockingRules` ; mots-clés recherche custom |
 
-**Comportement engagement (v1) :**
-
-- **Flexible** : toggle / suppression immédiats (avec confirm simple pour delete).
-- **Committed** : confirmation supplémentaire avant désactivation ou suppression.
-- **Locked** : `locked_until` renseigné (ex. +7 jours) ; toggle/delete désactivés tant que la date n’est pas passée.
+**Blocage on/off (UI actuelle) :** une colonne **Blocking** — **On** / **Off** (`is_active`). Pas de niveaux d’engagement (flexible / committed / locked) dans l’app ; les colonnes DB peuvent rester pour compatibilité / futur. Suppression : une confirmation.
 
 **Presets :** `BLOCKING_PRESETS` dans `BlockingTab.tsx` (Social, Short video, Shopping) — insert batch `url_contains`, doublons ignorés (même valeur insensible à la casse).
 

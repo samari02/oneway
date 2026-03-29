@@ -24,11 +24,6 @@ export const BLOCKING_PRESETS: { id: string; label: string; values: string[] }[]
   },
 ]
 
-function isLockActive(rule: CustomBlockingRule): boolean {
-  if (rule.commitment_level !== 'locked' || !rule.locked_until) return false
-  return new Date(rule.locked_until) > new Date()
-}
-
 function formatSyncedAt(d: Date | null): string {
   if (!d) return 'Not synced yet'
   return d.toLocaleString(undefined, {
@@ -40,18 +35,6 @@ function formatSyncedAt(d: Date | null): string {
   })
 }
 
-function commitmentLabel(rule: CustomBlockingRule): string {
-  if (isLockActive(rule)) return 'Locked'
-  switch (rule.commitment_level) {
-    case 'committed':
-      return 'Committed'
-    case 'locked':
-      return 'Flexible'
-    default:
-      return 'Flexible'
-  }
-}
-
 function ruleTypeLabel(rule: CustomBlockingRule): string {
   return rule.rule_type === 'url_contains' ? 'URL' : 'Search'
 }
@@ -60,15 +43,7 @@ function filterRulesBySearch(rules: CustomBlockingRule[], query: string): Custom
   const s = query.trim().toLowerCase()
   if (!s) return rules
   return rules.filter((r) => {
-    const blob = [
-      r.value,
-      r.note ?? '',
-      ruleTypeLabel(r),
-      commitmentLabel(r),
-      r.match_mode,
-    ]
-      .join(' ')
-      .toLowerCase()
+    const blob = [r.value, r.note ?? '', ruleTypeLabel(r), r.match_mode].join(' ').toLowerCase()
     return blob.includes(s)
   })
 }
@@ -151,7 +126,6 @@ export function BlockingTab({ userId }: BlockingTabProps) {
           user_id: userId,
           rule_type: 'url_contains',
           value,
-          commitment_level: 'flexible',
         })
       } else {
         const value = raw.toLowerCase()
@@ -164,7 +138,6 @@ export function BlockingTab({ userId }: BlockingTabProps) {
           user_id: userId,
           rule_type: 'search_contains',
           value,
-          commitment_level: 'flexible',
         })
       }
       setAddInput('')
@@ -193,7 +166,6 @@ export function BlockingTab({ userId }: BlockingTabProps) {
           rule_type: 'url_contains' as const,
           value: normalizeUrlBlockingValue(value),
           note: `Quick add: ${preset.label}`,
-          commitment_level: 'flexible',
         }))
       )
     } catch {
@@ -203,20 +175,8 @@ export function BlockingTab({ userId }: BlockingTabProps) {
     }
   }
 
-  const confirmCommitted = (action: string) =>
-    window.confirm(
-      `This rule is marked Committed. ${action}\n\nAre you sure you want to continue?`
-    )
-
   const handleToggle = async (rule: CustomBlockingRule) => {
-    if (isLockActive(rule)) {
-      window.alert('This rule is locked until ' + new Date(rule.locked_until!).toLocaleString())
-      return
-    }
     const next = !rule.is_active
-    if (rule.commitment_level === 'committed' && rule.is_active && !next) {
-      if (!confirmCommitted('Disabling will weaken your boundary.')) return
-    }
     optimisticToggle(rule.id, next)
     try {
       await updateRule(rule.id, { is_active: next })
@@ -226,13 +186,7 @@ export function BlockingTab({ userId }: BlockingTabProps) {
   }
 
   const handleDelete = async (rule: CustomBlockingRule) => {
-    if (isLockActive(rule)) {
-      window.alert('This rule is locked until ' + new Date(rule.locked_until!).toLocaleString())
-      return
-    }
-    if (rule.commitment_level === 'committed') {
-      if (!confirmCommitted('Deleting cannot be undone.')) return
-    } else if (!window.confirm('Remove this rule?')) {
+    if (!window.confirm('Remove this rule?')) {
       return
     }
     optimisticRemove(rule.id)
@@ -362,8 +316,7 @@ export function BlockingTab({ userId }: BlockingTabProps) {
                   <th>Criterion</th>
                   <th>Match</th>
                   <th>Note</th>
-                  <th>Commitment</th>
-                  <th>Active</th>
+                  <th>Blocking</th>
                   <th aria-label="Actions" />
                 </tr>
               </thead>
@@ -395,28 +348,24 @@ export function BlockingTab({ userId }: BlockingTabProps) {
                       ) : (
                         <span className="blocking-tab__muted">—</span>
                       )}
-                      {isLockActive(rule) && rule.locked_until && (
-                        <span className="blocking-tab__lock-inline">
-                          Locked until {new Date(rule.locked_until).toLocaleDateString()}
-                        </span>
-                      )}
                     </td>
-                    <td>{commitmentLabel(rule)}</td>
                     <td>
                       <label className="blocking-tab__toggle-inline">
                         <input
                           type="checkbox"
                           checked={rule.is_active}
-                          disabled={isLockActive(rule)}
                           onChange={() => handleToggle(rule)}
+                          aria-label={rule.is_active ? 'Blocking on; click to pause' : 'Blocking off; click to enforce'}
                         />
+                        <span className="blocking-tab__blocking-label">
+                          {rule.is_active ? 'On' : 'Off'}
+                        </span>
                       </label>
                     </td>
                     <td>
                       <button
                         type="button"
                         className="blocking-tab__table-remove"
-                        disabled={isLockActive(rule)}
                         onClick={() => handleDelete(rule)}
                       >
                         Remove
