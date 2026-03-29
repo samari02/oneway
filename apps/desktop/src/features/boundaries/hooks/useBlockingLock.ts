@@ -73,6 +73,7 @@ export function useBlockingLock() {
   }, [refresh])
 
   const clearLock = useCallback(async () => {
+    await refresh()
     await invoke('blocking_lock_clear')
     await refresh()
   }, [refresh])

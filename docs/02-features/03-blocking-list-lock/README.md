@@ -80,6 +80,11 @@ See [`unlock-modes.md`](./unlock-modes.md) for **password vs friction-only** and
 | Rust | `apps/desktop/src-tauri/src/blocking_lock.rs`, `lib.rs` |
 | React | `hooks/useBlockingLock.ts`, `BlockingUnlockModal.tsx`, `BlockingSetPasswordModal.tsx` (or inline), `BlockingTab.tsx` |
 
+## Troubleshooting
+
+- **Turn off protection** only runs while an **unlock session** is active (Rust deletes `blocking-lock.json` only then). The panel treats “Managing” using **`canManageDestructive`** from `blocking_lock_get_status` so the UI matches the backend (avoids `Date.now()` skew vs Rust). `clearLock` calls **`refresh()` before `blocking_lock_clear`** so state is current. Test in the **Clarity desktop app**; a plain browser dev session has no Tauri `invoke`.
+- If removal still fails, the alert should show the Rust message (for example “Unlock first to turn off protection.”).
+
 ## Open questions (later)
 
 - Minimum password length (v1: **8** characters).

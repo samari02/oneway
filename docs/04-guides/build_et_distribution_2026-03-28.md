@@ -1,10 +1,72 @@
 # Build, exécution locale et distribution (Clarity / oneway)
 
-**Last update:** 2026-03-28
+**Last update:** 2026-03-29
 
 ---
 
-Ce document regroupe les **modes d’exécution** (développement vs app installée), ce qui se passe si le **terminal plante**, comment obtenir une **version stable** avec **icône**, et comment penser la **distribution** sur plusieurs machines — sans confondre avec un hébergeur type **Vercel** (réservé au web).
+## Référence terminal — trois scénarios (copier-coller)
+
+Adapte le chemin racine si ton clone n’est pas sous `~/Development/oneway`. Remplace `<EXTENSION_ID>` par l’ID affiché dans **chrome://extensions** (mode développeur).
+
+### Scénario A — Compiler **seulement** le binaire Rust (debug)
+
+Utile pour le **native host** (`--native-host`), les tests Rust, ou avant de réinstaller le manifest Chrome **sans** lancer l’UI. Ne démarre **pas** Vite ni la fenêtre Clarity.
+
+```bash
+cd /Users/samuelmarinelli/Development/oneway/apps/desktop/src-tauri
+cargo build
+```
+
+Binaire produit : `apps/desktop/src-tauri/target/debug/appsdesktop` (profil debug). Les **warnings** Rust (dead code, etc.) n’empêchent pas la compilation.
+
+---
+
+### Scénario B — **App desktop complète** (UI + Tauri + hot reload)
+
+C’est le flux quotidien pour coder et tester l’app (Boundaries, lock, etc.). Équivalent à `tauri dev` ; recompile le Rust si besoin.
+
+**Depuis le package desktop :**
+
+```bash
+cd /Users/samuelmarinelli/Development/oneway/apps/desktop
+pnpm install
+pnpm dev
+```
+
+**Depuis la racine du monorepo oneway :**
+
+```bash
+cd /Users/samuelmarinelli/Development/oneway
+pnpm install
+pnpm dev:desktop
+```
+
+Tant que ce processus tourne dans le terminal, l’app est joignable ; si le terminal se ferme, le dev s’arrête en général avec.
+
+---
+
+### Scénario C — **Pont Chrome ↔ binaire** (native messaging, dev)
+
+À refaire si tu changes l’**ID d’extension**, le **chemin du binaire**, ou après un passage **release** (autre chemin que `target/debug/…`).
+
+```bash
+chmod +x /Users/samuelmarinelli/Development/oneway/apps/desktop/scripts/install-native-host.sh
+/Users/samuelmarinelli/Development/oneway/apps/desktop/scripts/install-native-host.sh <EXTENSION_ID> /Users/samuelmarinelli/Development/oneway/apps/desktop/src-tauri/target/debug/appsdesktop
+```
+
+Ensuite : recharger l’extension dans **chrome://extensions**. Voir aussi §6 et la doc connectivité.
+
+---
+
+| Scénario | Commandes clés | Résultat |
+|----------|----------------|----------|
+| **A** | `cd …/src-tauri` → `cargo build` | Binaire `target/debug/appsdesktop` seulement |
+| **B** | `cd …/apps/desktop` → `pnpm dev` (ou racine → `pnpm dev:desktop`) | Fenêtre Clarity + Vite |
+| **C** | `install-native-host.sh <id> <path binaire debug>` | Manifest Chrome → runner → `appsdesktop --native-host` |
+
+---
+
+Ce document regroupe aussi les **modes d’exécution** (développement vs app installée), ce qui se passe si le **terminal plante**, comment obtenir une **version stable** avec **icône**, et comment penser la **distribution** sur plusieurs machines — sans confondre avec un hébergeur type **Vercel** (réservé au web).
 
 ---
 

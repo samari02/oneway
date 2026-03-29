@@ -3,6 +3,16 @@ import type { BlockingLockStatus, FrictionChallengeStart } from '../hooks/useBlo
 import { BlockingFrictionModal } from './BlockingFrictionModal'
 import './BlockingLockPanel.css'
 
+function invokeErrMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (typeof err === 'string') return err
+  try {
+    return JSON.stringify(err)
+  } catch {
+    return String(err)
+  }
+}
+
 interface BlockingLockPanelProps {
   status: BlockingLockStatus | null
   loading: boolean
@@ -114,7 +124,7 @@ export function BlockingLockPanel({
     try {
       await setFrictionLock()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Could not enable challenge lock')
+      alert(invokeErrMessage(err) || 'Could not enable challenge lock')
     } finally {
       setBusy(false)
     }
@@ -127,7 +137,7 @@ export function BlockingLockPanel({
       const ch = await frictionStart()
       setFrictionChallenge(ch)
     } catch (err) {
-      setFrictionError(err instanceof Error ? err.message : 'Could not start challenge')
+      setFrictionError(invokeErrMessage(err) || 'Could not start challenge')
     } finally {
       setFrictionBusy(false)
     }
@@ -144,7 +154,7 @@ export function BlockingLockPanel({
       )
       closeFriction()
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Verification failed'
+      const msg = invokeErrMessage(err) || 'Verification failed'
       setFrictionError(msg)
       try {
         const ch = await frictionStart()
@@ -165,7 +175,7 @@ export function BlockingLockPanel({
     try {
       await clearLock()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Could not remove protection')
+      alert(invokeErrMessage(err) || 'Could not remove protection')
     } finally {
       setBusy(false)
     }
@@ -180,7 +190,8 @@ export function BlockingLockPanel({
   }
 
   const unlockedUntil = status.unlockedUntilMs
-  const isUnlocked = unlockedUntil != null && Date.now() < unlockedUntil
+  // Match Rust session (canManageDestructive); avoid Date.now() vs backend skew that left "Managing" visible after expiry.
+  const isUnlocked = status.hasLock && status.canManageDestructive
   const mins = Math.round(status.unlockDurationSecs / 60)
 
   return (
