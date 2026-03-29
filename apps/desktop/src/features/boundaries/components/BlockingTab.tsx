@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import type { CustomBlockingRule, CustomBlockingRuleType } from '@oneway/shared'
-import { normalizeUrlBlockingValue } from '../api/customBlockingRules'
+import type { CustomBlockingRule } from '@oneway/shared'
+import { inferBlockingRuleType, normalizeUrlBlockingValue } from '../api/customBlockingRules'
 import { useCustomBlockingRules } from '../hooks/useCustomBlockingRules'
 import './BlockingTab.css'
 
@@ -92,7 +92,6 @@ export function BlockingTab({ userId }: BlockingTabProps) {
     optimisticToggle,
   } = useCustomBlockingRules(userId)
 
-  const [addMode, setAddMode] = useState<CustomBlockingRuleType>('url_contains')
   const [addInput, setAddInput] = useState('')
   const [addError, setAddError] = useState<string | null>(null)
   const [addSaving, setAddSaving] = useState(false)
@@ -135,7 +134,8 @@ export function BlockingTab({ userId }: BlockingTabProps) {
 
     setAddSaving(true)
     try {
-      if (addMode === 'url_contains') {
+      const mode = inferBlockingRuleType(raw)
+      if (mode === 'url_contains') {
         const value = normalizeUrlBlockingValue(raw)
         if (value.length < MIN_LEN) {
           setAddError(`Use at least ${MIN_LEN} characters after removing https:// etc.`)
@@ -259,8 +259,9 @@ export function BlockingTab({ userId }: BlockingTabProps) {
           <strong>Chrome sync:</strong> rules are saved to Supabase and written to{' '}
           <code className="blocking-tab__code">~/.clarity/custom-blocking-rules.json</code>. The extension loads them via
           the native host (<code className="blocking-tab__code">GET_CONFIG</code>), merged with the built-in blocklist.
-          Keep Clarity running and the extension connected. Paste a URL or domain (e.g. <code className="blocking-tab__code">hello.com</code> or{' '}
-          <code className="blocking-tab__code">https://hello.com</code> — both work).
+          Keep Clarity running and the extension connected. One field: we infer <strong>site</strong> (e.g.{' '}
+          <code className="blocking-tab__code">reddit.com</code>, <code className="blocking-tab__code">/shorts</code>) vs{' '}
+          <strong>search keyword</strong> (e.g. <code className="blocking-tab__code">gossip</code>) — see caveats below.
         </div>
         <p className="blocking-tab__subtitle">
           Supabase project: <code className="blocking-tab__code">apps/desktop/.env.local</code> (defaults in{' '}
@@ -270,6 +271,11 @@ export function BlockingTab({ userId }: BlockingTabProps) {
         <p className="blocking-tab__sync">
           <span className="blocking-tab__sync-label">Last load from cloud:</span>{' '}
           <span className="blocking-tab__sync-time">{formatSyncedAt(lastSyncedAt)}</span>
+        </p>
+        <p className="blocking-tab__hint-inline">
+          <strong>Detection:</strong> anything with spaces → search. Looks like a host (<code className="blocking-tab__code">x.com</code>,{' '}
+          <code className="blocking-tab__code">192.168.1.1</code>) → URL. Single word without a dot (e.g. <code className="blocking-tab__code">reddit</code>)
+          → search — add <code className="blocking-tab__code">.com</code> to block the site.
         </p>
       </div>
 
@@ -284,55 +290,17 @@ export function BlockingTab({ userId }: BlockingTabProps) {
 
       <form className="blocking-tab__add-row" onSubmit={handleAdd}>
         <div className="blocking-tab__add-row-inner" role="group" aria-label="Add blocking rule">
-          <div className="blocking-tab__segment" role="tablist" aria-label="Rule type">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={addMode === 'url_contains'}
-              className={
-                addMode === 'url_contains'
-                  ? 'blocking-tab__segment-btn blocking-tab__segment-btn--active'
-                  : 'blocking-tab__segment-btn'
-              }
-              onClick={() => {
-                setAddMode('url_contains')
-                setAddError(null)
-              }}
-            >
-              URL
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={addMode === 'search_contains'}
-              className={
-                addMode === 'search_contains'
-                  ? 'blocking-tab__segment-btn blocking-tab__segment-btn--active'
-                  : 'blocking-tab__segment-btn'
-              }
-              onClick={() => {
-                setAddMode('search_contains')
-                setAddError(null)
-              }}
-            >
-              Search
-            </button>
-          </div>
           <input
             type="text"
-            className="blocking-tab__add-input"
+            className="blocking-tab__add-input blocking-tab__add-input--grow"
             value={addInput}
             onChange={(e) => {
               setAddInput(e.target.value)
               setAddError(null)
             }}
-            placeholder={
-              addMode === 'url_contains'
-                ? 'Domain or paste a full URL, e.g. reddit.com or https://…'
-                : 'Keyword to block in search queries (e.g. gossip)'
-            }
+            placeholder="Site (reddit.com, /shorts) or search words (no spaces)…"
             autoComplete="off"
-            aria-label={addMode === 'url_contains' ? 'URL or domain to block' : 'Search keyword to block'}
+            aria-label="Block a site or search keyword"
           />
           <button
             type="submit"

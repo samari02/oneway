@@ -17,6 +17,42 @@ export function normalizeUrlBlockingValue(raw: string): string {
   return s.trim()
 }
 
+/**
+ * Guess URL vs search keyword from a single line of input (no manual toggle).
+ *
+ * **URL** when: `http(s)://`, path-only starting with `/`, IPv4, `localhost`, or hostname-like
+ * (`label.tld` with TLD length ≥ 2, no spaces).
+ *
+ * **Caveats:** Phrases with spaces always become search. Values like `no.porn` look like domains
+ * and become URL rules. Version strings (`v1.0`) become search (TLD segment too short). Plain
+ * `reddit` without a domain is search — type `reddit.com` to block the site.
+ */
+export function inferBlockingRuleType(input: string): CustomBlockingRuleType {
+  const s = input.trim()
+  if (!s) return 'search_contains'
+
+  if (/^https?:\/\//i.test(s)) return 'url_contains'
+  if (s.startsWith('/')) return 'url_contains'
+
+  if (/\s/.test(s)) return 'search_contains'
+
+  const hostPart = s.split('/')[0].split('?')[0].split('#')[0]
+
+  if (/^localhost(:\d+)?$/i.test(hostPart)) return 'url_contains'
+
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostPart)) return 'url_contains'
+
+  const labels = hostPart.split('.')
+  if (labels.length >= 2) {
+    const tld = labels[labels.length - 1]
+    if (tld.length >= 2 && /^[a-z0-9-]+$/i.test(tld)) {
+      return 'url_contains'
+    }
+  }
+
+  return 'search_contains'
+}
+
 export async function getCustomBlockingRules(userId: string): Promise<CustomBlockingRule[]> {
   const { data, error } = await supabase
     .from('custom_blocking_rules')
