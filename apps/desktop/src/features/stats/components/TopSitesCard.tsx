@@ -13,6 +13,8 @@ interface TopSitesCardProps {
   onPeriodChange?: (period: Period | null) => void
   onClassificationSave?: (classifications: Record<string, SiteCategory>) => void
   showSourceFilter?: boolean // Show All/Web/Apps filter
+  /** Called after local visits/blocks for a web domain are deleted (refresh stats upstream). */
+  onSiteDataDeleted?: () => void
 }
 
 type DisplayLimit = 10 | 20 | 30
@@ -46,8 +48,9 @@ function useAppIcons() {
   return { icons, fetchIcon }
 }
 
-export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onClassificationSave, showSourceFilter = false }: TopSitesCardProps) {
+export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onClassificationSave, showSourceFilter = false, onSiteDataDeleted }: TopSitesCardProps) {
   const [displayLimit, setDisplayLimit] = useState<DisplayLimit>(10)
+  const [deletingDomain, setDeletingDomain] = useState<string | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all')
   const [isLimitMenuOpen, setIsLimitMenuOpen] = useState(false)
@@ -113,6 +116,22 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
     const hours = Math.floor(minutes / 60)
     const mins = minutes % 60
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
+  }
+
+  const handleDeleteWebSite = async (domain: string) => {
+    if (!confirm(`Remove all visits and block history stored locally for “${domain}”? This cannot be undone.`)) {
+      return
+    }
+    setDeletingDomain(domain)
+    try {
+      await invoke<unknown>('delete_browsing_data_for_domain', { domain })
+      onSiteDataDeleted?.()
+    } catch (e) {
+      console.error('[TopSitesCard] delete_browsing_data_for_domain:', e)
+      alert(`Could not delete: ${e}`)
+    } finally {
+      setDeletingDomain(null)
+    }
   }
 
   return (
@@ -280,6 +299,17 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
               <span className="top-sites-card__visits">{site.visits}</span>
               <span className="top-sites-card__time">{formatTime(site.timeSpent)}</span>
             </div>
+            {site.source === 'web' && (
+              <button
+                type="button"
+                className="top-sites-card__delete-site"
+                disabled={deletingDomain === site.domain}
+                title="Delete all stored data for this site"
+                onClick={() => void handleDeleteWebSite(site.domain)}
+              >
+                {deletingDomain === site.domain ? '…' : '🗑'}
+              </button>
+            )}
           </div>
         )})}
       </div>

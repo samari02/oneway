@@ -66,6 +66,17 @@ pub struct DailyScore {
     pub score: u32,    // 0-100
 }
 
+/// Result of deleting all local data tied to one site (domain)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteSiteStats {
+    #[serde(rename = "visitsRemoved")]
+    pub visits_removed: usize,
+    #[serde(rename = "blocksRemoved")]
+    pub blocks_removed: usize,
+    #[serde(rename = "classificationRemoved")]
+    pub classification_removed: bool,
+}
+
 /// Complete browsing stats for the frontend
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrowsingStats {
@@ -294,6 +305,34 @@ impl BrowsingStorage {
         }
         
         events
+    }
+
+    /// Rewrite visits file (full replace)
+    fn write_visits(&self, visits: &[StoredVisit]) -> std::io::Result<()> {
+        let path = self.visits_path();
+        let mut file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(&path)?;
+        for v in visits {
+            writeln!(file, "{}", serde_json::to_string(v)?)?;
+        }
+        Ok(())
+    }
+
+    /// Rewrite block events file (full replace)
+    fn write_block_events(&self, events: &[StoredBlockEvent]) -> std::io::Result<()> {
+        let path = self.blocks_path();
+        let mut file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(&path)?;
+        for e in events {
+            writeln!(file, "{}", serde_json::to_string(e)?)?;
+        }
+        Ok(())
     }
     
     /// Calculate browsing stats from stored data
@@ -631,6 +670,116 @@ pub fn store_history_batch(visits: Vec<StoredVisit>) {
     if let Ok(storage) = STORAGE.lock() {
         let _ = storage.store_visits_batch(&visits);
     }
+}
+
+/// Normalize domain for comparison (lowercase, strip scheme/path, strip leading www.)
+fn normalize_domain_input(s: &str) -> String {
+    let mut t = s.trim().to_lowercase();
+    if let Some(rest) = t.strip_prefix("http://") {
+        t = rest.to_string();
+    } else if let Some(rest) = t.strip_prefix("https://") {
+        t = rest.to_string();
+    }
+    if let Some(i) = t.find('/') {
+        t = t[..i].to_string();
+    }
+    while let Some(rest) = t.strip_prefix("www.") {
+        t = rest.to_string();
+    }
+    t
+}
+
+fn domain_matches_normalized(stored: &str, needle: &str) -> bool {
+    let s = normalize_domain_input(stored);
+    if s == needle {
+        return true;
+    }
+    // Subdomains: "youtube.com" also removes "m.youtube.com" (require a dot in needle to avoid matching TLD-only)
+    if needle.contains('.') && s.ends_with(&format!(".{}", needle)) {
+        return true;
+    }
+    false
+}
+
+/// Remove all visits, block events, and saved classification for one domain (local clarity-data only).
+pub fn delete_data_for_domain(domain: &str) -> Result<DeleteSiteStats, String> {
+    let needle = normalize_domain_input(domain);
+    if needle.is_empty() {
+        return Err("Enter a domain (e.g. example.com)".to_string());
+    }
+
+    let storage = STORAGE.lock().map_err(|_| "Failed to acquire lock".to_string())?;
+
+    let visits_before = storage.read_visits();
+    let visits_before_len = visits_before.len();
+    let visits: Vec<StoredVisit> = visits_before
+        .into_iter()
+        .filter(|v| !domain_matches_normalized(&v.domain, &needle))
+        .collect();
+    let visits_removed = visits_before_len - visits.len();
+    storage.write_visits(&visits).map_err(|e| e.to_string())?;
+
+    let blocks_before = storage.read_block_events();
+    let blocks_before_len = blocks_before.len();
+    let blocks: Vec<StoredBlockEvent> = blocks_before
+        .into_iter()
+        .filter(|b| !domain_matches_normalized(&b.domain, &needle))
+        .collect();
+    let blocks_removed = blocks_before_len - blocks.len();
+    storage.write_block_events(&blocks).map_err(|e| e.to_string())?;
+
+    let mut classifications = storage.read_classifications();
+    let keys_to_remove: Vec<String> = classifications
+        .keys()
+        .filter(|k| domain_matches_normalized(k, &needle))
+        .cloned()
+        .collect();
+    let classification_removed = !keys_to_remove.is_empty();
+    for k in keys_to_remove {
+        classifications.remove(&k);
+    }
+    if classification_removed {
+        storage
+            .save_classifications(&classifications)
+            .map_err(|e| e.to_string())?;
+    }
+
+    eprintln!(
+        "[BrowsingData] delete_data_for_domain {}: removed {} visits, {} blocks, classification_removed={}",
+        needle, visits_removed, blocks_removed, classification_removed
+    );
+
+    Ok(DeleteSiteStats {
+        visits_removed,
+        blocks_removed,
+        classification_removed,
+    })
+}
+
+/// Unique normalized domains from visits, block events, and classification keys (sorted).
+pub fn list_tracked_domains() -> Vec<String> {
+    let mut set = std::collections::BTreeSet::new();
+    if let Ok(storage) = STORAGE.lock() {
+        for v in storage.read_visits() {
+            let n = normalize_domain_input(&v.domain);
+            if !n.is_empty() {
+                set.insert(n);
+            }
+        }
+        for b in storage.read_block_events() {
+            let n = normalize_domain_input(&b.domain);
+            if !n.is_empty() {
+                set.insert(n);
+            }
+        }
+        for k in storage.read_classifications().keys() {
+            let n = normalize_domain_input(k);
+            if !n.is_empty() {
+                set.insert(n);
+            }
+        }
+    }
+    set.into_iter().collect()
 }
 
 /// Clear all browsing data

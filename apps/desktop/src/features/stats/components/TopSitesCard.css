@@ -458,6 +458,33 @@
   color: var(--text-muted);
 }
 
+.top-sites-card__delete-site {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: var(--space-xs);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.top-sites-card__delete-site:hover:not(:disabled) {
+  background: rgba(231, 76, 60, 0.12);
+  border-color: rgba(231, 76, 60, 0.35);
+}
+
+.top-sites-card__delete-site:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Improve classification button */
 .top-sites-card__classify-btn {
   display: flex;

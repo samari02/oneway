@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { getApiKey, setApiKey, removeApiKey, hasApiKey } from '@/lib/openai'
 import { SiteClassificationModal, type SiteClassification, type SiteCategory } from '@/features/stats/components/SiteClassificationModal'
 import { useAoiPreferences } from '@/features/settings/hooks/useAoiPreferences'
+import { DeleteSiteDomainPicker } from '@/features/settings/components/DeleteSiteDomainPicker'
 import './SettingsView.css'
 
 function normalizeDomainInput(raw: string): string {
@@ -91,6 +92,42 @@ export function SettingsView() {
       alert('❌ Failed to clear data: ' + e)
     } finally {
       setClearingData(false)
+    }
+  }
+
+  const handleDeleteSiteForever = async () => {
+    const domain = normalizeDomainInput(deleteSiteInput)
+    if (!domain) {
+      alert('Enter a domain (e.g. youtube.com)')
+      return
+    }
+    if (
+      !confirm(
+        `Delete all visits, block events, and saved classification for “${domain}” on this Mac? This cannot be undone.`
+      )
+    ) {
+      return
+    }
+    setDeleteSiteBusy(true)
+    try {
+      const result = await invoke<{
+        visitsRemoved: number
+        blocksRemoved: number
+        classificationRemoved: boolean
+      }>('delete_browsing_data_for_domain', { domain })
+      await fetchDataStats()
+      setDeleteSiteInput('')
+      const parts = [
+        `${result.visitsRemoved} visit row(s)`,
+        `${result.blocksRemoved} block event(s)`,
+      ]
+      if (result.classificationRemoved) parts.push('saved site classification')
+      alert(`Removed: ${parts.join(', ')}.`)
+    } catch (e) {
+      console.error('delete_browsing_data_for_domain:', e)
+      alert('Failed to delete: ' + e)
+    } finally {
+      setDeleteSiteBusy(false)
     }
   }
 
@@ -202,6 +239,15 @@ export function SettingsView() {
         <p className="settings-section__hint">
           To import more history, use the "Re-import History" button in the Clarity browser extension popup.
         </p>
+
+        <div className="settings-item settings-item--vertical">
+          <span className="settings-item__label">Remove one site from stored history</span>
+          <p className="settings-section__hint">
+            Data is removed only from this Mac (visits file, block log, saved classification). Remote database sync
+            for browsing history is not implemented yet.
+          </p>
+          <DeleteSiteDomainPicker onDataChanged={fetchDataStats} />
+        </div>
 
         <div className="settings-section__actions">
           <button 

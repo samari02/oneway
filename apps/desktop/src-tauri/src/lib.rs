@@ -44,6 +44,18 @@ fn clear_browsing_data() -> Result<(), String> {
     browsing_data::clear_browsing_data()
 }
 
+/// Remove all local visits, block events, and classification for one domain (does not sync to cloud).
+#[tauri::command]
+fn delete_browsing_data_for_domain(domain: String) -> Result<browsing_data::DeleteSiteStats, String> {
+    browsing_data::delete_data_for_domain(&domain)
+}
+
+/// Domains present in local browsing storage (for Settings search / delete UI).
+#[tauri::command]
+fn list_tracked_domains() -> Vec<String> {
+    browsing_data::list_tracked_domains()
+}
+
 /// Save user site classifications
 /// classifications: { "domain.com": "productive" | "neutral" | "distraction" }
 #[tauri::command]
@@ -284,6 +296,8 @@ pub fn run() {
             greet, 
             get_browsing_stats, 
             clear_browsing_data,
+            delete_browsing_data_for_domain,
+            list_tracked_domains,
             save_site_classifications,
             get_site_classifications,
             get_extension_status,

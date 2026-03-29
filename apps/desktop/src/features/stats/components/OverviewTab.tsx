@@ -197,6 +197,7 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
           onPeriodChange={(p) => setCardPeriod('top-sites', p)}
           showSourceFilter={true}
           onClassificationSave={handleClassificationSave}
+          onSiteDataDeleted={refetch}
         />
         
         {/* Quick Stats Grid */}
