@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import type { CustomBlockingRule } from '@oneway/shared'
+import { domainMatchesActiveBlockingRules } from '../../boundaries/api/customBlockingRules'
 import type { SiteVisit } from '../hooks/useBrowsingStats'
 import { CardPeriodMenu } from './CardPeriodMenu'
 import type { Period } from './PeriodSelector'
@@ -17,6 +19,8 @@ interface TopSitesCardProps {
   onSiteDataDeleted?: () => void
   /** Adds a custom URL/search rule (Boundaries → Blocking). Web-only. */
   onAddDomainToBlockList?: (domain: string) => Promise<void>
+  /** Active custom rules (for “Blocked” badge on web rows). */
+  blockingRules?: CustomBlockingRule[]
 }
 
 type DisplayLimit = 10 | 20 | 30
@@ -50,7 +54,7 @@ function useAppIcons() {
   return { icons, fetchIcon }
 }
 
-export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onClassificationSave, showSourceFilter = false, onSiteDataDeleted, onAddDomainToBlockList }: TopSitesCardProps) {
+export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onClassificationSave, showSourceFilter = false, onSiteDataDeleted, onAddDomainToBlockList, blockingRules }: TopSitesCardProps) {
   const [displayLimit, setDisplayLimit] = useState<DisplayLimit>(10)
   const [deletingDomain, setDeletingDomain] = useState<string | null>(null)
   const [addingToBlockDomain, setAddingToBlockDomain] = useState<string | null>(null)
@@ -83,6 +87,11 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
   
   const displayedSites = filteredSites.slice(0, displayLimit)
   const maxVisits = Math.max(...displayedSites.map(s => s.visits), 1) // Ensure at least 1 to avoid division by 0
+
+  const isWebDomainOnBlockList = useMemo(() => {
+    if (!blockingRules?.length) return (_d: string) => false
+    return (domain: string) => domainMatchesActiveBlockingRules(domain, blockingRules)
+  }, [blockingRules])
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -245,10 +254,12 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
         )}
         {displayedSites.map((site, index) => {
           const appIcon = site.bundleId ? icons[site.bundleId] : null
+          const onBlockList =
+            site.source === 'web' && isWebDomainOnBlockList(site.domain)
           return (
           <div 
             key={`${site.source}-${site.domain}`} 
-            className="top-sites-card__item"
+            className={`top-sites-card__item${onBlockList ? ' top-sites-card__item--on-blocklist' : ''}`}
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="top-sites-card__rank">{index + 1}</div>
@@ -306,7 +317,14 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
                     </div>
                   )}
                 </div>
-                <span className="top-sites-card__domain">{site.domain}</span>
+                <div className="top-sites-card__domain-line">
+                  <span className="top-sites-card__domain">{site.domain}</span>
+                  {onBlockList && (
+                    <span className="top-sites-card__blocked-badge" title="Matches your block list">
+                      Blocked
+                    </span>
+                  )}
+                </div>
               </div>
               
               <div className="top-sites-card__bar-container">
@@ -346,10 +364,14 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
                         type="button"
                         role="menuitem"
                         className="top-sites-card__actions-item"
-                        disabled={addingToBlockDomain === site.domain}
+                        disabled={onBlockList || addingToBlockDomain === site.domain}
                         onClick={() => void handleAddToBlockList(site.domain)}
                       >
-                        {addingToBlockDomain === site.domain ? 'Adding…' : 'Add to block list'}
+                        {addingToBlockDomain === site.domain
+                          ? 'Adding…'
+                          : onBlockList
+                            ? 'Already on block list'
+                            : 'Add to block list'}
                       </button>
                     )}
                     <button

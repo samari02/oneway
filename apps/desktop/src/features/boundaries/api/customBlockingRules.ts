@@ -137,3 +137,32 @@ export async function deleteCustomBlockingRule(id: string): Promise<void> {
     throw new Error('Could not delete this rule. Try signing in again or check your connection.')
   }
 }
+
+/**
+ * Whether a web hostname shown in Screen Time likely matches an active custom rule
+ * (URL contains / search contains). Used for UI badges only; extension does real matching.
+ */
+export function domainMatchesActiveBlockingRules(domain: string, rules: CustomBlockingRule[]): boolean {
+  const d = normalizeUrlBlockingValue(domain).toLowerCase()
+  if (!d) return false
+  for (const r of rules) {
+    if (!r.is_active) continue
+    if (r.rule_type === 'url_contains') {
+      const v = normalizeUrlBlockingValue(r.value).toLowerCase()
+      if (!v || v.length < 3) continue
+      if (v.startsWith('/')) continue
+      if (d === v) return true
+      if (v.includes('.')) {
+        if (v.length >= 4 && d.includes(v)) return true
+        if (d.endsWith('.' + v)) return true
+      } else if (d === `${v}.com` || d.startsWith(`${v}.`)) {
+        return true
+      }
+    } else if (r.rule_type === 'search_contains') {
+      const kw = r.value.trim().toLowerCase()
+      if (kw.length < 4 || /\s/.test(kw)) continue
+      if (d.includes(kw)) return true
+    }
+  }
+  return false
+}

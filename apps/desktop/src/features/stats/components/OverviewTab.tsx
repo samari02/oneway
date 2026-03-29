@@ -253,6 +253,7 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
           onClassificationSave={handleClassificationSave}
           onSiteDataDeleted={refetch}
           onAddDomainToBlockList={user?.id ? handleAddDomainToBlockList : undefined}
+          blockingRules={blockingRules}
         />
         
         {/* Quick Stats Grid */}

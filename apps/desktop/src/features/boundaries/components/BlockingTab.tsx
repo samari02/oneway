@@ -210,28 +210,14 @@ export function BlockingTab({ userId }: BlockingTabProps) {
   return (
     <section className="blocking-tab">
       <div className="blocking-tab__intro">
-        <h2 className="blocking-tab__title">Your blocking rules</h2>
-        <div className="blocking-tab__notice" role="status">
-          <strong>Chrome sync:</strong> rules are saved to Supabase and written to{' '}
-          <code className="blocking-tab__code">~/.clarity/custom-blocking-rules.json</code>. The extension loads them via
-          the native host (<code className="blocking-tab__code">GET_CONFIG</code>), merged with the built-in blocklist.
-          Keep Clarity running and the extension connected. One field: we infer <strong>site</strong> (e.g.{' '}
-          <code className="blocking-tab__code">reddit.com</code>, <code className="blocking-tab__code">/shorts</code>) vs{' '}
-          <strong>search keyword</strong> (e.g. <code className="blocking-tab__code">gossip</code>) — see caveats below.
-        </div>
-        <p className="blocking-tab__subtitle">
-          Supabase project: <code className="blocking-tab__code">apps/desktop/.env.local</code> (defaults in{' '}
-          <code className="blocking-tab__code">packages/shared/src/constants.ts</code> if unset). Table:{' '}
-          <code className="blocking-tab__code">custom_blocking_rules</code>.
+        <h2 className="blocking-tab__title">Your block list</h2>
+        <p className="blocking-tab__lede">
+          Add sites (for example <span className="blocking-tab__lede-mono">reddit.com</span>) or search keywords. Rules apply
+          in Chrome when the extension is on, and they stay in sync with your account.
         </p>
         <p className="blocking-tab__sync">
-          <span className="blocking-tab__sync-label">Last load from cloud:</span>{' '}
+          <span className="blocking-tab__sync-label">Last synced:</span>{' '}
           <span className="blocking-tab__sync-time">{formatSyncedAt(lastSyncedAt)}</span>
-        </p>
-        <p className="blocking-tab__hint-inline">
-          <strong>Detection:</strong> anything with spaces → search. Looks like a host (<code className="blocking-tab__code">x.com</code>,{' '}
-          <code className="blocking-tab__code">192.168.1.1</code>) → URL. Single word without a dot (e.g. <code className="blocking-tab__code">reddit</code>)
-          → search — add <code className="blocking-tab__code">.com</code> to block the site.
         </p>
       </div>
 
