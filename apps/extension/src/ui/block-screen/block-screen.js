@@ -1,13 +1,11 @@
 "use strict";
 /**
  * Block Screen UI Logic
+ * No bypass: user can only go back (history).
  */
-// Parse URL parameters
 const params = new URLSearchParams(window.location.search);
 const blockedUrl = params.get('url') || '';
 const reason = params.get('reason') || 'This site is blocked in Focus Mode';
-const tabId = parseInt(params.get('tabId') || '0');
-// Extract domain
 function extractDomain(url) {
     try {
         const urlObj = new URL(url);
@@ -17,11 +15,9 @@ function extractDomain(url) {
         return url;
     }
 }
-// Update UI
 const domain = extractDomain(blockedUrl);
 document.getElementById('blocked-domain').textContent = domain;
 document.getElementById('reason').textContent = reason;
-// Get status from background
 chrome.runtime.sendMessage({ type: 'GET_STATUS' }, (response) => {
     if (response) {
         document.querySelector('.block-screen__mode').textContent =
@@ -30,39 +26,6 @@ chrome.runtime.sendMessage({ type: 'GET_STATUS' }, (response) => {
             `${response.blocksToday} ${response.blocksToday === 1 ? 'site' : 'sites'} blocked today`;
     }
 });
-// Handle radio button selection
-const radioButtons = document.querySelectorAll('input[name="reason"]');
-const continueBtn = document.getElementById('btn-continue');
-radioButtons.forEach(radio => {
-    radio.addEventListener('change', () => {
-        continueBtn.disabled = false;
-    });
-});
-// Cancel button
 document.getElementById('btn-cancel').addEventListener('click', () => {
     window.history.back();
-});
-// Continue button
-continueBtn.addEventListener('click', async () => {
-    const selectedReason = document.querySelector('input[name="reason"]:checked')?.value;
-    if (!selectedReason)
-        return;
-    // Send bypass request to background
-    chrome.runtime.sendMessage({
-        type: 'BYPASS_BLOCK',
-        data: {
-            url: blockedUrl,
-            method: selectedReason,
-            tabId: tabId
-        }
-    }, (response) => {
-        if (response && response.success) {
-            console.log('[Block Screen] Bypass approved, navigating to', blockedUrl);
-            // Navigate to the original URL
-            window.location.href = blockedUrl;
-        }
-        else {
-            console.error('[Block Screen] Bypass failed', response);
-        }
-    });
 });

@@ -113,7 +113,11 @@ export const STORAGE_KEYS = {
     STRICTNESS: 'strictness',
     IS_ACTIVE: 'isActive',
     CACHE: 'decisionCache',
-    HISTORY: 'navigationHistory'
+    HISTORY: 'navigationHistory',
+    /** User rules from Boundaries → Blocking (merged with RULES in shouldBlock) */
+    CUSTOM_BLOCKING_RULES: 'customBlockingRules',
+    /** Lowercase substrings to block on search engines */
+    CUSTOM_SEARCH_KEYWORDS: 'customSearchKeywords'
 };
 /**
  * Block screen URL

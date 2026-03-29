@@ -15,6 +15,8 @@ interface TopSitesCardProps {
   showSourceFilter?: boolean // Show All/Web/Apps filter
   /** Called after local visits/blocks for a web domain are deleted (refresh stats upstream). */
   onSiteDataDeleted?: () => void
+  /** Adds a custom URL/search rule (Boundaries → Blocking). Web-only. */
+  onAddDomainToBlockList?: (domain: string) => Promise<void>
 }
 
 type DisplayLimit = 10 | 20 | 30
@@ -48,16 +50,19 @@ function useAppIcons() {
   return { icons, fetchIcon }
 }
 
-export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onClassificationSave, showSourceFilter = false, onSiteDataDeleted }: TopSitesCardProps) {
+export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onClassificationSave, showSourceFilter = false, onSiteDataDeleted, onAddDomainToBlockList }: TopSitesCardProps) {
   const [displayLimit, setDisplayLimit] = useState<DisplayLimit>(10)
   const [deletingDomain, setDeletingDomain] = useState<string | null>(null)
+  const [addingToBlockDomain, setAddingToBlockDomain] = useState<string | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all')
   const [isLimitMenuOpen, setIsLimitMenuOpen] = useState(false)
   const [isClassificationModalOpen, setIsClassificationModalOpen] = useState(false)
   const [reclassifyDropdownOpen, setReclassifyDropdownOpen] = useState<string | null>(null)
+  const [webActionsOpen, setWebActionsOpen] = useState<string | null>(null)
   const limitMenuRef = useRef<HTMLDivElement>(null)
   const reclassifyRef = useRef<HTMLDivElement>(null)
+  const webActionsRef = useRef<HTMLDivElement>(null)
   
   // App icons
   const { icons, fetchIcon } = useAppIcons()
@@ -88,13 +93,16 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
       if (reclassifyRef.current && !reclassifyRef.current.contains(event.target as Node)) {
         setReclassifyDropdownOpen(null)
       }
+      if (webActionsRef.current && !webActionsRef.current.contains(event.target as Node)) {
+        setWebActionsOpen(null)
+      }
     }
 
-    if (isLimitMenuOpen || reclassifyDropdownOpen) {
+    if (isLimitMenuOpen || reclassifyDropdownOpen || webActionsOpen) {
       document.addEventListener('mousedown', handleClickOutside)
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [isLimitMenuOpen, reclassifyDropdownOpen])
+  }, [isLimitMenuOpen, reclassifyDropdownOpen, webActionsOpen])
 
   // Handle reclassify from inline dropdown
   const handleInlineReclassify = (domain: string, newCategory: SiteCategory) => {
@@ -123,6 +131,7 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
       return
     }
     setDeletingDomain(domain)
+    setWebActionsOpen(null)
     try {
       await invoke<unknown>('delete_browsing_data_for_domain', { domain })
       onSiteDataDeleted?.()
@@ -131,6 +140,19 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
       alert(`Could not delete: ${e}`)
     } finally {
       setDeletingDomain(null)
+    }
+  }
+
+  const handleAddToBlockList = async (domain: string) => {
+    if (!onAddDomainToBlockList) return
+    setAddingToBlockDomain(domain)
+    try {
+      await onAddDomainToBlockList(domain)
+      setWebActionsOpen(null)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Could not add to block list')
+    } finally {
+      setAddingToBlockDomain(null)
     }
   }
 
@@ -300,15 +322,48 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
               <span className="top-sites-card__time">{formatTime(site.timeSpent)}</span>
             </div>
             {site.source === 'web' && (
-              <button
-                type="button"
-                className="top-sites-card__delete-site"
-                disabled={deletingDomain === site.domain}
-                title="Delete all stored data for this site"
-                onClick={() => void handleDeleteWebSite(site.domain)}
+              <div
+                className="top-sites-card__web-actions"
+                ref={webActionsOpen === site.domain ? webActionsRef : undefined}
               >
-                {deletingDomain === site.domain ? '…' : '🗑'}
-              </button>
+                <button
+                  type="button"
+                  className="top-sites-card__actions-trigger"
+                  aria-expanded={webActionsOpen === site.domain}
+                  aria-haspopup="menu"
+                  title="Site actions"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setWebActionsOpen(webActionsOpen === site.domain ? null : site.domain)
+                  }}
+                >
+                  ⋯
+                </button>
+                {webActionsOpen === site.domain && (
+                  <div className="top-sites-card__actions-dropdown" role="menu">
+                    {onAddDomainToBlockList && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="top-sites-card__actions-item"
+                        disabled={addingToBlockDomain === site.domain}
+                        onClick={() => void handleAddToBlockList(site.domain)}
+                      >
+                        {addingToBlockDomain === site.domain ? 'Adding…' : 'Add to block list'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="top-sites-card__actions-item top-sites-card__actions-item--danger"
+                      disabled={deletingDomain === site.domain}
+                      onClick={() => void handleDeleteWebSite(site.domain)}
+                    >
+                      {deletingDomain === site.domain ? 'Deleting…' : 'Delete stored data'}
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )})}

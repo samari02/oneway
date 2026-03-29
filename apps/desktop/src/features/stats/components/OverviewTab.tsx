@@ -1,6 +1,8 @@
 import { useMemo, useCallback, useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '../../auth'
+import { inferBlockingRuleType, normalizeUrlBlockingValue } from '../../boundaries/api/customBlockingRules'
+import { useCustomBlockingRules } from '../../boundaries/hooks/useCustomBlockingRules'
 import { useBrowsingStatsWithOverride } from '../hooks/useBrowsingStatsWithOverride'
 import { useCardPeriods } from '../hooks/useCardPeriods'
 import { useAppUsage, formatDuration } from '../../app-blocking/hooks/useAppUsage'
@@ -10,6 +12,8 @@ import type { Period } from './PeriodSelector'
 import type { SiteVisit } from '../hooks/useBrowsingStats'
 import type { SiteCategory } from './SiteClassificationModal'
 import './OverviewTab.css'
+
+const BLOCK_RULE_MIN_LEN = 3
 
 interface OverviewTabProps {
   period: Period
@@ -40,6 +44,7 @@ function getPeriodLabel(period: Period): string {
 
 export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   const { user } = useAuth()
+  const { rules: blockingRules, createRule } = useCustomBlockingRules(user?.id)
   const { getEffectivePeriod, setCardPeriod, resetAllOverrides } = useCardPeriods(period)
   
   // Reset all card overrides when global period is clicked
@@ -96,6 +101,55 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
       console.error('[OverviewTab] Failed to save classification:', e)
     }
   }, [refetch])
+
+  const handleAddDomainToBlockList = useCallback(
+    async (domain: string) => {
+      if (!user?.id) {
+        throw new Error('Sign in to add sites to your block list.')
+      }
+      const raw = domain.trim()
+      const mode = inferBlockingRuleType(raw)
+      if (mode === 'url_contains') {
+        const value = normalizeUrlBlockingValue(raw)
+        if (value.length < BLOCK_RULE_MIN_LEN) {
+          throw new Error(`Use at least ${BLOCK_RULE_MIN_LEN} characters in the domain.`)
+        }
+        const lower = value.toLowerCase()
+        const exists = blockingRules.some(
+          (r) =>
+            r.rule_type === 'url_contains' &&
+            normalizeUrlBlockingValue(r.value).toLowerCase() === lower
+        )
+        if (exists) {
+          throw new Error('That site is already on your block list.')
+        }
+        await createRule({
+          user_id: user.id,
+          rule_type: 'url_contains',
+          value,
+          note: 'From Screen Time',
+        })
+        return
+      }
+      const value = raw.toLowerCase()
+      if (value.length < BLOCK_RULE_MIN_LEN) {
+        throw new Error(`Use at least ${BLOCK_RULE_MIN_LEN} characters.`)
+      }
+      const exists = blockingRules.some(
+        (r) => r.rule_type === 'search_contains' && r.value.toLowerCase() === value
+      )
+      if (exists) {
+        throw new Error('That keyword is already on your block list.')
+      }
+      await createRule({
+        user_id: user.id,
+        rule_type: 'search_contains',
+        value,
+        note: 'From Screen Time',
+      })
+    },
+    [user?.id, blockingRules, createRule]
+  )
   
   const loading = browsingLoading || appLoading
   
@@ -198,6 +252,7 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
           showSourceFilter={true}
           onClassificationSave={handleClassificationSave}
           onSiteDataDeleted={refetch}
+          onAddDomainToBlockList={user?.id ? handleAddDomainToBlockList : undefined}
         />
         
         {/* Quick Stats Grid */}

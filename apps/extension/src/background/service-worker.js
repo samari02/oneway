@@ -247,21 +247,11 @@ async function shouldBlock(url, tabId) {
         STORAGE_KEYS.RULES,
         STORAGE_KEYS.CUSTOM_BLOCKING_RULES,
         STORAGE_KEYS.MODE,
-        STORAGE_KEYS.IS_ACTIVE,
-        'allowedTabs'
+        STORAGE_KEYS.IS_ACTIVE
     ]);
     // If not active, allow everything
     if (!storage.isActive) {
         return { shouldBlock: false };
-    }
-    const domain = extractDomain(url);
-    // Check tab-specific allowlist first
-    if (storage.allowedTabs && storage.allowedTabs[tabId]) {
-        const allowed = storage.allowedTabs[tabId];
-        if (allowed.domain === domain && allowed.expiresAt > Date.now()) {
-            log('Tab', tabId, 'is allowed for', domain, 'until', new Date(allowed.expiresAt).toLocaleTimeString());
-            return { shouldBlock: false };
-        }
     }
     // Check rules (built-in + user custom from desktop sync)
     const baseRules = storage.rules || DEFAULT_BLOCKLIST;
@@ -299,10 +289,6 @@ async function logBlockEvent(event) {
 // Handle messages from content scripts or popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     log('Message received:', message);
-    if (message.type === 'BYPASS_BLOCK') {
-        handleBypass(message.data).then(sendResponse);
-        return true; // Keep channel open for async response
-    }
     if (message.type === 'GET_STATUS') {
         getStatus().then(sendResponse);
         return true;
@@ -508,34 +494,6 @@ async function handleAoiPreferencesUpdate(data) {
         log('Aoi preferences saved locally (desktop not connected)');
         return { success: true, synced: false };
     }
-}
-/**
- * Handle bypass request
- */
-async function handleBypass(data) {
-    log('Bypass requested:', data);
-    const domain = extractDomain(data.url);
-    // Log bypass event
-    await logBlockEvent({
-        url: data.url,
-        domain,
-        reason: 'User bypassed',
-        action: 'bypassed',
-        bypassMethod: data.method,
-        timestamp: Date.now()
-    });
-    // Add to tab-specific allowlist
-    const storage = await chrome.storage.local.get('allowedTabs');
-    const allowedTabs = storage.allowedTabs || {};
-    // Allow this tab for this domain for the next 5 minutes
-    const expiresAt = Date.now() + (5 * 60 * 1000);
-    allowedTabs[data.tabId] = {
-        domain,
-        expiresAt
-    };
-    await chrome.storage.local.set({ allowedTabs });
-    log('Tab', data.tabId, 'allowed for', domain, 'until', new Date(expiresAt).toLocaleTimeString());
-    return { success: true };
 }
 /**
  * Get current status

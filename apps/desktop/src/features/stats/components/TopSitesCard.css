@@ -458,31 +458,77 @@
   color: var(--text-muted);
 }
 
-.top-sites-card__delete-site {
+/* Web row: ⋯ menu (add to block list, delete local data) */
+.top-sites-card__web-actions {
+  position: relative;
   flex-shrink: 0;
+  margin-left: var(--space-xs);
+}
+
+.top-sites-card__actions-trigger {
   width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: var(--space-xs);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
   background: var(--bg-secondary);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.top-sites-card__delete-site:hover:not(:disabled) {
-  background: rgba(231, 76, 60, 0.12);
-  border-color: rgba(231, 76, 60, 0.35);
+.top-sites-card__actions-trigger:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border-light);
+  color: var(--text-primary);
 }
 
-.top-sites-card__delete-site:disabled {
-  opacity: 0.5;
+.top-sites-card__actions-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  overflow: hidden;
+  min-width: 168px;
+}
+
+.top-sites-card__actions-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  text-align: left;
+}
+
+.top-sites-card__actions-item:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+}
+
+.top-sites-card__actions-item:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
+}
+
+.top-sites-card__actions-item--danger {
+  color: #c0392b;
+}
+
+.top-sites-card__actions-item--danger:hover:not(:disabled) {
+  background: rgba(231, 76, 60, 0.1);
 }
 
 /* Improve classification button */

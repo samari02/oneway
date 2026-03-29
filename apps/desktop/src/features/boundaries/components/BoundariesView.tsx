@@ -82,7 +82,7 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
   const [showIncognitoSetup, setShowIncognitoSetup] = useState(false)
   const [showSafeSearchInfo, setShowSafeSearchInfo] = useState(false)
   const [showSearchFilterInfo, setShowSearchFilterInfo] = useState(false)
-  const [boundariesTab, setBoundariesTab] = useState<BoundariesTab>('system')
+  const [boundariesTab, setBoundariesTab] = useState<BoundariesTab>('blocking')
 
   const safeSearchRef = useRef<HTMLDivElement>(null)
   const searchFilterRef = useRef<HTMLDivElement>(null)
@@ -225,6 +225,13 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
         <nav className="boundaries-view__tabs" aria-label="Boundaries sections">
           <button
             type="button"
+            className={`boundaries-view__tab ${boundariesTab === 'blocking' ? 'boundaries-view__tab--active' : ''}`}
+            onClick={() => setBoundariesTab('blocking')}
+          >
+            Blocking
+          </button>
+          <button
+            type="button"
             className={`boundaries-view__tab ${boundariesTab === 'system' ? 'boundaries-view__tab--active' : ''}`}
             onClick={() => setBoundariesTab('system')}
           >
@@ -236,13 +243,6 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
             onClick={() => setBoundariesTab('habits')}
           >
             Habits
-          </button>
-          <button
-            type="button"
-            className={`boundaries-view__tab ${boundariesTab === 'blocking' ? 'boundaries-view__tab--active' : ''}`}
-            onClick={() => setBoundariesTab('blocking')}
-          >
-            Blocking
           </button>
         </nav>
       </div>
