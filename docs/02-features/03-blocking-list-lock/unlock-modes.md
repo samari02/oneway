@@ -82,7 +82,7 @@ Ship **Mode 1** or **Mode 2** first; combine only when both flows are stable.
 | Phase | Content |
 |-------|---------|
 | **Phase 1 (done)** | Password + timed unlock + re-lock; gate remove / toggle-off in desktop. |
-| **Phase 2a (candidate)** | **Friction-only** path: choose at setup, challenge generator + verification in app, same session semantics. |
+| **Phase 2a (done)** | **Friction lock** at setup (`Use challenge lock`): 3 rounds of 5×5 digit grids, count a target digit per round; same timed session after success. See [`spec.md`](./spec.md). |
 | **Phase 2b (candidate)** | Password **recovery** (annoying grid flow → set new password) **if** we keep password as primary. |
 | **Phase 3** | Hybrid rules, optional friend alert, extension / hardening per [`README.md`](./README.md). |
 

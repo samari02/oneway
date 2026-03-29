@@ -80,11 +80,11 @@ Session storage: **in-process** `Mutex<Option<Instant>>` (or ms timestamp). **No
 - [ ] Restart app → session gone, locked again
 - [ ] No password file → full access, add still works
 
-## Code references (Phase 1)
+## Code references
 
 | Piece | Location |
 |-------|----------|
 | Rust | `apps/desktop/src-tauri/src/blocking_lock.rs`, commands in `lib.rs` |
 | Hook | `apps/desktop/src/features/boundaries/hooks/useBlockingLock.ts` |
-| UI | `apps/desktop/src/features/boundaries/components/BlockingLockPanel.tsx` |
-| Integration | `apps/desktop/src/features/boundaries/components/BlockingTab.tsx` |
+| UI | `BlockingLockPanel.tsx`, `BlockingFrictionModal.tsx` |
+| Integration | `BlockingTab.tsx` |
