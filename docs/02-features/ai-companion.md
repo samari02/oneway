@@ -168,4 +168,10 @@ Configurable dans Settings → AI Features.
 
 ---
 
+## Voir aussi
+
+- **Widget Aoi dans le navigateur** (bulle en bas à droite sur les pages web) : [aoi-widget/aoi_floating_widget_browser_2026-03-28.md](./aoi-widget/aoi_floating_widget_browser_2026-03-28.md) — autre surface produit que ce document (coach dans l’app desktop).
+
+---
+
 *Dernière mise à jour : 2026-01-10*

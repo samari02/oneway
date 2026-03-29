@@ -14,9 +14,11 @@
 ### [02-features/](./02-features/) — Specs des features
 - [clarity-connectivity/](./02-features/clarity-connectivity/) — Pont desktop ↔ extension, auth, heartbeats
   - [clarity_desktop_extension_connectivity_2026-03-28.md](./02-features/clarity-connectivity/clarity_desktop_extension_connectivity_2026-03-28.md)
+- [aoi-widget/](./02-features/aoi-widget/) — Bulle + mascotte sur les pages web (extension)
+  - [aoi_floating_widget_browser_2026-03-28.md](./02-features/aoi-widget/aoi_floating_widget_browser_2026-03-28.md)
 - [habits-boundaries.md](./02-features/habits-boundaries.md) — Système d'habitudes
 - [north-star.md](./02-features/north-star.md) — Objectif principal
-- [ai-companion.md](./02-features/ai-companion.md) — Aoi, le coach IA
+- [ai-companion.md](./02-features/ai-companion.md) — Coach IA dans l’app desktop (≠ widget navigateur)
 - [site-classification.md](./02-features/site-classification.md) — Classification des sites
 - [blocking/](./02-features/blocking/) — Système de blocage intelligent
   - [overview.md](./02-features/blocking/overview.md)

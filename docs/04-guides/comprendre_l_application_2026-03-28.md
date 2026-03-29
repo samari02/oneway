@@ -79,7 +79,7 @@ Pour une **version stable** installable (`.app`), l’indépendance au terminal,
 | Sujet | Fichier |
 |-------|---------|
 | Vision produit | [01-vision/](../01-vision/) |
-| Blocage, habits, Aoi | [02-features/](../02-features/) |
+| Blocage, habits, widget Aoi (navigateur) | [02-features/](../02-features/) — [aoi-widget/](../02-features/aoi-widget/) |
 | Architecture, pipeline de données | [03-architecture/overview.md](../03-architecture/overview.md), [data-pipeline.md](../03-architecture/data/data-pipeline.md) |
 | Build, `.app`, Vercel, multi-postes | [build_et_distribution_2026-03-28.md](./build_et_distribution_2026-03-28.md) |
 | Débug extension | [extension-debug.md](./extension-debug.md) |
