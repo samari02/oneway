@@ -68,6 +68,12 @@ Voir la section **Quick Start** du [README principal](../README.md) : `pnpm inst
 
 ---
 
+## Build release, icône, distribution (résumé)
+
+Pour une **version stable** installable (`.app`), l’indépendance au terminal, le fait que **Vercel ne sert pas** au binaire desktop, et la **multi-machine** : tout est détaillé dans le guide dédié **[build_et_distribution_2026-03-28.md](./build_et_distribution_2026-03-28.md)**.
+
+---
+
 ## Pour aller plus loin (docs du repo)
 
 | Sujet | Fichier |
@@ -75,6 +81,7 @@ Voir la section **Quick Start** du [README principal](../README.md) : `pnpm inst
 | Vision produit | [01-vision/](../01-vision/) |
 | Blocage, habits, Aoi | [02-features/](../02-features/) |
 | Architecture, pipeline de données | [03-architecture/overview.md](../03-architecture/overview.md), [data-pipeline.md](../03-architecture/data/data-pipeline.md) |
+| Build, `.app`, Vercel, multi-postes | [build_et_distribution_2026-03-28.md](./build_et_distribution_2026-03-28.md) |
 | Débug extension | [extension-debug.md](./extension-debug.md) |
 
 ---

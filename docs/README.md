@@ -35,6 +35,7 @@
 
 ### [04-guides/](./04-guides/) — Guides & contribution
 - [comprendre_l_application_2026-03-28.md](./04-guides/comprendre_l_application_2026-03-28.md) — Vue d’ensemble pédagogique (desktop, extension, données)
+- [build_et_distribution_2026-03-28.md](./04-guides/build_et_distribution_2026-03-28.md) — Dev vs release, `.app`, Vercel, multi-machines, distribution
 - [extension-debug.md](./04-guides/extension-debug.md) — Débugger l'extension
 
 ### [05-backlog/](./05-backlog/) — Idées futures
