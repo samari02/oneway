@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core'
 import { useCallback, useEffect, useState } from 'react'
 import {
   createCustomBlockingRule,
@@ -8,6 +9,14 @@ import {
   type CreateCustomBlockingRuleInput,
 } from '../api/customBlockingRules'
 import type { CustomBlockingRule } from '@oneway/shared'
+
+async function persistCustomRulesToDisk(next: CustomBlockingRule[]) {
+  try {
+    await invoke('write_custom_rules_to_disk', { rules: next })
+  } catch (e) {
+    console.warn('[Boundaries] write_custom_rules_to_disk failed', e)
+  }
+}
 
 interface UseCustomBlockingRulesResult {
   rules: CustomBlockingRule[]
@@ -41,6 +50,7 @@ export function useCustomBlockingRules(userId: string | undefined): UseCustomBlo
         const data = await getCustomBlockingRules(userId)
         setRules(data)
         setLastSyncedAt(new Date())
+        await persistCustomRulesToDisk(data)
       } catch (e) {
         setError(e instanceof Error ? e : new Error('Unknown error'))
       } finally {
@@ -62,32 +72,45 @@ export function useCustomBlockingRules(userId: string | undefined): UseCustomBlo
     setRules((prev) => prev.map((r) => (r.id === id ? { ...r, is_active: isActive } : r)))
   }, [])
 
-  const createRule = useCallback(
-    async (input: CreateCustomBlockingRuleInput) => {
-      const row = await createCustomBlockingRule(input)
-      setRules((prev) => [row, ...prev])
-      setLastSyncedAt(new Date())
-      return row
-    },
-    []
-  )
+  const createRule = useCallback(async (input: CreateCustomBlockingRuleInput) => {
+    const row = await createCustomBlockingRule(input)
+    setRules((prev) => {
+      const next = [row, ...prev]
+      void persistCustomRulesToDisk(next)
+      return next
+    })
+    setLastSyncedAt(new Date())
+    return row
+  }, [])
 
   const createRulesBatch = useCallback(async (inputs: CreateCustomBlockingRuleInput[]) => {
     const rows = await createCustomBlockingRulesBatch(inputs)
-    setRules((prev) => [...rows, ...prev])
+    setRules((prev) => {
+      const next = [...rows, ...prev]
+      void persistCustomRulesToDisk(next)
+      return next
+    })
     setLastSyncedAt(new Date())
     return rows
   }, [])
 
   const updateRule = useCallback(async (id: string, updates: Parameters<typeof updateCustomBlockingRule>[1]) => {
     const row = await updateCustomBlockingRule(id, updates)
-    setRules((prev) => prev.map((r) => (r.id === id ? row : r)))
+    setRules((prev) => {
+      const next = prev.map((r) => (r.id === id ? row : r))
+      void persistCustomRulesToDisk(next)
+      return next
+    })
     setLastSyncedAt(new Date())
   }, [])
 
   const removeRule = useCallback(async (id: string) => {
     await deleteCustomBlockingRule(id)
-    setRules((prev) => prev.filter((r) => r.id !== id))
+    setRules((prev) => {
+      const next = prev.filter((r) => r.id !== id)
+      void persistCustomRulesToDisk(next)
+      return next
+    })
     setLastSyncedAt(new Date())
   }, [])
 

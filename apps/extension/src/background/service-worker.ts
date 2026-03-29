@@ -191,6 +191,23 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   // Note: isSearchEngine returns false for redirect URLs (google.com/url)
   if (isSearchEngine(details.url)) {
     const query = extractSearchQuery(details.url)
+    if (query) {
+      const customSearch = await checkCustomSearchKeywords(query)
+      if (customSearch.blocked) {
+        const reason = customSearch.reason || 'Search blocked by your custom rule'
+        const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(details.url)}&reason=${encodeURIComponent(reason)}&tabId=${details.tabId}&type=search`
+        chrome.tabs.update(details.tabId, { url: blockUrl })
+        await incrementBlockedSearches()
+        await logBlockEvent({
+          url: details.url,
+          domain: event.domain,
+          reason,
+          action: 'blocked',
+          timestamp: Date.now()
+        })
+        return
+      }
+    }
     if (query && shouldAnalyzeSearch(query)) {
       const analysisResult = await analyzeSearch(query)
       
@@ -274,15 +291,37 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 })
 
 /**
+ * Block search if query contains a user keyword (Boundaries → Blocking, search rules).
+ */
+async function checkCustomSearchKeywords(query: string): Promise<{ blocked: boolean; reason?: string }> {
+  const data = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_SEARCH_KEYWORDS)
+  const keywords = data[STORAGE_KEYS.CUSTOM_SEARCH_KEYWORDS] as string[] | undefined
+  if (!Array.isArray(keywords) || keywords.length === 0) {
+    return { blocked: false }
+  }
+  const q = query.toLowerCase()
+  for (const kw of keywords) {
+    if (typeof kw === 'string' && kw.length >= 3 && q.includes(kw.toLowerCase())) {
+      return { blocked: true, reason: `Search blocked: ${kw}` }
+    }
+  }
+  return { blocked: false }
+}
+
+/**
  * Check if URL should be blocked
  */
 async function shouldBlock(url: string, tabId: number): Promise<{ shouldBlock: boolean; reason?: string }> {
   const storage = await chrome.storage.local.get([
     STORAGE_KEYS.RULES,
+    STORAGE_KEYS.CUSTOM_BLOCKING_RULES,
     STORAGE_KEYS.MODE,
     STORAGE_KEYS.IS_ACTIVE,
     'allowedTabs'
-  ]) as Partial<StorageData> & { allowedTabs?: Record<number, { domain: string; expiresAt: number }> }
+  ]) as Partial<StorageData> & {
+    allowedTabs?: Record<number, { domain: string; expiresAt: number }>
+    customBlockingRules?: BlockRule[]
+  }
   
   // If not active, allow everything
   if (!storage.isActive) {
@@ -300,9 +339,11 @@ async function shouldBlock(url: string, tabId: number): Promise<{ shouldBlock: b
     }
   }
   
-  // Check rules
-  const rules = storage.rules || DEFAULT_BLOCKLIST
-  
+  // Check rules (built-in + user custom from desktop sync)
+  const baseRules = storage.rules || DEFAULT_BLOCKLIST
+  const custom = storage.customBlockingRules ?? []
+  const rules = [...baseRules, ...custom]
+
   for (const rule of rules) {
     if (matchesPattern(url, rule.pattern)) {
       if (rule.action === 'block') {
@@ -868,10 +909,13 @@ async function getPageAnalysisData(data: { url: string; domain: string }): Promi
       `pageAnalysis_${domain}`,
       'lastPageAnalyses',
       STORAGE_KEYS.RULES,
+      STORAGE_KEYS.CUSTOM_BLOCKING_RULES,
       STORAGE_KEYS.IS_ACTIVE
     ])
-    
-    const rules = storage[STORAGE_KEYS.RULES] || DEFAULT_BLOCKLIST
+
+    const baseRules = storage[STORAGE_KEYS.RULES] || DEFAULT_BLOCKLIST
+    const custom = (storage[STORAGE_KEYS.CUSTOM_BLOCKING_RULES] as BlockRule[] | undefined) ?? []
+    const rules = [...baseRules, ...custom]
     const searchSession = await getSearchSession()
     const heightenedMode = await getHeightenedMode()
     const dailyStats = await getDailyStats()

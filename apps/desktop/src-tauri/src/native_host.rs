@@ -29,6 +29,7 @@ fn agent_debug_ndjson(hypothesis_id: &str, location: &str, message: &str, data: 
 // #endregion
 
 use crate::browsing_data::{self, StoredVisit};
+use crate::custom_rules_file;
 
 // Alert thresholds (in milliseconds)
 const ALERT_WARNING_THRESHOLD_MS: i64 = 90_000;   // 90 seconds without heartbeat = warning
@@ -380,9 +381,14 @@ pub struct UserData {
 #[derive(Debug, Serialize)]
 pub struct ConfigData {
     pub mode: String,
+    /// Legacy field; extension keeps built-in defaults in `rules` and merges user rules separately.
     pub rules: Vec<serde_json::Value>,
     #[serde(rename = "isActive")]
     pub is_active: bool,
+    #[serde(rename = "customRules")]
+    pub custom_rules: Vec<serde_json::Value>,
+    #[serde(rename = "customSearchKeywords")]
+    pub custom_search_keywords: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -470,12 +476,15 @@ pub fn handle_message(msg: IncomingMessage) -> OutgoingMessage {
         
         IncomingMessage::GetConfig => {
             eprintln!("[NativeHost] Received GET_CONFIG");
-            // TODO: Get actual config from app state
+            let (custom_rules, custom_search_keywords) =
+                custom_rules_file::extension_payload_from_disk();
             OutgoingMessage::ConfigUpdate {
                 data: ConfigData {
                     mode: "focus".to_string(),
                     rules: vec![],
                     is_active: true,
+                    custom_rules,
+                    custom_search_keywords,
                 },
             }
         }

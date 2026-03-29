@@ -189,22 +189,19 @@ export function BlockingTab({ userId }: BlockingTabProps) {
       <div className="blocking-tab__intro">
         <h2 className="blocking-tab__title">Your blocking rules</h2>
         <div className="blocking-tab__notice" role="status">
-          <strong>Chrome blocking is not wired yet.</strong> Lists here are saved to Supabase only. The extension still
-          uses its own rules in local storage (pushed from the desktop app when that pipeline is implemented)—it does
-          not read this table. So visiting a site in Chrome will not be blocked by these rows until sync is built.
+          <strong>Chrome sync:</strong> rules are saved to Supabase and written to{' '}
+          <code className="blocking-tab__code">~/.clarity/custom-blocking-rules.json</code>. The extension loads them via
+          the native host (<code className="blocking-tab__code">GET_CONFIG</code>), merged with the built-in blocklist.
+          Keep Clarity running and the extension connected; updates also poll about every minute.
         </div>
         <p className="blocking-tab__subtitle">
-          Saved to your Supabase project (see <code className="blocking-tab__code">apps/desktop/.env.local</code> — defaults
-          in <code className="blocking-tab__code">packages/shared/src/constants.ts</code> if unset). Table name:{' '}
+          Supabase project: <code className="blocking-tab__code">apps/desktop/.env.local</code> (defaults in{' '}
+          <code className="blocking-tab__code">packages/shared/src/constants.ts</code> if unset). Table:{' '}
           <code className="blocking-tab__code">custom_blocking_rules</code>.
         </p>
         <p className="blocking-tab__sync">
-          <span className="blocking-tab__sync-label">Account data:</span>{' '}
+          <span className="blocking-tab__sync-label">Last load from cloud:</span>{' '}
           <span className="blocking-tab__sync-time">{formatSyncedAt(lastSyncedAt)}</span>
-          <span className="blocking-tab__sync-hint">
-            {' '}
-            — extension sync is applied when the desktop app pushes config (see roadmap).
-          </span>
         </p>
       </div>
 

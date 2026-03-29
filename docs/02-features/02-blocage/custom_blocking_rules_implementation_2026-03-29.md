@@ -9,7 +9,7 @@ Document de référence pour tout ce qui a été livré sur les **règles de blo
 ## 1. Résumé produit
 
 - L’utilisateur gère des règles **Block by URL** (`url_contains`) et **Block by search keyword** (`search_contains`) depuis l’app desktop, onglet **Boundaries → Blocking**.
-- Persistance **Supabase** (`custom_blocking_rules`). **Sync vers l’extension Chrome** : pas encore branchée sur le pipeline natif / `GetConfig` (voir §7).
+- Persistance **Supabase** (`custom_blocking_rules`). **Sync vers l’extension Chrome** : fichier local `~/.clarity/custom-blocking-rules.json` + native messaging `GET_CONFIG` → `customRules` / `customSearchKeywords` (voir [`custom_blocking_sync_architecture_2026-03-29.md`](./custom_blocking_sync_architecture_2026-03-29.md)).
 
 ---
 
@@ -69,6 +69,11 @@ Ordre d’application : **016 puis 017** (CLI / dashboard). Les deux peuvent êt
 | `apps/desktop/src/features/boundaries/components/BoundariesView.tsx` | Onglets **System Health \| Habits \| Blocking**, header + tabs sous le titre |
 | `apps/desktop/src/features/boundaries/components/BoundariesView.css` | Layout large + onglets |
 | `apps/desktop/src/features/boundaries/index.ts` | Exports publics |
+| `apps/desktop/src-tauri/src/custom_rules_file.rs` | Écriture / lecture `~/.clarity/custom-blocking-rules.json`, mapping vers payloads extension |
+| `apps/desktop/src-tauri/src/native_host.rs` | `GET_CONFIG` → `ConfigUpdate` avec `customRules` + `customSearchKeywords` |
+| `apps/desktop/src-tauri/src/lib.rs` | Commande Tauri `write_custom_rules_to_disk` |
+| `apps/extension/src/background/native-messaging.ts` | `handleConfigUpdate` ne remplace plus la blocklist par défaut ; poll `GET_CONFIG` ~60s |
+| `apps/extension/src/background/service-worker.ts` | `shouldBlock` : merge `rules` + `customBlockingRules` ; mots-clés recherche custom |
 
 **Comportement engagement (v1) :**
 
@@ -110,7 +115,9 @@ Onglets placés **directement sous le titre** « Boundaries » (`boundaries-view
 
 ### Chrome ne bloque pas `hello.com` alors que la règle existe
 
-**Comportement actuel du code :** l’extension ne lit **pas** Supabase. Elle bloque avec les règles dans **`chrome.storage.local`** (remplies par le native messaging / config desktop), pas depuis `custom_blocking_rules`. Tant que la sync desktop → extension n’est pas implémentée, **aucune ligne de cette table ne peut bloquer Chrome**, même si Supabase est correct.
+1. **Règle URL** : ajoute `hello.com` en **URL rule** (`url_contains`), pas seulement en mot-clé recherche.
+2. **Desktop + extension** : Clarity doit avoir écrit `~/.clarity/custom-blocking-rules.json` (voir la console après un changement dans Blocking). L’extension doit être connectée au native host (`GET_CONFIG`). Un poll ~60s recharge la config ; reconnexion immédiate au redémarrage de l’extension.
+3. **Supabase OK mais fichier absent** : vérifie que `invoke('write_custom_rules_to_disk')` s’exécute (app desktop Tauri, pas le navigateur).
 
 **Types de règles :** une règle **Search** (`search_contains`) filtre les **requêtes** sur les moteurs reconnus, pas la navigation vers un domaine. Pour bloquer l’ouverture de `https://hello.com/`, il faut une règle **URL** (`url_contains`) avec par ex. `hello.com`.
 
@@ -118,7 +125,7 @@ Onglets placés **directement sous le titre** « Boundaries » (`boundaries-view
 
 ## 9. Non fait / dette technique
 
-- **Extension Chrome :** les règles ne sont pas encore fusionnées dans `chrome.storage.local` / `shouldBlock` via le native host (`GetConfig` encore partiellement stub côté Rust à l’époque de l’implémentation).
+- **Push instantané** : pas d’IPC desktop → native host hors fichier ; latence max ~60s + reconnect.
 - **Stats par règle** (nombre de blocages) : non branchées sur cette table en v1.
 - **Redirect-aware** : documenté en spec ; implémentation service worker à aligner dans un ticket dédié.
 

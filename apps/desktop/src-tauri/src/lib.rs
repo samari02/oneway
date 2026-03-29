@@ -1,5 +1,6 @@
 mod browsing_data;
 mod native_host;
+mod custom_rules_file;
 mod app_data;
 mod app_monitor;
 mod supabase_sync;
@@ -264,6 +265,12 @@ fn start_periodic_sync() {
     });
 }
 
+/// Persist custom blocking rules JSON (same shape as Supabase rows) for the native host.
+#[tauri::command]
+fn write_custom_rules_to_disk(rules: serde_json::Value) -> Result<(), String> {
+    custom_rules_file::write_rules_json(rules)
+}
+
 /// Save Aoi widget preferences (to local file, will be read by native host)
 #[tauri::command]
 fn save_aoi_preferences(hidden_global: bool, hidden_domains: Vec<String>) -> Result<(), String> {
@@ -303,6 +310,7 @@ pub fn run() {
             get_extension_status,
             get_aoi_preferences,
             save_aoi_preferences,
+            write_custom_rules_to_disk,
             // App monitoring & blocking
             get_app_usage_stats,
             get_running_apps,

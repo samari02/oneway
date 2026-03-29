@@ -63,6 +63,10 @@ let heartbeatInterval: ReturnType<typeof setInterval> | null = null
 const AOI_PREFERENCES_POLL_MS = 30_000
 let aoiPreferencesPollInterval: ReturnType<typeof setInterval> | null = null
 
+/** Poll GET_CONFIG so custom rules reach the extension shortly after desktop saves to disk. */
+const CONFIG_POLL_MS = 60_000
+let configPollInterval: ReturnType<typeof setInterval> | null = null
+
 function startAoiPreferencesPolling() {
   if (aoiPreferencesPollInterval) return
   aoiPreferencesPollInterval = setInterval(() => {
@@ -76,6 +80,22 @@ function stopAoiPreferencesPolling() {
   if (aoiPreferencesPollInterval) {
     clearInterval(aoiPreferencesPollInterval)
     aoiPreferencesPollInterval = null
+  }
+}
+
+function startConfigPolling() {
+  if (configPollInterval) return
+  configPollInterval = setInterval(() => {
+    if (port && isConnected) {
+      sendToDesktop({ type: 'GET_CONFIG' })
+    }
+  }, CONFIG_POLL_MS)
+}
+
+function stopConfigPolling() {
+  if (configPollInterval) {
+    clearInterval(configPollInterval)
+    configPollInterval = null
   }
 }
 
@@ -112,7 +132,16 @@ export interface HeartbeatPayload {
 
 export type MessageFromDesktop =
   | { type: 'AUTH_STATUS'; data: { authenticated: boolean; user: { id: string; email: string } | null } }
-  | { type: 'CONFIG_UPDATE'; data: { mode: string; rules: any[]; isActive: boolean } }
+  | {
+      type: 'CONFIG_UPDATE'
+      data: {
+        mode: string
+        rules: any[]
+        isActive: boolean
+        customRules?: any[]
+        customSearchKeywords?: string[]
+      }
+    }
   | { type: 'SYNC_REQUEST'; data: { since: number } }
   | { type: 'AOI_PREFERENCES'; data: AoiPreferences }
   | { type: 'ACK' }
@@ -168,6 +197,7 @@ export function connectToDesktopApp(): boolean {
       // Stop heartbeat
       stopHeartbeat()
       stopAoiPreferencesPolling()
+      stopConfigPolling()
       
       port = null
       isConnected = false
@@ -193,6 +223,7 @@ export function connectToDesktopApp(): boolean {
     sendToDesktop({ type: 'GET_CONFIG' })
     sendToDesktop({ type: 'GET_AOI_PREFERENCES' })
     startAoiPreferencesPolling()
+    startConfigPolling()
     
     // Send protection status to desktop
     sendProtectionStatusToDesktop()
@@ -219,7 +250,8 @@ export function disconnectFromDesktopApp() {
   // Stop heartbeat first
   stopHeartbeat()
   stopAoiPreferencesPolling()
-  
+  stopConfigPolling()
+
   if (port) {
     port.disconnect()
     port = null
@@ -309,15 +341,28 @@ async function handleAuthStatus(data: { authenticated: boolean; user: { id: stri
 
 /**
  * Handle config update from desktop
+ * Does not replace built-in `rules` — only updates custom rules / search keywords from disk.
  */
-async function handleConfigUpdate(data: { mode: string; rules: any[]; isActive: boolean }) {
+async function handleConfigUpdate(data: {
+  mode: string
+  rules: any[]
+  isActive: boolean
+  customRules?: any[]
+  customSearchKeywords?: string[]
+}) {
   log('Config update from desktop:', data.mode, data.isActive ? 'active' : 'inactive')
-  
-  await chrome.storage.local.set({
+
+  const patch: Record<string, unknown> = {
     mode: data.mode,
-    rules: data.rules,
     isActive: data.isActive
-  })
+  }
+  if (data.customRules !== undefined) {
+    patch.customBlockingRules = data.customRules
+  }
+  if (data.customSearchKeywords !== undefined) {
+    patch.customSearchKeywords = data.customSearchKeywords
+  }
+  await chrome.storage.local.set(patch)
 }
 
 /**
