@@ -33,7 +33,8 @@
 ### [03-runbooks/](./03-runbooks/) — Conventions & runbooks
 - [00-documentation-naming-rules_2026-03-28.md](./03-runbooks/00-documentation-naming-rules_2026-03-28.md) — Nommage des fichiers `.md`
 
-### [04-guides/](./04-guides/) — Comment contribuer
+### [04-guides/](./04-guides/) — Guides & contribution
+- [comprendre_l_application_2026-03-28.md](./04-guides/comprendre_l_application_2026-03-28.md) — Vue d’ensemble pédagogique (desktop, extension, données)
 - [extension-debug.md](./04-guides/extension-debug.md) — Débugger l'extension
 
 ### [05-backlog/](./05-backlog/) — Idées futures
