@@ -289,3 +289,45 @@
   color: var(--color-mint);
   font-size: 14px;
 }
+
+/* Checkbox row (e.g. Aoi global hide) */
+.settings-item--row {
+  gap: var(--space-md);
+  cursor: pointer;
+}
+
+.settings-item--row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-mint);
+}
+
+.settings-aoi-domain-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.settings-aoi-domain-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: var(--font-size-sm);
+  font-family: monospace;
+  color: var(--text-primary);
+}
+
+.settings-aoi-domain-list__item:last-child {
+  border-bottom: none;
+}
+
+.settings-aoi-add-row {
+  display: flex;
+  width: 100%;
+  gap: var(--space-sm);
+  align-items: center;
+}

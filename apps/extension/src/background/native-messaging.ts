@@ -45,6 +45,26 @@ function scheduleReconnect() {
 const HEARTBEAT_INTERVAL_MS = 60_000 // Send heartbeat every 60 seconds
 let heartbeatInterval: ReturnType<typeof setInterval> | null = null
 
+/** Poll desktop file for Aoi prefs (e.g. after Clarity Settings saves) */
+const AOI_PREFERENCES_POLL_MS = 30_000
+let aoiPreferencesPollInterval: ReturnType<typeof setInterval> | null = null
+
+function startAoiPreferencesPolling() {
+  if (aoiPreferencesPollInterval) return
+  aoiPreferencesPollInterval = setInterval(() => {
+    if (port && isConnected) {
+      sendToDesktop({ type: 'GET_AOI_PREFERENCES' })
+    }
+  }, AOI_PREFERENCES_POLL_MS)
+}
+
+function stopAoiPreferencesPolling() {
+  if (aoiPreferencesPollInterval) {
+    clearInterval(aoiPreferencesPollInterval)
+    aoiPreferencesPollInterval = null
+  }
+}
+
 // Message types
 export type MessageToDesktop = 
   | { type: 'GET_AUTH_STATUS' }
@@ -130,6 +150,7 @@ export function connectToDesktopApp(): boolean {
       
       // Stop heartbeat
       stopHeartbeat()
+      stopAoiPreferencesPolling()
       
       port = null
       isConnected = false
@@ -154,6 +175,7 @@ export function connectToDesktopApp(): boolean {
     sendToDesktop({ type: 'GET_AUTH_STATUS' })
     sendToDesktop({ type: 'GET_CONFIG' })
     sendToDesktop({ type: 'GET_AOI_PREFERENCES' })
+    startAoiPreferencesPolling()
     
     // Send protection status to desktop
     sendProtectionStatusToDesktop()
@@ -179,6 +201,7 @@ export function connectToDesktopApp(): boolean {
 export function disconnectFromDesktopApp() {
   // Stop heartbeat first
   stopHeartbeat()
+  stopAoiPreferencesPolling()
   
   if (port) {
     port.disconnect()

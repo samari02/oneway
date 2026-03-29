@@ -4,7 +4,16 @@ import { useAuth } from '@/features/auth'
 import { supabase } from '@/lib/supabase'
 import { getApiKey, setApiKey, removeApiKey, hasApiKey } from '@/lib/openai'
 import { SiteClassificationModal, type SiteClassification, type SiteCategory } from '@/features/stats/components/SiteClassificationModal'
+import { useAoiPreferences } from '@/features/settings/hooks/useAoiPreferences'
 import './SettingsView.css'
+
+function normalizeDomainInput(raw: string): string {
+  let s = raw.trim().toLowerCase()
+  s = s.replace(/^https?:\/\//, '')
+  s = s.split('/')[0] ?? ''
+  s = s.replace(/^www\./, '')
+  return s
+}
 
 interface DataStats {
   totalVisits: number
@@ -15,6 +24,9 @@ interface DataStats {
 
 export function SettingsView() {
   const { user, signOut } = useAuth()
+  const { preferences: aoiPrefs, isLoading: aoiLoading, updatePreferences: updateAoiPrefs } =
+    useAoiPreferences()
+  const [aoiDomainInput, setAoiDomainInput] = useState('')
   const [resetting, setResetting] = useState(false)
   const [apiKeyInput, setApiKeyInput] = useState('')
   const [hasKey, setHasKey] = useState(false)
@@ -255,6 +267,96 @@ export function SettingsView() {
           </div>
         </div>
       </section>
+
+      {/* Aoi browser widget — visibility (extension) */}
+      {user && (
+        <section className="settings-section">
+          <h2 className="settings-section__title">Aoi (browser widget)</h2>
+          <p className="settings-section__description">
+            Control the floating Aoi bubble injected on websites by the Clarity extension. When hidden,
+            the widget is fully removed from the page (no minimized chip). Restore it here or by
+            removing a site from the list below.
+          </p>
+
+          {aoiLoading ? (
+            <p className="settings-section__hint">Loading…</p>
+          ) : (
+            <>
+              <label className="settings-item settings-item--row">
+                <input
+                  type="checkbox"
+                  checked={aoiPrefs.hiddenGlobal}
+                  onChange={(e) => updateAoiPrefs({ hiddenGlobal: e.target.checked })}
+                />
+                <span className="settings-item__label">Hide Aoi on all websites</span>
+              </label>
+
+              <div className="settings-item settings-item--vertical">
+                <span className="settings-item__label">Hidden on these domains</span>
+                {aoiPrefs.hiddenDomains.length === 0 ? (
+                  <p className="settings-section__hint">None — Aoi shows on every site (unless hidden globally above).</p>
+                ) : (
+                  <ul className="settings-aoi-domain-list">
+                    {aoiPrefs.hiddenDomains.map((domain) => (
+                      <li key={domain} className="settings-aoi-domain-list__item">
+                        <span>{domain}</span>
+                        <button
+                          type="button"
+                          className="settings-button settings-button--small settings-button--ghost"
+                          onClick={() =>
+                            updateAoiPrefs({
+                              hiddenDomains: aoiPrefs.hiddenDomains.filter((d) => d !== domain),
+                            })
+                          }
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="settings-item settings-item--vertical">
+                <span className="settings-item__label">Hide on a domain</span>
+                <div className="settings-aoi-add-row">
+                  <input
+                    type="text"
+                    className="settings-api-key__input"
+                    placeholder="e.g. github.com"
+                    value={aoiDomainInput}
+                    onChange={(e) => setAoiDomainInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        const d = normalizeDomainInput(aoiDomainInput)
+                        if (!d || aoiPrefs.hiddenDomains.includes(d)) return
+                        void updateAoiPrefs({ hiddenDomains: [...aoiPrefs.hiddenDomains, d] })
+                        setAoiDomainInput('')
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="settings-button settings-button--small"
+                    onClick={() => {
+                      const d = normalizeDomainInput(aoiDomainInput)
+                      if (!d || aoiPrefs.hiddenDomains.includes(d)) return
+                      void updateAoiPrefs({ hiddenDomains: [...aoiPrefs.hiddenDomains, d] })
+                      setAoiDomainInput('')
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+                <p className="settings-section__hint">
+                  Use the hostname only (no <code>https://</code>). Matches the extension&apos;s per-site hide list.
+                </p>
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       {/* AI Features Section */}
       <section className="settings-section">

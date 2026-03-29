@@ -44,10 +44,13 @@ let pageLoadTime = Date.now()
 let lastStatusCheck = 0
 const STATUS_CHECK_INTERVAL = 30_000 // Check status every 30s
 
-// Hidden state
+// Hidden state (binary: full widget visible vs fully hidden — no minimize mode)
 let isHidden = false
 const HIDDEN_DOMAINS_KEY = 'clarity_hidden_domains'
 const HIDDEN_GLOBAL_KEY = 'clarity_hidden_global'
+
+let shadowRootRef: ShadowRoot | null = null
+let aoiHostContainer: HTMLDivElement | null = null
 
 /**
  * Get current domain
@@ -145,13 +148,26 @@ async function syncPreferencesToDesktop(): Promise<void> {
 /**
  * Create and inject the Aoi widget
  */
+function setHostVisibility(hidden: boolean): void {
+  isHidden = hidden
+  if (aoiHostContainer) {
+    aoiHostContainer.style.display = hidden ? 'none' : ''
+  }
+  if (!hidden && shadowRootRef) {
+    updateAoiStatus(shadowRootRef)
+  }
+}
+
 async function createAoiWidget(): Promise<void> {
   // Create container
   const container = document.createElement('div')
   container.id = 'clarity-aoi-widget'
+  aoiHostContainer = container
+  shadowRootRef = null
   
   // Use Shadow DOM to isolate styles
   const shadow = container.attachShadow({ mode: 'closed' })
+  shadowRootRef = shadow
   
   // Inject styles
   const styles = document.createElement('style')
@@ -164,17 +180,25 @@ async function createAoiWidget(): Promise<void> {
   widget.innerHTML = getWidgetHTML()
   shadow.appendChild(widget)
   
-  // Check if hidden (globally or on this domain)
+  // Check if hidden (globally or on this domain) — entire host node hidden (no in-page restore chip)
   const hideStatus = await shouldBeHidden()
-  isHidden = hideStatus.hidden
-  hiddenReason = hideStatus.reason
-  if (isHidden) {
-    widget.classList.add('hidden')
-    log(`Aoi hidden (${hiddenReason}) on ${getCurrentDomain()}`)
+  if (hideStatus.hidden) {
+    log(`Aoi hidden (${hideStatus.reason}) on ${getCurrentDomain()}`)
   }
+  setHostVisibility(hideStatus.hidden)
   
   // Add to page
   document.body.appendChild(container)
+  
+  // Sync when extension storage changes (e.g. Clarity Settings or other tabs)
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return
+    if (!changes[HIDDEN_GLOBAL_KEY] && !changes[HIDDEN_DOMAINS_KEY]) return
+    void (async () => {
+      const next = await shouldBeHidden()
+      setHostVisibility(next.hidden)
+    })()
+  })
   
   // Setup event listeners
   setupWidgetEvents(shadow)
@@ -938,78 +962,7 @@ function getWidgetStyles(): string {
       text-transform: uppercase;
     }
     
-    /* Minimize state */
-    .aoi-widget.minimized .aoi-bubble {
-      width: 32px;
-      height: 32px;
-    }
-    
-    .aoi-widget.minimized .aoi-character {
-      transform: scale(0.6);
-    }
-    
-    /* Hidden state */
-    .aoi-widget.hidden .aoi-bubble {
-      opacity: 0;
-      transform: scale(0.3);
-      pointer-events: none;
-    }
-    
-    .aoi-widget.hidden .aoi-restore {
-      opacity: 0.4;
-      pointer-events: auto;
-    }
-    
-    .aoi-widget.hidden .aoi-restore:hover {
-      opacity: 1;
-    }
-    
-    /* Restore button (visible when hidden) */
-    .aoi-restore {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #e8f5f2 0%, #d4f0ea 100%);
-      border: 1px solid rgba(125, 216, 196, 0.5);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .aoi-restore:hover {
-      transform: scale(1.1);
-      box-shadow: 0 4px 12px rgba(125, 216, 196, 0.3);
-    }
-    
-    .aoi-restore-icon {
-      width: 14px;
-      height: 14px;
-      background: linear-gradient(180deg, #c4b5fd 0%, #a78bfa 100%);
-      border-radius: 50%;
-      position: relative;
-    }
-    
-    /* Mini sprout on restore button */
-    .aoi-restore-icon::before {
-      content: '';
-      position: absolute;
-      top: -3px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 4px;
-      height: 5px;
-      background: #6ee7b7;
-      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    }
+    /* Visibility is toggled on #clarity-aoi-widget (display: none) — no minimize / no in-page restore chip */
   `
 }
 
@@ -1053,7 +1006,7 @@ function getWidgetHTML(): string {
       </div>
       <div class="aoi-menu-item aoi-menu-item--hide-global" data-action="hide-global">
         <span class="aoi-menu-item-icon">🌐</span>
-        <span>Hide everywhere</span>
+        <span>Hide on all sites</span>
       </div>
     </div>
     <div class="aoi-analysis-panel">
@@ -1068,14 +1021,8 @@ function getWidgetHTML(): string {
         <div class="aoi-analysis-empty">Loading...</div>
       </div>
     </div>
-    <div class="aoi-restore" title="Show Aoi">
-      <div class="aoi-restore-icon"></div>
-    </div>
   `
 }
-
-// Track why Aoi is hidden (to know what to undo on restore)
-let hiddenReason: 'global' | 'domain' | null = null
 
 /**
  * Setup widget event listeners
@@ -1084,14 +1031,13 @@ function setupWidgetEvents(shadow: ShadowRoot): void {
   const widget = shadow.querySelector('.aoi-widget') as HTMLElement
   const bubble = shadow.querySelector('.aoi-bubble') as HTMLElement
   const menu = shadow.querySelector('.aoi-menu') as HTMLElement
-  const restore = shadow.querySelector('.aoi-restore') as HTMLElement
   const hideGlobalItem = shadow.querySelector('.aoi-menu-item--hide-global') as HTMLElement
   const hideDomainItem = shadow.querySelector('.aoi-menu-item--hide-domain') as HTMLElement
   const analysisItem = shadow.querySelector('.aoi-menu-item--analysis') as HTMLElement
   const analysisPanel = shadow.querySelector('.aoi-analysis-panel') as HTMLElement
   const analysisClose = shadow.querySelector('.aoi-analysis-close') as HTMLElement
   
-  if (!bubble || !widget || !restore || !menu) return
+  if (!bubble || !widget || !menu) return
   
   let menuOpen = false
   let analysisPanelOpen = false
@@ -1135,17 +1081,14 @@ function setupWidgetEvents(shadow: ShadowRoot): void {
     analysisPanel?.classList.remove('open')
   })
   
-  // Click on "Hide everywhere" option
+  // Click on "Hide everywhere" option — widget removed from page; show again from Clarity Settings
   hideGlobalItem?.addEventListener('click', async (e) => {
     e.stopPropagation()
     menuOpen = false
     menu.classList.remove('open')
     
-    // Hide Aoi globally
-    isHidden = true
-    hiddenReason = 'global'
-    widget.classList.add('hidden')
     await setGlobalHidden(true)
+    setHostVisibility(true)
   })
   
   // Click on "Hide on this site" option
@@ -1154,25 +1097,8 @@ function setupWidgetEvents(shadow: ShadowRoot): void {
     menuOpen = false
     menu.classList.remove('open')
     
-    // Hide Aoi on this domain only
-    isHidden = true
-    hiddenReason = 'domain'
-    widget.classList.add('hidden')
     await toggleHiddenOnDomain(true)
-  })
-  
-  // Click on restore button to show Aoi again
-  restore.addEventListener('click', async () => {
-    isHidden = false
-    widget.classList.remove('hidden')
-    
-    // Undo the appropriate hide action
-    if (hiddenReason === 'global') {
-      await setGlobalHidden(false)
-    } else if (hiddenReason === 'domain') {
-      await toggleHiddenOnDomain(false)
-    }
-    hiddenReason = null
+    setHostVisibility(true)
   })
   
   // Close menu/panel when clicking outside
