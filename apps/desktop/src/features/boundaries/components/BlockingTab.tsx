@@ -52,6 +52,27 @@ function commitmentLabel(rule: CustomBlockingRule): string {
   }
 }
 
+function ruleTypeLabel(rule: CustomBlockingRule): string {
+  return rule.rule_type === 'url_contains' ? 'URL' : 'Search'
+}
+
+function filterRulesBySearch(rules: CustomBlockingRule[], query: string): CustomBlockingRule[] {
+  const s = query.trim().toLowerCase()
+  if (!s) return rules
+  return rules.filter((r) => {
+    const blob = [
+      r.value,
+      r.note ?? '',
+      ruleTypeLabel(r),
+      commitmentLabel(r),
+      r.match_mode,
+    ]
+      .join(' ')
+      .toLowerCase()
+    return blob.includes(s)
+  })
+}
+
 interface BlockingTabProps {
   userId: string
 }
@@ -73,19 +94,21 @@ export function BlockingTab({ userId }: BlockingTabProps) {
 
   const [modalType, setModalType] = useState<CustomBlockingRuleType | null>(null)
   const [presetBusy, setPresetBusy] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const urlRules = useMemo(
     () => rules.filter((r) => r.rule_type === 'url_contains'),
-    [rules]
-  )
-  const searchRules = useMemo(
-    () => rules.filter((r) => r.rule_type === 'search_contains'),
     [rules]
   )
 
   const existingUrlLower = useMemo(
     () => new Set(urlRules.map((r) => r.value.trim().toLowerCase())),
     [urlRules]
+  )
+
+  const filteredRules = useMemo(
+    () => filterRulesBySearch(rules, searchQuery),
+    [rules, searchQuery]
   )
 
   const handlePreset = async (presetId: string) => {
@@ -171,7 +194,10 @@ export function BlockingTab({ userId }: BlockingTabProps) {
         <p className="blocking-tab__sync">
           <span className="blocking-tab__sync-label">Account data:</span>{' '}
           <span className="blocking-tab__sync-time">{formatSyncedAt(lastSyncedAt)}</span>
-          <span className="blocking-tab__sync-hint"> — extension sync is applied when the desktop app pushes config (see roadmap).</span>
+          <span className="blocking-tab__sync-hint">
+            {' '}
+            — extension sync is applied when the desktop app pushes config (see roadmap).
+          </span>
         </p>
       </div>
 
@@ -184,9 +210,30 @@ export function BlockingTab({ userId }: BlockingTabProps) {
         </div>
       )}
 
-      <div className="blocking-tab__presets">
-        <h3 className="blocking-tab__card-title">Quick add (URLs)</h3>
-        <p className="blocking-tab__card-desc">Add common patterns in one tap. Duplicates are skipped.</p>
+      <div className="blocking-tab__toolbar">
+        <label className="blocking-tab__search-label">
+          <span className="blocking-tab__search-label-text">Search</span>
+          <input
+            type="search"
+            className="blocking-tab__search-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Filter by keyword, URL, note, type…"
+            autoComplete="off"
+          />
+        </label>
+        <div className="blocking-tab__toolbar-actions">
+          <button type="button" className="blocking-tab__btn-secondary" onClick={() => setModalType('url_contains')}>
+            + URL rule
+          </button>
+          <button type="button" className="blocking-tab__btn-secondary" onClick={() => setModalType('search_contains')}>
+            + Search rule
+          </button>
+        </div>
+      </div>
+
+      <div className="blocking-tab__presets-inline">
+        <span className="blocking-tab__presets-label">Quick add (URLs):</span>
         <div className="blocking-tab__preset-row">
           {BLOCKING_PRESETS.map((p) => (
             <button
@@ -202,25 +249,94 @@ export function BlockingTab({ userId }: BlockingTabProps) {
         </div>
       </div>
 
-      <BlockingRuleCard
-        title="Block by URL"
-        subtitle="Block pages whose address contains…"
-        empty="No URL rules yet"
-        rules={urlRules}
-        onAdd={() => setModalType('url_contains')}
-        onToggle={handleToggle}
-        onDelete={handleDelete}
-      />
+      <div className="blocking-tab__table-panel">
+        <div className="blocking-tab__table-meta">
+          <span>
+            {filteredRules.length} of {rules.length} rule{rules.length !== 1 ? 's' : ''}
+            {searchQuery.trim() ? ' (filtered)' : ''}
+          </span>
+        </div>
 
-      <BlockingRuleCard
-        title="Block by search keyword"
-        subtitle="Block search queries (Google, etc.) that contain…"
-        empty="No search keyword rules yet"
-        rules={searchRules}
-        onAdd={() => setModalType('search_contains')}
-        onToggle={handleToggle}
-        onDelete={handleDelete}
-      />
+        <div className="blocking-tab__table-wrap">
+          {rules.length === 0 ? (
+            <p className="blocking-tab__empty">No rules yet. Add a URL or search rule, or use Quick add.</p>
+          ) : filteredRules.length === 0 ? (
+            <p className="blocking-tab__empty">No rules match your search. Clear the filter or try other keywords.</p>
+          ) : (
+            <table className="blocking-tab__table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Criterion</th>
+                  <th>Match</th>
+                  <th>Note</th>
+                  <th>Commitment</th>
+                  <th>Active</th>
+                  <th aria-label="Actions" />
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRules.map((rule) => (
+                  <tr key={rule.id}>
+                    <td>
+                      <span
+                        className={
+                          rule.rule_type === 'url_contains'
+                            ? 'blocking-tab__type-badge blocking-tab__type-badge--url'
+                            : 'blocking-tab__type-badge blocking-tab__type-badge--search'
+                        }
+                      >
+                        {ruleTypeLabel(rule)}
+                      </span>
+                    </td>
+                    <td>
+                      <code className="blocking-tab__criterion">{rule.value}</code>
+                    </td>
+                    <td>
+                      <span className="blocking-tab__mono">{rule.match_mode === 'host_is' ? 'Host' : 'Contains'}</span>
+                    </td>
+                    <td className="blocking-tab__cell-note">
+                      {rule.note ? (
+                        <span className="blocking-tab__note-clip" title={rule.note}>
+                          {rule.note}
+                        </span>
+                      ) : (
+                        <span className="blocking-tab__muted">—</span>
+                      )}
+                      {isLockActive(rule) && rule.locked_until && (
+                        <span className="blocking-tab__lock-inline">
+                          Locked until {new Date(rule.locked_until).toLocaleDateString()}
+                        </span>
+                      )}
+                    </td>
+                    <td>{commitmentLabel(rule)}</td>
+                    <td>
+                      <label className="blocking-tab__toggle-inline">
+                        <input
+                          type="checkbox"
+                          checked={rule.is_active}
+                          disabled={isLockActive(rule)}
+                          onChange={() => handleToggle(rule)}
+                        />
+                      </label>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="blocking-tab__table-remove"
+                        disabled={isLockActive(rule)}
+                        onClick={() => handleDelete(rule)}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
 
       {modalType && (
         <AddCustomBlockingRuleModal
@@ -234,77 +350,5 @@ export function BlockingTab({ userId }: BlockingTabProps) {
         />
       )}
     </section>
-  )
-}
-
-function BlockingRuleCard({
-  title,
-  subtitle,
-  empty,
-  rules,
-  onAdd,
-  onToggle,
-  onDelete,
-}: {
-  title: string
-  subtitle: string
-  empty: string
-  rules: CustomBlockingRule[]
-  onAdd: () => void
-  onToggle: (r: CustomBlockingRule) => void
-  onDelete: (r: CustomBlockingRule) => void
-}) {
-  return (
-    <div className="blocking-tab__card">
-      <div className="blocking-tab__card-head">
-        <div>
-          <h3 className="blocking-tab__card-title">{title}</h3>
-          <p className="blocking-tab__card-desc">{subtitle}</p>
-        </div>
-        <button type="button" className="boundaries-view__add-btn" onClick={onAdd}>
-          + Add rule
-        </button>
-      </div>
-
-      {rules.length === 0 ? (
-        <p className="blocking-tab__empty">{empty}</p>
-      ) : (
-        <ul className="blocking-tab__list">
-          {rules.map((rule) => (
-            <li key={rule.id} className="blocking-tab__row">
-              <div className="blocking-tab__row-main">
-                <code className="blocking-tab__value">{rule.value}</code>
-                <span className="blocking-tab__chip">Contains</span>
-                <span className="blocking-tab__chip blocking-tab__chip--muted">{commitmentLabel(rule)}</span>
-                {rule.note && <p className="blocking-tab__note">&ldquo;{rule.note}&rdquo;</p>}
-                {isLockActive(rule) && rule.locked_until && (
-                  <p className="blocking-tab__lock">Locked until {new Date(rule.locked_until).toLocaleString()}</p>
-                )}
-              </div>
-              <div className="blocking-tab__row-actions">
-                <label className="blocking-tab__toggle">
-                  <input
-                    type="checkbox"
-                    checked={rule.is_active}
-                    disabled={isLockActive(rule)}
-                    onChange={() => onToggle(rule)}
-                  />
-                  <span>Active</span>
-                </label>
-                <button
-                  type="button"
-                  className="blocking-tab__delete"
-                  disabled={isLockActive(rule)}
-                  onClick={() => onDelete(rule)}
-                  title="Remove"
-                >
-                  Remove
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
   )
 }

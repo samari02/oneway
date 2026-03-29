@@ -24,6 +24,7 @@ Index and layout: **[02-features/README.md](./02-features/README.md)**.
   - [content-analysis.md](./02-features/02-blocage/content-analysis.md)
   - [implementation.md](./02-features/02-blocage/implementation.md)
   - [boundaries_blocking_rules_ux_2026-03-29.md](./02-features/02-blocage/boundaries_blocking_rules_ux_2026-03-29.md) — Custom URL / search blocking (Boundaries UX)
+  - [custom_blocking_rules_implementation_2026-03-29.md](./02-features/02-blocage/custom_blocking_rules_implementation_2026-03-29.md) — Implémentation desktop + Supabase + migrations
 - **[03-insights-et-donnees/](./02-features/03-insights-et-donnees/)** — Site insights & data
   - [site-classification.md](./02-features/03-insights-et-donnees/site-classification.md)
   - [screen-time.md](./02-features/03-insights-et-donnees/screen-time.md)
