@@ -63,7 +63,7 @@ stateDiagram-v2
 
 See [`unlock-modes.md`](./unlock-modes.md) for **password vs friction-only** and hybrid options.
 
-- [ ] **Phase 2a (optional):** Friction-only lock path (challenge to unlock; no password)
+- [x] **Phase 2a:** Friction lock — `lockKind: friction`, 3×5×5 digit grids, count target digit per round; unlock session same as password (~5 min). Commands: `blocking_lock_set_friction`, `blocking_lock_friction_start`, `blocking_lock_friction_submit`, `blocking_lock_clear` (while unlocked).
 - [ ] **Phase 2b (optional):** “Forgot password” → friction flow → **set new password** (invalidate old hash)
 - [ ] Rate limits / cooldown between attempts where relevant
 

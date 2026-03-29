@@ -6,27 +6,46 @@ For **password vs friction (“game”) unlock modes** and roadmap alignment, se
 
 **Path:** `~/.clarity/blocking-lock.json`
 
+**Password mode (v2):** (keys are snake_case in the file)
+
 ```json
 {
-  "version": 1,
+  "version": 2,
+  "lock_kind": "password",
   "password_hash": "<Argon2 PHC string>",
   "unlock_duration_secs": 300
 }
 ```
 
-- `password_hash`: produced with **Argon2id** (via `argon2` crate); includes salt and parameters in the string.
-- `unlock_duration_secs`: default **300**; editable in a later phase (only while unlocked).
+**Friction mode (v2):**
 
-If the file is **missing**, treat as **no password configured**.
+```json
+{
+  "version": 2,
+  "lock_kind": "friction",
+  "unlock_duration_secs": 300
+}
+```
+
+Legacy **v1** files with only `password_hash` are read as password mode.
+
+- `passwordHash`: Argon2id (password mode only).
+- `unlockDurationSecs`: default **300**.
+
+If the file is **missing**, treat as **no lock configured**.
 
 ## Tauri commands
 
 | Command | Input | Output | Notes |
 |---------|--------|--------|--------|
-| `blocking_lock_get_status` | — | `{ has_password, unlocked_until_ms, unlock_duration_secs, can_manage_destructive }` | `unlocked_until_ms` is `null` if locked or no session. `can_manage_destructive` = no password **OR** valid session. |
-| `blocking_lock_set_password` | `new_password`, `current_password?: string \| null` | `Result<(), string>` | First set: `current_password` omitted. Change: requires current (future) / v1 may only support **first set** + **clear** via recovery later. |
-| `blocking_lock_verify_unlock` | `password` | `Result<(), string>` | Verifies hash; starts session until `now + unlock_duration_secs`. |
-| `blocking_lock_relock` | — | `()` | Clears session. |
+| `blocking_lock_get_status` | — | `{ hasLock, lockKind, unlockedUntilMs, unlockDurationSecs, canManageDestructive }` | `lockKind`: `none` \| `password` \| `friction`. |
+| `blocking_lock_set_password` | `newPassword`, `currentPassword?` | `Result<(), string>` | Password mode only; errors if friction lock active. |
+| `blocking_lock_set_friction` | — | `Result<(), string>` | Creates friction lock; errors if password lock exists. |
+| `blocking_lock_verify_unlock` | `password` | `Result<(), string>` | Password mode only; starts session. |
+| `blocking_lock_friction_start` | — | `FrictionChallengeStart` | Friction mode only; pending challenge in memory (~10 min TTL). |
+| `blocking_lock_friction_submit` | `challengeId`, `answers: number[]` | `Result<(), string>` | Verifies counts; starts session on success. |
+| `blocking_lock_relock` | — | `()` | Clears session and pending friction challenge. |
+| `blocking_lock_clear` | — | `Result<(), string>` | Deletes lock file **only** while an unlock session is active (turn off protection). |
 
 Session storage: **in-process** `Mutex<Option<Instant>>` (or ms timestamp). **Not** written to disk (restart = locked).
 

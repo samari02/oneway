@@ -21,6 +21,20 @@
   border: 1px solid var(--border-light);
 }
 
+.blocking-lock__setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  width: 100%;
+  justify-content: flex-end;
+}
+
+@media (min-width: 520px) {
+  .blocking-lock__setup-actions {
+    width: auto;
+  }
+}
+
 .blocking-lock__banner--soft {
   background: rgba(125, 216, 196, 0.08);
   border-color: rgba(125, 216, 196, 0.35);
@@ -85,6 +99,13 @@
   color: var(--text-muted);
   margin: 8px 0 0;
   line-height: 1.4;
+}
+
+.blocking-lock__inline-error {
+  width: 100%;
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #c0392b;
 }
 
 .blocking-lock__modal-backdrop {

@@ -1,11 +1,24 @@
 import { invoke } from '@tauri-apps/api/core'
 import { useCallback, useEffect, useState } from 'react'
 
+export type BlockingLockKind = 'none' | 'password' | 'friction'
+
 export interface BlockingLockStatus {
-  hasPassword: boolean
+  hasLock: boolean
+  lockKind: BlockingLockKind
   unlockedUntilMs: number | null
   unlockDurationSecs: number
   canManageDestructive: boolean
+}
+
+export interface FrictionChallengeRound {
+  rows: string[]
+  targetDigit: number
+}
+
+export interface FrictionChallengeStart {
+  challengeId: string
+  rounds: FrictionChallengeRound[]
 }
 
 export function useBlockingLock() {
@@ -44,6 +57,11 @@ export function useBlockingLock() {
     await refresh()
   }, [refresh])
 
+  const setFrictionLock = useCallback(async () => {
+    await invoke('blocking_lock_set_friction')
+    await refresh()
+  }, [refresh])
+
   const unlock = useCallback(async (password: string) => {
     await invoke('blocking_lock_verify_unlock', { password })
     await refresh()
@@ -54,5 +72,36 @@ export function useBlockingLock() {
     await refresh()
   }, [refresh])
 
-  return { status, loading, refresh, setPassword, unlock, relock }
+  const clearLock = useCallback(async () => {
+    await invoke('blocking_lock_clear')
+    await refresh()
+  }, [refresh])
+
+  const frictionStart = useCallback(async () => {
+    return await invoke<FrictionChallengeStart>('blocking_lock_friction_start')
+  }, [])
+
+  const frictionSubmit = useCallback(
+    async (challengeId: string, answers: number[]) => {
+      await invoke('blocking_lock_friction_submit', {
+        challengeId,
+        answers,
+      })
+      await refresh()
+    },
+    [refresh]
+  )
+
+  return {
+    status,
+    loading,
+    refresh,
+    setPassword,
+    setFrictionLock,
+    unlock,
+    relock,
+    clearLock,
+    frictionStart,
+    frictionSubmit,
+  }
 }

@@ -80,8 +80,12 @@ export function BlockingTab({ userId }: BlockingTabProps) {
     status: lockStatus,
     loading: lockLoading,
     setPassword: setLockPassword,
+    setFrictionLock,
     unlock: unlockBlocking,
     relock: relockBlocking,
+    clearLock,
+    frictionStart,
+    frictionSubmit,
   } = useBlockingLock()
 
   const canManageDestructive =
@@ -244,8 +248,12 @@ export function BlockingTab({ userId }: BlockingTabProps) {
         status={lockStatus}
         loading={lockLoading}
         setPassword={setLockPassword}
+        setFrictionLock={setFrictionLock}
         unlock={unlockBlocking}
         relock={relockBlocking}
+        clearLock={clearLock}
+        frictionStart={frictionStart}
+        frictionSubmit={frictionSubmit}
       />
 
       {error && (

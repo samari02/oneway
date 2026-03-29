@@ -1,13 +1,18 @@
 import { useState } from 'react'
-import type { BlockingLockStatus } from '../hooks/useBlockingLock'
+import type { BlockingLockStatus, FrictionChallengeStart } from '../hooks/useBlockingLock'
+import { BlockingFrictionModal } from './BlockingFrictionModal'
 import './BlockingLockPanel.css'
 
 interface BlockingLockPanelProps {
   status: BlockingLockStatus | null
   loading: boolean
   setPassword: (newPassword: string, currentPassword?: string) => Promise<void>
+  setFrictionLock: () => Promise<void>
   unlock: (password: string) => Promise<void>
   relock: () => Promise<void>
+  clearLock: () => Promise<void>
+  frictionStart: () => Promise<FrictionChallengeStart>
+  frictionSubmit: (challengeId: string, answers: number[]) => Promise<void>
 }
 
 function formatRemainingMs(untilMs: number): string {
@@ -22,8 +27,12 @@ export function BlockingLockPanel({
   status,
   loading,
   setPassword,
+  setFrictionLock,
   unlock,
   relock,
+  clearLock,
+  frictionStart,
+  frictionSubmit,
 }: BlockingLockPanelProps) {
   const [showSetPw, setShowSetPw] = useState(false)
   const [showUnlock, setShowUnlock] = useState(false)
@@ -34,6 +43,10 @@ export function BlockingLockPanel({
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
+  const [frictionChallenge, setFrictionChallenge] = useState<FrictionChallengeStart | null>(null)
+  const [frictionBusy, setFrictionBusy] = useState(false)
+  const [frictionError, setFrictionError] = useState<string | null>(null)
+
   const closeModals = () => {
     setShowSetPw(false)
     setShowUnlock(false)
@@ -42,6 +55,11 @@ export function BlockingLockPanel({
     setPwUnlock('')
     setPwCurrent('')
     setFormError(null)
+  }
+
+  const closeFriction = () => {
+    setFrictionChallenge(null)
+    setFrictionError(null)
   }
 
   const handleSetPassword = async (e: React.FormEvent) => {
@@ -57,7 +75,7 @@ export function BlockingLockPanel({
     }
     setBusy(true)
     try {
-      if (status?.hasPassword) {
+      if (status?.hasLock && status.lockKind === 'password') {
         await setPassword(pwNew, pwCurrent)
       } else {
         await setPassword(pwNew)
@@ -84,6 +102,75 @@ export function BlockingLockPanel({
     }
   }
 
+  const handleUseFriction = async () => {
+    if (
+      !confirm(
+        'Challenge lock: to remove or turn off rules you will complete counting steps each time (no password to remember). Continue?'
+      )
+    ) {
+      return
+    }
+    setBusy(true)
+    try {
+      await setFrictionLock()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Could not enable challenge lock')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const openFrictionUnlock = async () => {
+    setFrictionError(null)
+    setFrictionBusy(true)
+    try {
+      const ch = await frictionStart()
+      setFrictionChallenge(ch)
+    } catch (err) {
+      setFrictionError(err instanceof Error ? err.message : 'Could not start challenge')
+    } finally {
+      setFrictionBusy(false)
+    }
+  }
+
+  const handleFrictionAnswers = async (answers: number[]) => {
+    if (!frictionChallenge) return
+    setFrictionBusy(true)
+    setFrictionError(null)
+    try {
+      await frictionSubmit(
+        frictionChallenge.challengeId,
+        answers.map((n) => Math.min(255, Math.max(0, Math.floor(n))))
+      )
+      closeFriction()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Verification failed'
+      setFrictionError(msg)
+      try {
+        const ch = await frictionStart()
+        setFrictionChallenge(ch)
+      } catch {
+        setFrictionChallenge(null)
+      }
+    } finally {
+      setFrictionBusy(false)
+    }
+  }
+
+  const handleTurnOffProtection = async () => {
+    if (!confirm('Turn off protection entirely? You can set a password or challenge lock again later.')) {
+      return
+    }
+    setBusy(true)
+    try {
+      await clearLock()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Could not remove protection')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (loading || !status) {
     return (
       <div className="blocking-lock blocking-lock--loading">
@@ -94,27 +181,32 @@ export function BlockingLockPanel({
 
   const unlockedUntil = status.unlockedUntilMs
   const isUnlocked = unlockedUntil != null && Date.now() < unlockedUntil
+  const mins = Math.round(status.unlockDurationSecs / 60)
 
   return (
     <>
       <div className="blocking-lock">
-        {!status.hasPassword && (
+        {!status.hasLock && (
           <div className="blocking-lock__banner blocking-lock__banner--soft">
             <div className="blocking-lock__text">
-              <strong>Optional:</strong> set a password so removing or turning off rules requires a short unlock (about{' '}
-              {Math.round(status.unlockDurationSecs / 60)} minutes). Adding rules stays quick.
+              <strong>Optional:</strong> protect removals — choose a <strong>password</strong> (quick unlock) or a{' '}
+              <strong>challenge</strong> (count digits each time; nothing to memorize). Adding rules stays quick either way.
             </div>
-            <button type="button" className="blocking-lock__btn" onClick={() => setShowSetPw(true)}>
-              Set password
-            </button>
+            <div className="blocking-lock__setup-actions">
+              <button type="button" className="blocking-lock__btn" disabled={busy} onClick={() => setShowSetPw(true)}>
+                Set password
+              </button>
+              <button type="button" className="blocking-lock__btn blocking-lock__btn--primary" disabled={busy} onClick={() => void handleUseFriction()}>
+                Use challenge lock
+              </button>
+            </div>
           </div>
         )}
 
-        {status.hasPassword && !isUnlocked && (
+        {status.hasLock && status.lockKind === 'password' && !isUnlocked && (
           <div className="blocking-lock__banner blocking-lock__banner--locked">
             <div className="blocking-lock__text">
-              <strong>List is locked.</strong> You can still add rules. To remove a rule or turn one off, unlock with your
-              password.
+              <strong>List is locked</strong> (password). You can still add rules. To remove or turn off a rule, unlock.
             </div>
             <button type="button" className="blocking-lock__btn blocking-lock__btn--primary" onClick={() => setShowUnlock(true)}>
               Unlock
@@ -122,7 +214,29 @@ export function BlockingLockPanel({
           </div>
         )}
 
-        {status.hasPassword && isUnlocked && unlockedUntil != null && (
+        {status.hasLock && status.lockKind === 'friction' && !isUnlocked && (
+          <div className="blocking-lock__banner blocking-lock__banner--locked">
+            <div className="blocking-lock__text">
+              <strong>List is locked</strong> (challenge). You can still add rules. To remove or turn off a rule, complete the
+              counting steps.
+            </div>
+            <button
+              type="button"
+              className="blocking-lock__btn blocking-lock__btn--primary"
+              disabled={frictionBusy}
+              onClick={() => void openFrictionUnlock()}
+            >
+              {frictionBusy ? '…' : 'Unlock'}
+            </button>
+            {frictionError && !frictionChallenge && (
+              <p className="blocking-lock__inline-error" role="alert">
+                {frictionError}
+              </p>
+            )}
+          </div>
+        )}
+
+        {status.hasLock && isUnlocked && unlockedUntil != null && (
           <div className="blocking-lock__banner blocking-lock__banner--open">
             <div className="blocking-lock__text">
               <strong>Managing</strong> — time left: <span className="blocking-lock__timer">{formatRemainingMs(unlockedUntil)}</span>
@@ -130,15 +244,20 @@ export function BlockingLockPanel({
             <button type="button" className="blocking-lock__btn" onClick={() => void relock()}>
               Re-lock now
             </button>
-            <button
-              type="button"
-              className="blocking-lock__btn blocking-lock__btn--ghost"
-              onClick={() => {
-                setPwCurrent('')
-                setShowSetPw(true)
-              }}
-            >
-              Change password
+            {status.lockKind === 'password' && (
+              <button
+                type="button"
+                className="blocking-lock__btn blocking-lock__btn--ghost"
+                onClick={() => {
+                  setPwCurrent('')
+                  setShowSetPw(true)
+                }}
+              >
+                Change password
+              </button>
+            )}
+            <button type="button" className="blocking-lock__btn blocking-lock__btn--ghost" disabled={busy} onClick={() => void handleTurnOffProtection()}>
+              Turn off protection
             </button>
           </div>
         )}
@@ -157,10 +276,10 @@ export function BlockingLockPanel({
             onClick={(e) => e.stopPropagation()}
           >
             <h3 id="blocking-lock-set-title" className="blocking-lock__modal-title">
-              {status.hasPassword ? 'Change password' : 'Set password'}
+              {status.hasLock && status.lockKind === 'password' ? 'Change password' : 'Set password'}
             </h3>
             <form onSubmit={handleSetPassword}>
-              {status.hasPassword && (
+              {status.hasLock && status.lockKind === 'password' && (
                 <label className="blocking-lock__field">
                   Current password
                   <input
@@ -208,7 +327,7 @@ export function BlockingLockPanel({
         </div>
       )}
 
-      {showUnlock && (
+      {showUnlock && status.lockKind === 'password' && (
         <div className="blocking-lock__modal-backdrop" role="presentation" onClick={() => !busy && closeModals()}>
           <div
             className="blocking-lock__modal"
@@ -220,7 +339,7 @@ export function BlockingLockPanel({
               Unlock to manage
             </h3>
             <p className="blocking-lock__modal-hint">
-              After unlocking, you can remove or turn off rules for about {Math.round(status.unlockDurationSecs / 60)} minutes.
+              After unlocking, you can remove or turn off rules for about {mins} minutes.
             </p>
             <form onSubmit={handleUnlock}>
               <label className="blocking-lock__field">
@@ -245,6 +364,16 @@ export function BlockingLockPanel({
             </form>
           </div>
         </div>
+      )}
+
+      {frictionChallenge && (
+        <BlockingFrictionModal
+          challenge={frictionChallenge}
+          busy={frictionBusy}
+          error={frictionError}
+          onClose={() => !frictionBusy && closeFriction()}
+          onSubmit={(answers) => void handleFrictionAnswers(answers)}
+        />
       )}
     </>
   )

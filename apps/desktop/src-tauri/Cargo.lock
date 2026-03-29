@@ -58,6 +58,7 @@ dependencies = [
  "lazy_static",
  "once_cell",
  "password-hash",
+ "rand 0.8.5",
  "rand_core 0.6.4",
  "reqwest",
  "serde",

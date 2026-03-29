@@ -295,6 +295,26 @@ fn blocking_lock_relock() {
     blocking_lock::relock();
 }
 
+#[tauri::command]
+fn blocking_lock_set_friction() -> Result<(), String> {
+    blocking_lock::set_friction_lock()
+}
+
+#[tauri::command]
+fn blocking_lock_clear() -> Result<(), String> {
+    blocking_lock::clear_lock_file()
+}
+
+#[tauri::command]
+fn blocking_lock_friction_start() -> Result<blocking_lock::FrictionChallengeStart, String> {
+    blocking_lock::friction_challenge_start()
+}
+
+#[tauri::command]
+fn blocking_lock_friction_submit(challenge_id: String, answers: Vec<u8>) -> Result<(), String> {
+    blocking_lock::friction_challenge_submit(challenge_id, answers)
+}
+
 /// Save Aoi widget preferences (to local file, will be read by native host)
 #[tauri::command]
 fn save_aoi_preferences(hidden_global: bool, hidden_domains: Vec<String>) -> Result<(), String> {
@@ -339,6 +359,10 @@ pub fn run() {
             blocking_lock_set_password,
             blocking_lock_verify_unlock,
             blocking_lock_relock,
+            blocking_lock_set_friction,
+            blocking_lock_clear,
+            blocking_lock_friction_start,
+            blocking_lock_friction_submit,
             // App monitoring & blocking
             get_app_usage_stats,
             get_running_apps,
