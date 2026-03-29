@@ -56,9 +56,6 @@ export function useExtensionStatus(): UseExtensionStatusResult {
         extensionVersion: result.extension_version,
         alertLevel: result.alert_level
       })
-      // #region agent log
-      fetch('http://127.0.0.1:7380/ingest/57142764-769f-4ca9-ac2e-b433ea5b37af',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ead3dc'},body:JSON.stringify({sessionId:'ead3dc',location:'useExtensionStatus.ts:fetch',message:'get_extension_status',data:{last_heartbeat:result.last_heartbeat,alert_level:result.alert_level,connected:result.connected},timestamp:Date.now(),hypothesisId:'H5',runId:'pre-fix'})}).catch(()=>{})
-      // #endregion
       setError(null)
     } catch (e) {
       setError(e instanceof Error ? e : new Error('Failed to get extension status'))

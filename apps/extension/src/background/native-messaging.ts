@@ -190,9 +190,6 @@ export function connectToDesktopApp(): boolean {
     port.onDisconnect.addListener(() => {
       const error = chrome.runtime.lastError?.message || 'Unknown error'
       log('Disconnected from desktop app:', error)
-      // #region agent log
-      fetch('http://127.0.0.1:7380/ingest/57142764-769f-4ca9-ac2e-b433ea5b37af',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ead3dc'},body:JSON.stringify({sessionId:'ead3dc',location:'native-messaging.ts:onDisconnect',message:'port_disconnect',data:{error},timestamp:Date.now(),hypothesisId:'H2',runId:'pre-fix'})}).catch(()=>{})
-      // #endregion
       
       // Stop heartbeat
       stopHeartbeat()
@@ -352,15 +349,26 @@ async function handleConfigUpdate(data: {
 }) {
   log('Config update from desktop:', data.mode, data.isActive ? 'active' : 'inactive')
 
+  const d = data as Record<string, unknown>
+  const hasCustomRulesKey = 'customRules' in d || 'custom_rules' in d
+  const hasKeywordsKey = 'customSearchKeywords' in d || 'custom_search_keywords' in d
+  const rawRules = d.customRules ?? d.custom_rules
+  const rawKeywords = d.customSearchKeywords ?? d.custom_search_keywords
+
   const patch: Record<string, unknown> = {
     mode: data.mode,
     isActive: data.isActive
   }
-  if (data.customRules !== undefined) {
-    patch.customBlockingRules = data.customRules
+  if (hasCustomRulesKey) {
+    patch.customBlockingRules = Array.isArray(rawRules) ? rawRules : []
   }
-  if (data.customSearchKeywords !== undefined) {
-    patch.customSearchKeywords = data.customSearchKeywords
+  if (hasKeywordsKey) {
+    patch.customSearchKeywords = Array.isArray(rawKeywords) ? rawKeywords : []
+  }
+  if (!hasCustomRulesKey && !hasKeywordsKey) {
+    log(
+      'CONFIG_UPDATE: payload has no customRules/customSearchKeywords — native host may be outdated; ensure GET_CONFIG returns those fields (rebuild host) and ~/.clarity/custom-blocking-rules.json exists.'
+    )
   }
   await chrome.storage.local.set(patch)
 }
@@ -585,14 +593,8 @@ export function stopHeartbeat() {
  * Send a single heartbeat to desktop
  */
 async function sendHeartbeat() {
-  // #region agent log
-  fetch('http://127.0.0.1:7380/ingest/57142764-769f-4ca9-ac2e-b433ea5b37af',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ead3dc'},body:JSON.stringify({sessionId:'ead3dc',location:'native-messaging.ts:sendHeartbeat',message:'heartbeat_attempt',data:{isConnected,hasPort:port!==null},timestamp:Date.now(),hypothesisId:'H4',runId:'pre-fix'})}).catch(()=>{})
-  // #endregion
   if (!isConnected) {
     log('Cannot send heartbeat: not connected')
-    // #region agent log
-    fetch('http://127.0.0.1:7380/ingest/57142764-769f-4ca9-ac2e-b433ea5b37af',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ead3dc'},body:JSON.stringify({sessionId:'ead3dc',location:'native-messaging.ts:sendHeartbeat',message:'heartbeat_skipped_not_connected',data:{},timestamp:Date.now(),hypothesisId:'H4',runId:'pre-fix'})}).catch(()=>{})
-    // #endregion
     return
   }
   
@@ -627,9 +629,6 @@ async function sendHeartbeat() {
       type: 'HEARTBEAT',
       data: heartbeatPayload
     })
-    // #region agent log
-    fetch('http://127.0.0.1:7380/ingest/57142764-769f-4ca9-ac2e-b433ea5b37af',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ead3dc'},body:JSON.stringify({sessionId:'ead3dc',location:'native-messaging.ts:sendHeartbeat',message:'heartbeat_post',data:{posted,ts:heartbeatPayload.timestamp},timestamp:Date.now(),hypothesisId:'H1',runId:'post-fix'})}).catch(()=>{})
-    // #endregion
 
     if (!posted) {
       maybeReconnectAfterHeartbeatFailure('post_failed')
@@ -638,9 +637,6 @@ async function sendHeartbeat() {
     }
   } catch (error) {
     log('Error sending heartbeat:', error)
-    // #region agent log
-    fetch('http://127.0.0.1:7380/ingest/57142764-769f-4ca9-ac2e-b433ea5b37af',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ead3dc'},body:JSON.stringify({sessionId:'ead3dc',location:'native-messaging.ts:sendHeartbeat',message:'heartbeat_error',data:{err:String(error)},timestamp:Date.now(),hypothesisId:'H1',runId:'post-fix'})}).catch(()=>{})
-    // #endregion
     maybeReconnectAfterHeartbeatFailure('exception')
   }
 }

@@ -355,7 +355,7 @@ async function shouldBlock(url: string, tabId: number): Promise<{ shouldBlock: b
       }
     }
   }
-  
+
   return { shouldBlock: false }
 }
 

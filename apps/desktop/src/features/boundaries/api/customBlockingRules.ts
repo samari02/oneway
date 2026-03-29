@@ -131,6 +131,9 @@ export async function updateCustomBlockingRule(
 }
 
 export async function deleteCustomBlockingRule(id: string): Promise<void> {
-  const { error } = await supabase.from('custom_blocking_rules').delete().eq('id', id)
+  const { data, error } = await supabase.from('custom_blocking_rules').delete().eq('id', id).select('id')
   if (error) throw new Error(error.message)
+  if (!data?.length) {
+    throw new Error('Could not delete this rule. Try signing in again or check your connection.')
+  }
 }

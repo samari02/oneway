@@ -63,7 +63,6 @@ export function BlockingTab({ userId }: BlockingTabProps) {
     createRulesBatch,
     updateRule,
     removeRule,
-    optimisticRemove,
     optimisticToggle,
   } = useCustomBlockingRules(userId)
 
@@ -72,6 +71,8 @@ export function BlockingTab({ userId }: BlockingTabProps) {
   const [addSaving, setAddSaving] = useState(false)
   const [presetBusy, setPresetBusy] = useState<string | null>(null)
   const [filterQuery, setFilterQuery] = useState('')
+  const [removingId, setRemovingId] = useState<string | null>(null)
+  const [removeError, setRemoveError] = useState<string | null>(null)
 
   const urlRules = useMemo(
     () => rules.filter((r) => r.rule_type === 'url_contains'),
@@ -185,15 +186,16 @@ export function BlockingTab({ userId }: BlockingTabProps) {
     }
   }
 
-  const handleDelete = async (rule: CustomBlockingRule) => {
-    if (!window.confirm('Remove this rule?')) {
-      return
-    }
-    optimisticRemove(rule.id)
+  const handleRemove = async (rule: CustomBlockingRule) => {
+    setRemoveError(null)
+    setRemovingId(rule.id)
     try {
       await removeRule(rule.id)
-    } catch {
-      refetch(true)
+    } catch (e) {
+      setRemoveError(e instanceof Error ? e.message : 'Could not remove rule')
+      await refetch(true)
+    } finally {
+      setRemovingId(null)
     }
   }
 
@@ -238,6 +240,15 @@ export function BlockingTab({ userId }: BlockingTabProps) {
           {error.message}
           <button type="button" className="blocking-tab__retry" onClick={() => refetch()}>
             Retry
+          </button>
+        </div>
+      )}
+
+      {removeError && (
+        <div className="blocking-tab__banner blocking-tab__banner--error" role="alert">
+          {removeError}
+          <button type="button" className="blocking-tab__retry" onClick={() => setRemoveError(null)}>
+            Dismiss
           </button>
         </div>
       )}
@@ -366,9 +377,10 @@ export function BlockingTab({ userId }: BlockingTabProps) {
                       <button
                         type="button"
                         className="blocking-tab__table-remove"
-                        onClick={() => handleDelete(rule)}
+                        disabled={removingId === rule.id}
+                        onClick={() => void handleRemove(rule)}
                       >
-                        Remove
+                        {removingId === rule.id ? '…' : 'Remove'}
                       </button>
                     </td>
                   </tr>

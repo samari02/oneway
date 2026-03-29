@@ -11,11 +11,77 @@ const HOST_NAME = 'com.clarity.app';
 let port = null;
 let isConnected = false;
 let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 5;
-const RECONNECT_DELAY = 5000;
+const RECONNECT_BASE_DELAY_MS = 5000;
+/** Cap backoff so we keep retrying forever (e.g. after desktop was closed for days). */
+const RECONNECT_MAX_DELAY_MS = 5 * 60000;
+let reconnectTimeout = null;
+function clearReconnectSchedule() {
+    if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = null;
+    }
+}
+function scheduleReconnect() {
+    clearReconnectSchedule();
+    const attempt = reconnectAttempts++;
+    const delay = Math.min(RECONNECT_BASE_DELAY_MS * Math.pow(2, Math.min(attempt, 8)), RECONNECT_MAX_DELAY_MS);
+    log(`Reconnect scheduled in ${delay}ms (attempt ${attempt + 1})`);
+    reconnectTimeout = setTimeout(() => {
+        reconnectTimeout = null;
+        connectToDesktopApp();
+    }, delay);
+}
+let lastHeartbeatFailureReconnect = 0;
+const HEARTBEAT_FAILURE_RECONNECT_COOLDOWN_MS = 120000;
+/** When postMessage fails or heartbeat cannot be sent, force a new native port (same effect as reloading the extension). */
+function maybeReconnectAfterHeartbeatFailure(reason) {
+    const now = Date.now();
+    if (now - lastHeartbeatFailureReconnect > HEARTBEAT_FAILURE_RECONNECT_COOLDOWN_MS) {
+        lastHeartbeatFailureReconnect = now;
+        log(`Heartbeat native reconnect (${reason})`);
+        disconnectFromDesktopApp();
+        connectToDesktopApp();
+    }
+}
 // Heartbeat configuration
 const HEARTBEAT_INTERVAL_MS = 60000; // Send heartbeat every 60 seconds
 let heartbeatInterval = null;
+/** Poll desktop file for Aoi prefs (e.g. after Clarity Settings saves) */
+const AOI_PREFERENCES_POLL_MS = 30000;
+let aoiPreferencesPollInterval = null;
+/** Poll GET_CONFIG so custom rules reach the extension shortly after desktop saves to disk. */
+const CONFIG_POLL_MS = 60000;
+let configPollInterval = null;
+function startAoiPreferencesPolling() {
+    if (aoiPreferencesPollInterval)
+        return;
+    aoiPreferencesPollInterval = setInterval(() => {
+        if (port && isConnected) {
+            sendToDesktop({ type: 'GET_AOI_PREFERENCES' });
+        }
+    }, AOI_PREFERENCES_POLL_MS);
+}
+function stopAoiPreferencesPolling() {
+    if (aoiPreferencesPollInterval) {
+        clearInterval(aoiPreferencesPollInterval);
+        aoiPreferencesPollInterval = null;
+    }
+}
+function startConfigPolling() {
+    if (configPollInterval)
+        return;
+    configPollInterval = setInterval(() => {
+        if (port && isConnected) {
+            sendToDesktop({ type: 'GET_CONFIG' });
+        }
+    }, CONFIG_POLL_MS);
+}
+function stopConfigPolling() {
+    if (configPollInterval) {
+        clearInterval(configPollInterval);
+        configPollInterval = null;
+    }
+}
 const messageHandlers = [];
 /**
  * Register a handler for messages from desktop
@@ -53,23 +119,19 @@ export function connectToDesktopApp() {
             log('Disconnected from desktop app:', error);
             // Stop heartbeat
             stopHeartbeat();
+            stopAoiPreferencesPolling();
+            stopConfigPolling();
             port = null;
             isConnected = false;
             // Update storage
             chrome.storage.local.set({ desktopAppConnected: false });
-            // Attempt reconnection if we haven't exceeded max attempts
-            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-                reconnectAttempts++;
-                log(`Reconnect attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${RECONNECT_DELAY}ms`);
-                setTimeout(connectToDesktopApp, RECONNECT_DELAY);
-            }
-            else {
-                log('Max reconnect attempts reached, desktop app not available');
-            }
+            // Keep retrying forever (desktop may be closed for hours/days)
+            scheduleReconnect();
         });
         // Connection successful
         isConnected = true;
         reconnectAttempts = 0;
+        clearReconnectSchedule();
         // Update storage
         chrome.storage.local.set({ desktopAppConnected: true });
         // Request initial status
@@ -77,6 +139,8 @@ export function connectToDesktopApp() {
         sendToDesktop({ type: 'GET_AUTH_STATUS' });
         sendToDesktop({ type: 'GET_CONFIG' });
         sendToDesktop({ type: 'GET_AOI_PREFERENCES' });
+        startAoiPreferencesPolling();
+        startConfigPolling();
         // Send protection status to desktop
         sendProtectionStatusToDesktop();
         // Start heartbeat system
@@ -88,6 +152,7 @@ export function connectToDesktopApp() {
         log('Failed to connect to desktop app:', error);
         isConnected = false;
         chrome.storage.local.set({ desktopAppConnected: false });
+        scheduleReconnect();
         return false;
     }
 }
@@ -97,6 +162,8 @@ export function connectToDesktopApp() {
 export function disconnectFromDesktopApp() {
     // Stop heartbeat first
     stopHeartbeat();
+    stopAoiPreferencesPolling();
+    stopConfigPolling();
     if (port) {
         port.disconnect();
         port = null;
@@ -175,14 +242,29 @@ async function handleAuthStatus(data) {
 }
 /**
  * Handle config update from desktop
+ * Does not replace built-in `rules` — only updates custom rules / search keywords from disk.
  */
 async function handleConfigUpdate(data) {
     log('Config update from desktop:', data.mode, data.isActive ? 'active' : 'inactive');
-    await chrome.storage.local.set({
+    const d = data;
+    const hasCustomRulesKey = 'customRules' in d || 'custom_rules' in d;
+    const hasKeywordsKey = 'customSearchKeywords' in d || 'custom_search_keywords' in d;
+    const rawRules = d.customRules ?? d.custom_rules;
+    const rawKeywords = d.customSearchKeywords ?? d.custom_search_keywords;
+    const patch = {
         mode: data.mode,
-        rules: data.rules,
         isActive: data.isActive
-    });
+    };
+    if (hasCustomRulesKey) {
+        patch.customBlockingRules = Array.isArray(rawRules) ? rawRules : [];
+    }
+    if (hasKeywordsKey) {
+        patch.customSearchKeywords = Array.isArray(rawKeywords) ? rawKeywords : [];
+    }
+    if (!hasCustomRulesKey && !hasKeywordsKey) {
+        log('CONFIG_UPDATE: payload has no customRules/customSearchKeywords — native host may be outdated; ensure GET_CONFIG returns those fields (rebuild host) and ~/.clarity/custom-blocking-rules.json exists.');
+    }
+    await chrome.storage.local.set(patch);
 }
 /**
  * Handle Aoi preferences from desktop
@@ -396,13 +478,47 @@ async function sendHeartbeat() {
             blockedSearchesToday,
             extensionVersion: manifest.version
         };
-        sendToDesktop({
+        const posted = sendToDesktop({
             type: 'HEARTBEAT',
             data: heartbeatPayload
         });
-        log('Heartbeat sent:', new Date().toISOString());
+        if (!posted) {
+            maybeReconnectAfterHeartbeatFailure('post_failed');
+        }
+        else {
+            log('Heartbeat sent:', new Date().toISOString());
+        }
     }
     catch (error) {
         log('Error sending heartbeat:', error);
+        maybeReconnectAfterHeartbeatFailure('exception');
     }
 }
+/**
+ * After sleep / lock, Chrome may leave a stale Port; connectToDesktopApp() early-returns while heartbeats stop.
+ * Reconnect when the OS returns from idle or locked to active (same outcome as reloading the extension).
+ */
+function setupIdleReconnect() {
+    if (typeof chrome === 'undefined' || !chrome.idle?.onStateChanged)
+        return;
+    let lastIdleState = null;
+    try {
+        chrome.idle.setDetectionInterval(60);
+    }
+    catch (e) {
+        log('idle.setDetectionInterval failed', e);
+    }
+    chrome.idle.queryState(60, (state) => {
+        lastIdleState = state;
+    });
+    chrome.idle.onStateChanged.addListener((newState) => {
+        const prev = lastIdleState;
+        lastIdleState = newState;
+        if (newState === 'active' && (prev === 'locked' || prev === 'idle')) {
+            log('Idle: active after idle/locked; reconnecting desktop native port');
+            disconnectFromDesktopApp();
+            connectToDesktopApp();
+        }
+    });
+}
+setupIdleReconnect();
