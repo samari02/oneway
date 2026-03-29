@@ -7,9 +7,10 @@ import {
   type AoiPreferences,
 } from '@/features/onboarding/api/settings'
 
-interface RustAoiPreferences {
-  hidden_global: boolean
-  hidden_domains: string[]
+/** Matches `AoiPreferencesData` JSON from Tauri (serde `rename` → camelCase) */
+interface AoiPreferencesFromRust {
+  hiddenGlobal: boolean
+  hiddenDomains: string[]
 }
 
 /**
@@ -59,11 +60,13 @@ export function useAoiPreferences() {
 
     const checkForExtensionUpdates = async () => {
       try {
-        const localPrefs = await invoke<RustAoiPreferences>('get_aoi_preferences')
+        const localPrefs = await invoke<AoiPreferencesFromRust>('get_aoi_preferences')
 
         const prefs: AoiPreferences = {
-          hiddenGlobal: localPrefs.hidden_global,
-          hiddenDomains: localPrefs.hidden_domains,
+          hiddenGlobal: Boolean(localPrefs?.hiddenGlobal),
+          hiddenDomains: Array.isArray(localPrefs?.hiddenDomains)
+            ? localPrefs.hiddenDomains
+            : [],
         }
 
         setPreferences((prev) => {
@@ -93,21 +96,22 @@ export function useAoiPreferences() {
     async (newPrefs: Partial<AoiPreferences>) => {
       if (!user?.id) return
 
+      let updated: AoiPreferences | null = null
       setPreferences((prev) => {
-        const updated: AoiPreferences = { ...prev, ...newPrefs }
-        void (async () => {
-          try {
-            await invoke('save_aoi_preferences', {
-              hiddenGlobal: updated.hiddenGlobal,
-              hiddenDomains: updated.hiddenDomains,
-            })
-            await updateInSupabase(user.id, updated)
-          } catch (error) {
-            console.error('Failed to save Aoi preferences:', error)
-          }
-        })()
+        updated = { ...prev, ...newPrefs }
         return updated
       })
+      if (!updated) return
+
+      try {
+        await invoke('save_aoi_preferences', {
+          hiddenGlobal: updated.hiddenGlobal,
+          hiddenDomains: updated.hiddenDomains,
+        })
+        await updateInSupabase(user.id, updated)
+      } catch (error) {
+        console.error('Failed to save Aoi preferences:', error)
+      }
     },
     [user?.id]
   )

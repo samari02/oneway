@@ -41,6 +41,20 @@ function scheduleReconnect() {
   }, delay)
 }
 
+let lastHeartbeatFailureReconnect = 0
+const HEARTBEAT_FAILURE_RECONNECT_COOLDOWN_MS = 120_000
+
+/** When postMessage fails or heartbeat cannot be sent, force a new native port (same effect as reloading the extension). */
+function maybeReconnectAfterHeartbeatFailure(reason: string) {
+  const now = Date.now()
+  if (now - lastHeartbeatFailureReconnect > HEARTBEAT_FAILURE_RECONNECT_COOLDOWN_MS) {
+    lastHeartbeatFailureReconnect = now
+    log(`Heartbeat native reconnect (${reason})`)
+    disconnectFromDesktopApp()
+    connectToDesktopApp()
+  }
+}
+
 // Heartbeat configuration
 const HEARTBEAT_INTERVAL_MS = 60_000 // Send heartbeat every 60 seconds
 let heartbeatInterval: ReturnType<typeof setInterval> | null = null
@@ -147,6 +161,9 @@ export function connectToDesktopApp(): boolean {
     port.onDisconnect.addListener(() => {
       const error = chrome.runtime.lastError?.message || 'Unknown error'
       log('Disconnected from desktop app:', error)
+      // #region agent log
+      fetch('http://127.0.0.1:7380/ingest/57142764-769f-4ca9-ac2e-b433ea5b37af',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ead3dc'},body:JSON.stringify({sessionId:'ead3dc',location:'native-messaging.ts:onDisconnect',message:'port_disconnect',data:{error},timestamp:Date.now(),hypothesisId:'H2',runId:'pre-fix'})}).catch(()=>{})
+      // #endregion
       
       // Stop heartbeat
       stopHeartbeat()
@@ -523,8 +540,14 @@ export function stopHeartbeat() {
  * Send a single heartbeat to desktop
  */
 async function sendHeartbeat() {
+  // #region agent log
+  fetch('http://127.0.0.1:7380/ingest/57142764-769f-4ca9-ac2e-b433ea5b37af',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ead3dc'},body:JSON.stringify({sessionId:'ead3dc',location:'native-messaging.ts:sendHeartbeat',message:'heartbeat_attempt',data:{isConnected,hasPort:port!==null},timestamp:Date.now(),hypothesisId:'H4',runId:'pre-fix'})}).catch(()=>{})
+  // #endregion
   if (!isConnected) {
     log('Cannot send heartbeat: not connected')
+    // #region agent log
+    fetch('http://127.0.0.1:7380/ingest/57142764-769f-4ca9-ac2e-b433ea5b37af',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ead3dc'},body:JSON.stringify({sessionId:'ead3dc',location:'native-messaging.ts:sendHeartbeat',message:'heartbeat_skipped_not_connected',data:{},timestamp:Date.now(),hypothesisId:'H4',runId:'pre-fix'})}).catch(()=>{})
+    // #endregion
     return
   }
   
@@ -555,13 +578,51 @@ async function sendHeartbeat() {
       extensionVersion: manifest.version
     }
     
-    sendToDesktop({
+    const posted = sendToDesktop({
       type: 'HEARTBEAT',
       data: heartbeatPayload
     })
-    
-    log('Heartbeat sent:', new Date().toISOString())
+    // #region agent log
+    fetch('http://127.0.0.1:7380/ingest/57142764-769f-4ca9-ac2e-b433ea5b37af',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ead3dc'},body:JSON.stringify({sessionId:'ead3dc',location:'native-messaging.ts:sendHeartbeat',message:'heartbeat_post',data:{posted,ts:heartbeatPayload.timestamp},timestamp:Date.now(),hypothesisId:'H1',runId:'post-fix'})}).catch(()=>{})
+    // #endregion
+
+    if (!posted) {
+      maybeReconnectAfterHeartbeatFailure('post_failed')
+    } else {
+      log('Heartbeat sent:', new Date().toISOString())
+    }
   } catch (error) {
     log('Error sending heartbeat:', error)
+    // #region agent log
+    fetch('http://127.0.0.1:7380/ingest/57142764-769f-4ca9-ac2e-b433ea5b37af',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ead3dc'},body:JSON.stringify({sessionId:'ead3dc',location:'native-messaging.ts:sendHeartbeat',message:'heartbeat_error',data:{err:String(error)},timestamp:Date.now(),hypothesisId:'H1',runId:'post-fix'})}).catch(()=>{})
+    // #endregion
+    maybeReconnectAfterHeartbeatFailure('exception')
   }
 }
+
+/**
+ * After sleep / lock, Chrome may leave a stale Port; connectToDesktopApp() early-returns while heartbeats stop.
+ * Reconnect when the OS returns from idle or locked to active (same outcome as reloading the extension).
+ */
+function setupIdleReconnect() {
+  if (typeof chrome === 'undefined' || !chrome.idle?.onStateChanged) return
+  let lastIdleState: chrome.idle.IdleState | null = null
+  try {
+    chrome.idle.setDetectionInterval(60)
+  } catch (e) {
+    log('idle.setDetectionInterval failed', e)
+  }
+  chrome.idle.queryState(60, (state) => {
+    lastIdleState = state
+  })
+  chrome.idle.onStateChanged.addListener((newState) => {
+    const prev = lastIdleState
+    lastIdleState = newState
+    if (newState === 'active' && (prev === 'locked' || prev === 'idle')) {
+      log('Idle: active after idle/locked; reconnecting desktop native port')
+      disconnectFromDesktopApp()
+      connectToDesktopApp()
+    }
+  })
+}
+setupIdleReconnect()

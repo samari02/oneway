@@ -53,6 +53,10 @@ Index and layout: **[02-features/README.md](./02-features/README.md)**.
 ### [05-backlog/](./05-backlog/) — Future ideas
 - [feature-ideas.md](./05-backlog/feature-ideas.md) — Feature backlog
 
+### [06-debug/](./06-debug/) — Debug notes & reproduction
+- [README.md](./06-debug/README.md) — Index
+- [extension_heartbeat_protection_banner_debug_2026-03-28.md](./06-debug/extension_heartbeat_protection_banner_debug_2026-03-28.md) — Protection banner / extension heartbeats
+
 ### [changelog/](./changelog/) — History
 - [1.log.md](./changelog/1.log.md) — Change log
 

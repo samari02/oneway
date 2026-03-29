@@ -6,6 +6,7 @@
   
   "permissions": [
     "storage",
+    "idle",
     "declarativeNetRequest",
     "declarativeNetRequestFeedback",
     "webNavigation",

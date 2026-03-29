@@ -11,6 +11,23 @@ use std::io::{self, Read, Write};
 use std::fs;
 use std::path::PathBuf;
 
+// #region agent log
+fn agent_debug_ndjson(hypothesis_id: &str, location: &str, message: &str, data: serde_json::Value) {
+    const PATH: &str = "/Users/samuelmarinelli/Development/apps/onelearn-web/.cursor/debug-ead3dc.log";
+    let payload = serde_json::json!({
+        "sessionId": "ead3dc",
+        "hypothesisId": hypothesis_id,
+        "location": location,
+        "message": message,
+        "data": data,
+        "timestamp": chrono::Utc::now().timestamp_millis(),
+    });
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(PATH) {
+        let _ = writeln!(f, "{}", payload);
+    }
+}
+// #endregion
+
 use crate::browsing_data::{self, StoredVisit};
 
 // Alert thresholds (in milliseconds)
@@ -213,6 +230,17 @@ fn update_heartbeat(data: &HeartbeatData) {
         status.heartbeat_count, 
         chrono::Utc::now().format("%H:%M:%S")
     );
+    // #region agent log
+    agent_debug_ndjson(
+        "H3",
+        "native_host.rs:update_heartbeat",
+        "heartbeat_persisted",
+        serde_json::json!({
+            "heartbeat_count": status.heartbeat_count,
+            "last_heartbeat_ms": status.last_heartbeat,
+        }),
+    );
+    // #endregion
 }
 
 /// Message received from the Chrome extension
@@ -557,6 +585,14 @@ pub fn run_native_host() {
             Ok(None) => {
                 // EOF - extension disconnected
                 eprintln!("[NativeHost] Extension disconnected (EOF)");
+                // #region agent log
+                agent_debug_ndjson(
+                    "H2",
+                    "native_host.rs:run_native_host",
+                    "extension_eof_native_host_exiting",
+                    serde_json::json!({}),
+                );
+                // #endregion
                 break;
             }
             Err(e) => {
