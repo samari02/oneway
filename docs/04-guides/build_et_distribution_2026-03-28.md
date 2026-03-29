@@ -100,7 +100,7 @@ Pour distribuer l’app desktop à d’autres personnes, on **publie un fichier 
 
 - L’extension parle au desktop via **native messaging** ; le manifest Chrome pointe vers un **binaire** (ou un **script lanceur** avec `--native-host`).
 - Le chemin **en dev** (`target/debug/appsdesktop`) n’est **pas** le même qu’**après install** (`/Applications/Clarity.app/...`).
-- Pour que le pont reste valide après une **build release**, il faut **réinstaller / mettre à jour** le manifest (voir `apps/desktop/scripts/install-native-host.sh` et la doc [clarity_desktop_extension_connectivity_2026-03-28.md](../02-features/clarity-connectivity/clarity_desktop_extension_connectivity_2026-03-28.md)).
+- Pour que le pont reste valide après une **build release**, il faut **réinstaller / mettre à jour** le manifest (voir `apps/desktop/scripts/install-native-host.sh` et la doc [clarity_desktop_extension_connectivity_2026-03-28.md](../02-features/05-plateforme-desktop-extension/clarity-connectivity/clarity_desktop_extension_connectivity_2026-03-28.md)).
 
 ---
 
@@ -121,4 +121,4 @@ Pour distribuer l’app desktop à d’autres personnes, on **publie un fichier 
 
 - [comprendre_l_application_2026-03-28.md](./comprendre_l_application_2026-03-28.md) — Vue d’ensemble produit (desktop + extension + données)
 - [README principal](../README.md) — Quick Start
-- [clarity_desktop_extension_connectivity_2026-03-28.md](../02-features/clarity-connectivity/clarity_desktop_extension_connectivity_2026-03-28.md) — Pont extension ↔ desktop
+- [clarity_desktop_extension_connectivity_2026-03-28.md](../02-features/05-plateforme-desktop-extension/clarity-connectivity/clarity_desktop_extension_connectivity_2026-03-28.md) — Pont extension ↔ desktop

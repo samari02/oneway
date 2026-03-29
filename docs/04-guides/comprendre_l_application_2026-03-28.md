@@ -31,7 +31,7 @@ Chrome ne peut pas “voir” ton dossier utilisateur comme une app normale. Le 
 
 Si ce lien est cassé (mauvais chemin, extension mal installée, desktop fermé trop longtemps), l’app peut afficher un bandeau du type **“Protection compromised”** : ce n’est pas que l’extension est “off” dans `chrome://extensions`, c’est que **le pont vers le desktop** ne reçoit plus de signaux.
 
-Détails techniques : [native-messaging.md](../03-architecture/extension/native-messaging.md) et [clarity_desktop_extension_connectivity_2026-03-28.md](../02-features/clarity-connectivity/clarity_desktop_extension_connectivity_2026-03-28.md).
+Détails techniques : [native-messaging.md](../03-architecture/extension/native-messaging.md) et [clarity_desktop_extension_connectivity_2026-03-28.md](../02-features/05-plateforme-desktop-extension/clarity-connectivity/clarity_desktop_extension_connectivity_2026-03-28.md).
 
 ---
 
@@ -79,7 +79,7 @@ Pour une **version stable** installable (`.app`), l’indépendance au terminal,
 | Sujet | Fichier |
 |-------|---------|
 | Vision produit | [01-vision/](../01-vision/) |
-| Blocage, habits, widget Aoi (navigateur) | [02-features/](../02-features/) — [aoi-widget/](../02-features/aoi-widget/) |
+| Blocage, habits, widget Aoi (navigateur) | [02-features/](../02-features/) — [aoi-widget/](../02-features/04-companion-ia/aoi-widget/) |
 | Architecture, pipeline de données | [03-architecture/overview.md](../03-architecture/overview.md), [data-pipeline.md](../03-architecture/data/data-pipeline.md) |
 | Build, `.app`, Vercel, multi-postes | [build_et_distribution_2026-03-28.md](./build_et_distribution_2026-03-28.md) |
 | Débug extension | [extension-debug.md](./extension-debug.md) |

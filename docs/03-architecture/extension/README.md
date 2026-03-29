@@ -96,4 +96,4 @@ Extension                              Desktop
 ## Voir aussi
 
 - [Desktop Architecture](../desktop/) — Application desktop Tauri
-- [Blocking Features](../../02-features/blocking/) — Documentation fonctionnelle du blocking
+- [Blocking features](../../02-features/02-blocage/) — Product docs for blocking
