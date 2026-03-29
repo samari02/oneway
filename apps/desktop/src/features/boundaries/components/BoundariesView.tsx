@@ -6,8 +6,11 @@ import { AddBoundaryModal } from './AddBoundaryModal'
 import { EditBoundaryModal } from './EditBoundaryModal'
 import { IncognitoSetupModal } from './IncognitoSetupModal'
 import { ProtectionAlert } from './ProtectionAlert'
+import { BlockingTab } from './BlockingTab'
 import type { Boundary } from '@oneway/shared'
 import './BoundariesView.css'
+
+type BoundariesTab = 'habits' | 'blocking'
 
 // Custom SVG Icons
 const CheckIcon = () => (
@@ -79,7 +82,8 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
   const [showIncognitoSetup, setShowIncognitoSetup] = useState(false)
   const [showSafeSearchInfo, setShowSafeSearchInfo] = useState(false)
   const [showSearchFilterInfo, setShowSearchFilterInfo] = useState(false)
-  
+  const [boundariesTab, setBoundariesTab] = useState<BoundariesTab>('habits')
+
   const safeSearchRef = useRef<HTMLDivElement>(null)
   const searchFilterRef = useRef<HTMLDivElement>(null)
   
@@ -379,7 +383,27 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
         </p>
       </section>
 
+      <nav className="boundaries-view__tabs" aria-label="Boundaries sections">
+        <button
+          type="button"
+          className={`boundaries-view__tab ${boundariesTab === 'habits' ? 'boundaries-view__tab--active' : ''}`}
+          onClick={() => setBoundariesTab('habits')}
+        >
+          Habits
+        </button>
+        <button
+          type="button"
+          className={`boundaries-view__tab ${boundariesTab === 'blocking' ? 'boundaries-view__tab--active' : ''}`}
+          onClick={() => setBoundariesTab('blocking')}
+        >
+          Blocking
+        </button>
+      </nav>
+
+      {boundariesTab === 'blocking' && <BlockingTab userId={userId} />}
+
       {/* My Rules Section */}
+      {boundariesTab === 'habits' && (
       <section className="boundaries-view__my-rules">
         <div className="boundaries-view__rules-header">
           <div>
@@ -520,6 +544,7 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
         </div>
       )}
       </section>
+      )}
 
         </div>
       </div>

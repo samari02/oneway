@@ -77,6 +77,33 @@
   letter-spacing: 0.5px;
 }
 
+.boundary-modal__field select {
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.boundary-modal__field select:focus {
+  outline: none;
+  border-color: var(--color-mint);
+  box-shadow: 0 0 0 3px rgba(125, 216, 196, 0.15);
+}
+
+.blocking-modal__hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.blocking-modal__error {
+  font-size: 13px;
+  color: var(--color-danger);
+  margin: 0;
+}
+
 .boundary-modal__field input[type="text"],
 .boundary-modal__field textarea {
   padding: 12px 14px;
