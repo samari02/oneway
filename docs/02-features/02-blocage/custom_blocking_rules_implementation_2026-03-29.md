@@ -61,7 +61,7 @@ Ordre d’application : **016 puis 017** (CLI / dashboard). Les deux peuvent êt
 
 | Chemin | Rôle |
 |--------|------|
-| `apps/desktop/src/features/boundaries/api/customBlockingRules.ts` | CRUD Supabase + batch (presets) ; `normalizeUrlBlockingValue()` enlève `https://`, `http://`, `www.` |
+| `apps/desktop/src/features/boundaries/api/customBlockingRules.ts` | CRUD Supabase + batch (presets) ; `normalizeUrlBlockingValue()` ; `inferBlockingRuleType()` (URL vs search, une seule ligne de saisie) |
 | `apps/desktop/src/features/boundaries/hooks/useCustomBlockingRules.ts` | État, `lastSyncedAt`, optimistic update |
 | `apps/desktop/src/features/boundaries/components/BlockingTab.tsx` | UI onglet Blocking : **barre d’ajout inline** (segment URL \| Search + champ + **Add**), filtre tableau discret à droite, **table unique**, presets en ligne |
 | `apps/desktop/src/features/boundaries/components/BlockingTab.css` | Styles |
