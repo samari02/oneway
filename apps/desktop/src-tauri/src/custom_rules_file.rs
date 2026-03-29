@@ -42,6 +42,22 @@ fn sanitize_value_for_pattern(s: &str) -> String {
     s.replace('*', "")
 }
 
+/// Strip `https://`, `http://`, `www.` so pasting a full URL still matches navigation URLs.
+fn normalize_url_contains_value(raw: &str) -> String {
+    let mut s = raw.trim();
+    for prefix in &["https://", "http://", "HTTPS://", "HTTP://"] {
+        if s.starts_with(prefix) {
+            s = s.strip_prefix(prefix).unwrap_or(s);
+            break;
+        }
+    }
+    let mut s = s.trim_start();
+    if s.len() >= 4 && s[..4].eq_ignore_ascii_case("www.") {
+        s = &s[4..];
+    }
+    sanitize_value_for_pattern(s.trim())
+}
+
 /// Writes the JSON array of rules (as received from the desktop UI).
 pub fn write_rules_json(rules: serde_json::Value) -> Result<(), String> {
     if !rules.is_array() {
@@ -77,7 +93,7 @@ fn read_disk_array() -> Vec<serde_json::Value> {
 }
 
 fn row_to_block_rules(row: &DiskRule) -> Vec<serde_json::Value> {
-    let v = sanitize_value_for_pattern(row.value.trim());
+    let v = normalize_url_contains_value(&row.value);
     if v.is_empty() {
         return Vec::new();
     }

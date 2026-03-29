@@ -6,6 +6,17 @@ import type {
   CustomBlockingRuleType,
 } from '@oneway/shared'
 
+/** Strip scheme and `www.` so pasted URLs match navigation (same logic as native host). */
+export function normalizeUrlBlockingValue(raw: string): string {
+  let s = raw.trim()
+  if (!s) return s
+  if (/^https:\/\//i.test(s)) s = s.slice(8)
+  else if (/^http:\/\//i.test(s)) s = s.slice(7)
+  s = s.trimStart()
+  if (/^www\./i.test(s)) s = s.slice(4)
+  return s.trim()
+}
+
 export async function getCustomBlockingRules(userId: string): Promise<CustomBlockingRule[]> {
   const { data, error } = await supabase
     .from('custom_blocking_rules')

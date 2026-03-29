@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import type { CustomBlockingRule, CustomBlockingRuleType } from '@oneway/shared'
+import { normalizeUrlBlockingValue } from '../api/customBlockingRules'
 import { useCustomBlockingRules } from '../hooks/useCustomBlockingRules'
-import { AddCustomBlockingRuleModal } from './AddCustomBlockingRuleModal'
 import './BlockingTab.css'
 
 const MIN_LEN = 3
@@ -92,9 +92,12 @@ export function BlockingTab({ userId }: BlockingTabProps) {
     optimisticToggle,
   } = useCustomBlockingRules(userId)
 
-  const [modalType, setModalType] = useState<CustomBlockingRuleType | null>(null)
+  const [addMode, setAddMode] = useState<CustomBlockingRuleType>('url_contains')
+  const [addInput, setAddInput] = useState('')
+  const [addError, setAddError] = useState<string | null>(null)
+  const [addSaving, setAddSaving] = useState(false)
   const [presetBusy, setPresetBusy] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [filterQuery, setFilterQuery] = useState('')
 
   const urlRules = useMemo(
     () => rules.filter((r) => r.rule_type === 'url_contains'),
@@ -102,19 +105,83 @@ export function BlockingTab({ userId }: BlockingTabProps) {
   )
 
   const existingUrlLower = useMemo(
-    () => new Set(urlRules.map((r) => r.value.trim().toLowerCase())),
+    () => new Set(urlRules.map((r) => normalizeUrlBlockingValue(r.value).toLowerCase())),
     [urlRules]
   )
 
-  const filteredRules = useMemo(
-    () => filterRulesBySearch(rules, searchQuery),
-    [rules, searchQuery]
+  const existingSearchLower = useMemo(
+    () =>
+      new Set(
+        rules
+          .filter((r) => r.rule_type === 'search_contains')
+          .map((r) => r.value.trim().toLowerCase())
+      ),
+    [rules]
   )
+
+  const filteredRules = useMemo(
+    () => filterRulesBySearch(rules, filterQuery),
+    [rules, filterQuery]
+  )
+
+  const handleAdd = async (e?: FormEvent) => {
+    e?.preventDefault()
+    setAddError(null)
+    const raw = addInput.trim()
+    if (raw.length < MIN_LEN) {
+      setAddError(`Use at least ${MIN_LEN} characters.`)
+      return
+    }
+
+    setAddSaving(true)
+    try {
+      if (addMode === 'url_contains') {
+        const value = normalizeUrlBlockingValue(raw)
+        if (value.length < MIN_LEN) {
+          setAddError(`Use at least ${MIN_LEN} characters after removing https:// etc.`)
+          setAddSaving(false)
+          return
+        }
+        if (existingUrlLower.has(value.toLowerCase())) {
+          setAddError('That URL is already in the list.')
+          setAddSaving(false)
+          return
+        }
+        await createRule({
+          user_id: userId,
+          rule_type: 'url_contains',
+          value,
+          commitment_level: 'flexible',
+        })
+      } else {
+        const value = raw.toLowerCase()
+        if (existingSearchLower.has(value)) {
+          setAddError('That keyword is already in the list.')
+          setAddSaving(false)
+          return
+        }
+        await createRule({
+          user_id: userId,
+          rule_type: 'search_contains',
+          value,
+          commitment_level: 'flexible',
+        })
+      }
+      setAddInput('')
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : 'Could not add rule')
+    } finally {
+      setAddSaving(false)
+    }
+  }
 
   const handlePreset = async (presetId: string) => {
     const preset = BLOCKING_PRESETS.find((p) => p.id === presetId)
     if (!preset) return
-    const toAdd = preset.values.filter((v) => v.length >= MIN_LEN && !existingUrlLower.has(v.toLowerCase()))
+    const toAdd = preset.values.filter((v) => {
+      const n = normalizeUrlBlockingValue(v)
+      return n.length >= MIN_LEN && !existingUrlLower.has(n.toLowerCase())
+    })
     if (toAdd.length === 0) {
       return
     }
@@ -124,7 +191,7 @@ export function BlockingTab({ userId }: BlockingTabProps) {
         toAdd.map((value) => ({
           user_id: userId,
           rule_type: 'url_contains' as const,
-          value,
+          value: normalizeUrlBlockingValue(value),
           note: `Quick add: ${preset.label}`,
           commitment_level: 'flexible',
         }))
@@ -192,7 +259,8 @@ export function BlockingTab({ userId }: BlockingTabProps) {
           <strong>Chrome sync:</strong> rules are saved to Supabase and written to{' '}
           <code className="blocking-tab__code">~/.clarity/custom-blocking-rules.json</code>. The extension loads them via
           the native host (<code className="blocking-tab__code">GET_CONFIG</code>), merged with the built-in blocklist.
-          Keep Clarity running and the extension connected; updates also poll about every minute.
+          Keep Clarity running and the extension connected. Paste a URL or domain (e.g. <code className="blocking-tab__code">hello.com</code> or{' '}
+          <code className="blocking-tab__code">https://hello.com</code> — both work).
         </div>
         <p className="blocking-tab__subtitle">
           Supabase project: <code className="blocking-tab__code">apps/desktop/.env.local</code> (defaults in{' '}
@@ -214,27 +282,68 @@ export function BlockingTab({ userId }: BlockingTabProps) {
         </div>
       )}
 
-      <div className="blocking-tab__toolbar">
-        <label className="blocking-tab__search-label">
-          <span className="blocking-tab__search-label-text">Search</span>
+      <form className="blocking-tab__add-row" onSubmit={handleAdd}>
+        <div className="blocking-tab__add-row-inner" role="group" aria-label="Add blocking rule">
+          <div className="blocking-tab__segment" role="tablist" aria-label="Rule type">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={addMode === 'url_contains'}
+              className={
+                addMode === 'url_contains'
+                  ? 'blocking-tab__segment-btn blocking-tab__segment-btn--active'
+                  : 'blocking-tab__segment-btn'
+              }
+              onClick={() => {
+                setAddMode('url_contains')
+                setAddError(null)
+              }}
+            >
+              URL
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={addMode === 'search_contains'}
+              className={
+                addMode === 'search_contains'
+                  ? 'blocking-tab__segment-btn blocking-tab__segment-btn--active'
+                  : 'blocking-tab__segment-btn'
+              }
+              onClick={() => {
+                setAddMode('search_contains')
+                setAddError(null)
+              }}
+            >
+              Search
+            </button>
+          </div>
           <input
-            type="search"
-            className="blocking-tab__search-input"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter by keyword, URL, note, type…"
+            type="text"
+            className="blocking-tab__add-input"
+            value={addInput}
+            onChange={(e) => {
+              setAddInput(e.target.value)
+              setAddError(null)
+            }}
+            placeholder={
+              addMode === 'url_contains'
+                ? 'Domain or paste a full URL, e.g. reddit.com or https://…'
+                : 'Keyword to block in search queries (e.g. gossip)'
+            }
             autoComplete="off"
+            aria-label={addMode === 'url_contains' ? 'URL or domain to block' : 'Search keyword to block'}
           />
-        </label>
-        <div className="blocking-tab__toolbar-actions">
-          <button type="button" className="blocking-tab__btn-secondary" onClick={() => setModalType('url_contains')}>
-            + URL rule
-          </button>
-          <button type="button" className="blocking-tab__btn-secondary" onClick={() => setModalType('search_contains')}>
-            + Search rule
+          <button
+            type="submit"
+            className="blocking-tab__add-submit"
+            disabled={addSaving || addInput.trim().length < MIN_LEN}
+          >
+            {addSaving ? '…' : 'Add'}
           </button>
         </div>
-      </div>
+        {addError && <p className="blocking-tab__add-error">{addError}</p>}
+      </form>
 
       <div className="blocking-tab__presets-inline">
         <span className="blocking-tab__presets-label">Quick add (URLs):</span>
@@ -257,15 +366,26 @@ export function BlockingTab({ userId }: BlockingTabProps) {
         <div className="blocking-tab__table-meta">
           <span>
             {filteredRules.length} of {rules.length} rule{rules.length !== 1 ? 's' : ''}
-            {searchQuery.trim() ? ' (filtered)' : ''}
+            {filterQuery.trim() ? ' (filtered)' : ''}
           </span>
+          <label className="blocking-tab__filter-right">
+            <span className="blocking-tab__filter-right-label">Filter</span>
+            <input
+              type="search"
+              className="blocking-tab__filter-input"
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              placeholder="Filter table…"
+              autoComplete="off"
+            />
+          </label>
         </div>
 
         <div className="blocking-tab__table-wrap">
           {rules.length === 0 ? (
-            <p className="blocking-tab__empty">No rules yet. Add a URL or search rule, or use Quick add.</p>
+            <p className="blocking-tab__empty">No rules yet. Type above and click Add, or use Quick add.</p>
           ) : filteredRules.length === 0 ? (
-            <p className="blocking-tab__empty">No rules match your search. Clear the filter or try other keywords.</p>
+            <p className="blocking-tab__empty">No rules match your filter. Clear the filter on the right.</p>
           ) : (
             <table className="blocking-tab__table">
               <thead>
@@ -341,18 +461,6 @@ export function BlockingTab({ userId }: BlockingTabProps) {
           )}
         </div>
       </div>
-
-      {modalType && (
-        <AddCustomBlockingRuleModal
-          userId={userId}
-          ruleType={modalType}
-          createRule={createRule}
-          onSave={() => {
-            setModalType(null)
-          }}
-          onCancel={() => setModalType(null)}
-        />
-      )}
     </section>
   )
 }

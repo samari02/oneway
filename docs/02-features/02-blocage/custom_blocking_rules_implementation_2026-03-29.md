@@ -61,11 +61,10 @@ Ordre d’application : **016 puis 017** (CLI / dashboard). Les deux peuvent êt
 
 | Chemin | Rôle |
 |--------|------|
-| `apps/desktop/src/features/boundaries/api/customBlockingRules.ts` | CRUD Supabase + batch create (presets) |
+| `apps/desktop/src/features/boundaries/api/customBlockingRules.ts` | CRUD Supabase + batch (presets) ; `normalizeUrlBlockingValue()` enlève `https://`, `http://`, `www.` |
 | `apps/desktop/src/features/boundaries/hooks/useCustomBlockingRules.ts` | État, `lastSyncedAt`, optimistic update |
-| `apps/desktop/src/features/boundaries/components/BlockingTab.tsx` | UI onglet Blocking : **table unique** (Type, critère, match, note, engagement, actif, actions), **barre de recherche** sur tout le texte (critère, note, type, engagement), boutons **+ URL rule** / **+ Search rule**, presets en ligne |
+| `apps/desktop/src/features/boundaries/components/BlockingTab.tsx` | UI onglet Blocking : **barre d’ajout inline** (segment URL \| Search + champ + **Add**), filtre tableau discret à droite, **table unique**, presets en ligne |
 | `apps/desktop/src/features/boundaries/components/BlockingTab.css` | Styles |
-| `apps/desktop/src/features/boundaries/components/AddCustomBlockingRuleModal.tsx` | Modal création (critère, note, engagement, lock 7 jours) |
 | `apps/desktop/src/features/boundaries/components/BoundariesView.tsx` | Onglets **System Health \| Habits \| Blocking**, header + tabs sous le titre |
 | `apps/desktop/src/features/boundaries/components/BoundariesView.css` | Layout large + onglets |
 | `apps/desktop/src/features/boundaries/index.ts` | Exports publics |
