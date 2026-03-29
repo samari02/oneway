@@ -10,7 +10,7 @@ import { BlockingTab } from './BlockingTab'
 import type { Boundary } from '@oneway/shared'
 import './BoundariesView.css'
 
-type BoundariesTab = 'habits' | 'blocking'
+type BoundariesTab = 'system' | 'habits' | 'blocking'
 
 // Custom SVG Icons
 const CheckIcon = () => (
@@ -82,7 +82,7 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
   const [showIncognitoSetup, setShowIncognitoSetup] = useState(false)
   const [showSafeSearchInfo, setShowSafeSearchInfo] = useState(false)
   const [showSearchFilterInfo, setShowSearchFilterInfo] = useState(false)
-  const [boundariesTab, setBoundariesTab] = useState<BoundariesTab>('habits')
+  const [boundariesTab, setBoundariesTab] = useState<BoundariesTab>('system')
 
   const safeSearchRef = useRef<HTMLDivElement>(null)
   const searchFilterRef = useRef<HTMLDivElement>(null)
@@ -188,24 +188,6 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
   const healthyChecks = systemHealthChecks.filter(Boolean).length
   const systemHealthPercent = Math.round((healthyChecks / 4) * 100)
 
-  if (loading) {
-    return (
-      <div className="boundaries-view">
-        <header className="boundaries-view__header">
-          <div className="boundaries-view__title">
-            <span className="boundaries-view__icon"><ShieldIcon /></span>
-            <h1>Boundaries</h1>
-          </div>
-        </header>
-        <div className="boundaries-view__scrollable">
-          <div className="boundaries-view__content">
-            <div className="boundaries-view__loading">Loading boundaries...</div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   // Helper to get icon based on alert level
   const getAlertIcon = (level: string | undefined) => {
     switch (level) {
@@ -232,22 +214,47 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
 
   return (
     <div className="boundaries-view">
-      {/* Sticky Header */}
-      <header className="boundaries-view__header">
-        <div className="boundaries-view__title">
-          <span className="boundaries-view__icon"><ShieldIcon /></span>
-          <h1>Boundaries</h1>
-        </div>
-      </header>
+      <div className="boundaries-view__header-block">
+        <header className="boundaries-view__header">
+          <div className="boundaries-view__title">
+            <span className="boundaries-view__icon"><ShieldIcon /></span>
+            <h1>Boundaries</h1>
+          </div>
+        </header>
+
+        <nav className="boundaries-view__tabs" aria-label="Boundaries sections">
+          <button
+            type="button"
+            className={`boundaries-view__tab ${boundariesTab === 'system' ? 'boundaries-view__tab--active' : ''}`}
+            onClick={() => setBoundariesTab('system')}
+          >
+            System Health
+          </button>
+          <button
+            type="button"
+            className={`boundaries-view__tab ${boundariesTab === 'habits' ? 'boundaries-view__tab--active' : ''}`}
+            onClick={() => setBoundariesTab('habits')}
+          >
+            Habits
+          </button>
+          <button
+            type="button"
+            className={`boundaries-view__tab ${boundariesTab === 'blocking' ? 'boundaries-view__tab--active' : ''}`}
+            onClick={() => setBoundariesTab('blocking')}
+          >
+            Blocking
+          </button>
+        </nav>
+      </div>
 
       {/* Scrollable content */}
       <div className="boundaries-view__scrollable">
         <div className="boundaries-view__content">
-          {/* Protection Alert Banner */}
-          <ProtectionAlert status={extensionStatus} />
+          {boundariesTab === 'system' && (
+            <>
+              <ProtectionAlert status={extensionStatus} />
 
-          {/* System Health Section */}
-          <section className="boundaries-view__system-health">
+              <section className="boundaries-view__system-health">
         <div className="boundaries-view__health-header">
           <h2 className="boundaries-view__section-title">System Health</h2>
           <div className="boundaries-view__health-gauge">
@@ -382,29 +389,18 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
           These protections work automatically in the background.
         </p>
       </section>
+            </>
+          )}
 
-      <nav className="boundaries-view__tabs" aria-label="Boundaries sections">
-        <button
-          type="button"
-          className={`boundaries-view__tab ${boundariesTab === 'habits' ? 'boundaries-view__tab--active' : ''}`}
-          onClick={() => setBoundariesTab('habits')}
-        >
-          Habits
-        </button>
-        <button
-          type="button"
-          className={`boundaries-view__tab ${boundariesTab === 'blocking' ? 'boundaries-view__tab--active' : ''}`}
-          onClick={() => setBoundariesTab('blocking')}
-        >
-          Blocking
-        </button>
-      </nav>
-
-      {boundariesTab === 'blocking' && <BlockingTab userId={userId} />}
+          {boundariesTab === 'blocking' && <BlockingTab userId={userId} />}
 
       {/* My Rules Section */}
       {boundariesTab === 'habits' && (
       <section className="boundaries-view__my-rules">
+        {loading ? (
+          <div className="boundaries-view__loading">Loading habits…</div>
+        ) : (
+        <>
         <div className="boundaries-view__rules-header">
           <div>
             <h2 className="boundaries-view__section-title">My Rules</h2>
@@ -543,6 +539,8 @@ export function BoundariesView({ userId }: BoundariesViewProps) {
           <p>No rules yet. Add your first rule to start blocking distracting sites.</p>
         </div>
       )}
+        </>
+        )}
       </section>
       )}
 

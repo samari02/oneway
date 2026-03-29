@@ -43,7 +43,18 @@ CREATE POLICY "Users can delete own custom blocking rules"
   ON custom_blocking_rules FOR DELETE
   USING (auth.uid() = user_id);
 
+-- Self-contained trigger (do not depend on boundaries migration / function name)
+CREATE OR REPLACE FUNCTION update_custom_blocking_rules_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS custom_blocking_rules_updated_at ON custom_blocking_rules;
+
 CREATE TRIGGER custom_blocking_rules_updated_at
   BEFORE UPDATE ON custom_blocking_rules
   FOR EACH ROW
-  EXECUTE FUNCTION update_boundaries_updated_at();
+  EXECUTE FUNCTION update_custom_blocking_rules_updated_at();
