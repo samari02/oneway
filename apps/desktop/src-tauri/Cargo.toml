@@ -30,5 +30,7 @@ base64 = "0.22"
 reqwest = { version = "0.12", features = ["json"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 uuid = { version = "1.0", features = ["v4", "serde"] }
-
+argon2 = "0.5"
+password-hash = "0.5"
+rand_core = { version = "0.6", features = ["getrandom"] }
 

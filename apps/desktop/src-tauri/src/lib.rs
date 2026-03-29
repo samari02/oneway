@@ -1,4 +1,5 @@
 mod browsing_data;
+mod blocking_lock;
 mod native_host;
 mod custom_rules_file;
 mod app_data;
@@ -271,6 +272,29 @@ fn write_custom_rules_to_disk(rules: serde_json::Value) -> Result<(), String> {
     custom_rules_file::write_rules_json(rules)
 }
 
+// --- Blocking list lock (local password + timed unlock) ---
+
+#[tauri::command]
+fn blocking_lock_get_status() -> blocking_lock::BlockingLockStatus {
+    blocking_lock::get_status()
+}
+
+#[tauri::command]
+fn blocking_lock_set_password(new_password: String, current_password: Option<String>) -> Result<(), String> {
+    let cur = current_password.as_deref();
+    blocking_lock::set_password(&new_password, cur)
+}
+
+#[tauri::command]
+fn blocking_lock_verify_unlock(password: String) -> Result<(), String> {
+    blocking_lock::verify_and_unlock(&password)
+}
+
+#[tauri::command]
+fn blocking_lock_relock() {
+    blocking_lock::relock();
+}
+
 /// Save Aoi widget preferences (to local file, will be read by native host)
 #[tauri::command]
 fn save_aoi_preferences(hidden_global: bool, hidden_domains: Vec<String>) -> Result<(), String> {
@@ -311,6 +335,10 @@ pub fn run() {
             get_aoi_preferences,
             save_aoi_preferences,
             write_custom_rules_to_disk,
+            blocking_lock_get_status,
+            blocking_lock_set_password,
+            blocking_lock_verify_unlock,
+            blocking_lock_relock,
             // App monitoring & blocking
             get_app_usage_stats,
             get_running_apps,

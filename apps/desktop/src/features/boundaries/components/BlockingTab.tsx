@@ -2,6 +2,8 @@ import { useMemo, useState, type FormEvent } from 'react'
 import type { CustomBlockingRule } from '@oneway/shared'
 import { inferBlockingRuleType, normalizeUrlBlockingValue } from '../api/customBlockingRules'
 import { useCustomBlockingRules } from '../hooks/useCustomBlockingRules'
+import { useBlockingLock } from '../hooks/useBlockingLock'
+import { BlockingLockPanel } from './BlockingLockPanel'
 import './BlockingTab.css'
 
 const MIN_LEN = 3
@@ -73,6 +75,17 @@ export function BlockingTab({ userId }: BlockingTabProps) {
   const [filterQuery, setFilterQuery] = useState('')
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
+
+  const {
+    status: lockStatus,
+    loading: lockLoading,
+    setPassword: setLockPassword,
+    unlock: unlockBlocking,
+    relock: relockBlocking,
+  } = useBlockingLock()
+
+  const canManageDestructive =
+    !lockLoading && (lockStatus?.canManageDestructive ?? true)
 
   const urlRules = useMemo(
     () => rules.filter((r) => r.rule_type === 'url_contains'),
@@ -178,6 +191,9 @@ export function BlockingTab({ userId }: BlockingTabProps) {
 
   const handleToggle = async (rule: CustomBlockingRule) => {
     const next = !rule.is_active
+    if (!next && !canManageDestructive) {
+      return
+    }
     optimisticToggle(rule.id, next)
     try {
       await updateRule(rule.id, { is_active: next })
@@ -187,6 +203,9 @@ export function BlockingTab({ userId }: BlockingTabProps) {
   }
 
   const handleRemove = async (rule: CustomBlockingRule) => {
+    if (!canManageDestructive) {
+      return
+    }
     setRemoveError(null)
     setRemovingId(rule.id)
     try {
@@ -220,6 +239,14 @@ export function BlockingTab({ userId }: BlockingTabProps) {
           <span className="blocking-tab__sync-time">{formatSyncedAt(lastSyncedAt)}</span>
         </p>
       </div>
+
+      <BlockingLockPanel
+        status={lockStatus}
+        loading={lockLoading}
+        setPassword={setLockPassword}
+        unlock={unlockBlocking}
+        relock={relockBlocking}
+      />
 
       {error && (
         <div className="blocking-tab__banner blocking-tab__banner--error">
@@ -351,6 +378,7 @@ export function BlockingTab({ userId }: BlockingTabProps) {
                         <input
                           type="checkbox"
                           checked={rule.is_active}
+                          disabled={!canManageDestructive && rule.is_active}
                           onChange={() => handleToggle(rule)}
                           aria-label={rule.is_active ? 'Blocking on; click to pause' : 'Blocking off; click to enforce'}
                         />
@@ -363,7 +391,7 @@ export function BlockingTab({ userId }: BlockingTabProps) {
                       <button
                         type="button"
                         className="blocking-tab__table-remove"
-                        disabled={removingId === rule.id}
+                        disabled={removingId === rule.id || !canManageDestructive}
                         onClick={() => void handleRemove(rule)}
                       >
                         {removingId === rule.id ? '…' : 'Remove'}
