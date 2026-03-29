@@ -188,8 +188,15 @@ export function BlockingTab({ userId }: BlockingTabProps) {
     <section className="blocking-tab">
       <div className="blocking-tab__intro">
         <h2 className="blocking-tab__title">Your blocking rules</h2>
+        <div className="blocking-tab__notice" role="status">
+          <strong>Chrome blocking is not wired yet.</strong> Lists here are saved to Supabase only. The extension still
+          uses its own rules in local storage (pushed from the desktop app when that pipeline is implemented)—it does
+          not read this table. So visiting a site in Chrome will not be blocked by these rows until sync is built.
+        </div>
         <p className="blocking-tab__subtitle">
-          These rules apply in Chrome when the Clarity extension is active. They are saved to your account.
+          Saved to your Supabase project (see <code className="blocking-tab__code">apps/desktop/.env.local</code> — defaults
+          in <code className="blocking-tab__code">packages/shared/src/constants.ts</code> if unset). Table name:{' '}
+          <code className="blocking-tab__code">custom_blocking_rules</code>.
         </p>
         <p className="blocking-tab__sync">
           <span className="blocking-tab__sync-label">Account data:</span>{' '}

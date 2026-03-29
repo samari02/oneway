@@ -1,6 +1,6 @@
 # Custom blocking rules — implémentation (desktop + Supabase)
 
-**Last update:** 2026-03-29
+**Last update:** 2026-03-29 (dépannage Supabase / Chrome + bandeau UI)
 
 Document de référence pour tout ce qui a été livré sur les **règles de blocage utilisateur** (URL + mots-clés recherche), en complément de la spec UX [`boundaries_blocking_rules_ux_2026-03-29.md`](./boundaries_blocking_rules_ux_2026-03-29.md).
 
@@ -98,7 +98,25 @@ Onglets placés **directement sous le titre** « Boundaries » (`boundaries-view
 
 ---
 
-## 8. Non fait / dette technique
+## 8. Dépannage
+
+### Table `custom_blocking_rules` vide dans le dashboard
+
+1. **Pas de `.env` à la racine du repo** — Seul **`apps/desktop/.env.local`** est lu par Vite (voir `apps/desktop/.env.example`). À la racine `oneway/`, il n’y a en général **pas** de fichier d’env pour le desktop.
+2. **Mauvais projet Supabase** — Sans `.env.local`, l’app utilise les URLs par défaut dans **`packages/shared/src/constants.ts`**. Il faut ouvrir le dashboard du **même** projet (même ref dans l’URL `https://<ref>.supabase.co`). Si tu regardes un autre projet, la table semble toujours vide.
+3. **Mauvaise table** — Les anciennes migrations ont une table legacy `blocking_rules` ; la feature Boundaries Blocking utilise **`custom_blocking_rules`**.
+4. **Migrations non appliquées** — Exécuter **`016_custom_blocking_rules.sql`** puis **`017_...`** sur ce projet (CLI ou SQL Editor). Sinon l’insert échoue (`relation does not exist`).
+5. **Erreur silencieuse** — Si l’insert échoue (RLS, clé, etc.), un message peut apparaître dans la modale ou la bannière d’erreur de l’onglet Blocking.
+
+### Chrome ne bloque pas `hello.com` alors que la règle existe
+
+**Comportement actuel du code :** l’extension ne lit **pas** Supabase. Elle bloque avec les règles dans **`chrome.storage.local`** (remplies par le native messaging / config desktop), pas depuis `custom_blocking_rules`. Tant que la sync desktop → extension n’est pas implémentée, **aucune ligne de cette table ne peut bloquer Chrome**, même si Supabase est correct.
+
+**Types de règles :** une règle **Search** (`search_contains`) filtre les **requêtes** sur les moteurs reconnus, pas la navigation vers un domaine. Pour bloquer l’ouverture de `https://hello.com/`, il faut une règle **URL** (`url_contains`) avec par ex. `hello.com`.
+
+---
+
+## 9. Non fait / dette technique
 
 - **Extension Chrome :** les règles ne sont pas encore fusionnées dans `chrome.storage.local` / `shouldBlock` via le native host (`GetConfig` encore partiellement stub côté Rust à l’époque de l’implémentation).
 - **Stats par règle** (nombre de blocages) : non branchées sur cette table en v1.
@@ -106,7 +124,7 @@ Onglets placés **directement sous le titre** « Boundaries » (`boundaries-view
 
 ---
 
-## 9. Historique des commits (référence git)
+## 10. Historique des commits (référence git)
 
 - `feat(desktop): Boundaries Blocking tab + custom_blocking_rules Supabase`
 - `fix(boundaries): 3 tabs under header + self-contained custom_blocking_rules trigger`
@@ -114,7 +132,7 @@ Onglets placés **directement sous le titre** « Boundaries » (`boundaries-view
 
 ---
 
-## 10. Liens
+## 11. Liens
 
 - Spec UX : [`boundaries_blocking_rules_ux_2026-03-29.md`](./boundaries_blocking_rules_ux_2026-03-29.md)
 - Blocage extension : [`overview.md`](./overview.md), [`implementation.md`](./implementation.md)
