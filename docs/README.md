@@ -26,6 +26,7 @@ Index and layout: **[02-features/README.md](./02-features/README.md)**.
 - **[03-insights-et-donnees/](./02-features/03-insights-et-donnees/)** — Site insights & data
   - [site-classification.md](./02-features/03-insights-et-donnees/site-classification.md)
   - [screen-time.md](./02-features/03-insights-et-donnees/screen-time.md)
+  - [delete_site_browsing_data_2026-03-29.md](./02-features/03-insights-et-donnees/delete_site_browsing_data_2026-03-29.md)
   - [classification/overview.md](./02-features/03-insights-et-donnees/classification/overview.md)
 - **[04-companion-ia/](./02-features/04-companion-ia/)** — AI companion & Aoi
   - [ai-companion.md](./02-features/04-companion-ia/ai-companion.md) — Coach in the desktop app (not the browser widget)

@@ -12,7 +12,7 @@ Product specs are grouped into **numbered domains** (rough order: product orient
 |--------|--------|----------------|
 | **[01-orientation-objectifs](./01-orientation-objectifs/)** | North Star & habits | `north-star.md`, `habits-boundaries.md` |
 | **[02-blocage](./02-blocage/)** | Blocking & protection (extension) | `overview`, `intelligent-blocking`, `content-analysis`, `implementation` |
-| **[03-insights-et-donnees](./03-insights-et-donnees/)** | Measurement & classification | `site-classification`, `screen-time`, `classification/overview` |
+| **[03-insights-et-donnees](./03-insights-et-donnees/)** | Measurement & classification | `site-classification`, `screen-time`, `delete_site_browsing_data_*`, `classification/overview` |
 | **[04-companion-ia](./04-companion-ia/)** | Aoi & AI companion | `ai-companion.md` (desktop app), [aoi-widget/](./04-companion-ia/aoi-widget/) (browser) |
 | **[05-plateforme-desktop-extension](./05-plateforme-desktop-extension/)** | Desktop ↔ Chrome bridge | [clarity-connectivity/](./05-plateforme-desktop-extension/clarity-connectivity/) |
 
@@ -26,6 +26,7 @@ Product specs are grouped into **numbered domains** (rough order: product orient
 ├── 01-orientation-objectifs/
 ├── 02-blocage/
 ├── 03-insights-et-donnees/
+│   ├── delete_site_browsing_data_2026-03-29.md
 │   └── classification/
 ├── 04-companion-ia/
 │   └── aoi-widget/

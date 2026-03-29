@@ -27,6 +27,7 @@ Utilise le composant `TopSitesCard` avec les fonctionnalités :
 - **Limit Selector** : Top 10 / 20 / 30
 - **Reclassification inline** : Cliquer sur le dot coloré pour changer la catégorie
 - **Classification Modal** : "Improve classification" pour classifier en masse
+- **Suppression locale (web)** : sur chaque ligne **web**, une action permet de supprimer définitivement les données stockées pour ce domaine (voir [delete_site_browsing_data_2026-03-29.md](./delete_site_browsing_data_2026-03-29.md))
 
 #### Quick Stats Grid
 4 cards avec métriques clés :
