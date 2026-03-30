@@ -301,8 +301,8 @@ fn blocking_lock_set_friction() -> Result<(), String> {
 }
 
 #[tauri::command]
-fn blocking_lock_clear() -> Result<(), String> {
-    blocking_lock::clear_lock_file()
+fn blocking_lock_clear(password: Option<String>) -> Result<(), String> {
+    blocking_lock::clear_lock_file(password.as_deref())
 }
 
 #[tauri::command]

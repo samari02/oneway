@@ -264,7 +264,7 @@ pub fn verify_and_unlock(password: &str) -> Result<(), String> {
 }
 
 fn start_unlock_session() {
-    let secs = load_unlock_secs().unwrap_or(DEFAULT_UNLOCK_SECS);
+    let secs = load_unlock_secs().unwrap_or(DEFAULT_UNLOCK_SECS).max(1);
     let until = now_ms() + (secs as i64) * 1000;
     *UNLOCK_UNTIL_MS.lock().expect("unlock mutex") = Some(until);
 }
@@ -274,14 +274,7 @@ pub fn relock() {
     *PENDING_FRICTION.lock().expect("friction mutex") = None;
 }
 
-/// Remove `blocking-lock.json` only while an unlock session is active.
-pub fn clear_lock_file() -> Result<(), String> {
-    clear_expired_unlock();
-    let unlocked_until_ms = *UNLOCK_UNTIL_MS.lock().expect("unlock mutex");
-    let session_ok = unlocked_until_ms.map(|u| now_ms() < u).unwrap_or(false);
-    if !session_ok {
-        return Err("Unlock first to turn off protection.".to_string());
-    }
+fn finish_clear_lock_file() -> Result<(), String> {
     let path = lock_file_path();
     if path.exists() {
         fs::remove_file(&path).map_err(|e| e.to_string())?;
@@ -289,6 +282,35 @@ pub fn clear_lock_file() -> Result<(), String> {
     *UNLOCK_UNTIL_MS.lock().expect("unlock mutex") = None;
     *PENDING_FRICTION.lock().expect("friction mutex") = None;
     Ok(())
+}
+
+/// Remove `blocking-lock.json` while an unlock session is active, or with the current password (password mode only).
+pub fn clear_lock_file(current_password: Option<&str>) -> Result<(), String> {
+    clear_expired_unlock();
+    let unlocked_until_ms = *UNLOCK_UNTIL_MS.lock().expect("unlock mutex");
+    let session_ok = unlocked_until_ms.map(|u| now_ms() < u).unwrap_or(false);
+    if session_ok {
+        return finish_clear_lock_file();
+    }
+
+    let path = lock_file_path();
+    if !path.exists() {
+        return Ok(());
+    }
+
+    match load_lock_kind()? {
+        Some(LockKind::Password(hash)) => {
+            let pw = current_password.ok_or_else(|| {
+                "Unlock first to turn off protection, or enter your password when prompted.".to_string()
+            })?;
+            verify_password(pw, &hash)?;
+            finish_clear_lock_file()
+        }
+        Some(LockKind::Friction) => Err(
+            "Unlock with the challenge first, then turn off protection.".to_string(),
+        ),
+        None => finish_clear_lock_file(),
+    }
 }
 
 // --- Friction challenge ---

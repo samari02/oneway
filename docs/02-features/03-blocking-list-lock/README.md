@@ -82,8 +82,8 @@ See [`unlock-modes.md`](./unlock-modes.md) for **password vs friction-only** and
 
 ## Troubleshooting
 
-- **Turn off protection** only runs while an **unlock session** is active (Rust deletes `blocking-lock.json` only then). The panel treats “Managing” using **`canManageDestructive`** from `blocking_lock_get_status` so the UI matches the backend (avoids `Date.now()` skew vs Rust). `clearLock` calls **`refresh()` before `blocking_lock_clear`** so state is current. Test in the **Clarity desktop app**; a plain browser dev session has no Tauri `invoke`.
-- If removal still fails, the alert should show the Rust message (for example “Unlock first to turn off protection.”).
+- **Turn off protection** removes `blocking-lock.json` when an **unlock session** is active, or (password mode) if the user passes the **current password** via `blocking_lock_clear` after a failed attempt. Friction mode still requires an **active session** after the challenge. The frontend **normalizes** `blocking_lock_get_status` (camelCase or snake_case). Unlock duration is clamped to **≥ 1 s** so a `0` value in the file cannot zero out the session instantly.
+- Test in the **Clarity desktop app** (`pnpm dev`); a plain browser tab on `localhost:1420` has no Tauri `invoke`.
 
 ## Open questions (later)
 

@@ -21,14 +21,44 @@ export interface FrictionChallengeStart {
   rounds: FrictionChallengeRound[]
 }
 
+/** Tauri may expose serde fields as camelCase or snake_case depending on version / bridge. */
+function normalizeBlockingLockStatus(raw: unknown): BlockingLockStatus | null {
+  if (!raw || typeof raw !== 'object') return null
+  const r = raw as Record<string, unknown>
+  const hasLock = Boolean(r.hasLock ?? r.has_lock)
+  const lk = (r.lockKind ?? r.lock_kind ?? 'none') as string
+  const lockKind: BlockingLockKind =
+    lk === 'password' || lk === 'friction' || lk === 'none' ? lk : 'none'
+  const num = (v: unknown): number | null => {
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+    if (typeof v === 'string' && v.trim() !== '') {
+      const n = Number(v)
+      if (Number.isFinite(n)) return n
+    }
+    return null
+  }
+  const unlockedUntilMs: number | null = num(r.unlockedUntilMs ?? r.unlocked_until_ms)
+  const unlockDurationSecs = num(r.unlockDurationSecs ?? r.unlock_duration_secs) ?? 300
+  const rawCmd = r.canManageDestructive ?? r.can_manage_destructive
+  const canManageDestructive =
+    typeof rawCmd === 'boolean' ? rawCmd : !hasLock
+  return {
+    hasLock,
+    lockKind,
+    unlockedUntilMs,
+    unlockDurationSecs,
+    canManageDestructive,
+  }
+}
+
 export function useBlockingLock() {
   const [status, setStatus] = useState<BlockingLockStatus | null>(null)
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
     try {
-      const s = await invoke<BlockingLockStatus>('blocking_lock_get_status')
-      setStatus(s)
+      const raw = await invoke<unknown>('blocking_lock_get_status')
+      setStatus(normalizeBlockingLockStatus(raw))
     } catch (e) {
       console.error('[useBlockingLock]', e)
       setStatus(null)
@@ -72,9 +102,8 @@ export function useBlockingLock() {
     await refresh()
   }, [refresh])
 
-  const clearLock = useCallback(async () => {
-    await refresh()
-    await invoke('blocking_lock_clear')
+  const clearLock = useCallback(async (password?: string) => {
+    await invoke('blocking_lock_clear', { password: password ?? null })
     await refresh()
   }, [refresh])
 

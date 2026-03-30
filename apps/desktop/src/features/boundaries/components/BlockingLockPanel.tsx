@@ -20,7 +20,7 @@ interface BlockingLockPanelProps {
   setFrictionLock: () => Promise<void>
   unlock: (password: string) => Promise<void>
   relock: () => Promise<void>
-  clearLock: () => Promise<void>
+  clearLock: (password?: string) => Promise<void>
   frictionStart: () => Promise<FrictionChallengeStart>
   frictionSubmit: (challengeId: string, answers: number[]) => Promise<void>
 }
@@ -175,7 +175,22 @@ export function BlockingLockPanel({
     try {
       await clearLock()
     } catch (err) {
-      alert(invokeErrMessage(err) || 'Could not remove protection')
+      const msg = invokeErrMessage(err) || 'Could not remove protection'
+      const askPassword =
+        status?.lockKind === 'password' &&
+        (/unlock first|password|prompt/i.test(msg) || msg.includes('Unlock first'))
+      if (askPassword) {
+        const pw = window.prompt('Enter your password to turn off protection.')
+        if (pw != null && pw !== '') {
+          try {
+            await clearLock(pw)
+          } catch (e2) {
+            alert(invokeErrMessage(e2) || 'Could not remove protection')
+          }
+        }
+      } else {
+        alert(msg)
+      }
     } finally {
       setBusy(false)
     }
