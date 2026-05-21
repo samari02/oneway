@@ -22,12 +22,23 @@ export function useOnboardingStatus(userId: string | undefined): UseOnboardingSt
     setLoading(true)
     setError(null)
 
+    const timeoutMs = 12_000
+
     try {
-      const settings = await getUserSettings(userId)
+      const settings = await Promise.race([
+        getUserSettings(userId),
+        new Promise<null>((_, reject) =>
+          window.setTimeout(() => reject(new Error('timeout')), timeoutMs)
+        ),
+      ])
       setNeedsOnboarding(!settings?.onboarding_completed)
     } catch (e) {
-      setError(e instanceof Error ? e : new Error('Unknown error'))
-      // If we can't fetch settings, assume onboarding is needed
+      const err = e instanceof Error ? e : new Error('Unknown error')
+      if (err.message === 'timeout') {
+        console.warn('[onboarding] getUserSettings timed out — showing onboarding')
+      } else {
+        setError(err)
+      }
       setNeedsOnboarding(true)
     } finally {
       setLoading(false)

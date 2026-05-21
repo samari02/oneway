@@ -26,21 +26,42 @@ async function syncAuthToBackend(userId: string | null, accessToken: string | nu
   }
 }
 
+const AUTH_INIT_TIMEOUT_MS = 12_000
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let cancelled = false
+
+    const applySession = (session: { user: User; access_token: string } | null) => {
+      if (cancelled) return
       setUser(session?.user ?? null)
       setLoading(false)
-      
-      // Sync to Tauri backend
       syncAuthToBackend(
         session?.user?.id ?? null,
         session?.access_token ?? null
       )
-    })
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled) return
+      console.warn('[auth] getSession timed out — showing login')
+      setLoading(false)
+    }, AUTH_INIT_TIMEOUT_MS)
+
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        window.clearTimeout(timeoutId)
+        applySession(session)
+      })
+      .catch((e) => {
+        window.clearTimeout(timeoutId)
+        console.error('[auth] getSession failed:', e)
+        setLoading(false)
+      })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
@@ -54,7 +75,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeoutId)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signOut = async () => {
