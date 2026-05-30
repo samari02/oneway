@@ -53,6 +53,7 @@ Index and layout: **[02-features/README.md](./02-features/README.md)**.
 - [comprendre_l_application_2026-03-28.md](./04-guides/comprendre_l_application_2026-03-28.md) — Product overview (desktop, extension, data)
 - [build_et_distribution_2026-03-28.md](./04-guides/build_et_distribution_2026-03-28.md) — Dev vs release, `.app`, Vercel, multi-machine
 - [native_host_chrome_setup_2026-03-29.md](./04-guides/native_host_chrome_setup_2026-03-29.md) — **Native host:** `cargo build`, `install-native-host.sh`, extension ID, when to rerun
+- [design_v2_iteration_2026-05-22.md](./04-guides/design_v2_iteration_2026-05-22.md) — **Design v2:** worktree, branche `design/v2`, lancer l’UI expérimentale
 - [extension-debug.md](./04-guides/extension-debug.md) — Debugging the extension
 
 ### [05-backlog/](./05-backlog/) — Future ideas
