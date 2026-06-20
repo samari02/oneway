@@ -4,13 +4,15 @@ Two Live2D models can be shown in the fixed orb (top-right). Each avatar has its
 
 ## Orb (CSS)
 
-Defined in `AppV2.css` → `.v2-companion-orb`:
+Defined in `AppV2.css` → `.v2-companion-orb` (wrapper: `CompanionOrb.tsx`):
 
 | Property | Value | Notes |
 |---|---|---|
-| Position | `fixed`, top-right | `top: 24px`, `right: 28px` |
+| Position | `fixed`, draggable | Default top-right; position saved in `localStorage` key `v2-companion-orb-position` |
 | Size | **220 × 220 px** | CSS size; clip circle via `border-radius: 999px` + `overflow: hidden` |
 | Canvas | fills orb | Pixi `resizeTo` host; Retina via `resolution: devicePixelRatio` |
+
+Drag the orb (not the avatar toggle pill) to move it anywhere on screen. Position persists across reloads.
 
 Changing orb CSS size does **not** change model zoom — scale is computed from `layout.refSize` (140px reference), not the live orb size.
 
