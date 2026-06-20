@@ -4,7 +4,7 @@ import { useUserSettings } from '@/features/onboarding'
 import { OnboardingFlow, useOnboardingStatus, saveOnboardingData } from '@/features/onboarding'
 import type { OnboardingData } from '@/features/onboarding'
 import { isSkipAuthPreview } from '@/lib/ui-variant'
-import { CompanionCharacter, COMPANION_AVATAR_SRC } from './CompanionCharacter'
+import { CompanionCharacter, COMPANION_AVATAR_SRC, getCompanionAvatar, getOtherCompanionAvatarId, type CompanionAvatarId } from './CompanionCharacter'
 import './AppV2.css'
 
 type V2Nav = 'home' | 'sessions' | 'insights' | 'habits' | 'settings'
@@ -59,6 +59,9 @@ function NavIcon({ name }: { name: V2Nav | 'home' }) {
 
 function V2HomeView({ firstName }: { firstName: string }) {
   const greeting = getGreeting()
+  const [avatarId, setAvatarId] = useState<CompanionAvatarId>('jian')
+  const avatar = getCompanionAvatar(avatarId)
+  const otherAvatar = getCompanionAvatar(getOtherCompanionAvatarId(avatarId))
 
   return (
     <>
@@ -105,8 +108,23 @@ function V2HomeView({ firstName }: { firstName: string }) {
         </div>
       </section>
 
-      <div className="v2-companion-orb">
-        <CompanionCharacter className="v2-companion-orb__canvas" />
+      <div className="v2-companion-orb-wrap">
+        <div className="v2-companion-orb">
+          <CompanionCharacter
+            key={avatarId}
+            avatarId={avatarId}
+            className="v2-companion-orb__canvas"
+          />
+        </div>
+        <button
+          type="button"
+          className="v2-companion-orb__toggle"
+          onClick={() => setAvatarId(getOtherCompanionAvatarId(avatarId))}
+          aria-label={`Switch avatar to ${otherAvatar.label}`}
+          title={`Avatar: ${avatar.label} — click for ${otherAvatar.label}`}
+        >
+          {avatar.label}
+        </button>
       </div>
 
       <section className="v2-cards">

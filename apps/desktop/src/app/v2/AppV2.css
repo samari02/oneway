@@ -301,16 +301,38 @@
 }
 
 /* Companion orb — fixed circle top-right */
-.v2-companion-orb {
+.v2-companion-orb-wrap {
   position: fixed;
   top: 24px;
   right: 28px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.v2-companion-orb {
   width: 220px;
   height: 220px;
   border-radius: 999px;
   overflow: hidden;
-  z-index: 100;
   background: linear-gradient(135deg, #f3f0ff, #ede9fe);
+}
+
+.v2-companion-orb__toggle {
+  padding: 6px 14px;
+  border: 1px solid var(--v2-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--v2-purple-deep);
+  font: 600 13px/1 ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.08);
+}
+
+.v2-companion-orb__toggle:hover {
+  background: var(--v2-purple-soft);
 }
 
 .v2-companion-orb__canvas {

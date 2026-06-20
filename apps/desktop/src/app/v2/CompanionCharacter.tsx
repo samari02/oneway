@@ -1,10 +1,13 @@
 import { useEffect, useRef } from 'react'
 import type { Application } from 'pixi.js'
 import type { Live2DModel } from 'pixi-live2d-display/cubism4'
-
-const MODEL_PATH = '/v2/1113_v2/Z.model3.json'
-const CORE_PATH = '/v2/1113_v2/live2dcubismcore.min.js'
-const AVATAR_SRC = '/v2/face_base.png'
+import {
+  COMPANION_CORE_PATH,
+  DEFAULT_COMPANION_AVATAR_ID,
+  getCompanionAvatar,
+  type CompanionAvatarId,
+  type CompanionAvatarLayout,
+} from './companion-avatars'
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -21,33 +24,36 @@ function loadScript(src: string): Promise<void> {
   })
 }
 
-const ORB_REF_SIZE = 140
-const FACE_ZOOM = 1.6
-const FACE_Y = 0.65
-
 function layoutModel(
   model: Live2DModel,
   viewWidth: number,
   viewHeight: number,
+  layout: CompanionAvatarLayout,
 ) {
   if (viewWidth <= 0 || viewHeight <= 0) return
-
-  model.anchor.set(0.5, 0.5)
 
   const im = model.internalModel
   const modelW = im?.width ?? model.width
   const modelH = im?.height ?? model.height
   if (modelW <= 0 || modelH <= 0) return
 
-  // Fixed scale — independent of orb size; only position follows the container.
   const scale =
-    Math.min(ORB_REF_SIZE / modelW, ORB_REF_SIZE / modelH) * FACE_ZOOM
+    Math.min(layout.refSize / modelW, layout.refSize / modelH) * layout.zoom
 
+  model.anchor.set(layout.anchorX, layout.anchorY)
   model.scale.set(scale)
-  model.position.set(viewWidth / 2, viewHeight * FACE_Y)
+  model.position.set(viewWidth * layout.faceX, viewHeight * layout.faceY)
 }
 
-export function CompanionCharacter({ className }: { className?: string }) {
+type CompanionCharacterProps = {
+  className?: string
+  avatarId?: CompanionAvatarId
+}
+
+export function CompanionCharacter({
+  className,
+  avatarId = DEFAULT_COMPANION_AVATAR_ID,
+}: CompanionCharacterProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
   const modelRef = useRef<Live2DModel | null>(null)
@@ -56,6 +62,7 @@ export function CompanionCharacter({ className }: { className?: string }) {
     const container = containerRef.current
     if (!container) return
 
+    const avatar = getCompanionAvatar(avatarId)
     let destroyed = false
     let resizeObserver: ResizeObserver | undefined
     let onPointerMove: ((event: PointerEvent) => void) | undefined
@@ -64,7 +71,7 @@ export function CompanionCharacter({ className }: { className?: string }) {
     const host = container
 
     async function init() {
-      await loadScript(CORE_PATH)
+      await loadScript(COMPANION_CORE_PATH)
       if (destroyed) return
 
       const PIXI = await import('pixi.js')
@@ -84,7 +91,7 @@ export function CompanionCharacter({ className }: { className?: string }) {
       appRef.current = app
       host.appendChild(app.view as HTMLCanvasElement)
 
-      const model = await Live2DModel.from(MODEL_PATH)
+      const model = await Live2DModel.from(avatar.modelPath)
       if (destroyed) {
         model.destroy()
         app.destroy(true, { children: true })
@@ -98,7 +105,12 @@ export function CompanionCharacter({ className }: { className?: string }) {
         cancelAnimationFrame(fitFrame)
         fitFrame = requestAnimationFrame(() => {
           if (!modelRef.current || destroyed) return
-          layoutModel(modelRef.current, host.clientWidth, host.clientHeight)
+          layoutModel(
+            modelRef.current,
+            host.clientWidth,
+            host.clientHeight,
+            avatar.layout,
+          )
         })
       }
 
@@ -132,7 +144,7 @@ export function CompanionCharacter({ className }: { className?: string }) {
       appRef.current = null
       host.replaceChildren()
     }
-  }, [])
+  }, [avatarId])
 
   return (
     <div
@@ -143,4 +155,13 @@ export function CompanionCharacter({ className }: { className?: string }) {
   )
 }
 
-export const COMPANION_AVATAR_SRC = AVATAR_SRC
+export {
+  COMPANION_AVATARS,
+  DEFAULT_COMPANION_AVATAR_ID,
+  getCompanionAvatar,
+  getOtherCompanionAvatarId,
+  type CompanionAvatarId,
+} from './companion-avatars'
+
+export const COMPANION_AVATAR_SRC =
+  getCompanionAvatar(DEFAULT_COMPANION_AVATAR_ID).previewSrc
