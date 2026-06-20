@@ -6,3 +6,7 @@ export function getUiVariant(): UiVariant {
 }
 
 export const isV2Ui = (): boolean => getUiVariant() === 'v2'
+
+/** Preview the v2 shell without Supabase login (local dev only). */
+export const isSkipAuthPreview = (): boolean =>
+  import.meta.env.VITE_SKIP_AUTH?.trim().toLowerCase() === 'true'
