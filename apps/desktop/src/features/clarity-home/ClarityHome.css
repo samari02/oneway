@@ -1,23 +1,29 @@
 /* Clarity home — dark glassmorphism dashboard */
 
 .clarity-home {
-  --ch-bg: #0f0f1b;
-  --ch-bg-glow: radial-gradient(ellipse 80% 50% at 70% 0%, rgba(88, 28, 135, 0.18), transparent 60%);
-  --ch-surface: rgba(22, 20, 36, 0.72);
-  --ch-surface-glass: rgba(24, 22, 40, 0.65);
-  --ch-ink: #f4f2f8;
-  --ch-muted: #8b849e;
-  --ch-line: rgba(255, 255, 255, 0.08);
-  --ch-purple: #a855f7;
-  --ch-purple-soft: rgba(168, 85, 247, 0.14);
-  --ch-purple-glow: rgba(168, 85, 247, 0.35);
-  --ch-blue-glow: rgba(59, 130, 246, 0.45);
-  --ch-success: #22c55e;
+  --ch-bg: #080810;
+  --ch-bg-glow:
+    radial-gradient(ellipse 90% 55% at 75% -5%, rgba(107, 86, 225, 0.14), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 20% 100%, rgba(56, 189, 248, 0.04), transparent 50%);
+  --ch-surface: #12121e;
+  --ch-surface-glass: rgba(18, 18, 30, 0.78);
+  --ch-ink: #f8f8fc;
+  --ch-muted: #8b8b9e;
+  --ch-line: rgba(255, 255, 255, 0.06);
+  --ch-purple: #6b56e1;
+  --ch-purple-light: #8b7aef;
+  --ch-purple-mid: #7c6ce8;
+  --ch-purple-soft: rgba(107, 86, 225, 0.15);
+  --ch-purple-glow: rgba(107, 86, 225, 0.45);
+  --ch-blue: #38bdf8;
+  --ch-blue-glow: rgba(56, 189, 248, 0.55);
+  --ch-success: #4ade80;
+  --ch-success-glow: rgba(74, 222, 128, 0.65);
   --ch-danger: #ef4444;
   --ch-danger-bg: rgba(127, 29, 29, 0.45);
   --ch-danger-border: rgba(239, 68, 68, 0.35);
-  --ch-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-  --ch-radius: 22px;
+  --ch-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --ch-radius: 20px;
 
   flex: 1;
   min-height: 0;
@@ -32,14 +38,14 @@
 
 [data-theme="light"] .clarity-home {
   --ch-bg: #f3f1f8;
-  --ch-bg-glow: radial-gradient(ellipse 80% 50% at 70% 0%, rgba(168, 85, 247, 0.08), transparent 60%);
+  --ch-bg-glow: radial-gradient(ellipse 80% 50% at 70% 0%, rgba(107, 86, 225, 0.08), transparent 60%);
   --ch-surface: rgba(255, 255, 255, 0.9);
   --ch-surface-glass: rgba(255, 255, 255, 0.82);
   --ch-ink: #15121f;
   --ch-muted: #7a738a;
   --ch-line: rgba(15, 15, 27, 0.08);
-  --ch-purple-soft: rgba(168, 85, 247, 0.1);
-  --ch-shadow: 0 8px 32px rgba(109, 40, 217, 0.08);
+  --ch-purple-soft: rgba(107, 86, 225, 0.1);
+  --ch-shadow: 0 8px 32px rgba(107, 86, 225, 0.08);
 }
 
 .clarity-home *,
@@ -60,12 +66,12 @@
 
 /* Glass card base */
 .clarity-home .ch-glass-card {
-  padding: clamp(18px, 2vw, 24px);
+  padding: clamp(20px, 2.2vw, 28px);
   border-radius: var(--ch-radius);
   background: var(--ch-surface-glass);
   border: 1px solid var(--ch-line);
   box-shadow: var(--ch-shadow);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
 }
 
 .clarity-home .ch-glass-card__title {
@@ -112,8 +118,8 @@
 }
 
 .clarity-home .ch-btn--ghost:hover {
-  background: rgba(168, 85, 247, 0.1);
-  border-color: rgba(168, 85, 247, 0.25);
+  background: var(--ch-purple-soft);
+  border-color: rgba(107, 86, 225, 0.28);
 }
 
 .clarity-home .ch-btn--danger {
@@ -134,7 +140,7 @@
   height: 7px;
   border-radius: 999px;
   background: var(--ch-success);
-  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+  box-shadow: 0 0 10px var(--ch-success-glow);
   flex-shrink: 0;
 }
 
@@ -194,130 +200,13 @@
   min-width: 0;
 }
 
-/* Hero character + switcher */
+/* Hero character (CSS/SVG glowing orb) */
 .clarity-home .ch-hero-mascot-wrap {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 10px;
-}
-
-.clarity-home .ch-hero-mascot {
-  position: relative;
-  width: clamp(140px, 16vw, 180px);
+  justify-content: center;
+  width: clamp(120px, 14vw, 160px);
   height: clamp(140px, 16vw, 180px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.clarity-home .ch-hero-mascot__live2d,
-.clarity-home .ch-live2d {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 50%;
-}
-
-.clarity-home .ch-live2d--error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  color: var(--ch-muted);
-  font-size: 11px;
-}
-
-.clarity-home .ch-live2d__fallback {
-  font-size: 2rem;
-  opacity: 0.7;
-}
-
-.clarity-home .ch-hero-switcher {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.clarity-home .ch-hero-switcher__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border: 1px solid var(--ch-line);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--ch-muted);
-  font: 600 11px/1 ui-sans-serif, system-ui, sans-serif;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.clarity-home .ch-hero-switcher__btn:hover {
-  background: var(--ch-purple-soft);
-  border-color: rgba(168, 85, 247, 0.35);
-  color: var(--ch-ink);
-}
-
-.clarity-home .ch-hero-switcher__icon {
-  font-size: 12px;
-  opacity: 0.85;
-}
-
-.clarity-home .ch-hero-switcher__dots {
-  display: flex;
-  gap: 4px;
-}
-
-.clarity-home .ch-hero-switcher__dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--ch-line);
-  opacity: 0.6;
-}
-
-.clarity-home .ch-hero-switcher__dot--active {
-  background: var(--ch-purple);
-  opacity: 1;
-  box-shadow: 0 0 6px var(--ch-purple-glow);
-}
-
-.clarity-home .ch-hero-mascot__glow {
-  position: absolute;
-  inset: -20%;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--ch-purple-glow) 0%, transparent 70%);
-  filter: blur(12px);
-}
-
-.clarity-home .ch-hero-mascot__ring {
-  position: absolute;
-  inset: 8%;
-  border-radius: 50%;
-  border: 2px solid rgba(59, 130, 246, 0.5);
-  box-shadow:
-    0 0 24px var(--ch-blue-glow),
-    inset 0 0 20px rgba(59, 130, 246, 0.15);
-}
-
-.clarity-home .ch-hero-mascot__orb {
-  position: relative;
-  z-index: 1;
-  transform: scale(0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 50%;
-}
-
-.clarity-home .ch-hero-mascot__orb .mascot__blob {
-  box-shadow: 0 0 40px var(--ch-purple-glow);
 }
 
 /* Intention card */
@@ -368,6 +257,7 @@
   display: block;
   width: 100%;
   color: var(--ch-purple);
+  filter: drop-shadow(0 0 6px var(--ch-purple-glow));
 }
 
 .clarity-home .ch-sparkline--wave {
@@ -409,7 +299,7 @@
 
 .clarity-home .ch-progress-ring__fill {
   stroke: var(--ch-purple);
-  filter: drop-shadow(0 0 6px var(--ch-purple-glow));
+  filter: drop-shadow(0 0 8px var(--ch-purple-glow));
 }
 
 .clarity-home .ch-progress-ring__label {
@@ -437,6 +327,7 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--ch-success);
+  text-shadow: 0 0 12px var(--ch-success-glow);
 }
 
 .clarity-home .ch-session-card__sites-label {
@@ -527,11 +418,13 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--ch-success);
+  text-shadow: 0 0 8px var(--ch-success-glow);
 }
 
 .clarity-home .ch-mini-chart__bar {
   fill: var(--ch-purple);
-  opacity: 0.65;
+  opacity: 0.75;
+  filter: drop-shadow(0 0 3px var(--ch-purple-glow));
 }
 
 .clarity-home .ch-insights-card__link {
@@ -604,6 +497,7 @@
 
 .clarity-home .ch-helpers-row__detail--active {
   color: var(--ch-success);
+  text-shadow: 0 0 8px var(--ch-success-glow);
 }
 
 .clarity-home .ch-helpers-card__customize {
@@ -652,8 +546,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 30% 80% at 92% 110%, rgba(168, 85, 247, 0.12), transparent 60%),
-    linear-gradient(to top, rgba(15, 15, 27, 0.5) 0%, transparent 50%);
+    radial-gradient(ellipse 35% 90% at 94% 115%, rgba(107, 86, 225, 0.1), transparent 55%),
+    linear-gradient(to top, rgba(8, 8, 16, 0.75) 0%, transparent 55%);
   pointer-events: none;
 }
 
@@ -665,8 +559,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #e8e0f0, #8b849e 60%, transparent 62%);
-  opacity: 0.35;
+  background: radial-gradient(circle at 35% 35%, var(--ch-purple-light), #6b7280 55%, transparent 62%);
+  opacity: 0.28;
 }
 
 .clarity-home .ch-footer-banner__scene::after {
@@ -674,9 +568,9 @@
   position: absolute;
   right: 0;
   bottom: 0;
-  left: 40%;
-  height: 40%;
-  background-color: rgba(139, 132, 158, 0.18);
+  left: 38%;
+  height: 42%;
+  background-color: rgba(30, 27, 45, 0.55);
   clip-path: polygon(0% 100%, 8% 55%, 18% 75%, 28% 45%, 38% 65%, 50% 35%, 62% 60%, 74% 40%, 86% 70%, 100% 50%, 100% 100%);
 }
 

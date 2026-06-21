@@ -97,18 +97,30 @@
   font-weight: var(--font-weight-semibold);
 }
 
+[data-theme="dark"] .sidebar__item:hover {
+  background: rgba(107, 86, 225, 0.1);
+  color: var(--text-primary);
+}
+
 [data-theme="dark"] .sidebar__item--active {
-  background: rgba(168, 85, 247, 0.18);
-  color: #e9d5ff;
-  box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.2);
+  background: rgba(107, 86, 225, 0.22);
+  color: #e4dff8;
+  border-radius: 999px;
+  box-shadow:
+    0 0 20px rgba(107, 86, 225, 0.25),
+    inset 0 0 0 1px rgba(107, 86, 225, 0.25);
+}
+
+[data-theme="dark"] .sidebar__item--active .sidebar__icon {
+  color: #8b7aef;
 }
 
 .sidebar__item--active .sidebar__icon {
   color: var(--color-mint-dark);
 }
 
-[data-theme="dark"] .sidebar__item--active .sidebar__icon {
-  color: #c084fc;
+[data-theme="dark"] .sidebar__logo {
+  color: #6b56e1;
 }
 
 /* Icon */
@@ -170,6 +182,14 @@
   color: var(--text-primary);
 }
 
+[data-theme="dark"] .sidebar__pin-btn:hover {
+  background: rgba(107, 86, 225, 0.1);
+}
+
 .sidebar--pinned .sidebar__pin-btn {
   color: var(--color-mint);
+}
+
+[data-theme="dark"] .sidebar--pinned .sidebar__pin-btn {
+  color: #6b56e1;
 }

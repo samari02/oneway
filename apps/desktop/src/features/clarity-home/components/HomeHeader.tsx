@@ -1,4 +1,3 @@
-import { useHeroAvatar } from '../hooks/useHeroAvatar'
 import { FocusTrackCard } from './FocusTrackCard'
 import { HeroMascot } from './HeroMascot'
 import { IntentionCard } from './IntentionCard'
@@ -10,8 +9,6 @@ type HomeHeaderProps = {
 }
 
 export function HomeHeader({ greeting, firstName, intentionText }: HomeHeaderProps) {
-  const { avatar, cycleAvatar } = useHeroAvatar()
-
   return (
     <header className="ch-home-hero">
       <div className="ch-home-hero__greeting">
@@ -22,7 +19,7 @@ export function HomeHeader({ greeting, firstName, intentionText }: HomeHeaderPro
       </div>
 
       <div className="ch-home-hero__mascot">
-        <HeroMascot avatar={avatar} onCycleAvatar={cycleAvatar} />
+        <HeroMascot />
       </div>
 
       <div className="ch-home-hero__intention">

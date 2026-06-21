@@ -385,7 +385,8 @@ function Dashboard() {
   const [sidebarPinned, setSidebarPinned] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('clarity-theme')
-    return saved === 'dark'
+    // Default to dark unless the user explicitly chose light
+    return saved !== 'light'
   })
 
   // Auto-start app monitoring if enabled

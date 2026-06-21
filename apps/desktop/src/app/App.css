@@ -111,6 +111,18 @@
   transform: scale(0.96);
 }
 
+[data-theme="dark"] .app-titlebar {
+  background: linear-gradient(135deg, rgba(107, 86, 225, 0.06) 0%, rgba(8, 8, 16, 0.95) 50%, rgba(56, 189, 248, 0.03) 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .app-titlebar__title {
+  background: linear-gradient(135deg, #8b7aef 0%, #6b56e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* ========================================
    App Layout (with Fixed Sidebar)
    ======================================== */

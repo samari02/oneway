@@ -87,36 +87,31 @@
    ======================================== */
 
 [data-theme="dark"] {
-  /* Backgrounds - Deep navy/charcoal */
-  --bg-primary: #0F1419;
-  --bg-secondary: #1A1F26;
-  --bg-tertiary: #1A1F26;
-  --bg-elevated: #242B33;
+  /* Backgrounds - deep navy/charcoal with purple undertone */
+  --bg-primary: #080810;
+  --bg-secondary: #0a0a12;
+  --bg-tertiary: #12121e;
+  --bg-elevated: #12121e;
   --bg-card: var(--bg-elevated);
-  --bg-hover: #2A323C;
+  --bg-hover: #1a1a28;
   
-  /* Text - Softer whites */
-  --text-primary: #E7E9EA;
-  --text-secondary: #8B98A5;
-  --text-tertiary: #6E7C8A;
-  --text-muted: #6E7C8A;
-  --text-nav: #8B98A5;
-  --text-on-accent: #FFFFFF;
+  /* Text - crisp white headings, muted gray secondary */
+  --text-primary: #f8f8fc;
+  --text-secondary: #8b8b9e;
+  --text-tertiary: #6b6b7e;
+  --text-muted: #6b6b7e;
+  --text-nav: #8b8b9e;
+  --text-on-accent: #ffffff;
   
-  /* Borders */
-  --border-light: #2F3841;
-  --border-default: #3D4752;
+  /* Borders - faint glass edges */
+  --border-light: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
   
-  /* Colors stay vibrant but slightly adjusted */
-  --color-mint: #6ECEB5;
-  --color-mint-light: #8FDBC9;
-  --color-mint-dark: #4FB99D;
+  /* Accent purple for dark mode nav highlights */
+  --accent: #6b56e1;
   
-  /* Accent follows mint in dark mode */
-  --accent: var(--color-mint);
-  
-  /* Shadows - More subtle in dark mode */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  /* Shadows - deeper in dark mode */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
 }
