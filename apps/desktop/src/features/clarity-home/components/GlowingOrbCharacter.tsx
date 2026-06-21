@@ -47,15 +47,15 @@ export function GlowingOrbCharacter({ size = 160, className }: GlowingOrbCharact
                 </radialGradient>
               </defs>
               <g className="glowing-orb__eyes">
-                <circle cx="35" cy="48" r="6.8" fill={`url(#${uid}-eye-bloom)`} />
-                <circle cx="65" cy="48" r="6.8" fill={`url(#${uid}-eye-bloom)`} />
-                <circle cx="35" cy="48" r="2.25" fill="#ffffff" />
-                <circle cx="65" cy="48" r="2.25" fill="#ffffff" />
+                <circle cx="33" cy="48" r="6.8" fill={`url(#${uid}-eye-bloom)`} />
+                <circle cx="67" cy="48" r="6.8" fill={`url(#${uid}-eye-bloom)`} />
+                <circle cx="33" cy="48" r="2.25" fill="#ffffff" />
+                <circle cx="67" cy="48" r="2.25" fill="#ffffff" />
               </g>
               {/* Smile */}
               <path
                 className="glowing-orb__mouth"
-                d="M 46 54 Q 50 56.5 54 54"
+                d="M 47 54 Q 50 56 53 54"
                 fill="none"
                 stroke="#67e8f9"
                 strokeWidth="0.85"
@@ -77,7 +77,7 @@ export function GlowingOrbCharacter({ size = 160, className }: GlowingOrbCharact
               <stop offset="0%" stopColor="#2563eb" stopOpacity="0.02" />
               <stop offset="12%" stopColor="#0891b2" stopOpacity="0.36" />
               <stop offset="27%" stopColor="#22d3ee" stopOpacity="0.9" />
-              <stop offset="50%" stopColor="#a5f3fc" stopOpacity="0.98" />
+              <stop offset="50%" stopColor="#67e8f9" stopOpacity="0.96" />
               <stop offset="73%" stopColor="#22d3ee" stopOpacity="0.9" />
               <stop offset="88%" stopColor="#0891b2" stopOpacity="0.36" />
               <stop offset="100%" stopColor="#2563eb" stopOpacity="0.02" />
@@ -85,7 +85,7 @@ export function GlowingOrbCharacter({ size = 160, className }: GlowingOrbCharact
             <linearGradient id={`${uid}-ring-bloom`} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#2563eb" stopOpacity="0" />
               <stop offset="24%" stopColor="#22d3ee" stopOpacity="0.22" />
-              <stop offset="50%" stopColor="#67e8f9" stopOpacity="0.34" />
+              <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.2" />
               <stop offset="76%" stopColor="#22d3ee" stopOpacity="0.22" />
               <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
             </linearGradient>
@@ -93,11 +93,11 @@ export function GlowingOrbCharacter({ size = 160, className }: GlowingOrbCharact
           <ellipse
             cx="60"
             cy="14"
-            rx="48"
-            ry="9.2"
+            rx="47"
+            ry="8.6"
             fill="none"
             stroke={`url(#${uid}-ring-bloom)`}
-            strokeWidth="3.8"
+            strokeWidth="2.6"
           />
           <ellipse
             cx="60"

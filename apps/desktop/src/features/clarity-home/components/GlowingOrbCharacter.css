@@ -20,10 +20,10 @@
   overflow: visible;
   border-radius: 999px;
   background:
-    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.16) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 18% 20%, rgba(186, 230, 253, 0.12) 0 1px, transparent 1.8px),
     radial-gradient(circle at 84% 34%, rgba(147, 197, 253, 0.16) 0 1px, transparent 1.8px),
-    radial-gradient(ellipse 72% 15% at 50% 78%, rgba(56, 189, 248, 0.1), transparent 74%),
-    radial-gradient(ellipse 54% 9% at 52% 83%, rgba(255, 255, 255, 0.06), transparent 72%);
+    radial-gradient(ellipse 64% 11% at 50% 82%, rgba(56, 189, 248, 0.07), transparent 76%),
+    radial-gradient(ellipse 42% 6% at 52% 86%, rgba(124, 58, 237, 0.035), transparent 74%);
 }
 
 .glowing-orb__stars::before {
@@ -47,56 +47,56 @@
   bottom: 25%;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.2), rgba(255, 255, 255, 0.18), rgba(56, 189, 248, 0.16), transparent);
-  filter: blur(3px);
+  background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.12), rgba(56, 189, 248, 0.13), rgba(124, 58, 237, 0.08), transparent);
+  filter: blur(2px);
 }
 
 .glowing-orb__stars span {
   position: absolute;
   border-radius: 50%;
-  background: rgba(236, 254, 255, 0.92);
+  background: rgba(186, 230, 253, 0.88);
   box-shadow:
-    0 0 7px rgba(103, 232, 249, 0.5),
-    0 0 15px rgba(124, 58, 237, 0.24);
-  opacity: 0.46;
+    0 0 6px rgba(103, 232, 249, 0.55),
+    0 0 12px rgba(124, 58, 237, 0.3);
+  opacity: 0.42;
   animation: glowing-orb-particle-float 10s ease-in-out infinite;
   will-change: transform, opacity;
 }
 
-.glowing-orb__stars span:nth-child(1) { width: 1.5px; height: 1.5px; top: 13%; left: 15%; opacity: 0.45; --particle-x: 5px; --particle-y: -7px; animation-duration: 8.5s; }
-.glowing-orb__stars span:nth-child(2) { width: 2.25px; height: 2.25px; top: 28%; left: 76%; opacity: 0.58; --particle-x: -5px; --particle-y: -9px; animation-duration: 10.5s; animation-delay: -2.2s; }
-.glowing-orb__stars span:nth-child(3) { width: 1.5px; height: 1.5px; top: 55%; left: 9%; opacity: 0.38; --particle-x: 6px; --particle-y: -5px; animation-duration: 9.5s; animation-delay: -4.1s; }
-.glowing-orb__stars span:nth-child(4) { width: 1.75px; height: 1.75px; top: 64%; left: 88%; opacity: 0.44; --particle-x: -6px; --particle-y: -6px; animation-duration: 11s; animation-delay: -1.4s; }
-.glowing-orb__stars span:nth-child(5) { width: 2.25px; height: 2.25px; top: 9%; left: 52%; opacity: 0.5; --particle-x: 3px; --particle-y: -8px; animation-duration: 8s; animation-delay: -3.5s; }
-.glowing-orb__stars span:nth-child(6) { width: 1.5px; height: 1.5px; top: 42%; left: 94%; opacity: 0.36; --particle-x: -4px; --particle-y: -7px; animation-duration: 12s; animation-delay: -5s; }
-.glowing-orb__stars span:nth-child(7) { width: 1.75px; height: 1.75px; top: 75%; left: 32%; opacity: 0.46; --particle-x: 4px; --particle-y: -5px; animation-duration: 10s; animation-delay: -2.8s; }
-.glowing-orb__stars span:nth-child(8) { width: 1.35px; height: 1.35px; top: 23%; left: 5%; opacity: 0.34; --particle-x: 7px; --particle-y: -4px; animation-duration: 9s; animation-delay: -6.2s; }
-.glowing-orb__stars span:nth-child(9) { width: 1.35px; height: 1.35px; top: 47%; left: 42%; opacity: 0.34; --particle-x: -3px; --particle-y: -7px; animation-duration: 11.5s; animation-delay: -3s; }
-.glowing-orb__stars span:nth-child(10) { width: 1.75px; height: 1.75px; top: 17%; left: 91%; opacity: 0.36; --particle-x: -6px; --particle-y: -5px; animation-duration: 8.8s; animation-delay: -4.8s; }
-.glowing-orb__stars span:nth-child(11) { width: 1.35px; height: 1.35px; top: 63%; left: 62%; opacity: 0.32; --particle-x: 4px; --particle-y: -6px; animation-duration: 12.5s; animation-delay: -7.1s; }
-.glowing-orb__stars span:nth-child(12) { width: 1.5px; height: 1.5px; top: 34%; left: 28%; opacity: 0.34; --particle-x: 5px; --particle-y: -8px; animation-duration: 9.8s; animation-delay: -1.8s; }
+.glowing-orb__stars span:nth-child(1) { width: 1.5px; height: 1.5px; top: 13%; left: 15%; opacity: 0.42; --particle-x: 8px; --particle-y: -12px; animation-duration: 8.5s; }
+.glowing-orb__stars span:nth-child(2) { width: 2.25px; height: 2.25px; top: 28%; left: 76%; opacity: 0.54; --particle-x: -8px; --particle-y: -14px; animation-duration: 10.5s; animation-delay: -2.2s; }
+.glowing-orb__stars span:nth-child(3) { width: 1.5px; height: 1.5px; top: 55%; left: 9%; opacity: 0.35; --particle-x: 9px; --particle-y: -10px; animation-duration: 9.5s; animation-delay: -4.1s; }
+.glowing-orb__stars span:nth-child(4) { width: 1.75px; height: 1.75px; top: 64%; left: 88%; opacity: 0.42; --particle-x: -10px; --particle-y: -11px; animation-duration: 11s; animation-delay: -1.4s; }
+.glowing-orb__stars span:nth-child(5) { width: 2.25px; height: 2.25px; top: 9%; left: 52%; opacity: 0.48; --particle-x: 6px; --particle-y: -13px; animation-duration: 8s; animation-delay: -3.5s; }
+.glowing-orb__stars span:nth-child(6) { width: 1.5px; height: 1.5px; top: 42%; left: 94%; opacity: 0.34; --particle-x: -7px; --particle-y: -12px; animation-duration: 12s; animation-delay: -5s; }
+.glowing-orb__stars span:nth-child(7) { width: 1.75px; height: 1.75px; top: 75%; left: 32%; opacity: 0.43; --particle-x: 7px; --particle-y: -10px; animation-duration: 10s; animation-delay: -2.8s; }
+.glowing-orb__stars span:nth-child(8) { width: 1.35px; height: 1.35px; top: 23%; left: 5%; opacity: 0.32; --particle-x: 10px; --particle-y: -9px; animation-duration: 9s; animation-delay: -6.2s; }
+.glowing-orb__stars span:nth-child(9) { width: 1.35px; height: 1.35px; top: 47%; left: 42%; opacity: 0.32; --particle-x: -6px; --particle-y: -12px; animation-duration: 11.5s; animation-delay: -3s; }
+.glowing-orb__stars span:nth-child(10) { width: 1.75px; height: 1.75px; top: 17%; left: 91%; opacity: 0.34; --particle-x: -10px; --particle-y: -10px; animation-duration: 8.8s; animation-delay: -4.8s; }
+.glowing-orb__stars span:nth-child(11) { width: 1.35px; height: 1.35px; top: 63%; left: 62%; opacity: 0.3; --particle-x: 7px; --particle-y: -11px; animation-duration: 12.5s; animation-delay: -7.1s; }
+.glowing-orb__stars span:nth-child(12) { width: 1.5px; height: 1.5px; top: 34%; left: 28%; opacity: 0.33; --particle-x: 8px; --particle-y: -13px; animation-duration: 9.8s; animation-delay: -1.8s; }
 
 /* -- Diffuse purple halo behind sphere (circular, no square artifacts) -- */
 .glowing-orb__halo {
   position: absolute;
   left: 50%;
   top: 46%;
-  width: 310%;
-  height: 310%;
+  width: 250%;
+  height: 250%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
   background: radial-gradient(
     circle at 50% 48%,
-    rgba(103, 232, 249, 0.06) 0%,
-    rgba(107, 86, 225, 0.2) 28%,
-    rgba(59, 130, 246, 0.1) 50%,
-    rgba(76, 29, 149, 0.045) 66%,
-    transparent 82%
+    rgba(103, 232, 249, 0.025) 0%,
+    rgba(107, 86, 225, 0.13) 30%,
+    rgba(59, 130, 246, 0.065) 54%,
+    rgba(76, 29, 149, 0.025) 70%,
+    transparent 88%
   );
-  filter: blur(58px);
-  opacity: 0.86;
+  filter: blur(72px);
+  opacity: 0.72;
 }
 
 /* -- Body container (sphere + ring, floats) -- */
@@ -106,7 +106,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 5px;
   animation: glowing-orb-float 6.2s ease-in-out infinite;
 }
 
@@ -127,7 +127,7 @@
     /* Upper-left specular bloom */
     radial-gradient(
       ellipse 36% 26% at 28% 17%,
-      rgba(255, 255, 255, 0.3) 0%,
+      rgba(226, 232, 255, 0.2) 0%,
       rgba(196, 181, 253, 0.16) 28%,
       rgba(103, 232, 249, 0.06) 55%,
       transparent 76%
@@ -165,18 +165,18 @@
     );
   box-shadow:
     inset 0 0 24px 6px rgba(67, 56, 202, 0.28),
-    inset 9px 4px 20px -8px rgba(236, 254, 255, 0.18),
+    inset 9px 4px 20px -8px rgba(186, 230, 253, 0.12),
     inset -10px 0 22px -7px rgba(59, 130, 246, 0.3),
     inset 0 -10px 18px -5px rgba(125, 211, 252, 0.3),
-    0 -4px 8px -3px rgba(221, 214, 254, 0.38),
+    0 -4px 8px -4px rgba(167, 139, 250, 0.24),
     -5px -8px 14px 0 rgba(139, 92, 246, 0.34),
     8px 0 16px -3px rgba(59, 130, 246, 0.44),
     0 9px 18px 0 rgba(56, 189, 248, 0.24),
-    0 0 42px 11px rgba(107, 86, 225, 0.22),
-    0 0 72px 22px rgba(37, 99, 235, 0.08);
+    0 0 34px 6px rgba(107, 86, 225, 0.16),
+    0 0 56px 12px rgba(37, 99, 235, 0.055);
 }
 
-/* Asymmetric rim ring - violet/white upper-left, blue right, cyan bottom. */
+/* Asymmetric rim ring - violet upper-left, blue right, cyan bottom. */
 .glowing-orb__sphere::before {
   content: '';
   position: absolute;
@@ -186,7 +186,7 @@
   z-index: 1;
   background: conic-gradient(
     from 218deg at 50% 50%,
-    rgba(221, 214, 254, 0.82) 0deg,
+    rgba(196, 181, 253, 0.68) 0deg,
     rgba(167, 139, 250, 0.82) 46deg,
     rgba(109, 40, 217, 0.54) 96deg,
     rgba(37, 99, 235, 0.72) 150deg,
@@ -194,7 +194,7 @@
     rgba(125, 211, 252, 0.8) 252deg,
     rgba(59, 130, 246, 0.48) 288deg,
     rgba(167, 139, 250, 0.64) 326deg,
-    rgba(221, 214, 254, 0.82) 360deg
+    rgba(196, 181, 253, 0.68) 360deg
   );
   -webkit-mask: radial-gradient(circle, transparent 65.5%, #000 67.4%, #000 70.4%, transparent 72.6%);
   mask: radial-gradient(circle, transparent 65.5%, #000 67.4%, #000 70.4%, transparent 72.6%);
@@ -209,7 +209,7 @@
   pointer-events: none;
   z-index: 1;
   background:
-    radial-gradient(ellipse 44% 30% at 30% 18%, rgba(255, 255, 255, 0.12), transparent 68%),
+    radial-gradient(ellipse 44% 30% at 30% 18%, rgba(226, 232, 255, 0.07), transparent 68%),
     radial-gradient(ellipse 16% 56% at 98% 49%, rgba(96, 165, 250, 0.46), transparent 68%),
     radial-gradient(ellipse 58% 17% at 50% 99%, rgba(125, 211, 252, 0.42), transparent 72%);
   -webkit-mask: radial-gradient(circle, transparent 52%, #000 67%, transparent 77%);
@@ -241,11 +241,11 @@
 .glowing-orb__ring {
   width: var(--orb-ring-w, 46px);
   height: auto;
-  margin-top: -3px;
+  margin-top: 1px;
   overflow: visible;
   filter:
-    drop-shadow(0 0 3px rgba(34, 211, 238, 0.62))
-    drop-shadow(0 0 8px rgba(37, 99, 235, 0.34));
+    drop-shadow(0 0 2px rgba(34, 211, 238, 0.54))
+    drop-shadow(0 0 5px rgba(37, 99, 235, 0.24));
 }
 
 /* -- Idle float animation -- */
@@ -262,11 +262,11 @@
 @keyframes glowing-orb-particle-float {
   0%, 100% {
     transform: translate3d(0, 0, 0);
-    opacity: 0.32;
+    opacity: 0.25;
   }
   50% {
-    transform: translate3d(var(--particle-x, 4px), var(--particle-y, -7px), 0);
-    opacity: 0.75;
+    transform: translate3d(var(--particle-x, 7px), var(--particle-y, -12px), 0);
+    opacity: 0.55;
   }
 }
 
