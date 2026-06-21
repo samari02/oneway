@@ -9,6 +9,7 @@ import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
 import { BoundariesView, ProtectionAlert, useExtensionStatus } from '@/features/boundaries'
 import { ClarityHomeView } from '@/features/clarity-home'
+import { ClarityHomeErrorBoundary } from '@/features/clarity-home/components/ClarityHomeErrorBoundary'
 import { Mascot, type MascotMood } from '@/features/mascot'
 import { AICompanion } from '@/features/ai-companion'
 import { GoalsBar, useGoals } from '@/features/goals'
@@ -420,7 +421,11 @@ function Dashboard() {
       case 'today':
         return <TodayView />
       case 'clarity-home':
-        return <ClarityHomeView />
+        return (
+          <ClarityHomeErrorBoundary>
+            <ClarityHomeView />
+          </ClarityHomeErrorBoundary>
+        )
       case 'screen-time':
         return <StatsView />
       case 'boundaries':

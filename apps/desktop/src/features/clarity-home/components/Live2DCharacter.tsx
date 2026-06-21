@@ -1,26 +1,34 @@
 import { useEffect, useRef, useState } from 'react'
-import * as PIXI from 'pixi.js'
-import { Live2DModel } from 'pixi-live2d-display'
 import type { HeroAvatarOption } from '../companion-avatars'
-
-if (typeof window !== 'undefined') {
-  window.PIXI = PIXI
-}
+import { Live2DFallback } from './Live2DFallback'
 
 const LIVE2D_MODELS: Record<'asuka' | 'jian', string> = {
   asuka: '/v2/asuka/Asuka.model3.json',
   jian: '/v2/jian/简.model3.json',
 }
 
+/** Bust portrait framing — scale up and anchor high so only upper torso shows. */
+const BUST_LAYOUT: Record<
+  'asuka' | 'jian',
+  { scaleMul: number; anchorY: number; yRatio: number }
+> = {
+  asuka: { scaleMul: 2.2, anchorY: 0.38, yRatio: 0.54 },
+  jian: { scaleMul: 2.0, anchorY: 0.36, yRatio: 0.52 },
+}
+
+const CUBISM_CORE_URL = '/v2/1113_v2/live2dcubismcore.min.js'
+
 let cubismLoadPromise: Promise<void> | null = null
 
 function loadCubismCore(): Promise<void> {
-  if (window.Live2DCubismCore) return Promise.resolve()
+  if (typeof window !== 'undefined' && window.Live2DCubismCore) {
+    return Promise.resolve()
+  }
   if (cubismLoadPromise) return cubismLoadPromise
 
   cubismLoadPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script')
-    script.src = '/v2/1113_v2/live2dcubismcore.min.js'
+    script.src = CUBISM_CORE_URL
     script.async = true
     script.onload = () => resolve()
     script.onerror = () => reject(new Error('Failed to load Live2D Cubism Core'))
@@ -30,6 +38,28 @@ function loadCubismCore(): Promise<void> {
   return cubismLoadPromise
 }
 
+type Live2DRuntime = {
+  PIXI: typeof import('pixi.js')
+  Live2DModel: typeof import('pixi-live2d-display/cubism4').Live2DModel
+}
+
+let live2dRuntimePromise: Promise<Live2DRuntime> | null = null
+
+async function loadLive2DRuntime(): Promise<Live2DRuntime> {
+  if (live2dRuntimePromise) return live2dRuntimePromise
+
+  live2dRuntimePromise = (async () => {
+    const PIXI = await import('pixi.js')
+    if (typeof window !== 'undefined') {
+      window.PIXI = PIXI
+    }
+    const { Live2DModel } = await import('pixi-live2d-display/cubism4')
+    return { PIXI, Live2DModel }
+  })()
+
+  return live2dRuntimePromise
+}
+
 type Live2DCharacterProps = {
   avatar: HeroAvatarOption
   className?: string
@@ -37,20 +67,21 @@ type Live2DCharacterProps = {
 
 export function Live2DCharacter({ avatar, className }: Live2DCharacterProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     const container = containerRef.current
     if (!container || avatar.kind !== 'live2d' || !avatar.live2dId) return
 
-    let app: PIXI.Application | null = null
-    let model: Live2DModel | null = null
+    let app: import('pixi.js').Application | null = null
+    let model: import('pixi-live2d-display/cubism4').Live2DModel | null = null
     let cancelled = false
 
     const init = async () => {
       try {
-        setError(null)
+        setFailed(false)
         await loadCubismCore()
+        const { PIXI, Live2DModel } = await loadLive2DRuntime()
         if (cancelled) return
 
         const modelUrl = LIVE2D_MODELS[avatar.live2dId!]
@@ -63,8 +94,7 @@ export function Live2DCharacter({ avatar, className }: Live2DCharacterProps) {
           autoDensity: true,
         })
 
-        container.innerHTML = ''
-        container.appendChild(app.view as HTMLCanvasElement)
+        container.replaceChildren(app.view as HTMLCanvasElement)
 
         model = await Live2DModel.from(modelUrl)
         if (cancelled) {
@@ -72,48 +102,37 @@ export function Live2DCharacter({ avatar, className }: Live2DCharacterProps) {
           return
         }
 
-        const scale = Math.min(
+        const layout = BUST_LAYOUT[avatar.live2dId!]
+        const fitScale = Math.min(
           (app.screen.width * 0.9) / model.width,
           (app.screen.height * 0.95) / model.height,
         )
-        model.scale.set(scale)
-        model.anchor.set(0.5, 0.5)
+        model.scale.set(fitScale * layout.scaleMul)
+        model.anchor.set(0.5, layout.anchorY)
         model.x = app.screen.width / 2
-        model.y = app.screen.height * 0.55
+        model.y = app.screen.height * layout.yRatio
 
         app.stage.addChild(model)
       } catch (err) {
+        console.warn('[Live2DCharacter] Failed to initialize:', err)
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Live2D unavailable')
+          setFailed(true)
         }
       }
     }
 
-    init()
+    void init()
 
     return () => {
       cancelled = true
-      if (model) {
-        model.destroy()
-      }
-      if (app) {
-        app.destroy(true, { children: true })
-      }
-      if (container) {
-        container.innerHTML = ''
-      }
+      model?.destroy()
+      app?.destroy(true, { children: true })
+      container.replaceChildren()
     }
   }, [avatar.id, avatar.kind, avatar.live2dId])
 
-  if (error) {
-    return (
-      <div className={`ch-live2d ch-live2d--error ${className ?? ''}`}>
-        <span className="ch-live2d__fallback" aria-hidden>
-          ✨
-        </span>
-        <span className="ch-live2d__error-text">{avatar.label}</span>
-      </div>
-    )
+  if (failed) {
+    return <Live2DFallback className={className} />
   }
 
   return <div ref={containerRef} className={`ch-live2d ${className ?? ''}`} aria-hidden />

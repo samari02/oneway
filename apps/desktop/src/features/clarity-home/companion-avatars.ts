@@ -1,48 +1,22 @@
 /**
  * Hero companion avatar registry for Clarity Home.
- * PNGs are auto-discovered from public/companion-avatars/ via Vite glob.
  */
 
-const pngModules = import.meta.glob(
-  '../../../public/companion-avatars/*.png',
-  { eager: true, query: '?url', import: 'default' },
-) as Record<string, string>
-
-function filenameToLabel(path: string): string {
-  const base = path.split('/').pop()?.replace(/\.png$/i, '') ?? 'Avatar'
-  return base
-    .replace(/[-_]+/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
-function filenameToId(path: string): string {
-  return path.split('/').pop()?.replace(/\.png$/i, '').toLowerCase() ?? 'avatar'
-}
-
-export type HeroAvatarKind = 'mascot' | 'mascot-bubble' | 'png' | 'live2d'
+export type HeroAvatarKind = 'mascot' | 'live2d'
 
 export type HeroAvatarOption = {
   id: string
   kind: HeroAvatarKind
   label: string
-  /** PNG url or Live2D model path */
+  /** Live2D model path */
   src?: string
   /** Live2D model key */
   live2dId?: 'asuka' | 'jian'
-  bubbleMessage?: string
 }
 
-const BUILTIN_AVATARS: HeroAvatarOption[] = [
+/** All hero avatar options, in cycle order. */
+export const HERO_AVATAR_OPTIONS: HeroAvatarOption[] = [
   { id: 'mascot', kind: 'mascot', label: 'Orb' },
-  {
-    id: 'mascot-bubble',
-    kind: 'mascot-bubble',
-    label: 'Bubble',
-    bubbleMessage: 'How was your day?',
-  },
-]
-
-const LIVE2D_AVATARS: HeroAvatarOption[] = [
   {
     id: 'live2d-asuka',
     kind: 'live2d',
@@ -57,20 +31,6 @@ const LIVE2D_AVATARS: HeroAvatarOption[] = [
     live2dId: 'jian',
     src: '/v2/jian/简.model3.json',
   },
-]
-
-const pngAvatars: HeroAvatarOption[] = Object.entries(pngModules).map(([path, url]) => ({
-  id: `png-${filenameToId(path)}`,
-  kind: 'png' as const,
-  label: filenameToLabel(path),
-  src: url,
-}))
-
-/** All hero avatar options, in cycle order. */
-export const HERO_AVATAR_OPTIONS: HeroAvatarOption[] = [
-  ...BUILTIN_AVATARS,
-  ...pngAvatars,
-  ...LIVE2D_AVATARS,
 ]
 
 export const HERO_AVATAR_STORAGE_KEY = 'clarity-home-hero-avatar'

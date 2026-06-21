@@ -211,18 +211,12 @@
   justify-content: center;
 }
 
-.clarity-home .ch-hero-mascot__png {
-  width: 88%;
-  height: 88%;
-  object-fit: contain;
-  border-radius: 50%;
-  filter: drop-shadow(0 0 16px var(--ch-purple-glow));
-}
-
 .clarity-home .ch-hero-mascot__live2d,
 .clarity-home .ch-live2d {
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
 }
 
 .clarity-home .ch-live2d--error {
@@ -318,11 +312,8 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-}
-
-.clarity-home .ch-hero-mascot-wrap:has(.mascot__bubble) .ch-hero-mascot {
-  height: clamp(180px, 20vw, 220px);
-  margin-top: -8px;
+  overflow: hidden;
+  border-radius: 50%;
 }
 
 .clarity-home .ch-hero-mascot__orb .mascot__blob {
@@ -721,4 +712,38 @@
   .clarity-home .ch-session-card__hero {
     flex-wrap: wrap;
   }
+}
+
+/* Error fallback when Home tab hits an uncaught render error */
+.clarity-home--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clarity-home__shell--fallback {
+  width: 100%;
+  max-width: 520px;
+}
+
+.clarity-home .ch-home-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: clamp(32px, 6vw, 48px);
+  text-align: center;
+}
+
+.clarity-home .ch-home-fallback__title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.clarity-home .ch-home-fallback__text {
+  margin: 0;
+  max-width: 36ch;
+  color: var(--ch-muted);
+  line-height: 1.5;
 }

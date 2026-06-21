@@ -12,6 +12,10 @@ export default defineConfig(async () => ({
   // Include .riv files as assets
   assetsInclude: ['**/*.riv'],
 
+  optimizeDeps: {
+    include: ['pixi.js', 'pixi-live2d-display/cubism4'],
+  },
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
