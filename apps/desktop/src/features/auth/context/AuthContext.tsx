@@ -11,8 +11,20 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-// Sync auth state with Tauri backend for Supabase sync
-async function syncAuthToBackend(userId: string | null, accessToken: string | null) {
+const AUTH_SYNC_DEBOUNCE_MS = 300
+
+let lastSyncedUserId: string | null = null
+let lastSyncedAccessToken: string | null = null
+let pendingAuthSync: ReturnType<typeof window.setTimeout> | null = null
+
+async function doSyncAuthToBackend(
+  userId: string | null,
+  accessToken: string | null
+) {
+  if (userId === lastSyncedUserId && accessToken === lastSyncedAccessToken) {
+    return
+  }
+
   try {
     if (userId && accessToken) {
       await invoke('set_supabase_auth', { userId, accessToken })
@@ -21,9 +33,45 @@ async function syncAuthToBackend(userId: string | null, accessToken: string | nu
       await invoke('clear_supabase_auth')
       console.log('[auth] Cleared backend auth')
     }
+    lastSyncedUserId = userId
+    lastSyncedAccessToken = accessToken
   } catch (e) {
     console.error('[auth] Failed to sync auth to backend:', e)
   }
+}
+
+// Sync auth state with Tauri backend for Supabase sync
+async function syncAuthToBackend(
+  userId: string | null,
+  accessToken: string | null,
+  options?: { immediate?: boolean }
+) {
+  const isLogout = !userId || !accessToken
+  const immediate = options?.immediate ?? isLogout
+
+  if (userId === lastSyncedUserId && accessToken === lastSyncedAccessToken) {
+    return
+  }
+
+  if (immediate) {
+    if (pendingAuthSync !== null) {
+      window.clearTimeout(pendingAuthSync)
+      pendingAuthSync = null
+    }
+    await doSyncAuthToBackend(userId, accessToken)
+    return
+  }
+
+  if (pendingAuthSync !== null) {
+    window.clearTimeout(pendingAuthSync)
+  }
+
+  await new Promise<void>((resolve) => {
+    pendingAuthSync = window.setTimeout(() => {
+      pendingAuthSync = null
+      void doSyncAuthToBackend(userId, accessToken).then(resolve)
+    }, AUTH_SYNC_DEBOUNCE_MS)
+  })
 }
 
 const AUTH_INIT_TIMEOUT_MS = 12_000
@@ -41,7 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
       syncAuthToBackend(
         session?.user?.id ?? null,
-        session?.access_token ?? null
+        session?.access_token ?? null,
+        { immediate: true }
       )
     }
 
@@ -78,6 +127,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true
       window.clearTimeout(timeoutId)
+      if (pendingAuthSync !== null) {
+        window.clearTimeout(pendingAuthSync)
+        pendingAuthSync = null
+      }
       subscription.unsubscribe()
     }
   }, [])

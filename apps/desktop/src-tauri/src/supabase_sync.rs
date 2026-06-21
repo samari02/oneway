@@ -3,10 +3,19 @@
 //! Handles syncing local app usage data to Supabase cloud storage.
 
 use chrono::{TimeZone, Utc};
+use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
-use once_cell::sync::Lazy;
+use std::io::Write;
+use std::sync::{Mutex, MutexGuard};
+
+fn auth_lock() -> MutexGuard<'static, Option<AuthState>> {
+    AUTH_STATE.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+fn log_supabase(args: impl std::fmt::Display) {
+    let _ = writeln!(std::io::stderr(), "{}", args);
+}
 
 // Supabase configuration
 const SUPABASE_URL: &str = "https://yvftumjlqjddrduueneb.supabase.co";
@@ -64,34 +73,34 @@ struct SupabaseError {
 
 /// Set auth state from frontend
 pub fn set_auth(user_id: String, access_token: String) {
-    let mut auth = AUTH_STATE.lock().unwrap();
-    eprintln!("[supabase] Auth set for user: {}", user_id);
+    let mut auth = auth_lock();
+    log_supabase(format!("[supabase] Auth set for user: {}", user_id));
     *auth = Some(AuthState { user_id, access_token });
 }
 
 /// Clear auth state (on logout)
 pub fn clear_auth() {
-    let mut auth = AUTH_STATE.lock().unwrap();
+    let mut auth = auth_lock();
     *auth = None;
 }
 
 /// Check if authenticated
 pub fn is_authenticated() -> bool {
-    AUTH_STATE.lock().unwrap().is_some()
+    auth_lock().is_some()
 }
 
 /// Get current user ID
 pub fn get_user_id() -> Option<String> {
-    AUTH_STATE.lock().unwrap().as_ref().map(|a| a.user_id.clone())
+    auth_lock().as_ref().map(|a| a.user_id.clone())
 }
 
 /// Sync completed sessions to Supabase
 pub async fn sync_sessions(sessions: Vec<crate::app_data::AppSession>) -> Result<usize, String> {
     let auth = {
-        let guard = AUTH_STATE.lock().unwrap();
+        let guard = auth_lock();
         guard.clone().ok_or_else(|| "Not authenticated".to_string())?
     };
-    
+
     if sessions.is_empty() {
         return Ok(0);
     }
@@ -137,7 +146,7 @@ pub async fn sync_sessions(sessions: Vec<crate::app_data::AppSession>) -> Result
         .map_err(|e| format!("Network error: {}", e))?;
     
     if response.status().is_success() {
-        eprintln!("[supabase] Synced {} sessions", count);
+        log_supabase(format!("[supabase] Synced {} sessions", count));
         Ok(count)
     } else {
         let status = response.status();
@@ -149,10 +158,10 @@ pub async fn sync_sessions(sessions: Vec<crate::app_data::AppSession>) -> Result
 /// Sync blocked apps config to Supabase
 pub async fn sync_blocked_apps(config: &crate::app_data::BlockedAppsConfig) -> Result<(), String> {
     let auth = {
-        let guard = AUTH_STATE.lock().unwrap();
+        let guard = auth_lock();
         guard.clone().ok_or_else(|| "Not authenticated".to_string())?
     };
-    
+
     // First, delete existing blocked apps for this user/platform
     let delete_url = format!(
         "{}/rest/v1/blocked_apps?user_id=eq.{}&platform=eq.macos",
@@ -169,7 +178,10 @@ pub async fn sync_blocked_apps(config: &crate::app_data::BlockedAppsConfig) -> R
     
     if !delete_response.status().is_success() {
         let body = delete_response.text().await.unwrap_or_default();
-        eprintln!("[supabase] Warning: Failed to delete old blocked apps: {}", body);
+        log_supabase(format!(
+            "[supabase] Warning: Failed to delete old blocked apps: {}",
+            body
+        ));
     }
     
     // Insert new blocked apps
@@ -206,14 +218,14 @@ pub async fn sync_blocked_apps(config: &crate::app_data::BlockedAppsConfig) -> R
         }
     }
     
-    eprintln!("[supabase] Synced blocked apps config");
+    log_supabase("[supabase] Synced blocked apps config");
     Ok(())
 }
 
 /// Fetch blocked apps from Supabase (for sync on startup)
 pub async fn fetch_blocked_apps() -> Result<crate::app_data::BlockedAppsConfig, String> {
     let auth = {
-        let guard = AUTH_STATE.lock().unwrap();
+        let guard = auth_lock();
         guard.clone().ok_or_else(|| "Not authenticated".to_string())?
     };
     
