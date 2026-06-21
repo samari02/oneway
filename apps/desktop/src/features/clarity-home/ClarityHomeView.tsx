@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useAuth } from '@/features/auth'
 import { useUserSettings } from '@/features/onboarding'
 import { CurrentSessionCard } from './components/CurrentSessionCard'
@@ -6,6 +7,7 @@ import { FooterBanner } from './components/FooterBanner'
 import { HomeHeader } from './components/HomeHeader'
 import { HomeInsightsCard } from './components/HomeInsightsCard'
 import { MorningHomeView } from './components/MorningHomeView'
+import { getTodayDayPlan } from './hooks/useMorningFlow'
 import { useMorningMode } from './hooks/useMorningMode'
 import './ClarityHome.css'
 
@@ -19,10 +21,18 @@ function getGreeting(): string {
 export function ClarityHomeView() {
   const { user } = useAuth()
   const { settings } = useUserSettings(user?.id)
-  const { isMorningMode } = useMorningMode()
+  const { isMorningMode, setIsMorningMode } = useMorningMode()
   const firstName = settings?.display_name?.split(' ')[0] || 'Sam'
+  const hasTodayPlan = getTodayDayPlan() !== null
+  const showMorningFlow = isMorningMode && !hasTodayPlan
 
-  if (isMorningMode) {
+  useEffect(() => {
+    if (isMorningMode && hasTodayPlan) {
+      setIsMorningMode(false)
+    }
+  }, [isMorningMode, hasTodayPlan, setIsMorningMode])
+
+  if (showMorningFlow) {
     return <MorningHomeView firstName={firstName} />
   }
 
