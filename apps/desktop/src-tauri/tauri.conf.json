@@ -24,7 +24,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' blob: data: mediastream: https://api.openai.com; script-src 'self' 'unsafe-eval'; connect-src 'self' https://api.openai.com https://*.supabase.co wss://*.supabase.co http://localhost:* ws://localhost:*; media-src 'self' blob: mediastream:"
+      "csp": "default-src 'self' blob: data: mediastream: https://api.openai.com; script-src 'self' 'unsafe-eval'; connect-src 'self' https://api.openai.com https://*.supabase.co wss://*.supabase.co http://localhost:* ws://localhost:*; img-src 'self' http://localhost:* blob: data: asset: http://asset.localhost; media-src 'self' blob: mediastream:"
     }
   },
   "bundle": {
