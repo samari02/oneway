@@ -52,7 +52,7 @@
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
-  padding: clamp(20px, 3vw, 36px) clamp(20px, 4vw, 48px) clamp(28px, 4vw, 48px);
+  padding: clamp(8px, 1.2vw, 14px) clamp(20px, 4vw, 48px) clamp(28px, 4vw, 48px);
   display: flex;
   flex-direction: column;
   gap: clamp(18px, 2.5vw, 28px);
@@ -152,7 +152,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
   grid-template-rows: auto auto;
-  gap: clamp(16px, 2vw, 24px);
+  gap: clamp(12px, 1.5vw, 20px) clamp(16px, 2vw, 24px);
   grid-template-areas:
     "greeting mascot"
     "intention focus-track";
@@ -160,7 +160,8 @@
 
 .clarity-home .ch-home-hero__greeting {
   grid-area: greeting;
-  align-self: end;
+  align-self: start;
+  padding-top: 0;
 }
 
 .clarity-home .ch-home-hero__title {
@@ -193,7 +194,14 @@
   min-width: 0;
 }
 
-/* Mascot orb */
+/* Hero character + switcher */
+.clarity-home .ch-hero-mascot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
 .clarity-home .ch-hero-mascot {
   position: relative;
   width: clamp(140px, 16vw, 180px);
@@ -201,6 +209,86 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.clarity-home .ch-hero-mascot__png {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 16px var(--ch-purple-glow));
+}
+
+.clarity-home .ch-hero-mascot__live2d,
+.clarity-home .ch-live2d {
+  width: 100%;
+  height: 100%;
+}
+
+.clarity-home .ch-live2d--error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--ch-muted);
+  font-size: 11px;
+}
+
+.clarity-home .ch-live2d__fallback {
+  font-size: 2rem;
+  opacity: 0.7;
+}
+
+.clarity-home .ch-hero-switcher {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.clarity-home .ch-hero-switcher__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--ch-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ch-muted);
+  font: 600 11px/1 ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.clarity-home .ch-hero-switcher__btn:hover {
+  background: var(--ch-purple-soft);
+  border-color: rgba(168, 85, 247, 0.35);
+  color: var(--ch-ink);
+}
+
+.clarity-home .ch-hero-switcher__icon {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.clarity-home .ch-hero-switcher__dots {
+  display: flex;
+  gap: 4px;
+}
+
+.clarity-home .ch-hero-switcher__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ch-line);
+  opacity: 0.6;
+}
+
+.clarity-home .ch-hero-switcher__dot--active {
+  background: var(--ch-purple);
+  opacity: 1;
+  box-shadow: 0 0 6px var(--ch-purple-glow);
 }
 
 .clarity-home .ch-hero-mascot__glow {
@@ -225,6 +313,16 @@
   position: relative;
   z-index: 1;
   transform: scale(0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.clarity-home .ch-hero-mascot-wrap:has(.mascot__bubble) .ch-hero-mascot {
+  height: clamp(180px, 20vw, 220px);
+  margin-top: -8px;
 }
 
 .clarity-home .ch-hero-mascot__orb .mascot__blob {
