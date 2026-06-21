@@ -1,12 +1,6 @@
-/* Glass-shell neon orb — rim glow only, dark translucent center */
+/* Simplified glowing orb — single halo, sphere with box-shadow rim, face SVG, ring */
 
 .glowing-orb {
-  --orb-cyan: #67e8f9;
-  --orb-cyan-core: #22d3ee;
-  --orb-purple: #7c6ce8;
-  --orb-violet: #6b56e1;
-  --orb-rim: #dbeafe;
-
   position: relative;
   width: var(--orb-size, 160px);
   height: var(--orb-size, 160px);
@@ -16,26 +10,29 @@
   flex-shrink: 0;
 }
 
-/* Minimal ambient — ring catch only, no body wash */
-.glowing-orb__bloom {
+/* ── Diffuse purple halo behind sphere (circular, no squares) ── */
+.glowing-orb__halo {
   position: absolute;
   left: 50%;
-  bottom: 18%;
-  width: 55%;
-  height: 18%;
-  transform: translateX(-50%);
+  top: 45%;
+  width: 260%;
+  height: 260%;
+  transform: translate(-50%, -50%);
   border-radius: 50%;
   pointer-events: none;
+  z-index: 0;
   background: radial-gradient(
-    ellipse at 50% 50%,
-    rgba(34, 211, 238, 0.14) 0%,
-    rgba(34, 211, 238, 0.06) 45%,
-    transparent 72%
+    circle at 50% 50%,
+    rgba(107, 86, 225, 0.18) 0%,
+    rgba(107, 86, 225, 0.10) 20%,
+    rgba(107, 86, 225, 0.05) 40%,
+    rgba(107, 86, 225, 0.02) 60%,
+    transparent 80%
   );
-  filter: blur(6px);
-  opacity: 0.45;
+  filter: blur(32px);
 }
 
+/* ── Body container (sphere + ring, floats) ── */
 .glowing-orb__body {
   position: relative;
   z-index: 1;
@@ -43,106 +40,86 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  animation: glowing-orb-float 4.5s ease-in-out infinite;
 }
 
-/* Glass shell — dark transparent center, color at rim only */
-.glowing-orb__sphere {
+.glowing-orb__sphere-wrap {
   position: relative;
   width: var(--orb-sphere, 88px);
   height: var(--orb-sphere, 88px);
+}
+
+/* ── The sphere: dark center, purple translucent edge, neon rim via box-shadow ── */
+.glowing-orb__sphere {
+  position: relative;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   overflow: hidden;
   background:
+    /* Top-left specular highlight */
     radial-gradient(
-      circle at 50% 112%,
-      rgba(34, 211, 238, 0.55) 0%,
-      rgba(34, 211, 238, 0.22) 10%,
-      rgba(34, 211, 238, 0.06) 18%,
-      transparent 32%
+      ellipse 34% 26% at 28% 24%,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.06) 30%,
+      transparent 60%
     ),
+    /* Cyan catch light from ring below */
+    radial-gradient(
+      circle at 50% 108%,
+      rgba(34, 211, 238, 0.35) 0%,
+      rgba(34, 211, 238, 0.12) 10%,
+      transparent 28%
+    ),
+    /* Main sphere body: dark center fading to purple translucent edge */
     radial-gradient(
       circle at 50% 50%,
-      rgba(8, 6, 24, 0.08) 0%,
-      rgba(12, 8, 32, 0.18) 42%,
-      rgba(20, 10, 45, 0.28) 58%,
-      rgba(68, 52, 165, 0.12) 72%,
-      rgba(107, 86, 225, 0.38) 86%,
-      rgba(124, 108, 232, 0.55) 92%,
-      rgba(191, 219, 254, 0.35) 96%,
-      transparent 100%
+      #060310 0%,
+      #080418 28%,
+      rgba(14, 8, 38, 0.85) 48%,
+      rgba(36, 22, 72, 0.55) 64%,
+      rgba(80, 56, 180, 0.35) 78%,
+      rgba(107, 86, 225, 0.22) 88%,
+      rgba(139, 122, 239, 0.12) 96%
     );
+  /* Layered box-shadows for neon rim glow:
+     1) Tight bright purple-white rim
+     2) Medium purple bloom
+     3) Wide diffuse purple glow */
   box-shadow:
-    0 0 0 0.5px rgba(219, 234, 254, 0.35),
-    0 0 4px rgba(107, 86, 225, 0.18);
+    inset 0 0 12px 2px rgba(107, 86, 225, 0.15),
+    0 0 0 1.2px rgba(139, 122, 239, 0.7),
+    0 0 4px 1px rgba(139, 122, 239, 0.8),
+    0 0 12px 3px rgba(107, 86, 225, 0.5),
+    0 0 28px 6px rgba(107, 86, 225, 0.2);
 }
 
-/* Top-left specular gloss */
-.glowing-orb__sheen {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse 32% 24% at 26% 22%,
-    rgba(255, 255, 255, 0.62) 0%,
-    rgba(255, 255, 255, 0.18) 22%,
-    rgba(255, 255, 255, 0.04) 38%,
-    transparent 58%
-  );
-  pointer-events: none;
-}
-
-/* Fresnel rim — neon edge ring, no interior fill */
-.glowing-orb__rim {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(
-    circle at 50% 50%,
-    transparent 78%,
-    rgba(191, 219, 254, 0.08) 86%,
-    rgba(219, 234, 254, 0.65) 91%,
-    rgba(165, 243, 252, 0.85) 94%,
-    rgba(107, 86, 225, 0.45) 96.5%,
-    transparent 99%
-  );
-  box-shadow:
-    inset 0 0 6px rgba(107, 86, 225, 0.12),
-    0 0 8px rgba(124, 108, 232, 0.15);
-}
-
+/* ── Face (eyes + smile) ── */
 .glowing-orb__face {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   opacity: 0.95;
+  z-index: 2;
 }
 
-/* Thin sharp neon ring beneath sphere */
+/* ── Cyan ring beneath sphere ── */
 .glowing-orb__ring {
-  width: var(--orb-ring-w, 115px);
+  width: var(--orb-ring-w, 46px);
   height: auto;
-  margin-top: -4px;
+  margin-top: -5px;
   overflow: visible;
   filter:
-    drop-shadow(0 0 2px rgba(34, 211, 238, 0.85))
-    drop-shadow(0 0 5px rgba(34, 211, 238, 0.35));
+    drop-shadow(0 0 3px rgba(34, 211, 238, 0.95))
+    drop-shadow(0 0 8px rgba(34, 211, 238, 0.55))
+    drop-shadow(0 0 14px rgba(34, 211, 238, 0.25));
 }
 
-/* Subtle idle float */
-.glowing-orb__body {
-  animation: glowing-orb-float 4.5s ease-in-out infinite;
-}
-
+/* ── Idle float animation ── */
 @keyframes glowing-orb-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
