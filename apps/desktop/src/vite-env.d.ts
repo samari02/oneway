@@ -14,3 +14,8 @@ declare module '*.riv' {
   const src: string
   export default src
 }
+
+interface Window {
+  Live2DCubismCore?: unknown
+  PIXI?: typeof import('pixi.js')
+}

@@ -11,6 +11,7 @@ import { BoundariesView, ProtectionAlert, useExtensionStatus } from '@/features/
 import { AppBlockingView } from '@/features/app-blocking'
 import { Mascot, type MascotMood } from '@/features/mascot'
 import { AICompanion } from '@/features/ai-companion'
+import { CompanionOrb } from '@/features/live2d-companion'
 import { GoalsBar, useGoals } from '@/features/goals'
 import type { OnboardingData } from '@/features/onboarding'
 import type { Habit } from '@oneway/shared'
@@ -492,6 +493,8 @@ function Dashboard() {
           </div>
         </main>
       </div>
+
+      <CompanionOrb />
     </div>
   )
 }
