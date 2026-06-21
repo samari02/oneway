@@ -1,8 +1,8 @@
 import { MOCK_SESSION } from '../mock-data'
 
-function ProgressRing({ progress }: { progress: number }) {
-  const size = 88
-  const stroke = 7
+function ProgressRing({ progress, label }: { progress: number; label: string }) {
+  const size = 96
+  const stroke = 6
   const radius = (size - stroke) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference * (1 - progress)
@@ -29,42 +29,59 @@ function ProgressRing({ progress }: { progress: number }) {
         strokeLinecap="round"
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
       />
+      <text
+        className="ch-progress-ring__label"
+        x={size / 2}
+        y={size / 2}
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        {label}
+      </text>
     </svg>
   )
 }
 
 export function CurrentSessionCard() {
-  const { elapsed, goal, progress, sites } = MOCK_SESSION
+  const { elapsed, mode, onTrack, progress, progressLabel, sites } = MOCK_SESSION
 
   return (
     <article className="ch-glass-card ch-session-card">
-      <div className="ch-session-card__head">
-        <h2 className="ch-glass-card__title">Current session</h2>
-        <span className="ch-session-card__goal">{goal}</span>
+      <h2 className="ch-glass-card__title ch-session-card__title">Current session</h2>
+
+      <div className="ch-session-card__hero">
+        <p className="ch-session-card__timer">{elapsed}</p>
+        <ProgressRing progress={progress} label={progressLabel} />
       </div>
 
-      <div className="ch-session-card__body">
-        <div className="ch-session-card__timer-wrap">
-          <ProgressRing progress={progress} />
-          <span className="ch-session-card__timer">{elapsed}</span>
-        </div>
+      <div className="ch-session-card__meta">
+        <span className="ch-session-card__mode">{mode}</span>
+        {onTrack && (
+          <span className="ch-session-card__on-track">
+            <span className="ch-status-pill__dot" aria-hidden />
+            On track
+          </span>
+        )}
+      </div>
 
-        <div className="ch-session-card__sites">
-          <p className="ch-session-card__sites-label">Active tabs</p>
-          <div className="ch-session-card__favicons">
-            {sites.map((site) => (
-              <span key={site.name} className="ch-favicon-chip" title={site.name}>
-                <span className="ch-favicon-chip__icon" aria-hidden>
-                  {site.favicon}
-                </span>
-                {site.name}
+      <div className="ch-session-card__sites">
+        <p className="ch-session-card__sites-label">Currently on</p>
+        <div className="ch-session-card__favicons">
+          {sites.map((site) => (
+            <span key={site.name} className="ch-favicon-chip" title={site.name}>
+              <span className="ch-favicon-chip__icon" aria-hidden>
+                {site.favicon}
               </span>
-            ))}
-          </div>
+              {site.name}
+            </span>
+          ))}
         </div>
       </div>
 
       <button type="button" className="ch-btn ch-btn--danger ch-session-card__end">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <rect x="6" y="6" width="12" height="12" rx="1" />
+        </svg>
         End session
       </button>
     </article>

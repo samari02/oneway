@@ -1,49 +1,44 @@
 /** Placeholder data for clarity home — used when real hooks have no data yet. */
 
 export const MOCK_INTENTION = {
-  text: 'Finish the product roadmap draft',
+  text: 'Work on Clarity MVP',
+  description: 'Ship the home dashboard and wire up session tracking.',
   progress: 0.62,
   focusedMinutes: 142,
   targetMinutes: 240,
 }
 
 export const MOCK_HERO = {
-  status: 'In flow',
-  statusDetail: 'Deep focus · 43 min',
-  sparkline: [12, 18, 22, 28, 24, 32, 38, 35, 42, 48, 44, 52],
+  status: "You're on track",
+  focusedLabel: '21m focused',
+  sparkline: [8, 14, 12, 20, 18, 26, 22, 30, 28, 24, 32, 21],
 }
 
 export const MOCK_SESSION = {
-  elapsed: '0:43:12',
-  goal: '1h focus block',
+  elapsed: '01:24:17',
+  mode: 'Deep Work',
+  onTrack: true,
   progress: 0.72,
+  progressLabel: '72%',
   sites: [
-    { name: 'Figma', favicon: '🎨' },
+    { name: 'Cursor', favicon: '⌘' },
+    { name: 'GitHub', favicon: '🐙' },
     { name: 'Notion', favicon: '📝' },
-    { name: 'Linear', favicon: '◆' },
   ],
 }
 
 export const MOCK_FOCUS_HELPERS = [
-  { id: 'block', label: 'Block distractions', description: 'Hide social feeds', enabled: true },
-  { id: 'noise', label: 'Ambient sound', description: 'Soft rain loop', enabled: true },
-  { id: 'breaks', label: 'Gentle breaks', description: 'Remind every 50 min', enabled: false },
+  { id: 'blocklist', icon: '🛡', label: 'Site blocklist', detail: '12 blocked' },
+  { id: 'shield', icon: '🔒', label: 'Distraction shield', detail: 'Active', active: true },
+  { id: 'breaks', icon: '☕', label: 'Smart breaks', detail: 'Every 90 min' },
+  { id: 'sounds', icon: '🎵', label: 'Focus sounds', detail: 'Forest' },
 ]
 
 export const MOCK_INSIGHTS = [
-  { label: 'Focus score', value: '87', unit: '%', trend: '+4', bars: [40, 55, 48, 62, 58, 72, 68, 80, 75, 87] },
-  { label: 'Intentional time', value: '5h 35m', unit: '', trend: '+22m', bars: [30, 42, 38, 50, 55, 48, 60, 58, 65, 70] },
-  { label: 'Sessions', value: '3', unit: 'today', trend: 'on track', bars: [20, 35, 28, 40, 32, 45, 38, 50, 42, 48] },
+  { label: 'Focused time', value: '16h 42m', trend: '+12%', bars: [30, 42, 38, 50, 55, 48, 60, 58, 65, 70] },
+  { label: 'Sessions completed', value: '8', trend: '+3', bars: [20, 35, 28, 40, 32, 45, 38, 50, 42, 48] },
+  { label: 'Distractions avoided', value: '37', trend: '+8', bars: [40, 55, 48, 62, 58, 72, 68, 80, 75, 87] },
 ]
 
-export const MOCK_REFLECTION = {
-  prompt: 'What felt meaningful about today?',
-  placeholder: 'Capture a quick note before you wrap up…',
-  streakDays: 4,
-}
-
-export const MOCK_SUPPORT_BANNER =
-  'Your attention is a gift — protect it gently, and progress will follow.'
-
 export const MOCK_FOOTER_BANNER =
-  'Small consistent steps beat perfect bursts. Rest when you need to — tomorrow is another chance to focus.'
+  "Small steps, every day, lead to who you want to become. I'm proud of you."

@@ -2,18 +2,17 @@ import { useMemo } from 'react'
 import { useBrowsingStats } from '@/features/stats/hooks/useBrowsingStats'
 import { MOCK_INSIGHTS } from '../mock-data'
 
-type KpiItem = {
+type InsightRow = {
   label: string
   value: string
-  unit: string
   trend: string
   bars: number[]
 }
 
 function MiniBarChart({ values }: { values: number[] }) {
   const max = Math.max(...values, 1)
-  const width = 100
-  const height = 32
+  const width = 72
+  const height = 28
   const barWidth = width / values.length - 1.5
 
   return (
@@ -44,20 +43,14 @@ function formatMinutes(totalMinutes: number): string {
   return `${hours}h ${minutes}m`
 }
 
-function trendLabel(trend: 'up' | 'down' | 'stable'): string {
-  if (trend === 'up') return '↑ trending'
-  if (trend === 'down') return '↓ trending'
-  return 'stable'
-}
-
 type HomeInsightsCardProps = {
   userId?: string
 }
 
 export function HomeInsightsCard({ userId }: HomeInsightsCardProps) {
-  const { stats, loading } = useBrowsingStats(userId, 'today')
+  const { stats, loading } = useBrowsingStats(userId, 'week')
 
-  const kpis = useMemo((): KpiItem[] => {
+  const rows = useMemo((): InsightRow[] => {
     if (!stats || loading) {
       return MOCK_INSIGHTS
     }
@@ -66,51 +59,40 @@ export function HomeInsightsCard({ userId }: HomeInsightsCardProps) {
       ? stats.dailyScores.slice(-10).map((d) => d.score)
       : MOCK_INSIGHTS[0].bars
 
-    const timeBars = scoreBars.map((score) => Math.round(score * 0.8))
-
     return [
       {
-        label: 'Focus score',
-        value: String(Math.round(stats.focusScore)),
-        unit: '%',
-        trend: trendLabel(stats.focusTrend),
+        label: 'Focused time',
+        value: formatMinutes(stats.totalTimeTracked),
+        trend: stats.focusTrend === 'up' ? '+12%' : stats.focusTrend === 'down' ? '-5%' : '+12%',
         bars: scoreBars.length >= 3 ? scoreBars : MOCK_INSIGHTS[0].bars,
       },
-      {
-        label: 'Intentional time',
-        value: formatMinutes(stats.totalTimeTracked),
-        unit: '',
-        trend: stats.dataSource.isConnected ? 'today' : 'mock',
-        bars: timeBars.length >= 3 ? timeBars : MOCK_INSIGHTS[1].bars,
-      },
+      MOCK_INSIGHTS[1],
       MOCK_INSIGHTS[2],
     ]
   }, [stats, loading])
 
   return (
     <article className="ch-glass-card ch-insights-card">
-      <div className="ch-insights-card__head">
-        <h2 className="ch-glass-card__title">Insights</h2>
-        <button type="button" className="ch-glass-card__link">
-          View all
-        </button>
-      </div>
+      <h2 className="ch-glass-card__title">Insights (This week)</h2>
 
-      <div className="ch-kpi-grid">
-        {kpis.map((kpi) => (
-          <div key={kpi.label} className="ch-kpi">
-            <span className="ch-kpi__label">{kpi.label}</span>
-            <p className="ch-kpi__value">
-              {kpi.value}
-              {kpi.unit && <span className="ch-kpi__unit"> {kpi.unit}</span>}
-            </p>
-            <div className="ch-kpi__footer">
-              <span className="ch-kpi__trend">{kpi.trend}</span>
-              <MiniBarChart values={kpi.bars} />
+      <ul className="ch-insights-list">
+        {rows.map((row) => (
+          <li key={row.label} className="ch-insights-row">
+            <div className="ch-insights-row__text">
+              <span className="ch-insights-row__label">{row.label}</span>
+              <span className="ch-insights-row__value">{row.value}</span>
             </div>
-          </div>
+            <div className="ch-insights-row__right">
+              <span className="ch-insights-row__trend">{row.trend}</span>
+              <MiniBarChart values={row.bars} />
+            </div>
+          </li>
         ))}
-      </div>
+      </ul>
+
+      <button type="button" className="ch-insights-card__link">
+        See all insights →
+      </button>
     </article>
   )
 }

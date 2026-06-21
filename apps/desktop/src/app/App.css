@@ -177,6 +177,10 @@
   min-height: 0; /* Critical for nested flex scroll */
 }
 
+.app-layout__view:has(.clarity-home) {
+  overflow: hidden;
+}
+
 /* ========================================
    Today View
    ======================================== */

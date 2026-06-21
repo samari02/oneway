@@ -72,8 +72,8 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'today', icon: Icons.today, label: 'Today' },
   { id: 'clarity-home', icon: Icons.clarityHome, label: 'Home' },
+  { id: 'today', icon: Icons.today, label: 'Today' },
   { id: 'screen-time', icon: Icons.stats, label: 'Screen Time' },
   { id: 'boundaries', icon: Icons.boundaries, label: 'Boundaries' },
   { id: 'settings', icon: Icons.settings, label: 'Settings' },
