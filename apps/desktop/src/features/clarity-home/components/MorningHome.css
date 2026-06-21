@@ -84,15 +84,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 100%;
-  padding: clamp(72px, 10vh, 96px) clamp(24px, 5vw, 48px) clamp(48px, 8vh, 80px);
+  padding: clamp(44px, 6vh, 60px) clamp(24px, 5vw, 48px) clamp(40px, 7vh, 72px);
   text-align: center;
 }
 
 .morning-home__greeting-block {
   max-width: 640px;
-  margin-bottom: clamp(20px, 3vh, 32px);
+  margin-bottom: 0;
 }
 
 .morning-home__sun {
@@ -121,40 +121,14 @@
   color: var(--mh-muted);
 }
 
-.morning-home__speech-bubble {
-  position: absolute;
-  z-index: 1;
-  top: clamp(120px, 24vh, 200px);
-  left: clamp(54%, 56vw, 62%);
-  max-width: min(280px, 36vw);
-  padding: 14px 18px;
-  border-radius: 18px;
-  background: rgba(18, 16, 32, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px);
-  font-size: clamp(13px, 1.4vw, 15px);
-  line-height: 1.5;
-  text-align: left;
-  color: var(--mh-ink);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-}
-
-.morning-home__speech-bubble::after {
-  content: "";
-  position: absolute;
-  left: -10px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 10px solid transparent;
-  border-right-color: rgba(18, 16, 32, 0.82);
-}
-
 .morning-home__intention {
   width: min(560px, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  margin-top: auto;
+  padding-top: clamp(56px, 14vh, 180px);
 }
 
 .morning-home__intention-title {
@@ -215,7 +189,7 @@
 }
 
 .morning-home__quote {
-  margin-top: clamp(32px, 5vh, 48px);
+  margin-top: clamp(24px, 4vh, 36px);
   max-width: 36ch;
   font-size: 13px;
   line-height: 1.6;
@@ -251,25 +225,6 @@
   .morning-home__tool-label {
     display: none;
   }
-
-  .morning-home__speech-bubble {
-    top: clamp(100px, 20vh, 160px);
-    left: 50%;
-    max-width: min(300px, 88vw);
-    transform: translateX(-8%);
-    text-align: center;
-  }
-
-  .morning-home__speech-bubble::after {
-    left: 28%;
-    top: auto;
-    bottom: -10px;
-    transform: none;
-    border: 10px solid transparent;
-    border-top-color: rgba(18, 16, 32, 0.82);
-    border-right-color: transparent;
-  }
-
   .morning-home__mood-chip {
     right: 12px;
     bottom: 12px;

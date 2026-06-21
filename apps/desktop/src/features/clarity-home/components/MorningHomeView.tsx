@@ -27,9 +27,6 @@ export function MorningHomeView({ firstName: firstNameProp }: MorningHomeViewPro
             onError={() => setBgFailed(true)}
           />
         )}
-        <div className="morning-home__speech-bubble" aria-label="Companion message">
-          I&apos;m here with you. Let&apos;s make today meaningful. 💜
-        </div>
       </div>
 
       <div className="morning-home__toolbar">
