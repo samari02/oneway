@@ -202,11 +202,20 @@
 
 /* Hero character (CSS/SVG glowing orb) */
 .clarity-home .ch-hero-mascot-wrap {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: clamp(120px, 14vw, 160px);
   height: clamp(140px, 16vw, 180px);
+  background:
+    radial-gradient(
+      ellipse 90% 80% at 50% 55%,
+      rgba(107, 86, 225, 0.18) 0%,
+      rgba(56, 189, 248, 0.06) 35%,
+      transparent 72%
+    );
+  border-radius: 50%;
 }
 
 /* Intention card */
