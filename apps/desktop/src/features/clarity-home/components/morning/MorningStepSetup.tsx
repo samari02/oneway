@@ -64,38 +64,29 @@ export function MorningStepSetup({ daySetup, onToggle, onComplete }: MorningStep
           Day setup preferences
         </h2>
 
-        <div className="mf-setup__grid">
-          <div className="mf-setup__list">
-            {SETUP_ITEMS.map((item) => {
-              const on = daySetup[item.key]
-              return (
-                <div
-                  key={item.key}
-                  className={`mf-toggle-row${on ? ' mf-toggle-row--active' : ''}${item.minimal ? ' mf-toggle-row--minimal' : ''}`}
-                >
-                  <div className="mf-toggle-row__text">
-                    <span className="mf-toggle-row__label">{item.label}</span>
-                    <span className="mf-toggle-row__hint">{item.hint}</span>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={on}
-                    aria-label={`${item.label}: ${on ? 'on' : 'off'}`}
-                    className={`mf-switch${on ? ' mf-switch--on' : ''}`}
-                    onClick={() => handleToggle(item.key)}
-                  />
+        <div className="mf-setup__list">
+          {SETUP_ITEMS.map((item) => {
+            const on = daySetup[item.key]
+            return (
+              <div
+                key={item.key}
+                className={`mf-toggle-row${on ? ' mf-toggle-row--active' : ''}${item.minimal ? ' mf-toggle-row--minimal' : ''}`}
+              >
+                <div className="mf-toggle-row__text">
+                  <span className="mf-toggle-row__label">{item.label}</span>
+                  <span className="mf-toggle-row__hint">{item.hint}</span>
                 </div>
-              )
-            })}
-          </div>
-
-          <aside className="mf-setup__aside">
-            <h3 className="mf-setup__aside-title">Why these?</h3>
-            <p className="mf-setup__aside-text">
-              These are based on days like this in the past.
-            </p>
-          </aside>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={on}
+                  aria-label={`${item.label}: ${on ? 'on' : 'off'}`}
+                  className={`mf-switch${on ? ' mf-switch--on' : ''}`}
+                  onClick={() => handleToggle(item.key)}
+                />
+              </div>
+            )
+          })}
         </div>
 
         <footer className="mf-setup__footer">

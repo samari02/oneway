@@ -264,10 +264,6 @@
   text-align: center;
 }
 
-.morning-flow__step--wide {
-  max-width: 920px;
-}
-
 .morning-flow__step--forward {
   animation: mf-step-in-forward var(--mf-duration) var(--mf-ease) both;
 }
@@ -589,21 +585,15 @@
 
 /* Step 3 — Day setup */
 .mf-setup {
-  width: min(920px, 100%);
-}
-
-.mf-setup__grid {
-  display: grid;
-  grid-template-columns: 1fr min(280px, 100%);
-  gap: clamp(16px, 3vw, 24px);
-  margin-top: clamp(20px, 4vh, 32px);
-  text-align: left;
+  width: min(640px, 100%);
 }
 
 .mf-setup__list {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-top: clamp(20px, 4vh, 32px);
+  text-align: left;
 }
 
 .mf-toggle-row {
@@ -680,28 +670,6 @@
   transform: translateX(18px);
 }
 
-.mf-setup__aside {
-  padding: clamp(18px, 2.5vw, 24px);
-  border-radius: var(--mf-radius-lg);
-  background: rgba(8, 8, 16, 0.55);
-  border: 1px solid var(--mf-line);
-  backdrop-filter: blur(12px);
-  align-self: start;
-}
-
-.mf-setup__aside-title {
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.mf-setup__aside-text {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--mf-muted);
-}
-
 .mf-setup__footer {
   display: flex;
   align-items: center;
@@ -754,14 +722,6 @@
 }
 
 @media (max-width: 768px) {
-  .mf-setup__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .mf-setup__aside {
-    order: -1;
-  }
-
   .morning-flow__mood-chip {
     right: 12px;
     bottom: 12px;

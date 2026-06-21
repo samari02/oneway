@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { MORNING_BG_SRC } from '../../companion-avatars'
+import { MORNING_AMBIENT_AUDIO_SRC, MORNING_BG_SRC } from '../../companion-avatars'
+import { useMorningAmbientAudio } from '../../hooks/useMorningAmbientAudio'
 import { useMorningFlow } from '../../hooks/useMorningFlow'
 import './MorningFlow.css'
 import { MorningStepIntention } from './MorningStepIntention'
@@ -28,7 +29,9 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
     completeFlow,
   } = useMorningFlow({ initialIntention })
 
-  const stepClass = `morning-flow__step morning-flow__step--${direction}${step === 3 ? ' morning-flow__step--wide' : ''}`
+  useMorningAmbientAudio(MORNING_AMBIENT_AUDIO_SRC)
+
+  const stepClass = `morning-flow__step morning-flow__step--${direction}`
 
   return (
     <div className={`morning-flow${bgFailed ? ' morning-flow--no-bg' : ''}${step === 1 ? ' morning-flow--welcome' : ''}`}>
