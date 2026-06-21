@@ -9,8 +9,8 @@ interface GlowingOrbCharacterProps {
 
 export function GlowingOrbCharacter({ size = 160, className }: GlowingOrbCharacterProps) {
   const uid = useId().replace(/:/g, '')
-  const sphere = Math.round(size * 0.55)
-  const ringW = Math.round(sphere * 0.52)
+  const sphere = Math.round(size * 0.62)
+  const ringW = Math.round(sphere * 0.7)
 
   return (
     <div
@@ -20,7 +20,7 @@ export function GlowingOrbCharacter({ size = 160, className }: GlowingOrbCharact
       aria-label="Companion orb"
     >
       <div className="glowing-orb__stars" aria-hidden>
-        {Array.from({ length: 8 }, (_, i) => (
+        {Array.from({ length: 12 }, (_, i) => (
           <span key={i} />
         ))}
       </div>
@@ -38,39 +38,26 @@ export function GlowingOrbCharacter({ size = 160, className }: GlowingOrbCharact
               focusable="false"
             >
               <defs>
-                <radialGradient id={`${uid}-eye`} cx="45%" cy="40%" r="55%">
-                  <stop offset="0%" stopColor="#ffffff" />
-                  <stop offset="25%" stopColor="#ffffff" />
-                  <stop offset="55%" stopColor="#e0f7fa" />
-                  <stop offset="100%" stopColor="#67e8f9" />
+                <radialGradient id={`${uid}-eye-bloom`} cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+                  <stop offset="22%" stopColor="#ffffff" stopOpacity="1" />
+                  <stop offset="34%" stopColor="#93c5fd" stopOpacity="0.72" />
+                  <stop offset="64%" stopColor="#38bdf8" stopOpacity="0.22" />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
                 </radialGradient>
-                <filter id={`${uid}-eye-glow`} x="-400%" y="-400%" width="900%" height="900%">
-                  <feGaussianBlur stdDeviation="5" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
               </defs>
-              {/* Eye outer bloom */}
-              <circle cx="38" cy="48" r="7.5" fill="#38bdf8" opacity="0.22" filter={`url(#${uid}-eye-glow)`} />
-              <circle cx="62" cy="48" r="7.5" fill="#38bdf8" opacity="0.22" filter={`url(#${uid}-eye-glow)`} />
-              {/* Eye cyan halos */}
-              <circle cx="38" cy="48" r="4.5" fill="#67e8f9" opacity="0.55" filter={`url(#${uid}-eye-glow)`} />
-              <circle cx="62" cy="48" r="4.5" fill="#67e8f9" opacity="0.55" filter={`url(#${uid}-eye-glow)`} />
-              {/* Eye cores — white-hot center with bloom */}
-              <circle cx="38" cy="48" r="2.8" fill="#ffffff" filter={`url(#${uid}-eye-glow)`} />
-              <circle cx="62" cy="48" r="2.8" fill="#ffffff" filter={`url(#${uid}-eye-glow)`} />
-              <circle cx="38" cy="48" r="1.6" fill={`url(#${uid}-eye)`} />
-              <circle cx="62" cy="48" r="1.6" fill={`url(#${uid}-eye)`} />
+              <circle cx="35" cy="48" r="6.8" fill={`url(#${uid}-eye-bloom)`} />
+              <circle cx="65" cy="48" r="6.8" fill={`url(#${uid}-eye-bloom)`} />
+              <circle cx="35" cy="48" r="2.25" fill="#ffffff" />
+              <circle cx="65" cy="48" r="2.25" fill="#ffffff" />
               {/* Smile */}
               <path
                 d="M 46 54 Q 50 56.5 54 54"
                 fill="none"
-                stroke="#ffffff"
+                stroke="#bfdbfe"
                 strokeWidth="0.7"
                 strokeLinecap="round"
-                opacity="0.85"
+                opacity="0.45"
               />
             </svg>
           </div>
@@ -83,30 +70,40 @@ export function GlowingOrbCharacter({ size = 160, className }: GlowingOrbCharact
           focusable="false"
         >
           <defs>
-            <filter id={`${uid}-ring-glow`} x="-30%" y="-200%" width="160%" height="500%">
-              <feGaussianBlur stdDeviation="2.4" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
             <linearGradient id={`${uid}-ring-stroke`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.12" />
-              <stop offset="18%" stopColor="#67e8f9" stopOpacity="0.92" />
+              <stop offset="0%" stopColor="#2563eb" stopOpacity="0.08" />
+              <stop offset="13%" stopColor="#38bdf8" stopOpacity="0.75" />
+              <stop offset="28%" stopColor="#e0f2fe" stopOpacity="1" />
               <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
-              <stop offset="82%" stopColor="#67e8f9" stopOpacity="0.92" />
-              <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.12" />
+              <stop offset="72%" stopColor="#e0f2fe" stopOpacity="1" />
+              <stop offset="87%" stopColor="#38bdf8" stopOpacity="0.75" />
+              <stop offset="100%" stopColor="#2563eb" stopOpacity="0.08" />
+            </linearGradient>
+            <linearGradient id={`${uid}-ring-bloom`} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#2563eb" stopOpacity="0" />
+              <stop offset="22%" stopColor="#38bdf8" stopOpacity="0.22" />
+              <stop offset="50%" stopColor="#93c5fd" stopOpacity="0.36" />
+              <stop offset="78%" stopColor="#38bdf8" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
             </linearGradient>
           </defs>
           <ellipse
             cx="60"
             cy="14"
-            rx="40"
-            ry="9"
+            rx="48"
+            ry="9.2"
+            fill="none"
+            stroke={`url(#${uid}-ring-bloom)`}
+            strokeWidth="5.2"
+          />
+          <ellipse
+            cx="60"
+            cy="14"
+            rx="46"
+            ry="8.2"
             fill="none"
             stroke={`url(#${uid}-ring-stroke)`}
-            strokeWidth="1.35"
-            filter={`url(#${uid}-ring-glow)`}
+            strokeWidth="1.65"
           />
         </svg>
       </div>

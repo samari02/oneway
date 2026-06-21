@@ -1,4 +1,4 @@
-/* Simplified glowing orb — single halo, sphere with box-shadow rim, face SVG, ring */
+/* Simplified glowing orb - CSS/SVG gradients only, no turbulence filters. */
 
 .glowing-orb {
   position: relative;
@@ -10,31 +10,68 @@
   flex-shrink: 0;
 }
 
-/* ── Faint starfield behind orb ── */
+/* -- Faint starfield and ground mist behind orb -- */
 .glowing-orb__stars {
   position: absolute;
-  inset: -20%;
+  inset: -34% -46% -28%;
   pointer-events: none;
   z-index: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.14) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 84% 34%, rgba(147, 197, 253, 0.12) 0 1px, transparent 1.7px),
+    radial-gradient(ellipse 72% 15% at 50% 78%, rgba(56, 189, 248, 0.12), transparent 72%),
+    radial-gradient(ellipse 54% 9% at 52% 83%, rgba(255, 255, 255, 0.08), transparent 70%);
+}
+
+.glowing-orb__stars::before {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 10%;
+  height: 28%;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(147, 197, 253, 0.12), rgba(56, 189, 248, 0.05) 46%, transparent 72%);
+  filter: blur(14px);
+}
+
+.glowing-orb__stars::after {
+  content: '';
+  position: absolute;
+  left: 22%;
+  right: 18%;
+  bottom: 25%;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.2), rgba(255, 255, 255, 0.18), rgba(56, 189, 248, 0.16), transparent);
+  filter: blur(3px);
 }
 
 .glowing-orb__stars span {
   position: absolute;
   border-radius: 50%;
   background: #fff;
-  opacity: 0.45;
+  box-shadow: 0 0 7px rgba(147, 197, 253, 0.55);
+  opacity: 0.38;
 }
 
-.glowing-orb__stars span:nth-child(1) { width: 1.5px; height: 1.5px; top: 12%; left: 18%; opacity: 0.35; }
-.glowing-orb__stars span:nth-child(2) { width: 2px; height: 2px; top: 28%; left: 72%; opacity: 0.55; }
-.glowing-orb__stars span:nth-child(3) { width: 1px; height: 1px; top: 55%; left: 8%; opacity: 0.30; }
-.glowing-orb__stars span:nth-child(4) { width: 1.5px; height: 1.5px; top: 68%; left: 85%; opacity: 0.40; }
-.glowing-orb__stars span:nth-child(5) { width: 2px; height: 2px; top: 8%; left: 48%; opacity: 0.50; }
-.glowing-orb__stars span:nth-child(6) { width: 1px; height: 1px; top: 42%; left: 92%; opacity: 0.35; }
-.glowing-orb__stars span:nth-child(7) { width: 1.5px; height: 1.5px; top: 78%; left: 32%; opacity: 0.45; }
-.glowing-orb__stars span:nth-child(8) { width: 1px; height: 1px; top: 22%; left: 5%; opacity: 0.30; }
+.glowing-orb__stars span:nth-child(1) { width: 1.5px; height: 1.5px; top: 14%; left: 17%; opacity: 0.34; }
+.glowing-orb__stars span:nth-child(2) { width: 2px; height: 2px; top: 29%; left: 75%; opacity: 0.48; }
+.glowing-orb__stars span:nth-child(3) { width: 1px; height: 1px; top: 57%; left: 8%; opacity: 0.28; }
+.glowing-orb__stars span:nth-child(4) { width: 1.5px; height: 1.5px; top: 66%; left: 88%; opacity: 0.34; }
+.glowing-orb__stars span:nth-child(5) { width: 2px; height: 2px; top: 9%; left: 51%; opacity: 0.42; }
+.glowing-orb__stars span:nth-child(6) { width: 1px; height: 1px; top: 43%; left: 94%; opacity: 0.28; }
+.glowing-orb__stars span:nth-child(7) { width: 1.5px; height: 1.5px; top: 76%; left: 31%; opacity: 0.36; }
+.glowing-orb__stars span:nth-child(8) { width: 1px; height: 1px; top: 23%; left: 5%; opacity: 0.26; }
+.glowing-orb__stars span:nth-child(9) { width: 1px; height: 1px; top: 48%; left: 42%; opacity: 0.24; }
+.glowing-orb__stars span:nth-child(10) { width: 1.5px; height: 1.5px; top: 18%; left: 91%; opacity: 0.26; }
+.glowing-orb__stars span:nth-child(11) { width: 1px; height: 1px; top: 64%; left: 62%; opacity: 0.22; }
+.glowing-orb__stars span:nth-child(12) { width: 1px; height: 1px; top: 35%; left: 28%; opacity: 0.24; }
 
-/* ── Diffuse purple halo behind sphere (circular, no squares) ── */
+/* -- Diffuse purple halo behind sphere (circular, no square artifacts) -- */
 .glowing-orb__halo {
   position: absolute;
   left: 50%;
@@ -45,26 +82,19 @@
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
-  background:
-    radial-gradient(
-      circle at 50% 62%,
-      rgba(56, 189, 248, 0.14) 0%,
-      rgba(56, 189, 248, 0.06) 18%,
-      transparent 38%
-    ),
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(107, 86, 225, 0.42) 0%,
-      rgba(107, 86, 225, 0.28) 14%,
-      rgba(107, 86, 225, 0.16) 28%,
-      rgba(107, 86, 225, 0.08) 48%,
-      rgba(107, 86, 225, 0.03) 68%,
-      transparent 86%
-    );
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(147, 197, 253, 0.12) 0%,
+    rgba(107, 86, 225, 0.38) 14%,
+    rgba(59, 130, 246, 0.18) 32%,
+    rgba(107, 86, 225, 0.09) 52%,
+    rgba(107, 86, 225, 0.035) 70%,
+    transparent 86%
+  );
   filter: blur(44px);
 }
 
-/* ── Body container (sphere + ring, floats) ── */
+/* -- Body container (sphere + ring, floats) -- */
 .glowing-orb__body {
   position: relative;
   z-index: 1;
@@ -81,7 +111,7 @@
   height: var(--orb-sphere, 88px);
 }
 
-/* ── The sphere: translucent crystal body, blue-bottom / violet-top gradient, neon rim ── */
+/* -- The sphere: deep blue-violet body with directional contour glow -- */
 .glowing-orb__sphere {
   position: relative;
   width: 100%;
@@ -89,80 +119,59 @@
   border-radius: 50%;
   overflow: hidden;
   background:
-    /* Upper-left specular highlight */
+    /* Upper-left specular bloom */
     radial-gradient(
-      ellipse 28% 20% at 28% 22%,
-      rgba(255, 255, 255, 0.38) 0%,
-      rgba(255, 255, 255, 0.14) 30%,
-      rgba(255, 255, 255, 0.04) 55%,
+      ellipse 34% 24% at 29% 18%,
+      rgba(255, 255, 255, 0.44) 0%,
+      rgba(196, 181, 253, 0.22) 22%,
+      rgba(167, 139, 250, 0.08) 48%,
       transparent 72%
     ),
-    /* Internal nebula wisp — upper violet mist */
+    /* Right electric-blue edge light */
     radial-gradient(
-      ellipse 55% 38% at 38% 32%,
-      rgba(139, 122, 239, 0.30) 0%,
-      rgba(107, 86, 225, 0.16) 38%,
+      ellipse 34% 76% at 91% 48%,
+      rgba(96, 165, 250, 0.52) 0%,
+      rgba(37, 99, 235, 0.3) 34%,
+      transparent 66%
+    ),
+    /* Bottom cyan lift */
+    radial-gradient(
+      ellipse 78% 32% at 50% 88%,
+      rgba(125, 211, 252, 0.48) 0%,
+      rgba(56, 189, 248, 0.26) 35%,
+      rgba(37, 99, 235, 0.12) 62%,
+      transparent 82%
+    ),
+    /* Subtle violet volume near the top */
+    radial-gradient(
+      ellipse 86% 52% at 50% 18%,
+      rgba(139, 92, 246, 0.28) 0%,
+      rgba(88, 28, 135, 0.2) 38%,
       transparent 72%
     ),
-    /* Internal nebula wisp — lower cyan mist */
+    /* Center depth - dark but alive, not flat black */
     radial-gradient(
-      ellipse 48% 32% at 62% 68%,
-      rgba(56, 189, 248, 0.28) 0%,
-      rgba(34, 211, 238, 0.12) 42%,
-      transparent 72%
-    ),
-    /* Dark translucent center pocket */
-    radial-gradient(
-      circle at 50% 42%,
-      rgba(6, 4, 18, 0.72) 0%,
-      rgba(10, 7, 28, 0.50) 32%,
-      transparent 58%
-    ),
-    /* Upper violet hemisphere wash */
-    radial-gradient(
-      ellipse 95% 52% at 50% -5%,
-      rgba(107, 86, 225, 0.42) 0%,
-      rgba(80, 56, 160, 0.24) 38%,
-      transparent 68%
-    ),
-    /* Electric cyan-blue pool at bottom — key interior gradient */
-    radial-gradient(
-      circle at 50% 115%,
-      rgba(103, 232, 249, 0.72) 0%,
-      rgba(56, 189, 248, 0.52) 10%,
-      rgba(34, 211, 238, 0.32) 22%,
-      rgba(107, 86, 225, 0.18) 42%,
-      transparent 58%
-    ),
-    /* Side purple body shell */
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(14, 10, 40, 0.58) 0%,
-      rgba(30, 18, 70, 0.52) 28%,
-      rgba(52, 34, 110, 0.46) 44%,
-      rgba(80, 56, 160, 0.40) 58%,
-      rgba(107, 86, 225, 0.32) 72%,
-      rgba(139, 122, 239, 0.20) 86%,
-      rgba(160, 145, 245, 0.12) 96%
+      circle at 50% 48%,
+      rgba(7, 12, 44, 0.76) 0%,
+      rgba(17, 24, 73, 0.68) 32%,
+      rgba(49, 32, 120, 0.48) 58%,
+      rgba(91, 70, 204, 0.28) 78%,
+      rgba(180, 160, 255, 0.16) 100%
     );
   box-shadow:
-    /* Inner purple mist */
-    inset 0 0 20px 5px rgba(107, 86, 225, 0.22),
-    inset 0 -8px 16px 2px rgba(56, 189, 248, 0.18),
-    /* Bottom cyan rim + bloom */
-    0 3px 6px 0 rgba(103, 232, 249, 0.95),
-    0 10px 22px 3px rgba(56, 189, 248, 0.62),
-    0 18px 36px 6px rgba(34, 211, 238, 0.38),
-    /* Top violet rim + bloom */
-    0 -3px 6px 0 rgba(180, 160, 255, 0.90),
-    0 -8px 18px 2px rgba(139, 122, 239, 0.55),
-    0 -14px 28px 4px rgba(107, 86, 225, 0.32),
-    /* Wide ambient glow */
-    0 0 70px 22px rgba(107, 86, 225, 0.34),
-    0 0 130px 44px rgba(107, 86, 225, 0.14);
+    inset 0 0 28px 7px rgba(67, 56, 202, 0.36),
+    inset 10px 4px 22px -8px rgba(221, 214, 254, 0.24),
+    inset -11px 0 22px -7px rgba(59, 130, 246, 0.34),
+    inset 0 -10px 18px -5px rgba(125, 211, 252, 0.28),
+    0 -4px 10px -2px rgba(237, 233, 254, 0.92),
+    -5px -8px 18px 0 rgba(167, 139, 250, 0.55),
+    8px 0 20px -2px rgba(59, 130, 246, 0.62),
+    0 10px 23px 0 rgba(56, 189, 248, 0.36),
+    0 0 66px 18px rgba(107, 86, 225, 0.38),
+    0 0 118px 38px rgba(37, 99, 235, 0.14);
 }
 
-/* Asymmetric rim ring — violet top, cyan bottom */
+/* Asymmetric rim ring - violet/white upper-left, blue right, cyan bottom. */
 .glowing-orb__sphere::before {
   content: '';
   position: absolute;
@@ -171,21 +180,39 @@
   pointer-events: none;
   z-index: 1;
   background: conic-gradient(
-    from 225deg at 50% 50%,
-    rgba(103, 232, 249, 0.95) 0deg,
-    rgba(56, 189, 248, 0.90) 50deg,
-    rgba(107, 86, 225, 0.55) 120deg,
-    rgba(180, 160, 255, 0.92) 180deg,
-    rgba(139, 122, 239, 0.70) 240deg,
-    rgba(56, 189, 248, 0.85) 300deg,
-    rgba(103, 232, 249, 0.95) 360deg
+    from 218deg at 50% 50%,
+    rgba(237, 233, 254, 0.98) 0deg,
+    rgba(196, 181, 253, 0.96) 46deg,
+    rgba(109, 40, 217, 0.68) 96deg,
+    rgba(37, 99, 235, 0.82) 150deg,
+    rgba(96, 165, 250, 0.94) 198deg,
+    rgba(125, 211, 252, 0.82) 252deg,
+    rgba(59, 130, 246, 0.54) 288deg,
+    rgba(167, 139, 250, 0.78) 326deg,
+    rgba(237, 233, 254, 0.98) 360deg
   );
-  -webkit-mask: radial-gradient(circle, transparent 66.5%, #000 68.5%, #000 71%, transparent 73%);
-  mask: radial-gradient(circle, transparent 66.5%, #000 68.5%, #000 71%, transparent 73%);
-  filter: blur(0.6px);
+  -webkit-mask: radial-gradient(circle, transparent 65.5%, #000 67.4%, #000 70.4%, transparent 72.6%);
+  mask: radial-gradient(circle, transparent 65.5%, #000 67.4%, #000 70.4%, transparent 72.6%);
+  filter: blur(0.45px);
 }
 
-/* ── Face (eyes + smile) ── */
+.glowing-orb__sphere::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse 16% 56% at 98% 49%, rgba(96, 165, 250, 0.5), transparent 68%),
+    radial-gradient(ellipse 58% 17% at 50% 99%, rgba(125, 211, 252, 0.38), transparent 72%),
+    radial-gradient(ellipse 38% 17% at 25% 4%, rgba(255, 255, 255, 0.28), transparent 70%);
+  -webkit-mask: radial-gradient(circle, transparent 57%, #000 69%, transparent 76%);
+  mask: radial-gradient(circle, transparent 57%, #000 69%, transparent 76%);
+  mix-blend-mode: screen;
+}
+
+/* -- Face (hot-white eyes + faint smile) -- */
 .glowing-orb__face {
   position: absolute;
   inset: 0;
@@ -195,20 +222,15 @@
   z-index: 2;
 }
 
-/* ── Cyan ring beneath sphere ── */
+/* -- Cyan ring beneath sphere -- */
 .glowing-orb__ring {
   width: var(--orb-ring-w, 46px);
   height: auto;
-  margin-top: -5px;
+  margin-top: -3px;
   overflow: visible;
-  filter:
-    drop-shadow(0 0 4px rgba(224, 242, 254, 0.95))
-    drop-shadow(0 0 10px rgba(34, 211, 238, 0.75))
-    drop-shadow(0 0 20px rgba(34, 211, 238, 0.45))
-    drop-shadow(0 0 32px rgba(56, 189, 248, 0.22));
 }
 
-/* ── Idle float animation ── */
+/* -- Idle float animation -- */
 @keyframes glowing-orb-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }
