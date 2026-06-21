@@ -37,7 +37,15 @@ User taps mic
 
 ### OpenAI API key
 
-Whisper requires a user-provided key stored in localStorage as `clarity_openai_api_key` (same key as other OpenAI features in Settings). `hasApiKey()` gates the Whisper path; missing key shows a clear inline error.
+**Yes — in the Tauri desktop app, voice input requires your own OpenAI API key.** Web Speech is disabled in Tauri; audio is sent to OpenAI Whisper (`whisper-1`) after you tap Stop.
+
+| Where | Detail |
+| --- | --- |
+| Storage | `localStorage` key `clarity_openai_api_key` |
+| Settings UI | Sidebar → **Settings** → **✨ AI Features** → **OpenAI API Key** → **Save Key** |
+| Same key as | Goal refinement, morning plan extraction, AI companion |
+
+`hasApiKey()` is checked at record start (not cached on mount). Missing or invalid keys show inline errors pointing to Settings → AI Features.
 
 ### Locale
 
@@ -60,7 +68,12 @@ Ensure usage strings from `Info.plist` are included in shipped macOS bundles per
 - **Web Speech path:** interim results update the textarea preview; final segments commit into the dump.
 - **Whisper path:** final transcript is appended after stop.
 - User **edits text** before **Sort my day** (`extractMorningPlan` / morning-plan LLM flow).
-- **Errors** are non-blocking: no API key, mic denied, no device, or transcription failure — user can keep typing.
+- **Errors** are non-blocking and specific where possible:
+  - No API key → “Add your OpenAI API key in Settings → AI Features…”
+  - Invalid key (401) → update key in Settings
+  - Mic denied / no device → System Settings guidance
+  - Empty or silent recording → “Speak a bit longer, then tap Stop”
+  - Other Whisper failures → generic retry message; details logged to the console as `[transcribeAudio]` / `[useSpeechRecognition]`
 
 ## Known limitations
 
@@ -72,11 +85,11 @@ Ensure usage strings from `Info.plist` are included in shipped macOS bundles per
 ## How to test
 
 1. **Run the app** from the repo root: `pnpm dev:desktop` (prefer a standalone Terminal on macOS for mic prompts).
-2. **Settings:** add a valid OpenAI API key (`clarity_openai_api_key`).
+2. **Add API key:** open **Settings** in the sidebar → **✨ AI Features** → paste an OpenAI key (`sk-…`) → **Save Key**.
 3. Open the **morning flow** and reach the **brain dump** step (`MorningStepIntention`, dump phase).
 4. **Grant microphone** when macOS prompts (System Settings → Privacy & Security → Microphone if needed).
-5. Tap **Speak** or the mic, say a short brain dump, tap **Stop**.
+5. Tap **Speak** or the mic, say a short brain dump (a few seconds), tap **Stop**.
 6. Confirm text appears in the textarea; edit if needed, then **Sort my day** and complete review/priority steps.
-7. **Negative cases:** remove API key (expect Settings message); deny mic (expect permission message); verify typing still works.
+7. **Negative cases:** remove API key (expect Settings message on Speak); deny mic (expect permission message); stop without speaking (expect “No speech detected”); verify typing still works.
 
 Optional: run the frontend in the browser only (`pnpm vite` in `apps/desktop`) to exercise Web Speech where supported, with Whisper fallback when Web Speech fails and a key is set.

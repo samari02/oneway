@@ -15,11 +15,17 @@ const WHISPER_MODEL = 'whisper-1'
 const API_KEY_STORAGE_KEY = 'clarity_openai_api_key'
 
 export function getApiKey(): string | null {
-  return localStorage.getItem(API_KEY_STORAGE_KEY)
+  const key = localStorage.getItem(API_KEY_STORAGE_KEY)?.trim()
+  return key || null
 }
 
 export function setApiKey(key: string): void {
-  localStorage.setItem(API_KEY_STORAGE_KEY, key)
+  const trimmed = key.trim()
+  if (trimmed) {
+    localStorage.setItem(API_KEY_STORAGE_KEY, trimmed)
+  } else {
+    localStorage.removeItem(API_KEY_STORAGE_KEY)
+  }
 }
 
 export function removeApiKey(): void {
@@ -418,31 +424,68 @@ export async function refineGoal(
   return chatWithAI(conversationHistory, currentGoal, context)
 }
 
+function audioFilenameForBlob(blob: Blob): string {
+  const type = blob.type.toLowerCase()
+  if (type.includes('mp4') || type.includes('m4a') || type.includes('aac')) return 'speech.m4a'
+  if (type.includes('mpeg') || type.includes('mp3')) return 'speech.mp3'
+  if (type.includes('wav')) return 'speech.wav'
+  if (type.includes('ogg')) return 'speech.ogg'
+  return 'speech.webm'
+}
+
 export async function transcribeAudio(audio: Blob, lang?: string): Promise<string> {
   const apiKey = getApiKey()
   if (!apiKey) {
     throw new Error('No API key configured')
   }
 
+  if (audio.size === 0) {
+    throw new Error('Empty audio')
+  }
+
   const formData = new FormData()
-  formData.append('file', audio, 'speech.webm')
+  formData.append('file', audio, audioFilenameForBlob(audio))
   formData.append('model', WHISPER_MODEL)
   formData.append('response_format', 'text')
   if (lang) {
     formData.append('language', lang.split('-')[0])
   }
 
-  const response = await fetch(OPENAI_TRANSCRIPTIONS_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: formData,
-  })
+  let response: Response
+  try {
+    response = await fetch(OPENAI_TRANSCRIPTIONS_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: formData,
+    })
+  } catch (err) {
+    console.error('[transcribeAudio] Network request failed:', err)
+    throw new Error('Network error')
+  }
 
   if (!response.ok) {
-    const error = await response.text()
-    throw new Error(error || 'Failed to transcribe audio')
+    const errorBody = await response.text()
+    console.error('[transcribeAudio] OpenAI API error:', response.status, errorBody)
+
+    if (response.status === 401) {
+      throw new Error('Invalid API key')
+    }
+
+    let apiMessage = 'Failed to transcribe audio'
+    try {
+      const parsed = JSON.parse(errorBody) as { error?: { message?: string } }
+      if (parsed.error?.message) {
+        apiMessage = parsed.error.message
+      }
+    } catch {
+      if (errorBody.trim()) {
+        apiMessage = errorBody.trim()
+      }
+    }
+
+    throw new Error(apiMessage)
   }
 
   const text = (await response.text()).trim()

@@ -36,6 +36,32 @@ function resolveSpeechLang(explicit?: string): string {
   return 'en-US'
 }
 
+export const OPENAI_KEY_SETTINGS_HINT =
+  'Add your OpenAI API key in Settings → AI Features (sidebar), then try again.'
+
+function mapTranscriptionError(err: unknown): string | null {
+  if (!(err instanceof Error)) {
+    return 'Could not transcribe your voice. Try again or keep typing.'
+  }
+
+  switch (err.message) {
+    case 'No API key configured':
+      return OPENAI_KEY_SETTINGS_HINT
+    case 'Invalid API key':
+      return 'Your OpenAI API key looks invalid. Update it in Settings → AI Features.'
+    case 'Network error':
+      return 'Voice input needs a network connection. You can keep typing.'
+    case 'Empty audio':
+    case 'No speech detected':
+      return 'No speech detected. Speak a bit longer, then tap Stop.'
+    default:
+      if (err.message && err.message !== 'Failed to transcribe audio') {
+        return err.message
+      }
+      return 'Could not transcribe your voice. Try again or keep typing.'
+  }
+}
+
 function mapSpeechError(error: string): string {
   switch (error) {
     case 'not-allowed':
@@ -94,8 +120,9 @@ export type UseSpeechRecognitionOptions = {
 
 export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitionOptions) {
   const hasWebSpeech = useMemo(() => getSpeechRecognitionCtor() !== null, [])
-  const hasWhisperFallback = useMemo(() => canUseMediaRecorder() && hasApiKey(), [])
-  const isSupported = hasWebSpeech || canUseMediaRecorder()
+  const canRecord = useMemo(() => canUseMediaRecorder(), [])
+  const isTauri = useMemo(() => isRunningInTauri(), [])
+  const isSupported = hasWebSpeech || canRecord
 
   const [isListening, setIsListening] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -142,17 +169,17 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
             try {
               const mimeType = recorder.mimeType || pickRecorderMimeType() || 'audio/webm'
               const blob = new Blob(mediaChunksRef.current, { type: mimeType })
-              if (blob.size > 0) {
-                const text = await transcribeAudio(blob, resolvedLang)
-                onTranscriptRef.current(text, true)
-              }
+              console.info(
+                '[useSpeechRecognition] Transcribing audio blob:',
+                blob.size,
+                'bytes, type:',
+                blob.type || mimeType,
+              )
+              const text = await transcribeAudio(blob, resolvedLang)
+              onTranscriptRef.current(text, true)
             } catch (err) {
-              const message =
-                err instanceof Error && err.message === 'No API key configured'
-                  ? 'Add your OpenAI API key in Settings to use voice input.'
-                  : err instanceof Error && err.message === 'No speech detected'
-                    ? null
-                    : 'Could not transcribe your voice. Try again or keep typing.'
+              console.error('[useSpeechRecognition] Whisper transcription failed:', err)
+              const message = mapTranscriptionError(err)
               if (message) setError(message)
             } finally {
               cleanupMedia()
@@ -162,6 +189,9 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
         },
         { once: true },
       )
+      if (typeof recorder.requestData === 'function') {
+        recorder.requestData()
+      }
       recorder.stop()
     })
   }, [cleanupMedia, resolvedLang])
@@ -214,7 +244,8 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
       const message = mapSpeechError(event.error)
       if (
         !preferWhisperRef.current &&
-        hasWhisperFallback &&
+        canUseMediaRecorder() &&
+        hasApiKey() &&
         (event.error === 'service-not-allowed' || event.error === 'network')
       ) {
         preferWhisperRef.current = true
@@ -253,7 +284,7 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
       setIsListening(false)
       return false
     }
-  }, [hasWhisperFallback, resolvedLang])
+  }, [resolvedLang])
 
   const startWhisperRecording = useCallback(async () => {
     if (!canUseMediaRecorder()) {
@@ -262,7 +293,7 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
     }
 
     if (!hasApiKey()) {
-      setError('Add your OpenAI API key in Settings to use voice input.')
+      setError(OPENAI_KEY_SETTINGS_HINT)
       return false
     }
 
@@ -283,9 +314,10 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
       engineRef.current = 'whisper'
       listeningRef.current = true
       setIsListening(true)
-      recorder.start()
+      recorder.start(250)
       return true
     } catch (err) {
+      console.error('[useSpeechRecognition] Failed to start MediaRecorder:', err)
       cleanupMedia()
       const name = err instanceof DOMException ? err.name : ''
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
@@ -310,7 +342,8 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
       return
     }
 
-    const useWhisper = preferWhisperRef.current || (!hasWebSpeech && hasWhisperFallback)
+    const whisperAvailable = canRecord && hasApiKey()
+    const useWhisper = preferWhisperRef.current || (!hasWebSpeech && (whisperAvailable || isTauri))
     if (useWhisper) {
       await startWhisperRecording()
       return
@@ -319,7 +352,7 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
     if (hasWebSpeech) {
       const started = startWebSpeech()
       if (started) return
-      if (hasWhisperFallback) {
+      if (whisperAvailable) {
         preferWhisperRef.current = true
         await startWhisperRecording()
         return
@@ -328,13 +361,18 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
       return
     }
 
-    if (hasWhisperFallback) {
+    if (whisperAvailable) {
       await startWhisperRecording()
       return
     }
 
+    if (isTauri && canRecord && !hasApiKey()) {
+      setError(OPENAI_KEY_SETTINGS_HINT)
+      return
+    }
+
     setError('Voice input is not available in this environment.')
-  }, [hasWebSpeech, hasWhisperFallback, startWebSpeech, startWhisperRecording])
+  }, [canRecord, hasWebSpeech, isTauri, startWebSpeech, startWhisperRecording])
 
   const toggle = useCallback(() => {
     if (listeningRef.current) {
