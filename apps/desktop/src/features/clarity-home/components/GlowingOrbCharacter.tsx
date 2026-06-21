@@ -1,23 +1,27 @@
 import { useId, type CSSProperties } from 'react'
+import { HERO_MONK_SRC } from '../companion-avatars'
+import type { CompanionDesignVariant } from '../hooks/useCompanionDesignVariant'
 import './GlowingOrbCharacter.css'
 
 interface GlowingOrbCharacterProps {
   /** Total visual height in px (sphere + ring + bloom). */
   size?: number
   className?: string
+  variant?: CompanionDesignVariant
 }
 
-export function GlowingOrbCharacter({ size = 160, className }: GlowingOrbCharacterProps) {
+export function GlowingOrbCharacter({ size = 160, className, variant = 'orb' }: GlowingOrbCharacterProps) {
   const uid = useId().replace(/:/g, '')
   const sphere = Math.round(size * 0.62)
   const ringW = Math.round(sphere * 0.7)
+  const isMonk = variant === 'monk'
 
   return (
     <div
-      className={`glowing-orb${className ? ` ${className}` : ''}`}
+      className={`glowing-orb${isMonk ? ' glowing-orb--monk' : ''}${className ? ` ${className}` : ''}`}
       style={{ '--orb-size': `${size}px`, '--orb-sphere': `${sphere}px`, '--orb-ring-w': `${ringW}px` } as CSSProperties}
       role="img"
-      aria-label="Companion orb"
+      aria-label={isMonk ? 'Companion monk' : 'Companion orb'}
     >
       <div className="glowing-orb__stars" aria-hidden>
         {Array.from({ length: 12 }, (_, i) => (
@@ -25,90 +29,98 @@ export function GlowingOrbCharacter({ size = 160, className }: GlowingOrbCharact
         ))}
       </div>
 
-      {/* Diffuse purple halo behind everything */}
-      <div className="glowing-orb__halo" aria-hidden />
-
       <div className="glowing-orb__body">
-        <div className="glowing-orb__sphere-wrap">
-          <div className="glowing-orb__sphere">
+        {isMonk ? (
+          <img
+            className="glowing-orb__monk"
+            src={HERO_MONK_SRC}
+            alt=""
+            draggable={false}
+          />
+        ) : (
+          <>
+            <div className="glowing-orb__sphere-wrap">
+              <div className="glowing-orb__sphere">
+                <svg
+                  className="glowing-orb__face"
+                  viewBox="0 0 100 100"
+                  aria-hidden
+                  focusable="false"
+                >
+                  <defs>
+                    <radialGradient id={`${uid}-eye-bloom`} cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+                      <stop offset="22%" stopColor="#ffffff" stopOpacity="1" />
+                      <stop offset="34%" stopColor="#93c5fd" stopOpacity="0.72" />
+                      <stop offset="64%" stopColor="#38bdf8" stopOpacity="0.22" />
+                      <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+                    </radialGradient>
+                  </defs>
+                  <g className="glowing-orb__eyes">
+                    <circle cx="33" cy="48" r="6.8" fill={`url(#${uid}-eye-bloom)`} />
+                    <circle cx="67" cy="48" r="6.8" fill={`url(#${uid}-eye-bloom)`} />
+                    <circle cx="33" cy="48" r="2.25" fill="#ffffff" />
+                    <circle cx="67" cy="48" r="2.25" fill="#ffffff" />
+                  </g>
+                  {/* Smile */}
+                  <path
+                    className="glowing-orb__mouth"
+                    d="M 47 54 Q 50 56 53 54"
+                    fill="none"
+                    stroke="#67e8f9"
+                    strokeWidth="0.85"
+                    strokeLinecap="round"
+                    opacity="0.72"
+                  />
+                </svg>
+              </div>
+            </div>
+
             <svg
-              className="glowing-orb__face"
-              viewBox="0 0 100 100"
+              className="glowing-orb__ring"
+              viewBox="0 0 120 28"
               aria-hidden
               focusable="false"
             >
               <defs>
-                <radialGradient id={`${uid}-eye-bloom`} cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-                  <stop offset="22%" stopColor="#ffffff" stopOpacity="1" />
-                  <stop offset="34%" stopColor="#93c5fd" stopOpacity="0.72" />
-                  <stop offset="64%" stopColor="#38bdf8" stopOpacity="0.22" />
-                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
-                </radialGradient>
+                <linearGradient id={`${uid}-ring-stroke`} x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#2563eb" stopOpacity="0.02" />
+                  <stop offset="12%" stopColor="#0891b2" stopOpacity="0.36" />
+                  <stop offset="27%" stopColor="#22d3ee" stopOpacity="0.9" />
+                  <stop offset="50%" stopColor="#67e8f9" stopOpacity="0.96" />
+                  <stop offset="73%" stopColor="#22d3ee" stopOpacity="0.9" />
+                  <stop offset="88%" stopColor="#0891b2" stopOpacity="0.36" />
+                  <stop offset="100%" stopColor="#2563eb" stopOpacity="0.02" />
+                </linearGradient>
+                <linearGradient id={`${uid}-ring-bloom`} x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#2563eb" stopOpacity="0" />
+                  <stop offset="24%" stopColor="#22d3ee" stopOpacity="0.22" />
+                  <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.2" />
+                  <stop offset="76%" stopColor="#22d3ee" stopOpacity="0.22" />
+                  <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
+                </linearGradient>
               </defs>
-              <g className="glowing-orb__eyes">
-                <circle cx="33" cy="48" r="6.8" fill={`url(#${uid}-eye-bloom)`} />
-                <circle cx="67" cy="48" r="6.8" fill={`url(#${uid}-eye-bloom)`} />
-                <circle cx="33" cy="48" r="2.25" fill="#ffffff" />
-                <circle cx="67" cy="48" r="2.25" fill="#ffffff" />
-              </g>
-              {/* Smile */}
-              <path
-                className="glowing-orb__mouth"
-                d="M 47 54 Q 50 56 53 54"
+              <ellipse
+                cx="60"
+                cy="14"
+                rx="47"
+                ry="8.6"
                 fill="none"
-                stroke="#67e8f9"
-                strokeWidth="0.85"
-                strokeLinecap="round"
-                opacity="0.72"
+                stroke={`url(#${uid}-ring-bloom)`}
+                strokeWidth="2.6"
+              />
+              <ellipse
+                cx="60"
+                cy="14"
+                rx="46"
+                ry="8.2"
+                fill="none"
+                stroke={`url(#${uid}-ring-stroke)`}
+                strokeWidth="1.9"
               />
             </svg>
-          </div>
-        </div>
-
-        <svg
-          className="glowing-orb__ring"
-          viewBox="0 0 120 28"
-          aria-hidden
-          focusable="false"
-        >
-          <defs>
-            <linearGradient id={`${uid}-ring-stroke`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#2563eb" stopOpacity="0.02" />
-              <stop offset="12%" stopColor="#0891b2" stopOpacity="0.36" />
-              <stop offset="27%" stopColor="#22d3ee" stopOpacity="0.9" />
-              <stop offset="50%" stopColor="#67e8f9" stopOpacity="0.96" />
-              <stop offset="73%" stopColor="#22d3ee" stopOpacity="0.9" />
-              <stop offset="88%" stopColor="#0891b2" stopOpacity="0.36" />
-              <stop offset="100%" stopColor="#2563eb" stopOpacity="0.02" />
-            </linearGradient>
-            <linearGradient id={`${uid}-ring-bloom`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#2563eb" stopOpacity="0" />
-              <stop offset="24%" stopColor="#22d3ee" stopOpacity="0.22" />
-              <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.2" />
-              <stop offset="76%" stopColor="#22d3ee" stopOpacity="0.22" />
-              <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <ellipse
-            cx="60"
-            cy="14"
-            rx="47"
-            ry="8.6"
-            fill="none"
-            stroke={`url(#${uid}-ring-bloom)`}
-            strokeWidth="2.6"
-          />
-          <ellipse
-            cx="60"
-            cy="14"
-            rx="46"
-            ry="8.2"
-            fill="none"
-            stroke={`url(#${uid}-ring-stroke)`}
-            strokeWidth="1.9"
-          />
-        </svg>
+          </>
+        )}
       </div>
     </div>
   )

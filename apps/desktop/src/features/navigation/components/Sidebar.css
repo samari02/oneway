@@ -159,7 +159,42 @@
 
 /* Footer */
 .sidebar__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
   padding: var(--space-xs);
+}
+
+/* Companion design toggle */
+.sidebar__design-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 11px;
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar__design-toggle:hover {
+  background: rgba(125, 216, 196, 0.15);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .sidebar__design-toggle:hover {
+  background: rgba(107, 86, 225, 0.1);
+}
+
+.sidebar__design-toggle--active {
+  color: var(--color-mint);
+}
+
+[data-theme="dark"] .sidebar__design-toggle--active {
+  color: #6b56e1;
 }
 
 /* Pin Button */

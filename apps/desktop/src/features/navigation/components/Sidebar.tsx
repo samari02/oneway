@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useCompanionDesignVariant } from '@/features/clarity-home/hooks/useCompanionDesignVariant'
 import './Sidebar.css'
 
 export type ViewType = 'today' | 'clarity-home' | 'screen-time' | 'boundaries' | 'settings'
@@ -63,6 +64,12 @@ const Icons = {
       <path d="M15 6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1"/>
     </svg>
   ),
+  companionDesign: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4"/>
+      <path d="M6 20v-1.2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4V20"/>
+    </svg>
+  ),
 }
 
 interface NavItem {
@@ -90,6 +97,7 @@ export function Sidebar({ currentView, onNavigate, onPinnedChange }: SidebarProp
     const saved = localStorage.getItem('sidebar-pinned')
     return saved === 'true'
   })
+  const { isMonk, toggleVariant } = useCompanionDesignVariant()
 
   useEffect(() => {
     localStorage.setItem('sidebar-pinned', String(isPinned))
@@ -126,6 +134,15 @@ export function Sidebar({ currentView, onNavigate, onPinnedChange }: SidebarProp
       <div className="sidebar__spacer" />
       
       <div className="sidebar__footer">
+        <button
+          className={`sidebar__design-toggle${isMonk ? ' sidebar__design-toggle--active' : ''}`}
+          onClick={toggleVariant}
+          title={isMonk ? 'Switch to orb companion' : 'Switch to monk companion'}
+          aria-pressed={isMonk}
+        >
+          {Icons.companionDesign}
+          <span className="sidebar__label">{isMonk ? 'Monk design' : 'Orb design'}</span>
+        </button>
         <button 
           className="sidebar__pin-btn"
           onClick={() => setIsPinned(!isPinned)}

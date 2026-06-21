@@ -11,44 +11,16 @@
   isolation: isolate;
 }
 
-/* -- Faint starfield and ground mist behind orb -- */
+/* -- Faint starfield particles behind orb/monk (no ground-mist circle) -- */
 .glowing-orb__stars {
   position: absolute;
   inset: -36% -54% -30%;
   pointer-events: none;
   z-index: 1;
   overflow: visible;
-  border-radius: 999px;
   background:
     radial-gradient(circle at 18% 20%, rgba(186, 230, 253, 0.12) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 84% 34%, rgba(147, 197, 253, 0.16) 0 1px, transparent 1.8px),
-    radial-gradient(ellipse 64% 11% at 50% 82%, rgba(56, 189, 248, 0.07), transparent 76%),
-    radial-gradient(ellipse 42% 6% at 52% 86%, rgba(124, 58, 237, 0.035), transparent 74%);
-}
-
-.glowing-orb__stars::before {
-  content: '';
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  bottom: 10%;
-  height: 28%;
-  border-radius: 50%;
-  background:
-    radial-gradient(ellipse at 50% 50%, rgba(147, 197, 253, 0.12), rgba(56, 189, 248, 0.05) 46%, transparent 72%);
-  filter: blur(14px);
-}
-
-.glowing-orb__stars::after {
-  content: '';
-  position: absolute;
-  left: 22%;
-  right: 18%;
-  bottom: 25%;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.12), rgba(56, 189, 248, 0.13), rgba(124, 58, 237, 0.08), transparent);
-  filter: blur(2px);
+    radial-gradient(circle at 84% 34%, rgba(147, 197, 253, 0.16) 0 1px, transparent 1.8px);
 }
 
 .glowing-orb__stars span {
@@ -75,29 +47,6 @@
 .glowing-orb__stars span:nth-child(10) { width: 1.75px; height: 1.75px; top: 17%; left: 91%; opacity: 0.34; --particle-x: -10px; --particle-y: -10px; animation-duration: 8.8s; animation-delay: -4.8s; }
 .glowing-orb__stars span:nth-child(11) { width: 1.35px; height: 1.35px; top: 63%; left: 62%; opacity: 0.3; --particle-x: 7px; --particle-y: -11px; animation-duration: 12.5s; animation-delay: -7.1s; }
 .glowing-orb__stars span:nth-child(12) { width: 1.5px; height: 1.5px; top: 34%; left: 28%; opacity: 0.33; --particle-x: 8px; --particle-y: -13px; animation-duration: 9.8s; animation-delay: -1.8s; }
-
-/* -- Diffuse purple halo behind sphere (circular, no square artifacts) -- */
-.glowing-orb__halo {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  width: 250%;
-  height: 250%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(
-    circle at 50% 48%,
-    rgba(103, 232, 249, 0.025) 0%,
-    rgba(107, 86, 225, 0.13) 30%,
-    rgba(59, 130, 246, 0.065) 54%,
-    rgba(76, 29, 149, 0.025) 70%,
-    transparent 88%
-  );
-  filter: blur(72px);
-  opacity: 0.72;
-}
 
 /* -- Body container (sphere + ring, floats) -- */
 .glowing-orb__body {
@@ -171,9 +120,7 @@
     0 -4px 8px -4px rgba(167, 139, 250, 0.24),
     -5px -8px 14px 0 rgba(139, 92, 246, 0.34),
     8px 0 16px -3px rgba(59, 130, 246, 0.44),
-    0 9px 18px 0 rgba(56, 189, 248, 0.24),
-    0 0 34px 6px rgba(107, 86, 225, 0.16),
-    0 0 56px 12px rgba(37, 99, 235, 0.055);
+    0 9px 18px 0 rgba(56, 189, 248, 0.24);
 }
 
 /* Asymmetric rim ring - violet upper-left, blue right, cyan bottom. */
@@ -235,6 +182,20 @@
 
 .glowing-orb__mouth {
   filter: drop-shadow(0 0 2px rgba(103, 232, 249, 0.42));
+}
+
+/* -- Monk avatar (replaces orb body; particles stay behind) -- */
+.glowing-orb__monk {
+  width: calc(var(--orb-sphere, 88px) * 2.2);
+  height: auto;
+  max-height: calc(var(--orb-size, 160px) * 1.35);
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.glowing-orb--monk .glowing-orb__body {
+  justify-content: center;
 }
 
 /* -- Cyan ring beneath sphere -- */
