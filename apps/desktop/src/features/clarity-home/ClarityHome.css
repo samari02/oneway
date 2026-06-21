@@ -1,0 +1,637 @@
+/* Clarity home — dark-first lavender dashboard (scoped to classic app) */
+
+.clarity-home {
+  --ch-bg: #12101a;
+  --ch-surface: #1c1828;
+  --ch-surface-glass: rgba(28, 24, 40, 0.92);
+  --ch-ink: #f0edf5;
+  --ch-muted: #9b93ad;
+  --ch-line: #2e2840;
+  --ch-purple: #a78bfa;
+  --ch-purple-soft: rgba(139, 92, 246, 0.15);
+  --ch-purple-deep: #c4b5fd;
+  --ch-pink: #e879f9;
+  --ch-pink-soft: rgba(240, 171, 252, 0.1);
+  --ch-lavender: rgba(139, 92, 246, 0.12);
+  --ch-lavender-deep: rgba(139, 92, 246, 0.2);
+  --ch-success: #10b981;
+  --ch-danger: #ef4444;
+  --ch-danger-soft: rgba(239, 68, 68, 0.12);
+  --ch-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+  --ch-shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --ch-radius: 24px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1120px;
+  padding: 8px 4px 24px;
+  color: var(--ch-ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+[data-theme="light"] .clarity-home {
+  --ch-bg: #f3f1f8;
+  --ch-surface: #ffffff;
+  --ch-surface-glass: rgba(255, 255, 255, 0.88);
+  --ch-ink: #15121f;
+  --ch-muted: #7a738a;
+  --ch-line: #e8e4f2;
+  --ch-purple: #8b5cf6;
+  --ch-purple-soft: #ede9fe;
+  --ch-purple-deep: #6d28d9;
+  --ch-pink: #f0abfc;
+  --ch-pink-soft: #fdf2ff;
+  --ch-lavender: #e9e0ff;
+  --ch-lavender-deep: #ddd6fe;
+  --ch-danger-soft: #fef2f2;
+  --ch-shadow: 0 12px 36px rgba(109, 40, 217, 0.06);
+  --ch-shadow-lg: 0 24px 60px rgba(109, 40, 217, 0.08);
+}
+
+.clarity-home *,
+.clarity-home *::before,
+.clarity-home *::after {
+  box-sizing: border-box;
+}
+
+/* Switch */
+.clarity-home .ch-switch {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border: 0;
+  border-radius: 999px;
+  background: #3d3654;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .clarity-home .ch-switch {
+  background: #d8d2e8;
+}
+
+.clarity-home .ch-switch--on {
+  background: var(--ch-purple);
+}
+
+.clarity-home .ch-switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s;
+}
+
+.clarity-home .ch-switch--on .ch-switch__thumb {
+  transform: translateX(18px);
+}
+
+/* Glass card */
+.clarity-home .ch-glass-card {
+  padding: 22px 24px;
+  border-radius: var(--ch-radius);
+  background: var(--ch-surface-glass);
+  border: 1px solid var(--ch-line);
+  box-shadow: var(--ch-shadow);
+  backdrop-filter: blur(10px);
+}
+
+[data-theme="light"] .clarity-home .ch-glass-card {
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+.clarity-home .ch-glass-card__eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ch-purple-deep);
+}
+
+.clarity-home .ch-glass-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.clarity-home .ch-glass-card__link {
+  border: 0;
+  background: transparent;
+  color: var(--ch-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.clarity-home .ch-glass-card__link:hover {
+  color: var(--ch-purple-deep);
+}
+
+/* Buttons */
+.clarity-home .ch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 14px;
+  font: 600 14px/1 ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.clarity-home .ch-btn:active {
+  transform: scale(0.98);
+}
+
+.clarity-home .ch-btn--primary {
+  background: linear-gradient(135deg, var(--ch-purple), var(--ch-purple-deep));
+  color: white;
+  box-shadow: 0 8px 20px rgba(109, 40, 217, 0.25);
+}
+
+.clarity-home .ch-btn--danger {
+  width: 100%;
+  background: var(--ch-danger-soft);
+  color: var(--ch-danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.clarity-home .ch-btn--danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Hero */
+.clarity-home .ch-home-hero__intro {
+  margin-bottom: 20px;
+}
+
+.clarity-home .ch-home-hero__greeting {
+  margin: 0;
+  font-size: clamp(1.75rem, 2.5vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.clarity-home .ch-home-hero__sparkle {
+  color: var(--ch-purple);
+}
+
+.clarity-home .ch-home-hero__subtitle {
+  margin: 8px 0 0;
+  color: var(--ch-muted);
+  font-size: 15px;
+}
+
+.clarity-home .ch-home-hero__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.clarity-home .ch-intention-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.clarity-home .ch-intention-card__text {
+  margin: 0 0 18px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.clarity-home .ch-intention-card__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.clarity-home .ch-intention-card__bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ch-lavender-deep);
+  overflow: hidden;
+}
+
+.clarity-home .ch-intention-card__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ch-purple), #a78bfa);
+}
+
+.clarity-home .ch-intention-card__stat {
+  font-size: 13px;
+  color: var(--ch-muted);
+  font-weight: 600;
+}
+
+/* Inline hero character */
+.clarity-home .ch-home-hero__character {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clarity-home .ch-hero-character {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.clarity-home .ch-hero-character__frame {
+  width: 160px;
+  height: 180px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, var(--ch-lavender), transparent);
+  box-shadow: var(--ch-shadow);
+}
+
+.clarity-home .ch-hero-character__frame .mascot {
+  transform: scale(0.85);
+}
+
+.clarity-home .ch-hero-character__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.clarity-home .ch-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--ch-purple-soft);
+  color: var(--ch-purple-deep);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.clarity-home .ch-status-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ch-success);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+  animation: ch-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ch-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.clarity-home .ch-hero-character__detail {
+  font-size: 12px;
+  color: var(--ch-muted);
+  font-weight: 600;
+}
+
+.clarity-home .ch-sparkline {
+  color: var(--ch-purple);
+}
+
+/* Support banner */
+.clarity-home .ch-support-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 22px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--ch-lavender), var(--ch-purple-soft));
+  border: 1px solid var(--ch-lavender-deep);
+}
+
+.clarity-home .ch-support-banner__icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.clarity-home .ch-support-banner__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ch-ink);
+  font-weight: 500;
+}
+
+[data-theme="light"] .clarity-home .ch-support-banner__text {
+  color: #4c4560;
+}
+
+/* Grids */
+.clarity-home .ch-home__middle,
+.clarity-home .ch-home__bottom {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 18px;
+}
+
+/* Session card */
+.clarity-home .ch-session-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.clarity-home .ch-session-card__goal {
+  font-size: 13px;
+  color: var(--ch-muted);
+  font-weight: 600;
+}
+
+.clarity-home .ch-session-card__body {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.clarity-home .ch-session-card__timer-wrap {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+}
+
+.clarity-home .ch-session-card__timer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.clarity-home .ch-progress-ring__track {
+  stroke: var(--ch-lavender-deep);
+}
+
+.clarity-home .ch-progress-ring__fill {
+  stroke: var(--ch-purple);
+}
+
+.clarity-home .ch-session-card__sites-label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ch-muted);
+}
+
+.clarity-home .ch-session-card__favicons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.clarity-home .ch-favicon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ch-line);
+  background: var(--ch-surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ch-ink);
+}
+
+.clarity-home .ch-favicon-chip__icon {
+  font-size: 14px;
+}
+
+/* Focus helpers */
+.clarity-home .ch-helpers-card__copy {
+  margin: 6px 0 16px;
+  font-size: 14px;
+  color: var(--ch-muted);
+}
+
+.clarity-home .ch-toggle-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.clarity-home .ch-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ch-line);
+}
+
+.clarity-home .ch-toggle-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.clarity-home .ch-toggle-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.clarity-home .ch-toggle-row__label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.clarity-home .ch-toggle-row__desc {
+  font-size: 12px;
+  color: var(--ch-muted);
+}
+
+/* Insights */
+.clarity-home .ch-insights-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.clarity-home .ch-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.clarity-home .ch-kpi {
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--ch-surface);
+  border: 1px solid var(--ch-line);
+}
+
+.clarity-home .ch-kpi__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ch-muted);
+  margin-bottom: 6px;
+}
+
+.clarity-home .ch-kpi__value {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.clarity-home .ch-kpi__unit {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ch-muted);
+}
+
+.clarity-home .ch-kpi__footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.clarity-home .ch-kpi__trend {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ch-success);
+}
+
+.clarity-home .ch-mini-chart__bar {
+  fill: var(--ch-purple);
+  opacity: 0.55;
+}
+
+/* Reflection */
+.clarity-home .ch-reflection-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.clarity-home .ch-reflection-card__badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--ch-purple-soft);
+  color: var(--ch-purple-deep);
+  white-space: nowrap;
+}
+
+.clarity-home .ch-reflection-card__prompt {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.clarity-home .ch-reflection-card__input {
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--ch-line);
+  border-radius: 14px;
+  background: var(--ch-surface);
+  color: var(--ch-ink);
+  font: 14px/1.5 ui-sans-serif, system-ui, sans-serif;
+  resize: vertical;
+}
+
+.clarity-home .ch-reflection-card__input::placeholder {
+  color: var(--ch-muted);
+}
+
+.clarity-home .ch-reflection-card__save {
+  width: 100%;
+}
+
+/* Footer banner */
+.clarity-home .ch-footer-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 24px;
+  border-radius: var(--ch-radius);
+  background: var(--ch-surface-glass);
+  border: 1px solid var(--ch-line);
+  box-shadow: var(--ch-shadow);
+}
+
+.clarity-home .ch-footer-banner__icon {
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.clarity-home .ch-footer-banner__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ch-muted);
+  font-style: italic;
+}
+
+@media (max-width: 1100px) {
+  .clarity-home .ch-home-hero__row,
+  .clarity-home .ch-home__middle,
+  .clarity-home .ch-home__bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .clarity-home .ch-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .clarity-home .ch-home-hero__character {
+    justify-content: flex-start;
+  }
+
+  .clarity-home .ch-hero-character {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .clarity-home .ch-hero-character__meta {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .clarity-home .ch-session-card__body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

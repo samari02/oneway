@@ -8,7 +8,7 @@ import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
 import { BoundariesView, ProtectionAlert, useExtensionStatus } from '@/features/boundaries'
-import { AppBlockingView } from '@/features/app-blocking'
+import { ClarityHomeView } from '@/features/clarity-home'
 import { Mascot, type MascotMood } from '@/features/mascot'
 import { AICompanion } from '@/features/ai-companion'
 import { GoalsBar, useGoals } from '@/features/goals'
@@ -419,6 +419,8 @@ function Dashboard() {
     switch (currentView) {
       case 'today':
         return <TodayView />
+      case 'clarity-home':
+        return <ClarityHomeView />
       case 'screen-time':
         return <StatsView />
       case 'boundaries':

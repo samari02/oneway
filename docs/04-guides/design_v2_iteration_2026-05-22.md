@@ -15,46 +15,30 @@ Les deux partagent le **même repo git** via **worktree** — commits séparés 
 
 ---
 
-## Lancer le design v2
+## Lancer le design v2 (Clarity home sur classic)
 
 ```bash
 cd /Users/samuelmarinelli/Development/4.projects/oneway-design-v2
 pnpm install
-pnpm dev:desktop:v2
-```
-
-Ou depuis `apps/desktop/.env.local` :
-
-```
-VITE_UI_VARIANT=v2
-```
-
-Puis `pnpm dev:desktop`.
-
----
-
-## Lancer le classic (inchangé)
-
-```bash
-cd /Users/samuelmarinelli/Development/4.projects/oneway
 pnpm dev:desktop
 ```
 
-(`main` n’a pas `VITE_UI_VARIANT=v2` → UI actuelle.)
+Dans l’app : sidebar **Home** (nouvelle vue Clarity). L’onglet **Today** garde l’accueil habituel (habits + calendrier).
 
 ---
 
 ## Où coder la refonte
 
 ```
-apps/desktop/src/app/v2/
-  AppV2.tsx      # shell + navigation
-  AppV2.css      # tokens / layout v2
+apps/desktop/src/features/clarity-home/
+  ClarityHomeView.tsx   # dashboard Clarity
+  ClarityHome.css       # tokens dark-first
+  components/           # cartes (session, insights, etc.)
 ```
 
-- Auth, Supabase, onboarding : réutilisés pour l’instant
+- Shell v2 parallèle (`apps/desktop/src/app/v2/`) **supprimé** — une seule stack `App.tsx`
+- Auth, Supabase, onboarding : réutilisés
 - Extension Chrome : **même** build / native host que `main`
-- Ne pas toucher `apps/desktop/src/app/App.tsx` sauf si tu merges plus tard
 
 ---
 

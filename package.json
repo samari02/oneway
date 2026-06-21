@@ -3,7 +3,6 @@
   "private": true,
   "scripts": {
     "dev:desktop": "pnpm --filter @oneway/desktop dev",
-    "dev:desktop:v2": "VITE_UI_VARIANT=v2 pnpm --filter @oneway/desktop dev",
     "dev:extension": "pnpm --filter @oneway/extension dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck"
