@@ -249,6 +249,25 @@
   color: var(--ch-muted);
 }
 
+.clarity-home .ch-intention-card__others {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.clarity-home .ch-intention-card__pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(248, 248, 252, 0.72);
+  line-height: 1.3;
+}
+
 .clarity-home .ch-intention-card__edit {
   width: fit-content;
 }

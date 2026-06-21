@@ -1,5 +1,6 @@
 import { MORNING_BG_SRC } from '../companion-avatars'
 import type { DayPlan } from '../hooks/useMorningFlow'
+import { getPriorityItem, getSecondaryItems, getSuccessFrameHint } from '../hooks/useMorningFlow'
 import './MorningHome.css'
 
 type MorningHomeLandingProps = {
@@ -8,6 +9,11 @@ type MorningHomeLandingProps = {
 }
 
 export function MorningHomeLanding({ firstName, plan }: MorningHomeLandingProps) {
+  const priority = getPriorityItem(plan)
+  const heroText = priority?.text || plan.intention
+  const subtitle = plan.summaryFrame || getSuccessFrameHint(plan.successFrame, plan.intention)
+  const secondaryItems = getSecondaryItems(plan)
+
   return (
     <>
       <div className="morning-home__bg" aria-hidden>
@@ -24,15 +30,25 @@ export function MorningHomeLanding({ firstName, plan }: MorningHomeLandingProps)
           </div>
           <h1 className="morning-home__title">Good morning, {firstName}.</h1>
           <p className="morning-home__subtitle">
-            Your intention is set. Stay close to what matters today.
+            Your focus is set. Stay close to what matters today.
           </p>
         </div>
 
         <section className="morning-home__intention" aria-labelledby="morning-home-intention">
           <h2 id="morning-home-intention" className="morning-home__intention-title">
-            Today&apos;s intention
+            Today&apos;s focus
           </h2>
-          <p className="morning-home__intention-desc">{plan.intention}</p>
+          <p className="morning-home__intention-desc morning-home__intention-desc--hero">{heroText}</p>
+          <p className="morning-home__intention-desc">{subtitle}</p>
+          {secondaryItems.length > 0 && (
+            <div className="morning-home__plan-pills" aria-label="Also on your mind">
+              {secondaryItems.map((item) => (
+                <span key={item.id} className="morning-home__plan-pill">
+                  {item.text}
+                </span>
+              ))}
+            </div>
+          )}
         </section>
 
         <footer className="morning-home__quote">

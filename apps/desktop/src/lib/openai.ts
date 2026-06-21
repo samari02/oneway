@@ -7,7 +7,9 @@
 import { supabase } from './supabase'
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
+const OPENAI_TRANSCRIPTIONS_URL = 'https://api.openai.com/v1/audio/transcriptions'
 const MODEL = 'gpt-4o-mini'
+const WHISPER_MODEL = 'whisper-1'
 
 // Store API key in localStorage (client-side only)
 const API_KEY_STORAGE_KEY = 'clarity_openai_api_key'
@@ -414,4 +416,39 @@ export async function refineGoal(
   context: UserContext = {}
 ): Promise<{ response: string; suggestions?: GoalRefinementResult }> {
   return chatWithAI(conversationHistory, currentGoal, context)
+}
+
+export async function transcribeAudio(audio: Blob, lang?: string): Promise<string> {
+  const apiKey = getApiKey()
+  if (!apiKey) {
+    throw new Error('No API key configured')
+  }
+
+  const formData = new FormData()
+  formData.append('file', audio, 'speech.webm')
+  formData.append('model', WHISPER_MODEL)
+  formData.append('response_format', 'text')
+  if (lang) {
+    formData.append('language', lang.split('-')[0])
+  }
+
+  const response = await fetch(OPENAI_TRANSCRIPTIONS_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(error || 'Failed to transcribe audio')
+  }
+
+  const text = (await response.text()).trim()
+  if (!text) {
+    throw new Error('No speech detected')
+  }
+
+  return text
 }

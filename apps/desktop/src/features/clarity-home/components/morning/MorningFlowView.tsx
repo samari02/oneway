@@ -21,10 +21,15 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
     intention,
     successFrame,
     daySetup,
-    setIntention,
+    brainDump,
+    items,
+    priorityItemId,
     setSuccessFrame,
     setDaySetup,
-    submitIntention,
+    setBrainDump,
+    setPriorityItemId,
+    applyPlanExtraction,
+    confirmPriority,
     goForward,
     completeFlow,
   } = useMorningFlow({ initialIntention })
@@ -77,9 +82,17 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
             <div className={stepClass} key="step-1">
               <MorningStepIntention
                 firstName={firstName}
-                intention={intention}
-                onIntentionChange={setIntention}
-                onSubmit={submitIntention}
+                brainDump={brainDump}
+                items={items}
+                priorityItemId={priorityItemId}
+                onBrainDumpChange={setBrainDump}
+                onPlanExtracted={(dump, planItems, meta) => {
+                  applyPlanExtraction(dump, planItems, {
+                    summaryFrame: meta.summaryFrame,
+                  })
+                }}
+                onPrioritySelect={setPriorityItemId}
+                onConfirmPriority={confirmPriority}
               />
             </div>
           )}

@@ -144,6 +144,31 @@
   color: var(--mh-muted);
 }
 
+.morning-home__intention-desc--hero {
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  font-weight: 600;
+  color: var(--mh-ink);
+  line-height: 1.45;
+}
+
+.morning-home__plan-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.morning-home__plan-pill {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--mh-line);
+  background: rgba(8, 8, 16, 0.45);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mh-muted);
+}
+
 .morning-home__intention-input {
   width: 100%;
   padding: 16px 20px;

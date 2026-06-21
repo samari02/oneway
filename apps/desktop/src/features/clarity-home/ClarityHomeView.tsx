@@ -6,7 +6,11 @@ import { FooterBanner } from './components/FooterBanner'
 import { HomeHeader } from './components/HomeHeader'
 import { HomeInsightsCard } from './components/HomeInsightsCard'
 import { MorningHomeView } from './components/MorningHomeView'
-import { getSuccessFrameHint, getTodayDayPlan } from './hooks/useMorningFlow'
+import {
+  getSecondaryItems,
+  getSuccessFrameHint,
+  getTodayDayPlan,
+} from './hooks/useMorningFlow'
 import { useMorningMode } from './hooks/useMorningMode'
 import './ClarityHome.css'
 
@@ -32,6 +36,8 @@ export function ClarityHomeView() {
   const intentionDescription = dayPlan
     ? getSuccessFrameHint(dayPlan.successFrame, dayPlan.intention)
     : undefined
+  const summaryFrame = dayPlan?.summaryFrame
+  const secondaryItems = dayPlan ? getSecondaryItems(dayPlan) : []
 
   return (
     <div className="clarity-home">
@@ -41,6 +47,8 @@ export function ClarityHomeView() {
           firstName={firstName}
           intentionText={intentionText}
           intentionDescription={intentionDescription}
+          summaryFrame={summaryFrame}
+          secondaryItems={secondaryItems}
         />
 
         <section className="ch-home__widgets">

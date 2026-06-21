@@ -1,12 +1,15 @@
 import { FocusTrackCard } from './FocusTrackCard'
 import { HeroMascot } from './HeroMascot'
 import { IntentionCard } from './IntentionCard'
+import type { PlanItem } from '../hooks/useMorningFlow'
 
 type HomeHeaderProps = {
   greeting: string
   firstName: string
   intentionText?: string | null
   intentionDescription?: string | null
+  summaryFrame?: string | null
+  secondaryItems?: PlanItem[]
 }
 
 export function HomeHeader({
@@ -14,6 +17,8 @@ export function HomeHeader({
   firstName,
   intentionText,
   intentionDescription,
+  summaryFrame,
+  secondaryItems,
 }: HomeHeaderProps) {
   return (
     <header className="ch-home-hero">
@@ -32,6 +37,8 @@ export function HomeHeader({
         <IntentionCard
           intentionText={intentionText}
           intentionDescription={intentionDescription}
+          summaryFrame={summaryFrame}
+          secondaryItems={secondaryItems}
         />
       </div>
 

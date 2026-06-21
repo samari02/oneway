@@ -24,12 +24,15 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self' blob: data: mediastream: https://api.openai.com; script-src 'self' 'unsafe-eval'; connect-src 'self' https://api.openai.com https://*.supabase.co wss://*.supabase.co http://localhost:* ws://localhost:*; media-src 'self' blob: mediastream:"
     }
   },
   "bundle": {
     "active": true,
     "targets": "all",
+    "macOS": {
+      "entitlements": "./Entitlements.plist"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
