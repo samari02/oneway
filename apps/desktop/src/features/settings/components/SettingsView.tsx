@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '@/features/auth'
 import { supabase } from '@/lib/supabase'
-import { getApiKey, setApiKey, removeApiKey, hasApiKey } from '@/lib/openai'
+import { setApiKey, removeApiKey, hasApiKey, getMaskedApiKey } from '@/lib/openai'
+
+type ApiKeySaveState = 'idle' | 'saving' | 'saved' | 'error'
 import { SiteClassificationModal, type SiteClassification, type SiteCategory } from '@/features/stats/components/SiteClassificationModal'
 import { useAoiPreferences } from '@/features/settings/hooks/useAoiPreferences'
 import { DeleteSiteDomainPicker } from '@/features/settings/components/DeleteSiteDomainPicker'
@@ -31,21 +33,27 @@ export function SettingsView() {
   const [resetting, setResetting] = useState(false)
   const [apiKeyInput, setApiKeyInput] = useState('')
   const [hasKey, setHasKey] = useState(false)
+  const [maskedKey, setMaskedKey] = useState<string | null>(null)
   const [showApiKey, setShowApiKey] = useState(false)
+  const [apiKeySaveState, setApiKeySaveState] = useState<ApiKeySaveState>('idle')
+  const [apiKeySaveError, setApiKeySaveError] = useState<string | null>(null)
   const [dataStats, setDataStats] = useState<DataStats | null>(null)
   const [clearingData, setClearingData] = useState(false)
   const [isClassificationModalOpen, setIsClassificationModalOpen] = useState(false)
 
   useEffect(() => {
     setHasKey(hasApiKey())
-    const key = getApiKey()
-    if (key) {
-      setApiKeyInput(key)
-    }
-    
+    setMaskedKey(getMaskedApiKey())
+
     // Fetch browsing data stats
     fetchDataStats()
   }, [])
+
+  useEffect(() => {
+    if (apiKeySaveState !== 'saved') return
+    const timer = window.setTimeout(() => setApiKeySaveState('idle'), 3000)
+    return () => window.clearTimeout(timer)
+  }, [apiKeySaveState])
 
   const fetchDataStats = async () => {
     try {
@@ -137,10 +145,45 @@ export function SettingsView() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
-  const handleSaveApiKey = () => {
-    if (apiKeyInput.trim()) {
-      setApiKey(apiKeyInput.trim())
+  const apiKeyDirty = apiKeyInput.trim().length > 0
+  const canSaveApiKey = apiKeyDirty && apiKeySaveState !== 'saving'
+
+  const handleApiKeyInputChange = (value: string) => {
+    setApiKeyInput(value)
+    if (apiKeySaveState === 'saved' || apiKeySaveState === 'error') {
+      setApiKeySaveState('idle')
+    }
+    setApiKeySaveError(null)
+  }
+
+  const handleSaveApiKey = async () => {
+    const trimmed = apiKeyInput.trim()
+    if (!trimmed) {
+      setApiKeySaveState('error')
+      setApiKeySaveError('Enter an API key before saving.')
+      return
+    }
+
+    setApiKeySaveState('saving')
+    setApiKeySaveError(null)
+
+    await new Promise((resolve) => window.setTimeout(resolve, 150))
+
+    try {
+      setApiKey(trimmed)
+      if (!hasApiKey()) {
+        throw new Error('Key was not persisted')
+      }
+
       setHasKey(true)
+      setMaskedKey(getMaskedApiKey())
+      setApiKeyInput('')
+      setShowApiKey(false)
+      setApiKeySaveState('saved')
+    } catch (e) {
+      console.error('Failed to save API key:', e)
+      setApiKeySaveState('error')
+      setApiKeySaveError('Could not save your API key. Please try again.')
     }
   }
 
@@ -148,6 +191,10 @@ export function SettingsView() {
     removeApiKey()
     setApiKeyInput('')
     setHasKey(false)
+    setMaskedKey(null)
+    setShowApiKey(false)
+    setApiKeySaveState('idle')
+    setApiKeySaveError(null)
   }
 
   const handleResetOnboarding = async () => {
@@ -415,42 +462,78 @@ export function SettingsView() {
         </p>
 
         <div className="settings-item settings-item--vertical">
-          <label className="settings-item__label">OpenAI API Key</label>
+          <div className="settings-api-key__header">
+            <label className="settings-item__label">OpenAI API Key</label>
+            {hasKey && !apiKeyDirty && (
+              <span className="settings-api-key__saved-badge">Saved</span>
+            )}
+          </div>
+
+          {hasKey && maskedKey && !apiKeyDirty && (
+            <div className="settings-api-key__stored">
+              <span className="settings-api-key__masked" aria-label="Saved API key">
+                {maskedKey}
+              </span>
+              <span className="settings-api-key__stored-hint">Key stored on this device</span>
+            </div>
+          )}
+
           <div className="settings-api-key">
             <input
               type={showApiKey ? 'text' : 'password'}
-              className="settings-api-key__input"
-              placeholder="sk-..."
+              className={`settings-api-key__input${
+                apiKeySaveState === 'saved' ? ' settings-api-key__input--saved' : ''
+              }`}
+              placeholder={hasKey ? 'Paste a new key to update' : 'sk-...'}
               value={apiKeyInput}
-              onChange={(e) => setApiKeyInput(e.target.value)}
+              onChange={(e) => handleApiKeyInputChange(e.target.value)}
+              disabled={apiKeySaveState === 'saving'}
             />
             <button
               type="button"
               className="settings-api-key__toggle"
               onClick={() => setShowApiKey(!showApiKey)}
+              disabled={!apiKeyInput || apiKeySaveState === 'saving'}
+              aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
             >
               {showApiKey ? '🙈' : '👁️'}
             </button>
           </div>
+
           <div className="settings-api-key__actions">
             <button
               className="settings-button settings-button--small"
-              onClick={handleSaveApiKey}
-              disabled={!apiKeyInput.trim()}
+              onClick={() => void handleSaveApiKey()}
+              disabled={!canSaveApiKey}
             >
-              {hasKey ? 'Update Key' : 'Save Key'}
+              {apiKeySaveState === 'saving'
+                ? 'Saving…'
+                : hasKey
+                  ? 'Update Key'
+                  : 'Save Key'}
             </button>
             {hasKey && (
               <button
                 className="settings-button settings-button--small settings-button--ghost"
                 onClick={handleRemoveApiKey}
+                disabled={apiKeySaveState === 'saving'}
               >
                 Remove
               </button>
             )}
           </div>
-          {hasKey && (
-            <span className="settings-api-key__status">✓ Key configured</span>
+
+          {apiKeySaveState === 'saved' && (
+            <p className="settings-api-key__feedback settings-api-key__feedback--success" role="status">
+              <span className="settings-api-key__feedback-icon" aria-hidden="true">✓</span>
+              API key saved
+            </p>
+          )}
+
+          {apiKeySaveState === 'error' && apiKeySaveError && (
+            <p className="settings-api-key__feedback settings-api-key__feedback--error" role="alert">
+              {apiKeySaveError}
+            </p>
           )}
         </div>
       </section>

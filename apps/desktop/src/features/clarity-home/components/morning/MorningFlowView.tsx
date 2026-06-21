@@ -29,8 +29,12 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
     setBrainDump,
     setPriorityItemId,
     applyPlanExtraction,
+    updateItem,
+    deleteItem,
+    addItem,
     confirmPriority,
     goForward,
+    goBack,
     completeFlow,
   } = useMorningFlow({ initialIntention })
 
@@ -77,6 +81,17 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
       )}
 
       <div className={`morning-flow__shell${step === 1 ? ' morning-flow__shell--welcome' : ''}`}>
+        {(step === 2 || step === 3) && (
+          <div className="morning-flow__top-bar morning-flow__top-bar--back">
+            <button type="button" className="morning-flow__back-btn" onClick={goBack}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Back
+            </button>
+          </div>
+        )}
+
         <div className={step === 1 ? 'morning-flow__welcome-stage' : 'morning-flow__stage'}>
           {step === 1 && (
             <div className={stepClass} key="step-1">
@@ -93,6 +108,9 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
                 }}
                 onPrioritySelect={setPriorityItemId}
                 onConfirmPriority={confirmPriority}
+                onUpdateItem={updateItem}
+                onDeleteItem={deleteItem}
+                onAddItem={addItem}
               />
             </div>
           )}

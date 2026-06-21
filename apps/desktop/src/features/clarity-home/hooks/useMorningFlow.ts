@@ -201,6 +201,24 @@ export function useMorningFlow({ initialIntention = '' }: UseMorningFlowOptions 
     [],
   )
 
+  const updateItem = useCallback((id: string, text: string) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, text: trimmed } : item)))
+  }, [])
+
+  const deleteItem = useCallback((id: string) => {
+    setItems((prev) => prev.filter((item) => item.id !== id))
+    setPriorityItemId((prev) => (prev === id ? undefined : prev))
+  }, [])
+
+  const addItem = useCallback((kind: PlanItemKind, text: string) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+    const id = `plan-${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${kind}`
+    setItems((prev) => [...prev, { id, text: trimmed, kind }])
+  }, [])
+
   const confirmPriority = useCallback(
     (itemId?: string) => {
       const nextItems = items
@@ -299,6 +317,9 @@ export function useMorningFlow({ initialIntention = '' }: UseMorningFlowOptions 
     setBrainDump,
     setPriorityItemId,
     applyPlanExtraction,
+    updateItem,
+    deleteItem,
+    addItem,
     confirmPriority,
     goToStep,
     goForward,

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { extractMorningPlan } from '@/lib/morning-plan'
-import type { PlanItem } from '../../hooks/useMorningFlow'
+import type { PlanItem, PlanItemKind } from '../../hooks/useMorningFlow'
 import { toPlanItems } from '../../hooks/useMorningFlow'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 
@@ -27,6 +27,192 @@ type MorningStepIntentionProps = {
   ) => void
   onPrioritySelect: (itemId: string) => void
   onConfirmPriority: (itemId?: string) => boolean
+  onUpdateItem: (id: string, text: string) => void
+  onDeleteItem: (id: string) => void
+  onAddItem: (kind: PlanItemKind, text: string) => void
+}
+
+type PlanItemRowProps = {
+  item: PlanItem
+  selected: boolean
+  onSelect: () => void
+  onUpdate: (text: string) => void
+  onDelete: () => void
+}
+
+function PlanItemRow({ item, selected, onSelect, onUpdate, onDelete }: PlanItemRowProps) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(item.text)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!editing) setDraft(item.text)
+  }, [item.text, editing])
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus()
+  }, [editing])
+
+  const commitEdit = useCallback(() => {
+    const trimmed = draft.trim()
+    if (trimmed) {
+      onUpdate(trimmed)
+    } else {
+      setDraft(item.text)
+    }
+    setEditing(false)
+  }, [draft, item.text, onUpdate])
+
+  const cancelEdit = useCallback(() => {
+    setDraft(item.text)
+    setEditing(false)
+  }, [item.text])
+
+  return (
+    <div
+      role="listitem"
+      className={`mf-plan-item${selected ? ' mf-plan-item--priority' : ''}${editing ? ' mf-plan-item--editing' : ''}`}
+    >
+      {editing ? (
+        <input
+          ref={inputRef}
+          type="text"
+          className="mf-plan-item__input"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commitEdit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              commitEdit()
+            }
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              cancelEdit()
+            }
+          }}
+          aria-label={`Edit ${item.kind}`}
+        />
+      ) : (
+        <button
+          type="button"
+          className="mf-plan-item__select"
+          onClick={onSelect}
+          aria-pressed={selected}
+        >
+          <span className="mf-plan-item__text">{item.text}</span>
+          {selected && (
+            <span className="mf-plan-item__star" aria-label="Priority">
+              ★
+            </span>
+          )}
+        </button>
+      )}
+
+      <div className="mf-plan-item__actions">
+        {!editing && (
+          <button
+            type="button"
+            className="mf-plan-item__action"
+            onClick={() => setEditing(true)}
+            aria-label={`Edit ${item.text}`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </button>
+        )}
+        <button
+          type="button"
+          className="mf-plan-item__action mf-plan-item__action--delete"
+          onClick={onDelete}
+          aria-label={`Remove ${item.text}`}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+type AddItemRowProps = {
+  kind: PlanItemKind
+  label: string
+  onAdd: (text: string) => void
+}
+
+function AddItemRow({ kind, label, onAdd }: AddItemRowProps) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus()
+  }, [open])
+
+  const handleAdd = useCallback(() => {
+    const trimmed = draft.trim()
+    if (!trimmed) return
+    onAdd(trimmed)
+    setDraft('')
+    setOpen(false)
+  }, [draft, onAdd])
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className="mf-plan-add"
+        onClick={() => setOpen(true)}
+      >
+        + Add {label.toLowerCase().replace(/s$/, '')}
+      </button>
+    )
+  }
+
+  return (
+    <div className="mf-plan-add-row">
+      <input
+        ref={inputRef}
+        type="text"
+        className="mf-plan-item__input mf-plan-add-row__input"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        placeholder={`New ${kind}…`}
+        aria-label={`Add ${kind}`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            handleAdd()
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault()
+            setDraft('')
+            setOpen(false)
+          }
+        }}
+      />
+      <button type="button" className="mf-btn mf-btn--ghost mf-btn--sm" onClick={handleAdd} disabled={!draft.trim()}>
+        Add
+      </button>
+      <button
+        type="button"
+        className="mf-plan-item__action"
+        onClick={() => {
+          setDraft('')
+          setOpen(false)
+        }}
+        aria-label="Cancel"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  )
 }
 
 export function MorningStepIntention({
@@ -38,6 +224,9 @@ export function MorningStepIntention({
   onPlanExtracted,
   onPrioritySelect,
   onConfirmPriority,
+  onUpdateItem,
+  onDeleteItem,
+  onAddItem,
 }: MorningStepIntentionProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const brainDumpBaseRef = useRef('')
@@ -131,6 +320,12 @@ export function MorningStepIntention({
     }
   }, [items.length, phase, avatarMessage])
 
+  useEffect(() => {
+    if (items.length === 0 && phase === 'review') {
+      setPhase('dump')
+    }
+  }, [items.length, phase])
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -146,7 +341,7 @@ export function MorningStepIntention({
     kind,
     label: KIND_LABELS[kind],
     items: items.filter((item) => item.kind === kind),
-  })).filter((group) => group.items.length > 0)
+  }))
 
   if (phase === 'processing') {
     return (
@@ -175,6 +370,7 @@ export function MorningStepIntention({
         <header className="mf-welcome__greeting">
           <p className="mf-eyebrow">Clarity</p>
           <h1 className="mf-welcome__title mf-welcome__title--sm">{avatarMessage}</h1>
+          <p className="mf-plan-review__subtitle">Tap to edit, star your focus, then continue.</p>
         </header>
 
         <section className="mf-plan-review" aria-labelledby="mf-plan-review-heading">
@@ -187,44 +383,47 @@ export function MorningStepIntention({
               <div key={group.kind} className="mf-plan-group">
                 <h3 className="mf-plan-group__label">{group.label}</h3>
                 <div className="mf-plan-group__items" role="list">
-                  {group.items.map((item) => {
-                    const selected = priorityItemId === item.id
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        role="listitem"
-                        className={`mf-plan-item${selected ? ' mf-plan-item--priority' : ''}`}
-                        onClick={() => {
-                          onPrioritySelect(item.id)
-                          onConfirmPriority(item.id)
-                        }}
-                        aria-pressed={selected}
-                      >
-                        <span className="mf-plan-item__text">{item.text}</span>
-                        {selected && (
-                          <span className="mf-plan-item__star" aria-label="Priority">
-                            ★
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
+                  {group.items.map((item) => (
+                    <PlanItemRow
+                      key={item.id}
+                      item={item}
+                      selected={priorityItemId === item.id}
+                      onSelect={() => onPrioritySelect(item.id)}
+                      onUpdate={(text) => onUpdateItem(item.id, text)}
+                      onDelete={() => onDeleteItem(item.id)}
+                    />
+                  ))}
                 </div>
+                <AddItemRow
+                  kind={group.kind}
+                  label={group.label}
+                  onAdd={(text) => onAddItem(group.kind, text)}
+                />
               </div>
             ))}
           </div>
 
           <div className="mf-plan-priority">
             <p className="mf-plan-priority__question">{priorityQuestion}</p>
-            <p className="mf-plan-priority__hint">Tap one to set your focus — or skip for now.</p>
-            <div className="mf-continue-row">
+            <p className="mf-plan-priority__hint">
+              {priorityItemId
+                ? 'Looks good — continue when ready.'
+                : 'Select a focus item, or skip for now.'}
+            </p>
+            <div className="mf-continue-row mf-continue-row--split">
               <button
                 type="button"
                 className="mf-btn mf-btn--ghost"
                 onClick={() => onConfirmPriority(undefined)}
               >
                 Skip for now
+              </button>
+              <button
+                type="button"
+                className="mf-btn mf-btn--primary"
+                onClick={() => onConfirmPriority(priorityItemId)}
+              >
+                Continue
               </button>
             </div>
           </div>

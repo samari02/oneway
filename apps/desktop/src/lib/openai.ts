@@ -36,6 +36,13 @@ export function hasApiKey(): boolean {
   return !!getApiKey()
 }
 
+export function getMaskedApiKey(): string | null {
+  const key = getApiKey()
+  if (!key) return null
+  if (key.length <= 4) return '••••'
+  return `••••••••${key.slice(-4)}`
+}
+
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
   content: string
