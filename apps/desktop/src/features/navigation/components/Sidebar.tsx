@@ -152,13 +152,15 @@ export function Sidebar({ currentView, onNavigate, onPinnedChange }: SidebarProp
           <span className="sidebar__label">{isMonk ? 'Monk design' : 'Orb design'}</span>
         </button>
         <button
+          type="button"
           className={`sidebar__design-toggle${isMorningMode ? ' sidebar__design-toggle--active' : ''}`}
           onClick={toggleMorningMode}
-          title={isMorningMode ? 'Switch to default home' : 'Switch to morning home'}
+          title={isMorningMode ? 'Switch to default home (dev)' : 'Switch to morning start (dev)'}
           aria-pressed={isMorningMode}
+          aria-label={isMorningMode ? 'Morning start on' : 'Morning start off'}
         >
           {Icons.morningMode}
-          <span className="sidebar__label">{isMorningMode ? 'Morning mode' : 'Default home'}</span>
+          <span className="sidebar__label">{isMorningMode ? 'Morning start' : 'Default home'}</span>
         </button>
         <button 
           className="sidebar__pin-btn"

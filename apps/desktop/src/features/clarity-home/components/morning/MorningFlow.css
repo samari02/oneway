@@ -678,6 +678,14 @@
   margin-top: clamp(24px, 4vh, 36px);
 }
 
+/* Music player */
+.morning-flow__music-player-wrap {
+  position: absolute;
+  left: clamp(20px, 3vw, 40px);
+  bottom: clamp(20px, 3vh, 32px);
+  z-index: 2;
+}
+
 /* Mood chip */
 .morning-flow__mood-chip {
   position: absolute;
@@ -722,6 +730,11 @@
 }
 
 @media (max-width: 768px) {
+  .morning-flow__music-player-wrap {
+    left: 12px;
+    bottom: 12px;
+  }
+
   .morning-flow__mood-chip {
     right: 12px;
     bottom: 12px;

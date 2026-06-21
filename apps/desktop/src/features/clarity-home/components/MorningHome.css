@@ -197,6 +197,14 @@
   color: rgba(248, 248, 252, 0.45);
 }
 
+.morning-home__music-player-wrap,
+.morning-flow__music-player-wrap {
+  position: absolute;
+  left: clamp(20px, 3vw, 40px);
+  bottom: clamp(20px, 3vh, 32px);
+  z-index: 2;
+}
+
 .morning-home__mood-chip {
   position: absolute;
   right: clamp(20px, 3vw, 40px);
@@ -225,6 +233,13 @@
   .morning-home__tool-label {
     display: none;
   }
+
+  .morning-home__music-player-wrap,
+  .morning-flow__music-player-wrap {
+    left: 12px;
+    bottom: 12px;
+  }
+
   .morning-home__mood-chip {
     right: 12px;
     bottom: 12px;

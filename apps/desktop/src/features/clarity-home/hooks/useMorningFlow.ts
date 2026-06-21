@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { setMorningMode } from './useMorningMode'
 
 export type SuccessFrame = 'ship' | 'progress' | 'consistent' | 'finish' | 'show_up'
 
@@ -143,12 +144,14 @@ export function useMorningFlow({ initialIntention = '' }: UseMorningFlowOptions 
   )
 
   const completeFlow = useCallback(() => {
-    return saveDayPlan({
+    const plan = saveDayPlan({
       step: 3,
       intention,
       successFrame,
       daySetup,
     })
+    setMorningMode(false)
+    return plan
   }, [intention, successFrame, daySetup])
 
   const updateDaySetup = useCallback((patch: Partial<DaySetup>) => {
