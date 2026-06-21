@@ -31,7 +31,7 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
   const stepClass = `morning-flow__step morning-flow__step--${direction}${step === 3 ? ' morning-flow__step--wide' : ''}`
 
   return (
-    <div className={`morning-flow${bgFailed ? ' morning-flow--no-bg' : ''}`}>
+    <div className={`morning-flow${bgFailed ? ' morning-flow--no-bg' : ''}${step === 1 ? ' morning-flow--welcome' : ''}`}>
       <div className="morning-flow__bg" aria-hidden>
         {!bgFailed && (
           <img
@@ -43,16 +43,33 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
         )}
       </div>
 
-      <div className="morning-flow__shell">
-        <div className="morning-flow__top-bar">
-          {step === 1 && (
-            <button type="button" className="morning-flow__link">
-              Why this matters
-            </button>
-          )}
+      {step === 1 && (
+        <div className="morning-flow__toolbar">
+          <button type="button" className="morning-flow__tool-btn" aria-label="Focus mode">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span className="morning-flow__tool-label">Focus mode</span>
+          </button>
+          <button type="button" className="morning-flow__tool-btn morning-flow__tool-btn--icon" aria-label="Focus sounds">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
+            </svg>
+          </button>
+          <button type="button" className="morning-flow__tool-btn morning-flow__tool-btn--icon" aria-label="Notifications">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </button>
         </div>
+      )}
 
-        <div className="morning-flow__stage">
+      <div className={`morning-flow__shell${step === 1 ? ' morning-flow__shell--welcome' : ''}`}>
+        <div className={step === 1 ? 'morning-flow__welcome-stage' : 'morning-flow__stage'}>
           {step === 1 && (
             <div className={stepClass} key="step-1">
               <MorningStepIntention

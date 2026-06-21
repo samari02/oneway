@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAuth } from '@/features/auth'
 import { useUserSettings } from '@/features/onboarding'
 import { CurrentSessionCard } from './components/CurrentSessionCard'
@@ -23,14 +23,17 @@ export function ClarityHomeView() {
   const { settings } = useUserSettings(user?.id)
   const { isMorningMode, setIsMorningMode } = useMorningMode()
   const firstName = settings?.display_name?.split(' ')[0] || 'Sam'
-  const hasTodayPlan = getTodayDayPlan() !== null
-  const showMorningFlow = isMorningMode && !hasTodayPlan
+  const showMorningFlow = isMorningMode
+  const skippedMorningOnLoad = useRef(false)
 
+  // Skip morning flow only on initial load when today's plan already exists.
   useEffect(() => {
-    if (isMorningMode && hasTodayPlan) {
+    if (skippedMorningOnLoad.current) return
+    skippedMorningOnLoad.current = true
+    if (getTodayDayPlan() !== null && isMorningMode) {
       setIsMorningMode(false)
     }
-  }, [isMorningMode, hasTodayPlan, setIsMorningMode])
+  }, [isMorningMode, setIsMorningMode])
 
   if (showMorningFlow) {
     return <MorningHomeView firstName={firstName} />

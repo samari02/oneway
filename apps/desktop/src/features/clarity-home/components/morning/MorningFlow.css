@@ -61,6 +61,156 @@
   to { transform: scale(1.05) translateY(-1.5%); }
 }
 
+/* Step 1 welcome — toolbar, top-aligned greeting */
+.morning-flow__toolbar {
+  position: absolute;
+  top: clamp(16px, 2vw, 28px);
+  right: clamp(20px, 3vw, 40px);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.morning-flow__tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--mf-line);
+  border-radius: 999px;
+  background: rgba(8, 8, 16, 0.55);
+  backdrop-filter: blur(12px);
+  color: var(--mf-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.morning-flow__tool-btn:hover {
+  background: rgba(107, 86, 225, 0.18);
+  border-color: rgba(107, 86, 225, 0.35);
+}
+
+.morning-flow__tool-btn--icon {
+  padding: 9px;
+}
+
+.morning-flow__shell--welcome {
+  padding: clamp(44px, 6vh, 60px) clamp(24px, 5vw, 48px) clamp(40px, 7vh, 72px);
+}
+
+.morning-flow__welcome-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.morning-flow--welcome .morning-flow__step {
+  max-width: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.mf-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 100%;
+}
+
+.mf-welcome__greeting {
+  max-width: 640px;
+  flex-shrink: 0;
+}
+
+.mf-welcome__sun {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  color: #fbbf24;
+  filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.45));
+}
+
+.mf-welcome__title {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.mf-welcome__subtitle {
+  margin: 14px auto 0;
+  max-width: 42ch;
+  font-size: clamp(15px, 1.6vw, 17px);
+  line-height: 1.55;
+  color: var(--mf-muted);
+}
+
+.mf-welcome__intention {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: clamp(220px, 40vh, 460px);
+}
+
+.mf-welcome__intention-title {
+  margin: 0;
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.mf-welcome__intention-desc {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--mf-muted);
+}
+
+.mf-welcome__intention-input {
+  width: 100%;
+  padding: 16px 52px 16px 20px;
+  border: 1px solid var(--mf-line);
+  border-radius: 14px;
+  background: var(--mf-glass);
+  backdrop-filter: blur(16px);
+  color: var(--mf-ink);
+  font: 400 15px/1.4 ui-sans-serif, system-ui, sans-serif;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mf-welcome__intention-input::placeholder {
+  color: rgba(248, 248, 252, 0.35);
+}
+
+.mf-welcome__intention-input:focus {
+  border-color: rgba(107, 86, 225, 0.45);
+  box-shadow: 0 0 0 3px rgba(107, 86, 225, 0.15);
+}
+
+.mf-welcome__quote {
+  margin-top: clamp(24px, 4vh, 36px);
+  max-width: 36ch;
+  font-size: 13px;
+  line-height: 1.6;
+  font-style: italic;
+  color: rgba(248, 248, 252, 0.45);
+}
+
 /* Layout shell */
 .morning-flow__shell {
   position: relative;
@@ -208,50 +358,9 @@
   margin-top: 6px;
 }
 
-/* Step 1 — Intention */
-.mf-intention {
-  width: min(560px, 100%);
-  margin-top: clamp(56px, 14vh, 160px);
-}
-
-.mf-intention__heading {
-  margin: 0 0 4px;
-  font-size: clamp(1.15rem, 2vw, 1.35rem);
-  font-weight: 600;
-}
-
-.mf-intention__desc {
-  margin: 0 0 16px;
-  font-size: 14px;
-  color: var(--mf-muted);
-}
-
 .mf-intention__field {
   position: relative;
   width: 100%;
-}
-
-.mf-intention__input {
-  width: 100%;
-  padding: 16px 52px 16px 20px;
-  border: 1px solid var(--mf-line);
-  border-radius: 14px;
-  background: var(--mf-glass);
-  backdrop-filter: blur(16px);
-  color: var(--mf-ink);
-  font: 400 15px/1.4 ui-sans-serif, system-ui, sans-serif;
-  text-align: center;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.mf-intention__input::placeholder {
-  color: rgba(248, 248, 252, 0.35);
-}
-
-.mf-intention__input:focus {
-  border-color: rgba(107, 86, 225, 0.45);
-  box-shadow: 0 0 0 3px rgba(107, 86, 225, 0.15);
 }
 
 .mf-intention__submit {
@@ -660,7 +769,21 @@
 }
 
 @media (max-width: 640px) {
-  .mf-intention__input {
+  .morning-flow__toolbar {
+    top: 12px;
+    right: 12px;
+    gap: 6px;
+  }
+
+  .morning-flow__tool-label {
+    display: none;
+  }
+
+  .mf-welcome__intention {
+    margin-top: clamp(160px, 32vh, 320px);
+  }
+
+  .mf-welcome__intention-input {
     padding-right: 20px;
   }
 

@@ -45,21 +45,30 @@ export function MorningStepIntention({
   const canSubmit = intention.trim().length > 0
 
   return (
-    <div className="mf-stagger">
-      <header>
-        <h1 className="mf-title">Good morning, {firstName}.</h1>
+    <div className="mf-welcome mf-stagger">
+      <header className="mf-welcome__greeting">
+        <div className="mf-welcome__sun" aria-hidden>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+          </svg>
+        </div>
+        <h1 className="mf-welcome__title">Good morning, {firstName}.</h1>
+        <p className="mf-welcome__subtitle">
+          Every day is a new opportunity to stay close to what matters.
+        </p>
       </header>
 
-      <section className="mf-intention" aria-labelledby="mf-intention-heading">
-        <h2 id="mf-intention-heading" className="mf-intention__heading">
+      <section className="mf-welcome__intention" aria-labelledby="mf-intention-heading">
+        <h2 id="mf-intention-heading" className="mf-welcome__intention-title">
           What matters today?
         </h2>
-        <p className="mf-intention__desc">Set one intention to guide your focus</p>
+        <p className="mf-welcome__intention-desc">Set one intention to guide your focus</p>
 
         <div className="mf-intention__field">
           <input
             ref={inputRef}
-            className="mf-intention__input"
+            className="mf-welcome__intention-input"
             type="text"
             value={intention}
             onChange={(e) => onIntentionChange(e.target.value)}
@@ -135,6 +144,10 @@ export function MorningStepIntention({
           </button>
         </div>
       </section>
+
+      <footer className="mf-welcome__quote">
+        The way is not in the sky. The way is in the heart. — Buddha
+      </footer>
     </div>
   )
 }
