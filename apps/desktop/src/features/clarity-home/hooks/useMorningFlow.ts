@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react'
-import { setMorningMode } from './useMorningMode'
 
 export type SuccessFrame = 'ship' | 'progress' | 'consistent' | 'finish' | 'show_up'
 
@@ -86,6 +85,23 @@ export function intentionMentionsMvp(intention: string): boolean {
   return /\bmvp\b/i.test(intention)
 }
 
+export function getSuccessFrameHint(frame: SuccessFrame, intention: string): string {
+  switch (frame) {
+    case 'ship':
+      return 'Make something real and shareable'
+    case 'progress':
+      return 'Move the needle forward'
+    case 'consistent':
+      return 'Show up and keep the momentum'
+    case 'finish':
+      return intentionMentionsMvp(intention)
+        ? 'Complete the entire MVP'
+        : 'Wrap up what you started'
+    case 'show_up':
+      return 'Focus on presence, not outcome'
+  }
+}
+
 type UseMorningFlowOptions = {
   initialIntention?: string
 }
@@ -127,14 +143,12 @@ export function useMorningFlow({ initialIntention = '' }: UseMorningFlowOptions 
   )
 
   const completeFlow = useCallback(() => {
-    const plan = saveDayPlan({
+    return saveDayPlan({
       step: 3,
       intention,
       successFrame,
       daySetup,
     })
-    setMorningMode(false)
-    return plan
   }, [intention, successFrame, daySetup])
 
   const updateDaySetup = useCallback((patch: Partial<DaySetup>) => {

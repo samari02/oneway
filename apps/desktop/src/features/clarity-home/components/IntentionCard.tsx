@@ -2,11 +2,12 @@ import { MOCK_INTENTION } from '../mock-data'
 
 type IntentionCardProps = {
   intentionText?: string | null
+  intentionDescription?: string | null
 }
 
-export function IntentionCard({ intentionText }: IntentionCardProps) {
+export function IntentionCard({ intentionText, intentionDescription }: IntentionCardProps) {
   const text = intentionText?.trim() || MOCK_INTENTION.text
-  const description = MOCK_INTENTION.description
+  const description = intentionDescription?.trim() || MOCK_INTENTION.description
 
   return (
     <article className="ch-glass-card ch-intention-card">

@@ -6,9 +6,15 @@ type HomeHeaderProps = {
   greeting: string
   firstName: string
   intentionText?: string | null
+  intentionDescription?: string | null
 }
 
-export function HomeHeader({ greeting, firstName, intentionText }: HomeHeaderProps) {
+export function HomeHeader({
+  greeting,
+  firstName,
+  intentionText,
+  intentionDescription,
+}: HomeHeaderProps) {
   return (
     <header className="ch-home-hero">
       <div className="ch-home-hero__greeting">
@@ -23,7 +29,10 @@ export function HomeHeader({ greeting, firstName, intentionText }: HomeHeaderPro
       </div>
 
       <div className="ch-home-hero__intention">
-        <IntentionCard intentionText={intentionText} />
+        <IntentionCard
+          intentionText={intentionText}
+          intentionDescription={intentionDescription}
+        />
       </div>
 
       <div className="ch-home-hero__focus-track">
