@@ -5,8 +5,8 @@ export function HeroMascot() {
   const { variant } = useCompanionDesignVariant()
 
   return (
-    <div className={`ch-hero-mascot-wrap${variant === 'monk' ? ' ch-hero-mascot-wrap--monk' : ''}`}>
-      <GlowingOrbCharacter size={variant === 'monk' ? 200 : 160} variant={variant} />
+    <div className="ch-hero-mascot-wrap">
+      <GlowingOrbCharacter size={variant === 'monk' ? 220 : 160} variant={variant} />
     </div>
   )
 }

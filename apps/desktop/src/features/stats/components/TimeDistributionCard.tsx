@@ -1,4 +1,5 @@
-import { MiniMascot } from './MiniMascot'
+import { Mascot } from '../../mascot'
+import { MONK_MINIATURE_SRC } from '@/features/clarity-home/companion-avatars'
 import { CardPeriodMenu } from './CardPeriodMenu'
 import type { Period } from './PeriodSelector'
 import './TimeDistributionCard.css'
@@ -89,7 +90,7 @@ export function TimeDistributionCard({ productive, neutral, distraction, totalMi
         {categories.map((cat) => (
           <div key={cat.className} className="time-distribution-card__legend-item">
             <div className="time-distribution-card__legend-mascot">
-              <MiniMascot mood={cat.mood} size={28} />
+              <Mascot mood="happy" size="small" showMessage={false} imageSrc={MONK_MINIATURE_SRC} />
             </div>
             <div className="time-distribution-card__legend-content">
               <span className="time-distribution-card__legend-label">{cat.label}</span>

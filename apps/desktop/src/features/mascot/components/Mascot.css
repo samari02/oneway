@@ -11,7 +11,8 @@
   cursor: pointer;
 }
 
-.mascot--interactive:hover .mascot__blob {
+.mascot--interactive:hover .mascot__blob,
+.mascot--interactive:hover .mascot__image {
   transform: scale(1.08);
 }
 
@@ -43,8 +44,38 @@
   border-color: var(--color-mint);
 }
 
-.mascot--interactive:active .mascot__blob {
+.mascot--interactive:active .mascot__blob,
+.mascot--interactive:active .mascot__image {
   transform: scale(1.02);
+}
+
+/* ===== IMAGE MASCOT ===== */
+.mascot__image-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mascot__image {
+  display: block;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.mascot--small .mascot__image {
+  height: 40px;
+  width: auto;
+}
+
+.mascot--medium .mascot__image {
+  height: 56px;
+  width: auto;
+}
+
+.mascot--large .mascot__image {
+  height: 120px;
+  width: auto;
 }
 
 /* ===== SIZES ===== */

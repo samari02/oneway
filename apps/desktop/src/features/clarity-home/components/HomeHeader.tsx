@@ -1,4 +1,3 @@
-import { useCompanionDesignVariant } from '../hooks/useCompanionDesignVariant'
 import { FocusTrackCard } from './FocusTrackCard'
 import { HeroMascot } from './HeroMascot'
 import { IntentionCard } from './IntentionCard'
@@ -10,10 +9,8 @@ type HomeHeaderProps = {
 }
 
 export function HomeHeader({ greeting, firstName, intentionText }: HomeHeaderProps) {
-  const { isMonk } = useCompanionDesignVariant()
-
   return (
-    <header className={`ch-home-hero${isMonk ? ' ch-home-hero--monk' : ''}`}>
+    <header className="ch-home-hero">
       <div className="ch-home-hero__greeting">
         <h1 className="ch-home-hero__title">
           {greeting}, {firstName}

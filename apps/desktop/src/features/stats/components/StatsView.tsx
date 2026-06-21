@@ -7,6 +7,7 @@ import { HeatmapCard } from './HeatmapCard'
 import { CompletionBar } from './CompletionBar'
 import { HabitStatsCard } from './HabitStatsCard'
 import { Mascot, type MascotMood } from '../../mascot'
+import { MONK_MINIATURE_SRC } from '@/features/clarity-home/companion-avatars'
 import { BrowsingView } from './BrowsingView'
 import { OverviewTab } from './OverviewTab'
 import { AppsTab } from './AppsTab'
@@ -262,7 +263,8 @@ function HabitsContent({ stats, loading, error, mascotMood, period }: HabitsCont
         <Mascot 
           mood={mascotMood} 
           message={stats.encouragingMessage}
-          size="medium"
+          size="large"
+          imageSrc={MONK_MINIATURE_SRC}
         />
       </section>
     </div>

@@ -11,6 +11,7 @@ import { BoundariesView, ProtectionAlert, useExtensionStatus } from '@/features/
 import { ClarityHomeView } from '@/features/clarity-home'
 import { ClarityHomeErrorBoundary } from '@/features/clarity-home/components/ClarityHomeErrorBoundary'
 import { Mascot, type MascotMood } from '@/features/mascot'
+import { MONK_MINIATURE_SRC } from '@/features/clarity-home/companion-avatars'
 import { AICompanion } from '@/features/ai-companion'
 import { GoalsBar, useGoals } from '@/features/goals'
 import type { OnboardingData } from '@/features/onboarding'
@@ -219,6 +220,7 @@ function TodayView() {
               mood={mascotState.mood} 
               message={mascotState.message}
               size="large"
+              imageSrc={MONK_MINIATURE_SRC}
               onChatClick={() => setShowAiChat(!showAiChat)}
             />
           </div>

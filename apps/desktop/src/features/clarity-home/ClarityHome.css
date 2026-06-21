@@ -158,7 +158,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
   grid-template-rows: auto auto;
-  gap: clamp(12px, 1.5vw, 20px) clamp(16px, 2vw, 24px);
+  row-gap: clamp(4px, 0.6vw, 8px);
+  column-gap: clamp(16px, 2vw, 24px);
   grid-template-areas:
     "greeting mascot"
     "intention focus-track";
@@ -167,7 +168,7 @@
 .clarity-home .ch-home-hero__greeting {
   grid-area: greeting;
   align-self: start;
-  padding-top: 0;
+  padding-top: clamp(14px, 1.8vw, 24px);
 }
 
 .clarity-home .ch-home-hero__title {
@@ -188,49 +189,36 @@
   grid-area: mascot;
   justify-self: end;
   align-self: start;
+  position: relative;
+  z-index: 0;
+  /* Fixed slot — mascot is absolutely positioned so variant visuals don't shift layout */
+  width: clamp(200px, 22vw, 280px);
+  height: clamp(220px, 24vw, 300px);
+  margin-bottom: clamp(-56px, -5vw, -36px);
+  overflow: visible;
 }
 
 .clarity-home .ch-home-hero__intention {
   grid-area: intention;
   min-width: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .clarity-home .ch-home-hero__focus-track {
   grid-area: focus-track;
   min-width: 0;
+  position: relative;
+  z-index: 1;
 }
 
 /* Hero character (CSS/SVG glowing orb) */
 .clarity-home .ch-hero-mascot-wrap {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: clamp(120px, 14vw, 160px);
-  height: clamp(140px, 16vw, 180px);
-}
-
-.clarity-home .ch-hero-mascot-wrap--monk {
-  width: clamp(200px, 22vw, 280px);
-  height: clamp(220px, 24vw, 300px);
-  overflow: visible;
-}
-
-/* Monk hero: tighter row gap, mascot overlaps cards behind them */
-.clarity-home .ch-home-hero--monk {
-  row-gap: clamp(4px, 0.6vw, 8px);
-}
-
-.clarity-home .ch-home-hero--monk .ch-home-hero__mascot {
-  position: relative;
-  z-index: 0;
-  margin-bottom: clamp(-56px, -5vw, -36px);
-}
-
-.clarity-home .ch-home-hero--monk .ch-home-hero__intention,
-.clarity-home .ch-home-hero--monk .ch-home-hero__focus-track {
-  position: relative;
-  z-index: 1;
 }
 
 /* Intention card */

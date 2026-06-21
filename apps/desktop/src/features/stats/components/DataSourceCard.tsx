@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { MiniMascot } from './MiniMascot'
+import { Mascot } from '../../mascot'
+import { MONK_MINIATURE_SRC } from '@/features/clarity-home/companion-avatars'
 import './DataSourceCard.css'
 
 interface DataSourceCardProps {
@@ -62,7 +63,7 @@ export function DataSourceCard({
   return (
     <div className="data-source-card">
       <div className="data-source-card__header">
-        <MiniMascot mood={isConnected ? 'happy' : 'meh'} />
+        <Mascot mood={isConnected ? 'happy' : 'thinking'} size="small" showMessage={false} imageSrc={MONK_MINIATURE_SRC} />
         <span className="data-source-card__title">Data Source</span>
         <span className={`data-source-card__status ${isConnected ? 'connected' : 'disconnected'}`}>
           {isConnected ? '🔗 Connected' : '⚠️ Not synced'}

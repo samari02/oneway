@@ -22,7 +22,12 @@
   }
 }
 
-/* ===== Watching Mascot ===== */
+/* ===== Hero Mascot ===== */
+.distraction-hero__mascot {
+  margin: 0 auto 16px;
+}
+
+/* ===== Watching Mascot (legacy) ===== */
 .watching-mascot {
   width: 64px;
   height: 64px;

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Mascot } from '../../mascot'
+import { MONK_MINIATURE_SRC } from '@/features/clarity-home/companion-avatars'
 import type { Period } from './PeriodSelector'
 import './DistractionHeroCard.css'
 
@@ -46,38 +48,6 @@ function getPeriodLabel(period: Period): string {
   }
 }
 
-// Mini mascot looking at watch
-function WatchingMascot() {
-  return (
-    <div className="watching-mascot">
-      <div className="watching-mascot__blob">
-        {/* Sprout */}
-        <div className="watching-mascot__sprout">
-          <div className="watching-mascot__sprout-stem" />
-          <div className="watching-mascot__sprout-leaf watching-mascot__sprout-leaf--left" />
-          <div className="watching-mascot__sprout-leaf watching-mascot__sprout-leaf--right" />
-        </div>
-        
-        {/* Face */}
-        <div className="watching-mascot__face">
-          <div className="watching-mascot__cheek watching-mascot__cheek--left" />
-          <div className="watching-mascot__cheek watching-mascot__cheek--right" />
-          <div className="watching-mascot__eye watching-mascot__eye--left" />
-          <div className="watching-mascot__eye watching-mascot__eye--right" />
-          <div className="watching-mascot__mouth" />
-        </div>
-        
-        {/* Watch on arm */}
-        <div className="watching-mascot__arm">
-          <div className="watching-mascot__watch">
-            <div className="watching-mascot__watch-face" />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export function DistractionHeroCard({ 
   distractionMinutes, 
   period,
@@ -93,7 +63,9 @@ export function DistractionHeroCard({
   
   return (
     <div className="distraction-hero">
-      <WatchingMascot />
+      <div className="distraction-hero__mascot">
+        <Mascot mood="thinking" size="large" showMessage={false} imageSrc={MONK_MINIATURE_SRC} />
+      </div>
       
       <h2 className="distraction-hero__title">Time Lost to Distractions</h2>
       

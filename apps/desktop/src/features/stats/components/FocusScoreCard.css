@@ -47,9 +47,7 @@
   margin-bottom: var(--space-sm);
 }
 
-/* Scale up the mascot for more presence */
 .focus-score-card__mascot .mascot {
-  transform: scale(1.1);
   transform-origin: center bottom;
 }
 

@@ -31,22 +31,23 @@
     0 0 6px rgba(103, 232, 249, 0.55),
     0 0 12px rgba(124, 58, 237, 0.3);
   opacity: 0.42;
-  animation: glowing-orb-particle-float 10s ease-in-out infinite;
+  transform-origin: center;
+  animation: glowing-orb-particle-orbit 10s ease-in-out infinite;
   will-change: transform, opacity;
 }
 
-.glowing-orb__stars span:nth-child(1) { width: 1.5px; height: 1.5px; top: 13%; left: 15%; opacity: 0.42; --particle-x: 8px; --particle-y: -12px; animation-duration: 8.5s; }
-.glowing-orb__stars span:nth-child(2) { width: 2.25px; height: 2.25px; top: 28%; left: 76%; opacity: 0.54; --particle-x: -8px; --particle-y: -14px; animation-duration: 10.5s; animation-delay: -2.2s; }
-.glowing-orb__stars span:nth-child(3) { width: 1.5px; height: 1.5px; top: 55%; left: 9%; opacity: 0.35; --particle-x: 9px; --particle-y: -10px; animation-duration: 9.5s; animation-delay: -4.1s; }
-.glowing-orb__stars span:nth-child(4) { width: 1.75px; height: 1.75px; top: 64%; left: 88%; opacity: 0.42; --particle-x: -10px; --particle-y: -11px; animation-duration: 11s; animation-delay: -1.4s; }
-.glowing-orb__stars span:nth-child(5) { width: 2.25px; height: 2.25px; top: 9%; left: 52%; opacity: 0.48; --particle-x: 6px; --particle-y: -13px; animation-duration: 8s; animation-delay: -3.5s; }
-.glowing-orb__stars span:nth-child(6) { width: 1.5px; height: 1.5px; top: 42%; left: 94%; opacity: 0.34; --particle-x: -7px; --particle-y: -12px; animation-duration: 12s; animation-delay: -5s; }
-.glowing-orb__stars span:nth-child(7) { width: 1.75px; height: 1.75px; top: 75%; left: 32%; opacity: 0.43; --particle-x: 7px; --particle-y: -10px; animation-duration: 10s; animation-delay: -2.8s; }
-.glowing-orb__stars span:nth-child(8) { width: 1.35px; height: 1.35px; top: 23%; left: 5%; opacity: 0.32; --particle-x: 10px; --particle-y: -9px; animation-duration: 9s; animation-delay: -6.2s; }
-.glowing-orb__stars span:nth-child(9) { width: 1.35px; height: 1.35px; top: 47%; left: 42%; opacity: 0.32; --particle-x: -6px; --particle-y: -12px; animation-duration: 11.5s; animation-delay: -3s; }
-.glowing-orb__stars span:nth-child(10) { width: 1.75px; height: 1.75px; top: 17%; left: 91%; opacity: 0.34; --particle-x: -10px; --particle-y: -10px; animation-duration: 8.8s; animation-delay: -4.8s; }
-.glowing-orb__stars span:nth-child(11) { width: 1.35px; height: 1.35px; top: 63%; left: 62%; opacity: 0.3; --particle-x: 7px; --particle-y: -11px; animation-duration: 12.5s; animation-delay: -7.1s; }
-.glowing-orb__stars span:nth-child(12) { width: 1.5px; height: 1.5px; top: 34%; left: 28%; opacity: 0.33; --particle-x: 8px; --particle-y: -13px; animation-duration: 9.8s; animation-delay: -1.8s; }
+.glowing-orb__stars span:nth-child(1) { width: 1.5px; height: 1.5px; top: 13%; left: 15%; opacity: 0.42; --particle-x: 14px; --particle-y: -18px; animation-duration: 8.5s; }
+.glowing-orb__stars span:nth-child(2) { width: 2.25px; height: 2.25px; top: 28%; left: 76%; opacity: 0.54; --particle-x: -16px; --particle-y: -20px; animation-duration: 10.5s; animation-delay: -2.2s; }
+.glowing-orb__stars span:nth-child(3) { width: 1.5px; height: 1.5px; top: 55%; left: 9%; opacity: 0.35; --particle-x: 18px; --particle-y: -14px; animation-duration: 9.5s; animation-delay: -4.1s; }
+.glowing-orb__stars span:nth-child(4) { width: 1.75px; height: 1.75px; top: 64%; left: 88%; opacity: 0.42; --particle-x: -20px; --particle-y: -16px; animation-duration: 11s; animation-delay: -1.4s; }
+.glowing-orb__stars span:nth-child(5) { width: 2.25px; height: 2.25px; top: 9%; left: 52%; opacity: 0.48; --particle-x: 12px; --particle-y: -22px; animation-duration: 8s; animation-delay: -3.5s; }
+.glowing-orb__stars span:nth-child(6) { width: 1.5px; height: 1.5px; top: 42%; left: 94%; opacity: 0.34; --particle-x: -14px; --particle-y: -19px; animation-duration: 12s; animation-delay: -5s; }
+.glowing-orb__stars span:nth-child(7) { width: 1.75px; height: 1.75px; top: 75%; left: 32%; opacity: 0.43; --particle-x: 15px; --particle-y: -15px; animation-duration: 10s; animation-delay: -2.8s; }
+.glowing-orb__stars span:nth-child(8) { width: 1.35px; height: 1.35px; top: 23%; left: 5%; opacity: 0.32; --particle-x: 20px; --particle-y: -13px; animation-duration: 9s; animation-delay: -6.2s; }
+.glowing-orb__stars span:nth-child(9) { width: 1.35px; height: 1.35px; top: 47%; left: 42%; opacity: 0.32; --particle-x: -12px; --particle-y: -20px; animation-duration: 11.5s; animation-delay: -3s; }
+.glowing-orb__stars span:nth-child(10) { width: 1.75px; height: 1.75px; top: 17%; left: 91%; opacity: 0.34; --particle-x: -18px; --particle-y: -17px; animation-duration: 8.8s; animation-delay: -4.8s; }
+.glowing-orb__stars span:nth-child(11) { width: 1.35px; height: 1.35px; top: 63%; left: 62%; opacity: 0.3; --particle-x: 13px; --particle-y: -18px; animation-duration: 12.5s; animation-delay: -7.1s; }
+.glowing-orb__stars span:nth-child(12) { width: 1.5px; height: 1.5px; top: 34%; left: 28%; opacity: 0.33; --particle-x: 16px; --particle-y: -21px; animation-duration: 9.8s; animation-delay: -1.8s; }
 
 /* -- Body container (sphere + ring, floats) -- */
 .glowing-orb__body {
@@ -198,6 +199,10 @@
   justify-content: center;
 }
 
+.glowing-orb--monk .glowing-orb__monk {
+  transform: translateY(calc(var(--orb-size, 160px) * -0.1));
+}
+
 /* -- Cyan ring beneath sphere -- */
 .glowing-orb__ring {
   width: var(--orb-ring-w, 46px);
@@ -220,14 +225,26 @@
   90% { transform: scaleY(0.08); }
 }
 
-@keyframes glowing-orb-particle-float {
+@keyframes glowing-orb-particle-orbit {
   0%, 100% {
-    transform: translate3d(0, 0, 0);
-    opacity: 0.25;
+    transform: translate3d(0, 0, 0) scale(0.72);
+    opacity: 0.18;
   }
-  50% {
-    transform: translate3d(var(--particle-x, 7px), var(--particle-y, -12px), 0);
-    opacity: 0.55;
+  18% {
+    transform: translate3d(var(--particle-x, 14px), calc(var(--particle-y, -16px) * 0.35), 0) scale(1.45);
+    opacity: 0.82;
+  }
+  42% {
+    transform: translate3d(calc(var(--particle-x, 14px) * -0.62), var(--particle-y, -16px), 0) scale(0.88);
+    opacity: 0.42;
+  }
+  68% {
+    transform: translate3d(calc(var(--particle-x, 14px) * 0.48), calc(var(--particle-y, -16px) * -0.72), 0) scale(1.28);
+    opacity: 0.68;
+  }
+  86% {
+    transform: translate3d(calc(var(--particle-x, 14px) * -0.28), calc(var(--particle-y, -16px) * 0.55), 0) scale(1.05);
+    opacity: 0.52;
   }
 }
 

@@ -1,4 +1,5 @@
 import { Mascot, type MascotMood } from '../../mascot'
+import { MONK_MINIATURE_SRC } from '@/features/clarity-home/companion-avatars'
 import { CardPeriodMenu } from './CardPeriodMenu'
 import type { Period } from './PeriodSelector'
 import './FocusScoreCard.css'
@@ -74,7 +75,7 @@ export function FocusScoreCard({ score, trend, period, defaultPeriod, onPeriodCh
       )}
       {!compact && (
         <div className="focus-score-card__mascot">
-          <Mascot mood={getMascotMood()} size="small" showMessage={false} />
+          <Mascot mood={getMascotMood()} size="large" showMessage={false} imageSrc={MONK_MINIATURE_SRC} />
         </div>
       )}
       <div className="focus-score-card__content">
