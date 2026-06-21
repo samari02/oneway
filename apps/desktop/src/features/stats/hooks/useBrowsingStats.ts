@@ -67,7 +67,7 @@ interface RustBrowsingStats {
 }
 
 // Map Rust category to frontend category
-function mapCategory(category: string): 'productive' | 'neutral' | 'distraction' {
+export function mapCategory(category: string): 'productive' | 'neutral' | 'distraction' {
   switch (category) {
     case 'work':
     case 'dev':

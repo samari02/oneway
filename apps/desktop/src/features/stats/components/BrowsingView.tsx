@@ -1,14 +1,23 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useCallback } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '../../auth'
+import { inferBlockingRuleType, normalizeUrlBlockingValue } from '../../boundaries/api/customBlockingRules'
+import { useCustomBlockingRules } from '../../boundaries/hooks/useCustomBlockingRules'
 import { useBrowsingStatsWithOverride } from '../hooks/useBrowsingStatsWithOverride'
 import { useCardPeriods } from '../hooks/useCardPeriods'
+import { mapCategory } from '../hooks/useBrowsingStats'
+import type { SiteVisit } from '../hooks/useBrowsingStats'
 import { DistractionHeroCard } from './DistractionHeroCard'
 import { TopDistractionsCard } from './TopDistractionsCard'
+import { TopSitesCard } from './TopSitesCard'
 import { TimeDistributionCard } from './TimeDistributionCard'
 import { BrowsingHeatmapCard } from './BrowsingHeatmapCard'
 import { DataSourceCard } from './DataSourceCard'
 import type { Period } from './PeriodSelector'
+import type { SiteCategory } from './SiteClassificationModal'
 import './BrowsingView.css'
+
+const BLOCK_RULE_MIN_LEN = 3
 
 // Map Rust category to check if distraction
 function isDistraction(category: string): boolean {
@@ -22,6 +31,7 @@ interface BrowsingViewProps {
 
 export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
   const { user } = useAuth()
+  const { rules: blockingRules, createRule, updateRule } = useCustomBlockingRules(user?.id)
   const { getEffectivePeriod, setCardPeriod, resetAllOverrides } = useCardPeriods(period)
   
   // Reset all card overrides when global period is clicked
@@ -33,9 +43,9 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
   
   // Get effective periods for cards
   const cardPeriods = {
-    'focus-score': period, // Not used but required by hook
+    'focus-score': period,
     'time-distribution': getEffectivePeriod('time-distribution'),
-    'top-sites': period, // Not used but required by hook
+    'top-sites': getEffectivePeriod('top-sites'),
     'heatmap': getEffectivePeriod('heatmap'),
   }
   
@@ -45,8 +55,85 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
     cardPeriods
   )
 
+  const handleClassificationSave = useCallback(async (classifications: Record<string, SiteCategory>) => {
+    if (Object.keys(classifications).length === 0) return
+    try {
+      await invoke('save_site_classifications', { classifications })
+      refetch()
+    } catch (e) {
+      console.error('[BrowsingView] Failed to save classification:', e)
+    }
+  }, [refetch])
+
+  const handleAddDomainToBlockList = useCallback(
+    async (domain: string) => {
+      if (!user?.id) {
+        throw new Error('Sign in to add sites to your block list.')
+      }
+      const raw = domain.trim()
+      const mode = inferBlockingRuleType(raw)
+      if (mode === 'url_contains') {
+        const value = normalizeUrlBlockingValue(raw)
+        if (value.length < BLOCK_RULE_MIN_LEN) {
+          throw new Error(`Use at least ${BLOCK_RULE_MIN_LEN} characters in the domain.`)
+        }
+        const lower = value.toLowerCase()
+        const existing = blockingRules.find(
+          (r) =>
+            r.rule_type === 'url_contains' &&
+            normalizeUrlBlockingValue(r.value).toLowerCase() === lower
+        )
+        if (existing) {
+          if (existing.is_active) {
+            throw new Error('That site is already on your block list.')
+          }
+          await updateRule(existing.id, { is_active: true })
+          return
+        }
+        await createRule({
+          user_id: user.id,
+          rule_type: 'url_contains',
+          value,
+          note: 'From Screen Time',
+        })
+        return
+      }
+      const value = raw.toLowerCase()
+      if (value.length < BLOCK_RULE_MIN_LEN) {
+        throw new Error(`Use at least ${BLOCK_RULE_MIN_LEN} characters.`)
+      }
+      const existing = blockingRules.find(
+        (r) => r.rule_type === 'search_contains' && r.value.toLowerCase() === value
+      )
+      if (existing) {
+        if (existing.is_active) {
+          throw new Error('That keyword is already on your block list.')
+        }
+        await updateRule(existing.id, { is_active: true })
+        return
+      }
+      await createRule({
+        user_id: user.id,
+        rule_type: 'search_contains',
+        value,
+        note: 'From Screen Time',
+      })
+    },
+    [user?.id, blockingRules, createRule, updateRule]
+  )
+
+  // All visited sites for the All Visited Sites card
+  const allVisitedSites = useMemo<SiteVisit[]>(() => {
+    return (cardStats.topSites?.topSites || []).map(site => ({
+      domain: site.domain,
+      visits: site.visits,
+      timeSpent: site.timeSpent,
+      category: mapCategory(site.category),
+      source: 'web' as const,
+    }))
+  }, [cardStats.topSites])
+
   // Get distraction sites for TopDistractionsCard (must be before early returns)
-  // Display data: based on selected period
   const distractionSites = useMemo(() => {
     const topSites = cardStats.timeDistribution?.topSites || []
     return topSites
@@ -64,8 +151,7 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
     const periodStart = cardStats.allTime?.periodStart
     const periodEnd = cardStats.allTime?.periodEnd
     
-    // Calculate actual days of data we have
-    let totalDays = 30 // default fallback
+    let totalDays = 30
     if (periodStart && periodEnd) {
       const start = new Date(periodStart)
       const end = new Date(periodEnd)
@@ -106,7 +192,6 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
     )
   }
 
-  // Use first available card stats for overall view (fallback to focus-score)
   const stats = cardStats.focusScore || cardStats.timeDistribution
   
   if (!stats || stats.totalVisits === 0) {
@@ -121,7 +206,6 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
     )
   }
 
-  // Get distraction time by summing actual time from distraction sites
   const distractionMinutes = distractionSites.reduce((sum, site) => sum + site.timeSpent, 0)
 
   return (
@@ -145,6 +229,26 @@ export function BrowsingView({ period, resetTrigger = 0 }: BrowsingViewProps) {
               period={getEffectivePeriod('time-distribution')}
               projectionSites={projectionData.sites}
               projectionDays={projectionData.totalDays}
+              blockingRules={blockingRules}
+              onBlock={(domain) => handleAddDomainToBlockList(domain)}
+            />
+          </section>
+        )}
+
+        {/* All Visited Sites */}
+        {allVisitedSites.length > 0 && (
+          <section className="browsing-view__section browsing-view__section--sites">
+            <TopSitesCard
+              sites={allVisitedSites}
+              title="All visited sites"
+              allowShowAll
+              period={getEffectivePeriod('top-sites')}
+              defaultPeriod={period}
+              onPeriodChange={(p) => setCardPeriod('top-sites', p)}
+              onClassificationSave={handleClassificationSave}
+              onSiteDataDeleted={refetch}
+              onAddDomainToBlockList={user?.id ? handleAddDomainToBlockList : undefined}
+              blockingRules={blockingRules}
             />
           </section>
         )}

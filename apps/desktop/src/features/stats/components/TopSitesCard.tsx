@@ -21,9 +21,13 @@ interface TopSitesCardProps {
   onAddDomainToBlockList?: (domain: string) => Promise<void>
   /** Active custom rules (for “Blocked” badge on web rows). */
   blockingRules?: CustomBlockingRule[]
+  /** Card heading (default: Top Sites). */
+  title?: string
+  /** Adds an “All” option to the display limit menu. */
+  allowShowAll?: boolean
 }
 
-type DisplayLimit = 10 | 20 | 30
+type DisplayLimit = 10 | 20 | 30 | 'all'
 type CategoryFilter = 'all' | 'productive' | 'neutral' | 'distraction'
 type SourceFilter = 'all' | 'web' | 'app'
 
@@ -54,8 +58,8 @@ function useAppIcons() {
   return { icons, fetchIcon }
 }
 
-export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onClassificationSave, showSourceFilter = false, onSiteDataDeleted, onAddDomainToBlockList, blockingRules }: TopSitesCardProps) {
-  const [displayLimit, setDisplayLimit] = useState<DisplayLimit>(10)
+export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onClassificationSave, showSourceFilter = false, onSiteDataDeleted, onAddDomainToBlockList, blockingRules, title = 'Top Sites', allowShowAll = false }: TopSitesCardProps) {
+  const [displayLimit, setDisplayLimit] = useState<DisplayLimit>(allowShowAll ? 'all' : 10)
   const [deletingDomain, setDeletingDomain] = useState<string | null>(null)
   const [addingToBlockDomain, setAddingToBlockDomain] = useState<string | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
@@ -85,13 +89,13 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
     ? filteredBySource 
     : filteredBySource.filter(s => s.category === categoryFilter)
   
-  const displayedSites = filteredSites.slice(0, displayLimit)
+  const displayedSites = displayLimit === 'all' ? filteredSites : filteredSites.slice(0, displayLimit)
   const maxVisits = Math.max(...displayedSites.map(s => s.visits), 1) // Ensure at least 1 to avoid division by 0
 
-  const isWebDomainOnBlockList = useMemo(() => {
-    if (!blockingRules?.length) return (_d: string) => false
-    return (domain: string) => domainMatchesActiveBlockingRules(domain, blockingRules)
-  }, [blockingRules])
+  const isWebDomainOnBlockList = useMemo(
+    () => (domain: string) => domainMatchesActiveBlockingRules(domain, blockingRules ?? []),
+    [blockingRules]
+  )
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -181,7 +185,9 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
           className="top-sites-card__limit-trigger"
           onClick={() => setIsLimitMenuOpen(!isLimitMenuOpen)}
         >
-          <span className="top-sites-card__limit-text">Top {displayLimit}</span>
+          <span className="top-sites-card__limit-text">
+            {displayLimit === 'all' ? 'All' : `Top ${displayLimit}`}
+          </span>
           <span className="top-sites-card__limit-icon">▼</span>
         </button>
 
@@ -203,12 +209,26 @@ export function TopSitesCard({ sites, period, defaultPeriod, onPeriodChange, onC
                 {displayLimit === limit && <span className="top-sites-card__limit-check">✓</span>}
               </button>
             ))}
+            {allowShowAll && (
+              <button
+                className={`top-sites-card__limit-item ${
+                  displayLimit === 'all' ? 'top-sites-card__limit-item--active' : ''
+                }`}
+                onClick={() => {
+                  setDisplayLimit('all')
+                  setIsLimitMenuOpen(false)
+                }}
+              >
+                All ({filteredSites.length})
+                {displayLimit === 'all' && <span className="top-sites-card__limit-check">✓</span>}
+              </button>
+            )}
           </div>
         )}
       </div>
       
       <div className="top-sites-card__header">
-        <h3 className="top-sites-card__title">Top Sites</h3>
+        <h3 className="top-sites-card__title">{title}</h3>
         
         <div className="top-sites-card__filters-row">
           {/* Source filter (All/Web/Apps) */}

@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, useEffect } from 'react'
+import { useMemo, useCallback, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '../../auth'
 import { inferBlockingRuleType, normalizeUrlBlockingValue } from '../../boundaries/api/customBlockingRules'
@@ -6,6 +6,7 @@ import { useCustomBlockingRules } from '../../boundaries/hooks/useCustomBlocking
 import { useBrowsingStatsWithOverride } from '../hooks/useBrowsingStatsWithOverride'
 import { useCardPeriods } from '../hooks/useCardPeriods'
 import { useAppUsage, formatDuration } from '../../app-blocking/hooks/useAppUsage'
+import { mapCategory } from '../hooks/useBrowsingStats'
 import { FocusScoreCard } from './FocusScoreCard'
 import { TopSitesCard } from './TopSitesCard'
 import type { Period } from './PeriodSelector'
@@ -20,12 +21,15 @@ interface OverviewTabProps {
   resetTrigger?: number
 }
 
-// Map period to app usage period string
+// Map period to app usage period string (must match Rust backend)
 function mapPeriodToAppUsage(period: Period): string {
   switch (period) {
     case 'today': return 'today'
-    case '7d': return '7d'
-    case '30d': return '30d'
+    case '7days': return '7days'
+    case '30days': return '30days'
+    case '90days': return '90days'
+    case '180days': return '90days'
+    case '365days': return 'all'
     case 'all': return 'all'
     default: return 'today'
   }
@@ -35,8 +39,11 @@ function mapPeriodToAppUsage(period: Period): string {
 function getPeriodLabel(period: Period): string {
   switch (period) {
     case 'today': return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
-    case '7d': return 'Last 7 days'
-    case '30d': return 'Last 30 days'
+    case '7days': return 'Last 7 days'
+    case '30days': return 'Last 30 days'
+    case '90days': return 'Last 90 days'
+    case '180days': return 'Last 180 days'
+    case '365days': return 'Last year'
     case 'all': return 'All time'
     default: return 'Today'
   }
@@ -44,7 +51,7 @@ function getPeriodLabel(period: Period): string {
 
 export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   const { user } = useAuth()
-  const { rules: blockingRules, createRule } = useCustomBlockingRules(user?.id)
+  const { rules: blockingRules, createRule, updateRule } = useCustomBlockingRules(user?.id)
   const { getEffectivePeriod, setCardPeriod, resetAllOverrides } = useCardPeriods(period)
   
   // Reset all card overrides when global period is clicked
@@ -53,24 +60,6 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
       resetAllOverrides()
     }
   }, [resetTrigger, resetAllOverrides])
-  
-  // App classifications (stored locally, same system as web sites)
-  const [appClassifications, setAppClassifications] = useState<Record<string, SiteCategory>>({})
-  
-  // Load existing classifications on mount (includes both web and app)
-  useEffect(() => {
-    invoke<Record<string, string>>('get_site_classifications')
-      .then(classifications => {
-        const validClassifications: Record<string, SiteCategory> = {}
-        Object.entries(classifications).forEach(([key, value]) => {
-          if (value === 'productive' || value === 'neutral' || value === 'distraction') {
-            validClassifications[key] = value
-          }
-        })
-        setAppClassifications(validClassifications)
-      })
-      .catch(() => {})
-  }, [])
   
   // Browsing stats - must be before handleClassificationSave so refetch is available
   const { cardStats, loading: browsingLoading, refetch } = useBrowsingStatsWithOverride(
@@ -87,15 +76,12 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   // App usage stats - use top-sites effective period for unified view
   const { stats: appStats, loading: appLoading } = useAppUsage(mapPeriodToAppUsage(getEffectivePeriod('top-sites')))
   
-  // Handle classification save (for both web sites and apps)
+  // Handle classification save (web sites only)
   const handleClassificationSave = useCallback(async (classifications: Record<string, SiteCategory>) => {
     if (Object.keys(classifications).length === 0) return
     
     try {
       await invoke('save_site_classifications', { classifications })
-      // Update local app classifications state immediately for instant UI feedback
-      setAppClassifications(prev => ({ ...prev, ...classifications }))
-      // Refetch to update web sites with new classifications
       refetch()
     } catch (e) {
       console.error('[OverviewTab] Failed to save classification:', e)
@@ -115,13 +101,17 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
           throw new Error(`Use at least ${BLOCK_RULE_MIN_LEN} characters in the domain.`)
         }
         const lower = value.toLowerCase()
-        const exists = blockingRules.some(
+        const existing = blockingRules.find(
           (r) =>
             r.rule_type === 'url_contains' &&
             normalizeUrlBlockingValue(r.value).toLowerCase() === lower
         )
-        if (exists) {
-          throw new Error('That site is already on your block list.')
+        if (existing) {
+          if (existing.is_active) {
+            throw new Error('That site is already on your block list.')
+          }
+          await updateRule(existing.id, { is_active: true })
+          return
         }
         await createRule({
           user_id: user.id,
@@ -135,11 +125,15 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
       if (value.length < BLOCK_RULE_MIN_LEN) {
         throw new Error(`Use at least ${BLOCK_RULE_MIN_LEN} characters.`)
       }
-      const exists = blockingRules.some(
+      const existing = blockingRules.find(
         (r) => r.rule_type === 'search_contains' && r.value.toLowerCase() === value
       )
-      if (exists) {
-        throw new Error('That keyword is already on your block list.')
+      if (existing) {
+        if (existing.is_active) {
+          throw new Error('That keyword is already on your block list.')
+        }
+        await updateRule(existing.id, { is_active: true })
+        return
       }
       await createRule({
         user_id: user.id,
@@ -148,30 +142,21 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
         note: 'From Screen Time',
       })
     },
-    [user?.id, blockingRules, createRule]
+    [user?.id, blockingRules, createRule, updateRule]
   )
   
   const loading = browsingLoading || appLoading
   
-  // Combine web sites and apps into a unified list
-  const allSites = useMemo<SiteVisit[]>(() => {
-    const webSites: SiteVisit[] = (cardStats.topSites?.topSites || []).map(site => ({
-      ...site,
+  // Web-only sites for summary top sites card
+  const webSites = useMemo<SiteVisit[]>(() => {
+    return (cardStats.topSites?.topSites || []).map(site => ({
+      domain: site.domain,
+      visits: site.visits,
+      timeSpent: site.timeSpent,
+      category: mapCategory(site.category),
       source: 'web' as const,
     }))
-    
-    const appSites: SiteVisit[] = appStats.apps.map(app => ({
-      domain: app.app_name,
-      visits: 1, // Apps don't track visits the same way
-      timeSpent: Math.round(app.total_time_ms / 60000), // Convert ms to minutes
-      category: appClassifications[app.app_name] || 'neutral', // Use saved classification or default
-      source: 'app' as const,
-      bundleId: app.bundle_id,
-    }))
-    
-    // Sort by time spent descending
-    return [...webSites, ...appSites].sort((a, b) => b.timeSpent - a.timeSpent)
-  }, [cardStats.topSites, appStats.apps, appClassifications])
+  }, [cardStats.topSites])
   
   if (loading) {
     return (
@@ -194,7 +179,7 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
   const appTimeMs = appStats.total_time_ms || 0
   const totalTimeMs = browsingTimeMs + appTimeMs
   
-  const hasData = totalTimeMs > 0 || allSites.length > 0
+  const hasData = totalTimeMs > 0 || webSites.length > 0
   
   if (!hasData) {
     return (
@@ -243,18 +228,19 @@ export function OverviewTab({ period, resetTrigger = 0 }: OverviewTabProps) {
           )}
         </section>
         
-        {/* Top Sites (Web + Apps unified) */}
-        <TopSitesCard 
-          sites={allSites}
-          period={getEffectivePeriod('top-sites')}
-          defaultPeriod={period}
-          onPeriodChange={(p) => setCardPeriod('top-sites', p)}
-          showSourceFilter={true}
-          onClassificationSave={handleClassificationSave}
-          onSiteDataDeleted={refetch}
-          onAddDomainToBlockList={user?.id ? handleAddDomainToBlockList : undefined}
-          blockingRules={blockingRules}
-        />
+        {/* Top Sites (web only — apps live in Apps tab) */}
+        {webSites.length > 0 && (
+          <TopSitesCard 
+            sites={webSites}
+            period={getEffectivePeriod('top-sites')}
+            defaultPeriod={period}
+            onPeriodChange={(p) => setCardPeriod('top-sites', p)}
+            onClassificationSave={handleClassificationSave}
+            onSiteDataDeleted={refetch}
+            onAddDomainToBlockList={user?.id ? handleAddDomainToBlockList : undefined}
+            blockingRules={blockingRules}
+          />
+        )}
         
         {/* Quick Stats Grid */}
         <section className="overview-tab__section">

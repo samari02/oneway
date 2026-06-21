@@ -1,4 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import type { CustomBlockingRule } from '@oneway/shared'
+import { domainMatchesActiveBlockingRules } from '../../boundaries/api/customBlockingRules'
 import type { Period } from './PeriodSelector'
 import './TopDistractionsCard.css'
 
@@ -15,7 +17,9 @@ interface TopDistractionsCardProps {
   // Projection data (based on ALL available data)
   projectionSites: DistractionSite[]
   projectionDays: number  // Actual days of data available
-  onBlock?: (domain: string, source: 'web' | 'app', bundleId?: string) => void
+  /** Active custom rules — persisted blocked state for web rows. */
+  blockingRules?: CustomBlockingRule[]
+  onBlock?: (domain: string, source: 'web' | 'app', bundleId?: string) => Promise<void>
 }
 
 // Calculate yearly projection from all-time data
@@ -50,9 +54,19 @@ function getPeriodSuffix(period: Period): string {
   }
 }
 
-export function TopDistractionsCard({ sites, period, projectionSites, projectionDays, onBlock }: TopDistractionsCardProps) {
-  const [blockedDomains, setBlockedDomains] = useState<Set<string>>(new Set())
+export function TopDistractionsCard({ sites, period, projectionSites, projectionDays, blockingRules, onBlock }: TopDistractionsCardProps) {
+  const [blockingDomain, setBlockingDomain] = useState<string | null>(null)
   const [showTooltip, setShowTooltip] = useState(false)
+
+  const isSiteBlocked = useCallback(
+    (site: DistractionSite) => {
+      if (site.source === 'web' && blockingRules?.length) {
+        return domainMatchesActiveBlockingRules(site.domain, blockingRules)
+      }
+      return false
+    },
+    [blockingRules]
+  )
   
   // Sort by time spent descending, take top 5 (display data from selected period)
   const topDistractions = [...sites]
@@ -69,17 +83,30 @@ export function TopDistractionsCard({ sites, period, projectionSites, projection
   }, [projectionSites])
   
   // Calculate total yearly days using ALL-TIME data (not period-based)
-  const totalYearlyDays = topDistractions.reduce((sum, site) => {
-    if (!blockedDomains.has(site.domain)) {
-      const allTimeMinutes = projectionByDomain.get(site.domain) || site.timeSpent
-      return sum + calculateYearlyDays(allTimeMinutes, projectionDays)
-    }
-    return sum
-  }, 0)
+  const blockedCount = topDistractions.filter(isSiteBlocked).length
+
+  const totalYearlyDays = useMemo(
+    () =>
+      topDistractions.reduce((sum, site) => {
+        if (!isSiteBlocked(site)) {
+          const allTimeMinutes = projectionByDomain.get(site.domain) || site.timeSpent
+          return sum + calculateYearlyDays(allTimeMinutes, projectionDays)
+        }
+        return sum
+      }, 0),
+    [topDistractions, isSiteBlocked, projectionByDomain, projectionDays]
+  )
   
-  const handleBlock = (site: DistractionSite) => {
-    setBlockedDomains(prev => new Set(prev).add(site.domain))
-    onBlock?.(site.domain, site.source, site.bundleId)
+  const handleBlock = async (site: DistractionSite) => {
+    if (isSiteBlocked(site) || !onBlock) return
+    setBlockingDomain(site.domain)
+    try {
+      await onBlock(site.domain, site.source, site.bundleId)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Could not add to block list')
+    } finally {
+      setBlockingDomain(null)
+    }
   }
   
   if (topDistractions.length === 0) {
@@ -103,7 +130,8 @@ export function TopDistractionsCard({ sites, period, projectionSites, projection
           // Use ALL-TIME data for yearly projection (stable, accurate)
           const allTimeMinutes = projectionByDomain.get(site.domain) || site.timeSpent
           const yearlyDays = calculateYearlyDays(allTimeMinutes, projectionDays)
-          const isBlocked = blockedDomains.has(site.domain)
+          const isBlocked = isSiteBlocked(site)
+          const isBlocking = blockingDomain === site.domain
           
           return (
             <div 
@@ -130,10 +158,10 @@ export function TopDistractionsCard({ sites, period, projectionSites, projection
               
               <button
                 className={`top-distractions__block-btn ${isBlocked ? 'top-distractions__block-btn--blocked' : ''}`}
-                onClick={() => handleBlock(site)}
-                disabled={isBlocked}
+                onClick={() => void handleBlock(site)}
+                disabled={isBlocked || isBlocking}
               >
-                {isBlocked ? '✓ Blocked' : 'Block'}
+                {isBlocking ? 'Blocking…' : isBlocked ? '✓ Blocked' : 'Block'}
               </button>
             </div>
           )
@@ -144,7 +172,7 @@ export function TopDistractionsCard({ sites, period, projectionSites, projection
         <div className="top-distractions__summary">
           <span className="top-distractions__summary-icon">💡</span>
           <span className="top-distractions__summary-text">
-            Block {blockedDomains.size > 0 ? 'the rest' : `these ${topDistractions.length}`} = reclaim <strong>~{totalYearlyDays} days/year</strong>
+            Block {blockedCount > 0 ? 'the rest' : `these ${topDistractions.length}`} = reclaim <strong>~{totalYearlyDays} days/year</strong>
           </span>
           <span 
             className="top-distractions__info"
