@@ -5,7 +5,7 @@
 
 const params = new URLSearchParams(window.location.search)
 const blockedUrl = params.get('url') || ''
-const reason = params.get('reason') || 'This site is blocked in Focus Mode'
+const reason = params.get('reason') || "This site isn't available while you're in Focus Mode"
 
 function extractDomain(url: string): string {
   try {

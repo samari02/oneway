@@ -3,36 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blocked - Clarity</title>
+  <title>Stay focused - Clarity</title>
   <link rel="stylesheet" href="block-screen.css">
 </head>
 <body>
+  <div class="block-screen__bg" aria-hidden="true">
+    <div class="block-screen__bg-drift"></div>
+    <div class="block-screen__particles">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+
   <div class="block-screen">
+    <div class="block-screen__monk-wrap">
+      <div class="block-screen__monk-glow" aria-hidden="true"></div>
+      <img
+        class="block-screen__monk"
+        src="companion-avatars/monk_miniature.png"
+        alt=""
+        width="96"
+        height="96"
+        draggable="false"
+      >
+    </div>
+
     <div class="block-screen__content">
-      <div class="block-screen__icon">🧘</div>
-      <h1 class="block-screen__title">Blocked</h1>
-      
+      <h1 class="block-screen__title">Stay focused</h1>
+
       <div class="block-screen__status">
         <span class="block-screen__mode">You're in Focus Mode</span>
       </div>
-      
+
       <div class="block-screen__site">
         <span id="blocked-domain" class="block-screen__domain"></span>
-        <span class="block-screen__blocked-label">is blocked</span>
+        <span class="block-screen__blocked-label">is set aside for now</span>
       </div>
-      
+
       <div id="reason" class="block-screen__reason"></div>
-      
+
       <div class="block-screen__actions block-screen__actions--single">
         <button id="btn-cancel" type="button" class="btn btn--secondary">Go back</button>
       </div>
-      
+
       <div class="block-screen__stats">
         <span id="blocks-today">0 sites blocked today</span>
       </div>
     </div>
   </div>
-  
+
   <script src="block-screen.js" type="module"></script>
 </body>
 </html>

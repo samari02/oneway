@@ -3,7 +3,7 @@
  * Main logic for the extension
  */
 
-import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL } from '../shared/constants'
+import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL, isOwnExtensionUrl } from '../shared/constants'
 import { extractDomain, matchesPattern, log } from '../shared/utils'
 import type { BlockRule, StorageData, NavigationEvent, BlockEvent, ProtectionStatus } from '../shared/types'
 import {
@@ -154,6 +154,9 @@ async function syncExistingHistoryToDesktop() {
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   // Only main frame navigations
   if (details.frameId !== 0) return
+
+  // Never block or re-analyze our own extension pages (especially block-screen.html)
+  if (isOwnExtensionUrl(details.url)) return
   
   let urlToAnalyze = details.url
   
@@ -312,6 +315,10 @@ async function checkCustomSearchKeywords(query: string): Promise<{ blocked: bool
  * Check if URL should be blocked
  */
 async function shouldBlock(url: string, tabId: number): Promise<{ shouldBlock: boolean; reason?: string }> {
+  if (isOwnExtensionUrl(url)) {
+    return { shouldBlock: false }
+  }
+
   const storage = await chrome.storage.local.get([
     STORAGE_KEYS.RULES,
     STORAGE_KEYS.CUSTOM_BLOCKING_RULES,

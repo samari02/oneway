@@ -133,3 +133,8 @@ export const STORAGE_KEYS = {
  * Block screen URL
  */
 export const BLOCK_SCREEN_URL = chrome.runtime.getURL('block-screen.html')
+
+/** True for this extension's pages (block screen, popup, etc.) */
+export function isOwnExtensionUrl(url: string): boolean {
+  return url.startsWith(chrome.runtime.getURL(''))
+}

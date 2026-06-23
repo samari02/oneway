@@ -2,7 +2,7 @@
  * Background Service Worker
  * Main logic for the extension
  */
-import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL } from '../shared/constants';
+import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL, isOwnExtensionUrl } from '../shared/constants';
 import { extractDomain, matchesPattern, log } from '../shared/utils';
 import { extractSearchQuery, isSearchEngine, extractRedirectDestination, isEmailTrackingUrl, incrementBlockedSearches, getBlockedSearchesToday } from './search-filter';
 import { analyzeSearch, shouldAnalyzeSearch, getHeightenedMode, getDailyStats, updateBadge, getSearchSession } from './search-intelligence';
@@ -107,6 +107,9 @@ async function syncExistingHistoryToDesktop() {
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
     // Only main frame navigations
     if (details.frameId !== 0)
+        return;
+    // Never block or re-analyze our own extension pages (especially block-screen.html)
+    if (isOwnExtensionUrl(details.url))
         return;
     let urlToAnalyze = details.url;
     // Check if this is a redirect URL (Google/Bing click tracking)
@@ -243,6 +246,9 @@ async function checkCustomSearchKeywords(query) {
  * Check if URL should be blocked
  */
 async function shouldBlock(url, tabId) {
+    if (isOwnExtensionUrl(url)) {
+        return { shouldBlock: false };
+    }
     const storage = await chrome.storage.local.get([
         STORAGE_KEYS.RULES,
         STORAGE_KEYS.CUSTOM_BLOCKING_RULES,

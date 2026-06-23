@@ -10,15 +10,28 @@ export function extractDomain(url) {
     return match ? match[1] : url;
 }
 /**
+ * Normalize URL for blocklist matching (host + path only — not query/hash).
+ * Prevents false positives when blocked URLs appear in query params (e.g. block-screen.html?url=...).
+ */
+function urlForPatternMatch(url) {
+    try {
+        const parsed = new URL(url);
+        return `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
+    }
+    catch {
+        return url.split(/[?#]/)[0];
+    }
+}
+/**
  * Check if URL matches pattern (simple wildcard matching)
  */
 export function matchesPattern(url, pattern) {
-    // Convert wildcard pattern to regex
+    const target = urlForPatternMatch(url);
     const regexPattern = pattern
         .replace(/\./g, '\\.')
         .replace(/\*/g, '.*');
     const regex = new RegExp(`^${regexPattern}$`);
-    return regex.test(url);
+    return regex.test(target);
 }
 /**
  * Get current timestamp

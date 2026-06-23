@@ -6,11 +6,6 @@ import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 
 type StepPhase = 'dump' | 'processing' | 'review'
 
-export type VoiceCompanionMessage = {
-  text: string
-  variant: 'listening' | 'transcribing' | 'error'
-}
-
 const KIND_LABELS: Record<PlanItem['kind'], string> = {
   goal: 'Goals',
   task: 'Tasks',
@@ -35,7 +30,6 @@ type MorningStepIntentionProps = {
   onUpdateItem: (id: string, text: string) => void
   onDeleteItem: (id: string) => void
   onAddItem: (kind: PlanItemKind, text: string) => void
-  onVoiceCompanionMessage?: (message: VoiceCompanionMessage | null) => void
 }
 
 type PlanItemRowProps = {
@@ -233,7 +227,6 @@ export function MorningStepIntention({
   onUpdateItem,
   onDeleteItem,
   onAddItem,
-  onVoiceCompanionMessage,
 }: MorningStepIntentionProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const brainDumpBaseRef = useRef('')
@@ -282,39 +275,6 @@ export function MorningStepIntention({
     }
     toggleSpeech()
   }, [brainDump, isListening, toggleSpeech])
-
-  useEffect(() => {
-    if (phase !== 'dump') {
-      onVoiceCompanionMessage?.(null)
-      return
-    }
-
-    if (isListening) {
-      onVoiceCompanionMessage?.({
-        text: 'Listening… speak freely, tap the mic when done',
-        variant: 'listening',
-      })
-      return
-    }
-
-    if (isTranscribing) {
-      onVoiceCompanionMessage?.({
-        text: 'Transcribing your voice…',
-        variant: 'transcribing',
-      })
-      return
-    }
-
-    if (speechError) {
-      onVoiceCompanionMessage?.({
-        text: speechError,
-        variant: 'error',
-      })
-      return
-    }
-
-    onVoiceCompanionMessage?.(null)
-  }, [phase, isListening, isTranscribing, speechError, onVoiceCompanionMessage])
 
   useEffect(() => {
     if (phase !== 'dump' && isListening) {
@@ -497,6 +457,14 @@ export function MorningStepIntention({
         </p>
 
         <div className="mf-brain-dump__field">
+          {phase === 'dump' && (isListening || isTranscribing) && !brainDump.trim() && (
+            <p className="mf-brain-dump__listening" role="status" aria-live="polite">
+              <span className="mf-brain-dump__listening-dot" aria-hidden />
+              {isListening
+                ? 'Listening… speak freely, tap the mic when done'
+                : 'Transcribing your voice…'}
+            </p>
+          )}
           <textarea
             ref={textareaRef}
             className="mf-brain-dump__input"
@@ -506,7 +474,11 @@ export function MorningStepIntention({
               onBrainDumpChange(e.target.value)
             }}
             onKeyDown={handleKeyDown}
-            placeholder="e.g. finish the MVP landing page, call mom, gym after lunch, feeling scattered about the pitch deck…"
+            placeholder={
+              isListening || isTranscribing
+                ? ''
+                : 'e.g. finish the MVP landing page, call mom, gym after lunch, feeling scattered about the pitch deck…'
+            }
             aria-label="Brain dump for today"
             rows={5}
           />
@@ -539,6 +511,12 @@ export function MorningStepIntention({
             </button>
           )}
         </div>
+
+        {speechError && (
+          <p className="mf-brain-dump__voice-error" role="alert">
+            {speechError}
+          </p>
+        )}
 
         {error && (
           <p className="mf-brain-dump__error" role="alert">
