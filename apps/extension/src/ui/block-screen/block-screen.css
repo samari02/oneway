@@ -27,16 +27,95 @@ body {
   justify-content: center;
   color: var(--bs-ink);
   background: #080810;
+  overflow: hidden;
 }
 
+/* Animated background — matches morning flow aesthetic */
 .block-screen__bg {
   position: fixed;
   inset: 0;
   z-index: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(107, 86, 225, 0.18), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(251, 191, 36, 0.08), transparent 50%),
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(107, 86, 225, 0.15), transparent 55%),
     linear-gradient(180deg, #1a1528 0%, #0c0a14 45%, #080810 100%);
   pointer-events: none;
+  overflow: hidden;
+}
+
+.block-screen__bg-drift {
+  position: absolute;
+  inset: -4%;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(107, 86, 225, 0.22), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(107, 86, 225, 0.1), transparent 50%),
+    radial-gradient(ellipse 50% 35% at 80% 70%, rgba(139, 122, 239, 0.08), transparent 45%);
+  animation: bs-bg-drift 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes bs-bg-drift {
+  from { transform: scale(1.02) translateY(0); }
+  to { transform: scale(1.06) translateY(-1.5%); }
+}
+
+/* Subtle starfield particles */
+.block-screen__particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(186, 230, 253, 0.1) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 84% 34%, rgba(147, 197, 253, 0.12) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 42% 72%, rgba(124, 58, 237, 0.08) 0 1px, transparent 1.8px);
+}
+
+.block-screen__particles span {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(186, 230, 253, 0.88);
+  box-shadow:
+    0 0 6px rgba(103, 232, 249, 0.55),
+    0 0 12px rgba(124, 58, 237, 0.3);
+  opacity: 0.38;
+  animation: bs-particle-orbit 10s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.block-screen__particles span:nth-child(1) { width: 1.5px; height: 1.5px; top: 13%; left: 15%; --particle-x: 14px; --particle-y: -18px; animation-duration: 8.5s; }
+.block-screen__particles span:nth-child(2) { width: 2.25px; height: 2.25px; top: 28%; left: 76%; opacity: 0.5; --particle-x: -16px; --particle-y: -20px; animation-duration: 10.5s; animation-delay: -2.2s; }
+.block-screen__particles span:nth-child(3) { width: 1.5px; height: 1.5px; top: 55%; left: 9%; opacity: 0.32; --particle-x: 18px; --particle-y: -14px; animation-duration: 9.5s; animation-delay: -4.1s; }
+.block-screen__particles span:nth-child(4) { width: 1.75px; height: 1.75px; top: 64%; left: 88%; --particle-x: -20px; --particle-y: -16px; animation-duration: 11s; animation-delay: -1.4s; }
+.block-screen__particles span:nth-child(5) { width: 2.25px; height: 2.25px; top: 9%; left: 52%; opacity: 0.44; --particle-x: 12px; --particle-y: -22px; animation-duration: 8s; animation-delay: -3.5s; }
+.block-screen__particles span:nth-child(6) { width: 1.5px; height: 1.5px; top: 42%; left: 94%; opacity: 0.3; --particle-x: -14px; --particle-y: -19px; animation-duration: 12s; animation-delay: -5s; }
+.block-screen__particles span:nth-child(7) { width: 1.75px; height: 1.75px; top: 75%; left: 32%; opacity: 0.4; --particle-x: 15px; --particle-y: -15px; animation-duration: 10s; animation-delay: -2.8s; }
+.block-screen__particles span:nth-child(8) { width: 1.35px; height: 1.35px; top: 23%; left: 5%; opacity: 0.28; --particle-x: 20px; --particle-y: -13px; animation-duration: 9s; animation-delay: -6.2s; }
+.block-screen__particles span:nth-child(9) { width: 1.35px; height: 1.35px; top: 47%; left: 42%; opacity: 0.28; --particle-x: -12px; --particle-y: -20px; animation-duration: 11.5s; animation-delay: -3s; }
+.block-screen__particles span:nth-child(10) { width: 1.75px; height: 1.75px; top: 17%; left: 91%; opacity: 0.3; --particle-x: -18px; --particle-y: -17px; animation-duration: 8.8s; animation-delay: -4.8s; }
+.block-screen__particles span:nth-child(11) { width: 1.35px; height: 1.35px; top: 63%; left: 62%; opacity: 0.26; --particle-x: 13px; --particle-y: -18px; animation-duration: 12.5s; animation-delay: -7.1s; }
+.block-screen__particles span:nth-child(12) { width: 1.5px; height: 1.5px; top: 34%; left: 28%; opacity: 0.3; --particle-x: 16px; --particle-y: -21px; animation-duration: 9.8s; animation-delay: -1.8s; }
+
+@keyframes bs-particle-orbit {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(0.72);
+    opacity: 0.18;
+  }
+  18% {
+    transform: translate3d(var(--particle-x, 14px), calc(var(--particle-y, -16px) * 0.35), 0) scale(1.45);
+    opacity: 0.82;
+  }
+  42% {
+    transform: translate3d(calc(var(--particle-x, 14px) * -0.62), var(--particle-y, -16px), 0) scale(0.88);
+    opacity: 0.42;
+  }
+  68% {
+    transform: translate3d(calc(var(--particle-x, 14px) * 0.48), calc(var(--particle-y, -16px) * -0.72), 0) scale(1.28);
+    opacity: 0.68;
+  }
+  86% {
+    transform: translate3d(calc(var(--particle-x, 14px) * -0.28), calc(var(--particle-y, -16px) * 0.55), 0) scale(1.05);
+    opacity: 0.52;
+  }
 }
 
 .block-screen {
@@ -45,19 +124,10 @@ body {
   width: 100%;
   max-width: 440px;
   padding: 24px;
-}
-
-.block-screen__content {
-  background: var(--bs-glass);
-  border: 1px solid var(--bs-line);
-  border-radius: var(--bs-radius-lg);
-  padding: 40px 36px 36px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   animation: bs-fade-in 0.45s var(--bs-ease);
 }
 
@@ -73,17 +143,38 @@ body {
 }
 
 .block-screen__monk-wrap {
+  position: relative;
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  align-items: center;
+  width: 140px;
+  height: 120px;
+  margin-bottom: 4px;
+}
+
+.block-screen__monk-glow {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(107, 86, 225, 0.35) 0%, rgba(107, 86, 225, 0.08) 55%, transparent 70%);
+  filter: blur(8px);
+  animation: bs-glow-pulse 6s ease-in-out infinite;
+}
+
+@keyframes bs-glow-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
 }
 
 .block-screen__monk {
-  width: 120px;
-  height: 120px;
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  height: 96px;
   object-fit: contain;
-  filter: drop-shadow(0 8px 24px rgba(107, 86, 225, 0.35));
-  animation: bs-monk-float 6s ease-in-out infinite;
+  filter: drop-shadow(0 8px 24px rgba(107, 86, 225, 0.4));
+  animation: bs-monk-float 6.2s ease-in-out infinite;
   user-select: none;
   -webkit-user-drag: none;
 }
@@ -93,8 +184,22 @@ body {
     transform: translateY(0) scale(1);
   }
   50% {
-    transform: translateY(-6px) scale(1.02);
+    transform: translateY(-8px) scale(1.02);
   }
+}
+
+.block-screen__content {
+  width: 100%;
+  background: var(--bs-glass);
+  border: 1px solid var(--bs-line);
+  border-radius: var(--bs-radius-lg);
+  padding: 32px 36px 36px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  text-align: center;
 }
 
 .block-screen__title {
@@ -204,7 +309,7 @@ body {
   }
 
   .block-screen__content {
-    padding: 32px 24px 28px;
+    padding: 28px 24px 28px;
   }
 
   .block-screen__title {
@@ -212,7 +317,22 @@ body {
   }
 
   .block-screen__monk {
-    width: 100px;
+    width: 80px;
+    height: 80px;
+  }
+
+  .block-screen__monk-wrap {
+    width: 120px;
     height: 100px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block-screen__bg-drift,
+  .block-screen__particles span,
+  .block-screen__monk,
+  .block-screen__monk-glow,
+  .block-screen {
+    animation: none;
   }
 }
