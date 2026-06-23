@@ -1,0 +1,23 @@
+.global-ambient-music {
+  position: fixed;
+  left: calc(64px + clamp(16px, 2vw, 24px));
+  bottom: clamp(16px, 2vh, 24px);
+  z-index: 120;
+  pointer-events: auto;
+  transition: left 0.25s ease;
+}
+
+.app-layout--sidebar-pinned .global-ambient-music {
+  left: calc(172px + clamp(16px, 2vw, 24px));
+}
+
+.app-layout__body:has(.sidebar:hover) .global-ambient-music {
+  left: calc(172px + clamp(16px, 2vw, 24px));
+}
+
+@media (max-width: 640px) {
+  .global-ambient-music {
+    left: calc(64px + 12px);
+    bottom: 12px;
+  }
+}

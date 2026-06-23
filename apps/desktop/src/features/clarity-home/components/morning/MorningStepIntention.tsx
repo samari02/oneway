@@ -6,6 +6,11 @@ import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 
 type StepPhase = 'dump' | 'processing' | 'review'
 
+export type VoiceCompanionMessage = {
+  text: string
+  variant: 'listening' | 'transcribing' | 'error'
+}
+
 const KIND_LABELS: Record<PlanItem['kind'], string> = {
   goal: 'Goals',
   task: 'Tasks',
@@ -30,6 +35,7 @@ type MorningStepIntentionProps = {
   onUpdateItem: (id: string, text: string) => void
   onDeleteItem: (id: string) => void
   onAddItem: (kind: PlanItemKind, text: string) => void
+  onVoiceCompanionMessage?: (message: VoiceCompanionMessage | null) => void
 }
 
 type PlanItemRowProps = {
@@ -227,6 +233,7 @@ export function MorningStepIntention({
   onUpdateItem,
   onDeleteItem,
   onAddItem,
+  onVoiceCompanionMessage,
 }: MorningStepIntentionProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const brainDumpBaseRef = useRef('')
@@ -262,6 +269,7 @@ export function MorningStepIntention({
   const {
     isSupported: isSpeechSupported,
     isListening,
+    isTranscribing,
     error: speechError,
     toggle: toggleSpeech,
     stop: stopSpeech,
@@ -274,6 +282,39 @@ export function MorningStepIntention({
     }
     toggleSpeech()
   }, [brainDump, isListening, toggleSpeech])
+
+  useEffect(() => {
+    if (phase !== 'dump') {
+      onVoiceCompanionMessage?.(null)
+      return
+    }
+
+    if (isListening) {
+      onVoiceCompanionMessage?.({
+        text: 'Listening… speak freely, tap the mic when done',
+        variant: 'listening',
+      })
+      return
+    }
+
+    if (isTranscribing) {
+      onVoiceCompanionMessage?.({
+        text: 'Transcribing your voice…',
+        variant: 'transcribing',
+      })
+      return
+    }
+
+    if (speechError) {
+      onVoiceCompanionMessage?.({
+        text: speechError,
+        variant: 'error',
+      })
+      return
+    }
+
+    onVoiceCompanionMessage?.(null)
+  }, [phase, isListening, isTranscribing, speechError, onVoiceCompanionMessage])
 
   useEffect(() => {
     if (phase !== 'dump' && isListening) {
@@ -499,19 +540,6 @@ export function MorningStepIntention({
           )}
         </div>
 
-        {isListening && (
-          <p className="mf-brain-dump__listening" aria-live="polite">
-            <span className="mf-brain-dump__listening-dot" aria-hidden />
-            Listening… speak freely, tap the mic when done
-          </p>
-        )}
-
-        {speechError && (
-          <p className="mf-brain-dump__voice-error" role="alert">
-            {speechError}
-          </p>
-        )}
-
         {error && (
           <p className="mf-brain-dump__error" role="alert">
             {error}
@@ -542,10 +570,6 @@ export function MorningStepIntention({
           {isSpeechSupported ? 'Speak or type — ⌘/Ctrl + Enter to continue' : '⌘/Ctrl + Enter to continue'}
         </p>
       </section>
-
-      <footer className="mf-welcome__quote">
-        The way is not in the sky. The way is in the heart. — Buddha
-      </footer>
     </div>
   )
 }

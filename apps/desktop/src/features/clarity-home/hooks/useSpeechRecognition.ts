@@ -125,6 +125,7 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
   const isSupported = hasWebSpeech || canRecord
 
   const [isListening, setIsListening] = useState(false)
+  const [isTranscribing, setIsTranscribing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
@@ -161,6 +162,8 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
       return
     }
 
+    setIsTranscribing(true)
+
     await new Promise<void>((resolve) => {
       recorder.addEventListener(
         'stop',
@@ -182,6 +185,7 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
               const message = mapTranscriptionError(err)
               if (message) setError(message)
             } finally {
+              setIsTranscribing(false)
               cleanupMedia()
               resolve()
             }
@@ -397,6 +401,7 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
   return {
     isSupported,
     isListening,
+    isTranscribing,
     error,
     start,
     stop,

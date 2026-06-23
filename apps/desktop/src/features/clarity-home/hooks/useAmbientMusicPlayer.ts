@@ -153,8 +153,13 @@ function syncAudioSource() {
   }
 }
 
-async function tryPlay() {
-  if (!enabledRef) return
+type TryPlayOptions = {
+  /** When true, only attempt playback if a mounted consumer opted into auto-play. */
+  requireEnabled?: boolean
+}
+
+async function tryPlay({ requireEnabled = false }: TryPlayOptions = {}) {
+  if (requireEnabled && !enabledRef) return
 
   syncAudioSource()
   const element = getAudio()
@@ -174,7 +179,7 @@ function attachGestureRetry() {
   gestureListenersAttached = true
 
   const onInteraction = () => {
-    void tryPlay()
+    void tryPlay({ requireEnabled: true })
   }
 
   document.addEventListener('pointerdown', onInteraction)
@@ -189,9 +194,7 @@ function setEnabled(enabled: boolean) {
   enabledRef = enabled
   if (enabled) {
     attachGestureRetry()
-    void tryPlay()
-  } else {
-    pausePlayback()
+    void tryPlay({ requireEnabled: true })
   }
 }
 
@@ -203,9 +206,7 @@ function selectTrack(trackId: string) {
   emitChange()
   syncAudioSource()
 
-  if (enabledRef) {
-    void tryPlay()
-  }
+  void tryPlay()
 }
 
 function addTrackFromFile(file: File): AmbientTrack | null {
@@ -228,9 +229,7 @@ function addTrackFromFile(file: File): AmbientTrack | null {
   emitChange()
   syncAudioSource()
 
-  if (enabledRef) {
-    void tryPlay()
-  }
+  void tryPlay()
 
   return track
 }
@@ -298,7 +297,7 @@ export function useAmbientMusicPlayer({ enabled = true }: UseAmbientMusicPlayerO
 
   const play = useCallback(() => {
     void tryPlay()
-  }, [])
+  }, []) // manual play — not gated by enabledRef
 
   const pause = useCallback(() => {
     pausePlayback()

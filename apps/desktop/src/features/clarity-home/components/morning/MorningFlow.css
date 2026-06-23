@@ -18,6 +18,8 @@
   --mf-duration: 0.45s;
 
   position: relative;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   width: 100%;
@@ -105,6 +107,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   min-height: 0;
   width: 100%;
 }
@@ -115,6 +119,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
+  align-self: stretch;
+  width: 100%;
+  min-height: 0;
   text-align: center;
 }
 
@@ -122,8 +130,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   width: 100%;
-  min-height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .mf-welcome__greeting {
@@ -163,7 +173,8 @@
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
-  margin-top: clamp(220px, 40vh, 460px);
+  margin-top: auto;
+  padding-top: clamp(56px, 14vh, 180px);
 }
 
 .mf-welcome__intention-title {
@@ -202,15 +213,6 @@
   box-shadow: 0 0 0 3px rgba(107, 86, 225, 0.15);
 }
 
-.mf-welcome__quote {
-  margin-top: clamp(24px, 4vh, 36px);
-  max-width: 36ch;
-  font-size: 13px;
-  line-height: 1.6;
-  font-style: italic;
-  color: rgba(248, 248, 252, 0.45);
-}
-
 .mf-welcome__title--sm {
   font-size: clamp(1.35rem, 3vw, 1.85rem);
   max-width: 28ch;
@@ -219,10 +221,6 @@
 
 .mf-welcome--review .mf-welcome__greeting {
   margin-bottom: clamp(16px, 3vh, 28px);
-}
-
-.mf-welcome__brain-dump {
-  margin-top: clamp(120px, 28vh, 360px);
 }
 
 /* Brain dump input */
@@ -630,7 +628,8 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  flex: 1;
+  min-height: 0;
   padding: clamp(20px, 3vw, 36px) clamp(24px, 5vw, 48px) clamp(32px, 5vh, 56px);
 }
 
@@ -1120,6 +1119,58 @@
   margin-top: clamp(24px, 4vh, 36px);
 }
 
+/* Companion speech bubble — voice status overlay on the illustration */
+.morning-flow__speech-bubble {
+  position: absolute;
+  z-index: 2;
+  bottom: clamp(72px, 10vh, 100px);
+  left: clamp(20px, 3vw, 40px);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(340px, calc(100vw - 180px));
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: rgba(18, 16, 32, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  font-size: clamp(13px, 1.4vw, 15px);
+  line-height: 1.5;
+  text-align: left;
+  color: var(--mf-ink);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  animation: mf-fade-up 0.35s var(--mf-ease) both;
+}
+
+.morning-flow__speech-bubble::after {
+  content: "";
+  position: absolute;
+  left: 28px;
+  bottom: -10px;
+  border: 10px solid transparent;
+  border-top-color: rgba(18, 16, 32, 0.88);
+}
+
+.morning-flow__speech-bubble--listening,
+.morning-flow__speech-bubble--transcribing {
+  color: var(--mf-purple-light);
+  font-weight: 500;
+}
+
+.morning-flow__speech-bubble--error {
+  color: #fbbf24;
+}
+
+.morning-flow__speech-bubble-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--mf-purple-light);
+  box-shadow: 0 0 10px var(--mf-purple-glow);
+  animation: mf-listening-dot 1.2s ease-in-out infinite;
+}
+
 /* Music player */
 .morning-flow__music-player-wrap {
   position: absolute;
@@ -1183,6 +1234,13 @@
     bottom: 12px;
   }
 
+  .morning-flow__speech-bubble {
+    left: 12px;
+    right: 12px;
+    bottom: clamp(64px, 12vh, 88px);
+    max-width: none;
+  }
+
   .morning-flow__mood-chip {
     right: 12px;
     bottom: 12px;
@@ -1201,11 +1259,7 @@
   }
 
   .mf-welcome__intention {
-    margin-top: clamp(160px, 32vh, 320px);
-  }
-
-  .mf-welcome__brain-dump {
-    margin-top: clamp(100px, 22vh, 240px);
+    padding-top: clamp(40px, 10vh, 100px);
   }
 
   .mf-welcome__intention-input {

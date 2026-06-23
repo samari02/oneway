@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { MORNING_AMBIENT_AUDIO_SRC, MORNING_BG_SRC } from '../../companion-avatars'
 import { useMorningAmbientAudio } from '../../hooks/useMorningAmbientAudio'
+import { AmbientMusicPlayer } from '../AmbientMusicPlayer'
 import { useMorningFlow } from '../../hooks/useMorningFlow'
 import './MorningFlow.css'
-import { MorningStepIntention } from './MorningStepIntention'
+import { MorningStepIntention, type VoiceCompanionMessage } from './MorningStepIntention'
 import { MorningStepSetup } from './MorningStepSetup'
 import { MorningStepSuccess } from './MorningStepSuccess'
 
@@ -14,6 +15,11 @@ type MorningFlowViewProps = {
 
 export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlowViewProps) {
   const [bgFailed, setBgFailed] = useState(false)
+  const [voiceCompanionMessage, setVoiceCompanionMessage] = useState<VoiceCompanionMessage | null>(null)
+
+  const handleVoiceCompanionMessage = useCallback((message: VoiceCompanionMessage | null) => {
+    setVoiceCompanionMessage(message)
+  }, [])
 
   const {
     step,
@@ -38,7 +44,7 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
     completeFlow,
   } = useMorningFlow({ initialIntention })
 
-  useMorningAmbientAudio(MORNING_AMBIENT_AUDIO_SRC)
+  const music = useMorningAmbientAudio(MORNING_AMBIENT_AUDIO_SRC)
 
   const stepClass = `morning-flow__step morning-flow__step--${direction}`
 
@@ -54,6 +60,20 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
           />
         )}
       </div>
+
+      {step === 1 && voiceCompanionMessage && (
+        <div
+          className={`morning-flow__speech-bubble morning-flow__speech-bubble--${voiceCompanionMessage.variant}`}
+          role={voiceCompanionMessage.variant === 'error' ? 'alert' : 'status'}
+          aria-live="polite"
+        >
+          {(voiceCompanionMessage.variant === 'listening' ||
+            voiceCompanionMessage.variant === 'transcribing') && (
+            <span className="morning-flow__speech-bubble-dot" aria-hidden />
+          )}
+          {voiceCompanionMessage.text}
+        </div>
+      )}
 
       {step === 1 && (
         <div className="morning-flow__toolbar">
@@ -111,6 +131,7 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
                 onUpdateItem={updateItem}
                 onDeleteItem={deleteItem}
                 onAddItem={addItem}
+                onVoiceCompanionMessage={handleVoiceCompanionMessage}
               />
             </div>
           )}
@@ -136,6 +157,18 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
             </div>
           )}
         </div>
+      </div>
+
+      <div className="morning-flow__music-player-wrap">
+        <AmbientMusicPlayer
+          tracks={music.tracks}
+          currentTrack={music.currentTrack}
+          isPlaying={music.isPlaying}
+          onToggle={music.toggle}
+          onSelectTrack={music.selectTrack}
+          onAddTrack={music.addTrack}
+          onRemoveTrack={music.removeTrack}
+        />
       </div>
 
       <div className="morning-flow__mood-chip">
