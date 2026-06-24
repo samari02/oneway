@@ -384,7 +384,7 @@ function TodayView() {
 function Dashboard() {
   const { user } = useAuth()
   const { status: extensionStatus } = useExtensionStatus()
-  const [currentView, setCurrentView] = useState<ViewType>('today')
+  const [currentView, setCurrentView] = useState<ViewType>('clarity-home')
   const [sidebarPinned, setSidebarPinned] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('clarity-theme')

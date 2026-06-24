@@ -13,6 +13,9 @@ export interface UserSettings {
   north_star_goal?: string
   north_star_icon?: string
   north_star_created_at?: string
+  // Clarity day routing
+  evening_reflection_time?: string
+  drift_threshold_minutes?: number
 }
 
 export interface NorthStar {

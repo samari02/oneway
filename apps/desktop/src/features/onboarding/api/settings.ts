@@ -19,6 +19,9 @@ export interface UserSettings {
   // Aoi widget preferences
   aoi_hidden_global?: boolean
   aoi_hidden_domains?: string[]
+  // Clarity day routing
+  evening_reflection_time?: string
+  drift_threshold_minutes?: number
 }
 
 export interface AoiPreferences {

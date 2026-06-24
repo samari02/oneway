@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useCompanionDesignVariant } from '@/features/clarity-home/hooks/useCompanionDesignVariant'
-import { useMorningMode } from '@/features/clarity-home/hooks/useMorningMode'
 import './Sidebar.css'
 
 export type ViewType = 'today' | 'clarity-home' | 'screen-time' | 'boundaries' | 'settings'
@@ -71,12 +70,6 @@ const Icons = {
       <path d="M6 20v-1.2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4V20"/>
     </svg>
   ),
-  morningMode: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="4"/>
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-    </svg>
-  ),
 }
 
 interface NavItem {
@@ -105,7 +98,6 @@ export function Sidebar({ currentView, onNavigate, onPinnedChange }: SidebarProp
     return saved === 'true'
   })
   const { isMonk, toggleVariant } = useCompanionDesignVariant()
-  const { isMorningMode, toggleMorningMode } = useMorningMode()
 
   useEffect(() => {
     localStorage.setItem('sidebar-pinned', String(isPinned))
@@ -150,17 +142,6 @@ export function Sidebar({ currentView, onNavigate, onPinnedChange }: SidebarProp
         >
           {Icons.companionDesign}
           <span className="sidebar__label">{isMonk ? 'Monk design' : 'Orb design'}</span>
-        </button>
-        <button
-          type="button"
-          className={`sidebar__design-toggle${isMorningMode ? ' sidebar__design-toggle--active' : ''}`}
-          onClick={toggleMorningMode}
-          title={isMorningMode ? 'Switch to default home (dev)' : 'Switch to morning start (dev)'}
-          aria-pressed={isMorningMode}
-          aria-label={isMorningMode ? 'Morning start on' : 'Morning start off'}
-        >
-          {Icons.morningMode}
-          <span className="sidebar__label">{isMorningMode ? 'Morning start' : 'Default home'}</span>
         </button>
         <button 
           className="sidebar__pin-btn"

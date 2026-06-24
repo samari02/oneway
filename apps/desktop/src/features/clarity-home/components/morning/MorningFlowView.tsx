@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { MORNING_AMBIENT_AUDIO_SRC, MORNING_BG_SRC } from '../../companion-avatars'
 import { useMorningAmbientAudio } from '../../hooks/useMorningAmbientAudio'
 import { AmbientMusicPlayer } from '../AmbientMusicPlayer'
+import type { DayPlan } from '../../hooks/useMorningFlow'
 import { useMorningFlow } from '../../hooks/useMorningFlow'
 import './MorningFlow.css'
 import { MorningStepIntention } from './MorningStepIntention'
@@ -11,9 +12,10 @@ import { MorningStepSuccess } from './MorningStepSuccess'
 type MorningFlowViewProps = {
   firstName: string
   initialIntention?: string
+  onFlowComplete?: (plan: DayPlan) => void
 }
 
-export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlowViewProps) {
+export function MorningFlowView({ firstName, initialIntention = '', onFlowComplete }: MorningFlowViewProps) {
   const [bgFailed, setBgFailed] = useState(false)
 
   const {
@@ -132,7 +134,10 @@ export function MorningFlowView({ firstName, initialIntention = '' }: MorningFlo
               <MorningStepSetup
                 daySetup={daySetup}
                 onToggle={setDaySetup}
-                onComplete={completeFlow}
+                onComplete={() => {
+                  const plan = completeFlow()
+                  onFlowComplete?.(plan)
+                }}
               />
             </div>
           )}

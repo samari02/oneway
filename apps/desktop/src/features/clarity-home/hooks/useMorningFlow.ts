@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { ExtractedPlanItem } from '@/lib/morning-plan'
-import { setMorningMode } from './useMorningMode'
 
 export type SuccessFrame = 'ship' | 'progress' | 'consistent' | 'finish' | 'show_up'
 
@@ -258,7 +257,6 @@ export function useMorningFlow({ initialIntention = '' }: UseMorningFlowOptions 
       priorityItemId,
       summaryFrame,
     })
-    setMorningMode(false)
     return plan
   }, [intention, successFrame, daySetup, brainDump, items, priorityItemId, summaryFrame])
 
