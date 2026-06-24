@@ -17,6 +17,7 @@ function mapLocalPlanToDailyPlan(userId: string, local: DayPlan): DailyPlan {
   const goals: DailyGoal[] = (local.items ?? []).map((item) => ({
     id: item.id,
     title: item.text,
+    area: item.area,
     status: item.id === local.priorityItemId ? 'in_progress' : 'pending',
   }))
 
@@ -26,8 +27,8 @@ function mapLocalPlanToDailyPlan(userId: string, local: DayPlan): DailyPlan {
     plan_date: formatLocalDateKey(),
     goals,
     priority_goal_id: local.priorityItemId ?? null,
-    blockers: null,
-    suggested_duration_minutes: null,
+    blockers: local.blockers?.length ? local.blockers : null,
+    suggested_duration_minutes: local.durationMinutes ?? null,
     status: 'active',
     created_at: local.completedAt,
     updated_at: local.completedAt,
@@ -38,6 +39,7 @@ function mapMorningFlowToInsert(userId: string, state: MorningFlowState): Omit<D
   const goals: DailyGoal[] = (state.items ?? []).map((item) => ({
     id: item.id,
     title: item.text,
+    area: item.area,
     status: item.id === state.priorityItemId ? 'in_progress' : 'pending',
   }))
 
@@ -46,8 +48,8 @@ function mapMorningFlowToInsert(userId: string, state: MorningFlowState): Omit<D
     plan_date: formatLocalDateKey(),
     goals,
     priority_goal_id: state.priorityItemId ?? null,
-    blockers: null,
-    suggested_duration_minutes: null,
+    blockers: state.blockers?.length ? state.blockers : null,
+    suggested_duration_minutes: state.durationMinutes ?? null,
     status: 'active',
   }
 }
@@ -136,9 +138,12 @@ export async function syncMorningFlowPlan(userId: string, state: MorningFlowStat
   try {
     const existing = await getTodayPlan(userId)
     if (existing && !existing.id.startsWith('local-')) {
+      const mapped = mapMorningFlowToInsert(userId, state)
       return updateDailyPlan(existing.id, {
-        goals: mapMorningFlowToInsert(userId, state).goals,
+        goals: mapped.goals,
         priority_goal_id: state.priorityItemId ?? null,
+        blockers: mapped.blockers,
+        suggested_duration_minutes: mapped.suggested_duration_minutes,
         status: 'active',
       })
     }

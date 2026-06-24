@@ -25,7 +25,7 @@ function getGreeting(): string {
 export function ClarityHomeView() {
   const { user } = useAuth()
   const { settings } = useUserSettings(user?.id)
-  const { dayState, isLoading } = useDayState({
+  const { dayState, isLoading, refetch } = useDayState({
     userId: user?.id,
     eveningReflectionTime: settings?.evening_reflection_time ?? '18:00',
   })
@@ -40,7 +40,7 @@ export function ClarityHomeView() {
   }
 
   if (dayState === 'morning') {
-    return <MorningHomeView firstName={firstName} />
+    return <MorningHomeView firstName={firstName} onFlowComplete={() => void refetch()} />
   }
 
   if (dayState === 'evening') {

@@ -1,90 +1,83 @@
-import { useState } from 'react'
-import { MORNING_AMBIENT_AUDIO_SRC, MORNING_BG_SRC } from '../../companion-avatars'
+import { MORNING_AMBIENT_AUDIO_SRC } from '../../companion-avatars'
 import { useMorningAmbientAudio } from '../../hooks/useMorningAmbientAudio'
 import { AmbientMusicPlayer } from '../AmbientMusicPlayer'
 import type { DayPlan } from '../../hooks/useMorningFlow'
 import { useMorningFlow } from '../../hooks/useMorningFlow'
 import './MorningFlow.css'
+import { MorningFlowShell } from './MorningFlowShell'
+import { MorningStepBlockers } from './MorningStepBlockers'
+import { MorningStepConfirm } from './MorningStepConfirm'
 import { MorningStepIntention } from './MorningStepIntention'
-import { MorningStepSetup } from './MorningStepSetup'
-import { MorningStepSuccess } from './MorningStepSuccess'
+import { MorningStepPlan } from './MorningStepPlan'
 
 type MorningFlowViewProps = {
   firstName: string
   initialIntention?: string
+  initialCarriedForward?: string
   onFlowComplete?: (plan: DayPlan) => void
 }
 
-export function MorningFlowView({ firstName, initialIntention = '', onFlowComplete }: MorningFlowViewProps) {
-  const [bgFailed, setBgFailed] = useState(false)
+const MONK_MESSAGES: Record<1 | 2 | 3 | 4, string> = {
+  1: "What would make today successful? Share freely — I'll help you make it count.",
+  2: "Let's shape today together.",
+  3: 'What usually gets in the way?',
+  4: "I'll help you stay with it.",
+}
 
+export function MorningFlowView({
+  firstName,
+  initialIntention = '',
+  initialCarriedForward,
+  onFlowComplete,
+}: MorningFlowViewProps) {
   const {
     step,
     direction,
-    intention,
-    successFrame,
-    daySetup,
     brainDump,
     items,
     priorityItemId,
-    setSuccessFrame,
-    setDaySetup,
+    blockers,
+    suggestedBlockers,
+    durationMinutes,
+    carriedForwardText,
+    showCarriedCard,
+    isExtracting,
     setBrainDump,
     setPriorityItemId,
+    setIsExtracting,
     applyPlanExtraction,
     updateItem,
     deleteItem,
     addItem,
-    confirmPriority,
-    goForward,
+    confirmPlanStep,
+    confirmBlockersStep,
+    toggleBlocker,
+    carryForwardGoal,
+    dismissCarriedGoal,
+    removeCarriedForward,
+    goToStep,
     goBack,
     completeFlow,
-  } = useMorningFlow({ initialIntention })
+  } = useMorningFlow({ initialIntention, initialCarriedForward })
 
   const music = useMorningAmbientAudio(MORNING_AMBIENT_AUDIO_SRC)
-
   const stepClass = `morning-flow__step morning-flow__step--${direction}`
 
+  const handleIntentionContinue = () => {
+    goToStep(2, 'forward')
+  }
+
+  const handleStartSession = () => {
+    const plan = completeFlow()
+    onFlowComplete?.(plan)
+  }
+
   return (
-    <div className={`morning-flow${bgFailed ? ' morning-flow--no-bg' : ''}${step === 1 ? ' morning-flow--welcome' : ''}`}>
-      <div className="morning-flow__bg" aria-hidden>
-        {!bgFailed && (
-          <img
-            className="morning-flow__bg-img"
-            src={MORNING_BG_SRC}
-            alt=""
-            onError={() => setBgFailed(true)}
-          />
-        )}
-      </div>
+    <div className="morning-flow morning-flow--shell">
+      <div className="morning-flow__bg" aria-hidden />
 
-      {step === 1 && (
-        <div className="morning-flow__toolbar">
-          <button type="button" className="morning-flow__tool-btn" aria-label="Focus mode">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-              <circle cx="12" cy="12" r="10" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-            <span className="morning-flow__tool-label">Focus mode</span>
-          </button>
-          <button type="button" className="morning-flow__tool-btn morning-flow__tool-btn--icon" aria-label="Focus sounds">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-              <path d="M9 18V5l12-2v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-          </button>
-          <button type="button" className="morning-flow__tool-btn morning-flow__tool-btn--icon" aria-label="Notifications">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </button>
-        </div>
-      )}
-
-      <div className={`morning-flow__shell${step === 1 ? ' morning-flow__shell--welcome' : ''}`}>
-        {(step === 2 || step === 3) && (
+      <div className="morning-flow__shell morning-flow__shell--flow">
+        {step > 1 && (
           <div className="morning-flow__top-bar morning-flow__top-bar--back">
             <button type="button" className="morning-flow__back-btn" onClick={goBack}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -95,52 +88,62 @@ export function MorningFlowView({ firstName, initialIntention = '', onFlowComple
           </div>
         )}
 
-        <div className={step === 1 ? 'morning-flow__welcome-stage' : 'morning-flow__stage'}>
-          {step === 1 && (
-            <div className={stepClass} key="step-1">
-              <MorningStepIntention
-                firstName={firstName}
-                brainDump={brainDump}
-                items={items}
-                priorityItemId={priorityItemId}
-                onBrainDumpChange={setBrainDump}
-                onPlanExtracted={(dump, planItems, meta) => {
-                  applyPlanExtraction(dump, planItems, {
-                    summaryFrame: meta.summaryFrame,
-                  })
-                }}
-                onPrioritySelect={setPriorityItemId}
-                onConfirmPriority={confirmPriority}
-                onUpdateItem={updateItem}
-                onDeleteItem={deleteItem}
-                onAddItem={addItem}
-              />
-            </div>
-          )}
+        <div className="morning-flow__stage morning-flow__stage--flow">
+          <div className={stepClass} key={`step-${step}`}>
+            <MorningFlowShell
+              firstName={firstName}
+              monkMessage={MONK_MESSAGES[step]}
+              isProcessing={isExtracting}
+            >
+              {step === 1 && (
+                <MorningStepIntention
+                  brainDump={brainDump}
+                  carriedForwardText={carriedForwardText}
+                  showCarriedCard={showCarriedCard}
+                  onBrainDumpChange={setBrainDump}
+                  onPlanExtracted={(dump, planItems, meta) => {
+                    applyPlanExtraction(dump, planItems, meta)
+                  }}
+                  onCarryForward={carryForwardGoal}
+                  onDismissCarried={dismissCarriedGoal}
+                  onRemoveCarriedForward={removeCarriedForward}
+                  onContinue={handleIntentionContinue}
+                  onExtractingChange={setIsExtracting}
+                />
+              )}
 
-          {step === 2 && (
-            <div className={stepClass} key="step-2">
-              <MorningStepSuccess
-                intention={intention}
-                successFrame={successFrame}
-                onSelect={setSuccessFrame}
-                onContinue={goForward}
-              />
-            </div>
-          )}
+              {step === 2 && (
+                <MorningStepPlan
+                  items={items}
+                  priorityItemId={priorityItemId}
+                  onPrioritySelect={setPriorityItemId}
+                  onConfirmPriority={confirmPlanStep}
+                  onUpdateItem={updateItem}
+                  onDeleteItem={deleteItem}
+                  onAddItem={addItem}
+                />
+              )}
 
-          {step === 3 && (
-            <div className={stepClass} key="step-3">
-              <MorningStepSetup
-                daySetup={daySetup}
-                onToggle={setDaySetup}
-                onComplete={() => {
-                  const plan = completeFlow()
-                  onFlowComplete?.(plan)
-                }}
-              />
-            </div>
-          )}
+              {step === 3 && (
+                <MorningStepBlockers
+                  options={suggestedBlockers}
+                  selected={blockers}
+                  onToggle={toggleBlocker}
+                  onContinue={confirmBlockersStep}
+                />
+              )}
+
+              {step === 4 && (
+                <MorningStepConfirm
+                  items={items}
+                  priorityItemId={priorityItemId}
+                  durationMinutes={durationMinutes}
+                  blockers={blockers}
+                  onStart={handleStartSession}
+                />
+              )}
+            </MorningFlowShell>
+          </div>
         </div>
       </div>
 

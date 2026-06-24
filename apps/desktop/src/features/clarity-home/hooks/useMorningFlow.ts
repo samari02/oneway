@@ -3,44 +3,36 @@ import type { ExtractedPlanItem } from '@/lib/morning-plan'
 
 export type SuccessFrame = 'ship' | 'progress' | 'consistent' | 'finish' | 'show_up'
 
-export type DaySetup = {
-  blockSites: boolean
-  nudges: boolean
-  focusSounds: boolean
-  pomodoro: boolean
-  minimal: boolean
-}
-
 export type PlanItemKind = 'goal' | 'task' | 'routine'
 
 export type PlanItem = {
   id: string
   text: string
   kind: PlanItemKind
+  area?: string
 }
 
+export const DEFAULT_BLOCKER_OPTIONS = ['YouTube', 'Social Media', 'Reddit', 'News'] as const
+
 export type MorningFlowState = {
-  step: 1 | 2 | 3
+  step: 1 | 2 | 3 | 4
   intention: string
   successFrame: SuccessFrame
-  daySetup: DaySetup
   brainDump?: string
   items?: PlanItem[]
   priorityItemId?: string
   summaryFrame?: string
+  blockers: string[]
+  suggestedBlockers: string[]
+  durationMinutes: number
+  carriedForwardText?: string
 }
 
 export type DayPlan = MorningFlowState & {
   completedAt: string
 }
 
-export const DEFAULT_DAY_SETUP: DaySetup = {
-  blockSites: true,
-  nudges: true,
-  focusSounds: true,
-  pomodoro: false,
-  minimal: false,
-}
+export const DEFAULT_DURATION_MINUTES = 50
 
 function formatDateKey(date: Date): string {
   const y = date.getFullYear()
@@ -66,6 +58,9 @@ export function getTodayDayPlan(): DayPlan | null {
 export function saveDayPlan(state: MorningFlowState): DayPlan {
   const plan: DayPlan = {
     ...state,
+    blockers: state.blockers ?? [],
+    suggestedBlockers: state.suggestedBlockers ?? [],
+    durationMinutes: state.durationMinutes ?? DEFAULT_DURATION_MINUTES,
     completedAt: new Date().toISOString(),
   }
   localStorage.setItem(getDayPlanStorageKey(), JSON.stringify(plan))
@@ -120,6 +115,7 @@ export function toPlanItems(extracted: ExtractedPlanItem[]): PlanItem[] {
     id: `plan-${index}-${item.kind}`,
     text: item.text,
     kind: item.kind,
+    area: item.area,
   }))
 }
 
@@ -154,47 +150,68 @@ export function getSecondaryItems(plan: MorningFlowState): PlanItem[] {
 
 type UseMorningFlowOptions = {
   initialIntention?: string
+  initialCarriedForward?: string
 }
 
-export function useMorningFlow({ initialIntention = '' }: UseMorningFlowOptions = {}) {
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+export function useMorningFlow({
+  initialIntention = '',
+  initialCarriedForward,
+}: UseMorningFlowOptions = {}) {
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
   const [intention, setIntention] = useState(initialIntention)
   const [successFrame, setSuccessFrame] = useState<SuccessFrame>(() =>
     inferSuccessFrame(initialIntention),
   )
-  const [daySetup, setDaySetup] = useState<DaySetup>({ ...DEFAULT_DAY_SETUP })
   const [brainDump, setBrainDump] = useState('')
   const [items, setItems] = useState<PlanItem[]>([])
   const [priorityItemId, setPriorityItemId] = useState<string | undefined>()
   const [summaryFrame, setSummaryFrame] = useState<string | undefined>()
+  const [blockers, setBlockers] = useState<string[]>([])
+  const [suggestedBlockers, setSuggestedBlockers] = useState<string[]>([...DEFAULT_BLOCKER_OPTIONS])
+  const [durationMinutes, setDurationMinutes] = useState(DEFAULT_DURATION_MINUTES)
+  const [carriedForwardText, setCarriedForwardText] = useState<string | undefined>(initialCarriedForward)
+  const [showCarriedCard, setShowCarriedCard] = useState(!initialCarriedForward)
+  const [isExtracting, setIsExtracting] = useState(false)
 
-  const goToStep = useCallback((next: 1 | 2 | 3, dir: 'forward' | 'back' = 'forward') => {
+  const goToStep = useCallback((next: 1 | 2 | 3 | 4, dir: 'forward' | 'back' = 'forward') => {
     setDirection(dir)
     setStep(next)
   }, [])
 
   const goForward = useCallback(() => {
     setDirection('forward')
-    setStep((s) => Math.min(3, s + 1) as 1 | 2 | 3)
+    setStep((s) => Math.min(4, s + 1) as 1 | 2 | 3 | 4)
   }, [])
 
   const goBack = useCallback(() => {
     setDirection('back')
-    setStep((s) => Math.max(1, s - 1) as 1 | 2 | 3)
+    setStep((s) => Math.max(1, s - 1) as 1 | 2 | 3 | 4)
   }, [])
 
   const applyPlanExtraction = useCallback(
     (
       dump: string,
       extractedItems: PlanItem[],
-      options?: { summaryFrame?: string; priorityItemId?: string },
+      options?: {
+        summaryFrame?: string
+        priorityItemId?: string
+        suggestedBlockers?: string[]
+        durationMinutes?: number
+      },
     ) => {
       setBrainDump(dump)
       setItems(extractedItems)
       setSummaryFrame(options?.summaryFrame)
       if (options?.priorityItemId) {
         setPriorityItemId(options.priorityItemId)
+      }
+      if (options?.suggestedBlockers?.length) {
+        setSuggestedBlockers(options.suggestedBlockers)
+        setBlockers(options.suggestedBlockers)
+      }
+      if (options?.durationMinutes) {
+        setDurationMinutes(options.durationMinutes)
       }
     },
     [],
@@ -211,91 +228,110 @@ export function useMorningFlow({ initialIntention = '' }: UseMorningFlowOptions 
     setPriorityItemId((prev) => (prev === id ? undefined : prev))
   }, [])
 
-  const addItem = useCallback((kind: PlanItemKind, text: string) => {
+  const addItem = useCallback((kind: PlanItemKind, text: string, area?: string) => {
     const trimmed = text.trim()
     if (!trimmed) return
     const id = `plan-${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${kind}`
-    setItems((prev) => [...prev, { id, text: trimmed, kind }])
+    setItems((prev) => [...prev, { id, text: trimmed, kind, area }])
   }, [])
 
-  const confirmPriority = useCallback(
+  const confirmPlanStep = useCallback(
     (itemId?: string) => {
-      const nextItems = items
       const resolvedId = itemId ?? priorityItemId
-      const nextIntention = deriveIntention(nextItems, resolvedId, brainDump || intention)
+      const nextIntention = deriveIntention(items, resolvedId, brainDump || intention)
       if (!nextIntention) return false
 
       setPriorityItemId(resolvedId)
       setIntention(nextIntention)
       setSuccessFrame(inferSuccessFrame(nextIntention))
-      goToStep(2, 'forward')
+      goToStep(3, 'forward')
       return true
     },
     [items, priorityItemId, brainDump, intention, goToStep],
   )
 
-  const submitIntention = useCallback(
-    (value: string) => {
-      const trimmed = value.trim()
-      if (!trimmed) return false
-      setIntention(trimmed)
-      setSuccessFrame(inferSuccessFrame(trimmed))
-      goToStep(2, 'forward')
-      return true
-    },
-    [goToStep],
-  )
+  const confirmBlockersStep = useCallback(() => {
+    goToStep(4, 'forward')
+  }, [goToStep])
+
+  const toggleBlocker = useCallback((label: string) => {
+    setBlockers((prev) =>
+      prev.includes(label) ? prev.filter((b) => b !== label) : [...prev, label],
+    )
+  }, [])
+
+  const carryForwardGoal = useCallback((text: string) => {
+    setCarriedForwardText(text)
+    setShowCarriedCard(false)
+    setBrainDump((prev) => {
+      if (prev.includes(text)) return prev
+      return prev.trim() ? `${prev.trim()}, ${text}` : text
+    })
+  }, [])
+
+  const dismissCarriedGoal = useCallback(() => {
+    setShowCarriedCard(false)
+  }, [])
+
+  const removeCarriedForward = useCallback(() => {
+    setCarriedForwardText(undefined)
+  }, [])
 
   const completeFlow = useCallback(() => {
     const plan = saveDayPlan({
-      step: 3,
+      step: 4,
       intention,
       successFrame,
-      daySetup,
       brainDump: brainDump || undefined,
       items: items.length > 0 ? items : undefined,
       priorityItemId,
       summaryFrame,
+      blockers,
+      suggestedBlockers,
+      durationMinutes,
+      carriedForwardText,
     })
     return plan
-  }, [intention, successFrame, daySetup, brainDump, items, priorityItemId, summaryFrame])
-
-  const updateDaySetup = useCallback((patch: Partial<DaySetup>) => {
-    setDaySetup((prev) => {
-      if (patch.minimal === true) {
-        return {
-          blockSites: false,
-          nudges: false,
-          focusSounds: false,
-          pomodoro: false,
-          minimal: true,
-        }
-      }
-
-      const next = { ...prev, ...patch }
-
-      if (patch.minimal === false) {
-        next.minimal = false
-      } else if (Object.keys(patch).some((key) => key !== 'minimal')) {
-        next.minimal = false
-      }
-
-      return next
-    })
-  }, [])
+  }, [
+    intention,
+    successFrame,
+    brainDump,
+    items,
+    priorityItemId,
+    summaryFrame,
+    blockers,
+    suggestedBlockers,
+    durationMinutes,
+    carriedForwardText,
+  ])
 
   const state = useMemo<MorningFlowState>(
     () => ({
       step,
       intention,
       successFrame,
-      daySetup,
       brainDump: brainDump || undefined,
       items: items.length > 0 ? items : undefined,
       priorityItemId,
       summaryFrame,
+      blockers,
+      suggestedBlockers,
+      durationMinutes,
+      carriedForwardText,
     }),
-    [step, intention, successFrame, daySetup, brainDump, items, priorityItemId, summaryFrame],
+    [
+      step,
+      intention,
+      successFrame,
+      brainDump,
+      items,
+      priorityItemId,
+      summaryFrame,
+      blockers,
+      suggestedBlockers,
+      durationMinutes,
+      carriedForwardText,
+    ],
   )
 
   return {
@@ -304,25 +340,32 @@ export function useMorningFlow({ initialIntention = '' }: UseMorningFlowOptions 
     direction,
     intention,
     successFrame,
-    daySetup,
     brainDump,
     items,
     priorityItemId,
     summaryFrame,
-    setIntention,
-    setSuccessFrame,
-    setDaySetup: updateDaySetup,
+    blockers,
+    suggestedBlockers,
+    durationMinutes,
+    carriedForwardText,
+    showCarriedCard,
+    isExtracting,
     setBrainDump,
     setPriorityItemId,
+    setIsExtracting,
     applyPlanExtraction,
     updateItem,
     deleteItem,
     addItem,
-    confirmPriority,
+    confirmPlanStep,
+    confirmBlockersStep,
+    toggleBlocker,
+    carryForwardGoal,
+    dismissCarriedGoal,
+    removeCarriedForward,
     goToStep,
     goForward,
     goBack,
-    submitIntention,
     completeFlow,
   }
 }
