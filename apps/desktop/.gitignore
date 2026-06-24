@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# VTuber/Live2D assets (large binary files)
+public/v2/

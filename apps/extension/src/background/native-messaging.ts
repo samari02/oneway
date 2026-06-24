@@ -55,9 +55,9 @@ function maybeReconnectAfterHeartbeatFailure(reason: string) {
   }
 }
 
-// Heartbeat configuration
-const HEARTBEAT_INTERVAL_MS = 60_000 // Send heartbeat every 60 seconds
-let heartbeatInterval: ReturnType<typeof setInterval> | null = null
+// Heartbeat via chrome.alarms (MV3 service workers suspend setInterval timers)
+const CONNECTION_ALARM_NAME = 'clarity-desktop-connection'
+const HEARTBEAT_ALARM_PERIOD_MINUTES = 1
 
 /** Poll desktop file for Aoi prefs (e.g. after Clarity Settings saves) */
 const AOI_PREFERENCES_POLL_MS = 30_000
@@ -164,12 +164,84 @@ export function onMessageFromDesktop(handler: MessageHandler) {
 }
 
 /**
+ * Verify the native port can still accept messages (detect zombie ports after sleep).
+ */
+function verifyPortAlive(): boolean {
+  if (!port) return false
+
+  try {
+    port.postMessage({ type: 'PING' })
+    const lastError = chrome.runtime.lastError
+    if (lastError) {
+      log('Native port verify failed:', lastError.message)
+      return false
+    }
+    return true
+  } catch (error) {
+    log('Native port verify threw:', error)
+    return false
+  }
+}
+
+function handleNativePortFailure(reason: string) {
+  log(`Native port failure (${reason})`)
+  try {
+    port?.disconnect()
+  } catch {
+    // Port may already be dead after sleep or host exit
+  }
+  port = null
+  isConnected = false
+  chrome.storage.local.set({ desktopAppConnected: false })
+  scheduleReconnect()
+}
+
+function setupConnectionAlarm() {
+  if (typeof chrome === 'undefined' || !chrome.alarms?.create) return
+  chrome.alarms.create(CONNECTION_ALARM_NAME, {
+    periodInMinutes: HEARTBEAT_ALARM_PERIOD_MINUTES,
+  })
+}
+
+function setupConnectionAlarmListener() {
+  if (typeof chrome === 'undefined' || !chrome.alarms?.onAlarm) return
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name !== CONNECTION_ALARM_NAME) return
+    void ensureDesktopConnectionAndHeartbeat()
+  })
+}
+
+/**
+ * Called on alarm tick and when the service worker wakes — keeps heartbeats flowing
+ * even after MV3 suspension or a stale native port.
+ */
+async function ensureDesktopConnectionAndHeartbeat() {
+  if (!port || !isConnected) {
+    connectToDesktopApp()
+    return
+  }
+
+  if (!verifyPortAlive()) {
+    log('Stale native port on alarm tick; reconnecting')
+    disconnectFromDesktopApp()
+    connectToDesktopApp()
+    return
+  }
+
+  await sendHeartbeat()
+}
+
+/**
  * Connect to the Desktop App via Native Messaging
  */
 export function connectToDesktopApp(): boolean {
   if (port) {
-    log('Already connected to desktop app')
-    return true
+    if (verifyPortAlive()) {
+      log('Already connected to desktop app')
+      return true
+    }
+    log('Stale native port detected; reconnecting')
+    disconnectFromDesktopApp()
   }
 
   // Check if nativeMessaging is available
@@ -191,8 +263,6 @@ export function connectToDesktopApp(): boolean {
       const error = chrome.runtime.lastError?.message || 'Unknown error'
       log('Disconnected from desktop app:', error)
       
-      // Stop heartbeat
-      stopHeartbeat()
       stopAoiPreferencesPolling()
       stopConfigPolling()
       
@@ -244,13 +314,15 @@ export function connectToDesktopApp(): boolean {
  * Disconnect from Desktop App
  */
 export function disconnectFromDesktopApp() {
-  // Stop heartbeat first
-  stopHeartbeat()
   stopAoiPreferencesPolling()
   stopConfigPolling()
 
   if (port) {
-    port.disconnect()
+    try {
+      port.disconnect()
+    } catch (error) {
+      log('Error disconnecting native port:', error)
+    }
     port = null
     isConnected = false
     chrome.storage.local.set({ desktopAppConnected: false })
@@ -276,9 +348,16 @@ export function sendToDesktop(message: MessageToDesktop): boolean {
   
   try {
     port.postMessage(message)
+    const lastError = chrome.runtime.lastError
+    if (lastError) {
+      log('Error sending message to desktop:', lastError.message)
+      handleNativePortFailure('postMessage')
+      return false
+    }
     return true
   } catch (error) {
     log('Error sending message to desktop:', error)
+    handleNativePortFailure('postMessage_exception')
     return false
   }
 }
@@ -560,33 +639,17 @@ export async function sendProtectionStatusToDesktop() {
 }
 
 /**
- * Start the heartbeat system
- * Sends periodic heartbeats to desktop to confirm extension is alive
+ * Start the heartbeat system — immediate send; periodic ticks use chrome.alarms.
  */
 export function startHeartbeat() {
-  // Clear any existing interval
-  stopHeartbeat()
-  
-  log('Starting heartbeat system (interval: ' + HEARTBEAT_INTERVAL_MS + 'ms)')
-  
-  // Send first heartbeat immediately
-  sendHeartbeat()
-  
-  // Then send periodically
-  heartbeatInterval = setInterval(() => {
-    sendHeartbeat()
-  }, HEARTBEAT_INTERVAL_MS)
+  log('Starting heartbeat (alarm period: ' + HEARTBEAT_ALARM_PERIOD_MINUTES + ' min)')
+  setupConnectionAlarm()
+  void sendHeartbeat()
 }
 
-/**
- * Stop the heartbeat system
- */
+/** Kept for API compatibility; alarms persist to wake the service worker for reconnect. */
 export function stopHeartbeat() {
-  if (heartbeatInterval) {
-    clearInterval(heartbeatInterval)
-    heartbeatInterval = null
-    log('Heartbeat system stopped')
-  }
+  // Intentionally no-op — clearing the alarm would stop reconnect attempts after disconnect.
 }
 
 /**
@@ -667,3 +730,7 @@ function setupIdleReconnect() {
   })
 }
 setupIdleReconnect()
+setupConnectionAlarmListener()
+setupConnectionAlarm()
+// MV3 service workers restart often — reconnect on every module load, not only onInstalled/onStartup.
+connectToDesktopApp()
