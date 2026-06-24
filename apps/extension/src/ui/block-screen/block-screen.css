@@ -147,15 +147,15 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 140px;
-  height: 120px;
+  width: 200px;
+  height: 170px;
   margin-bottom: 4px;
 }
 
 .block-screen__monk-glow {
   position: absolute;
-  width: 100px;
-  height: 100px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(107, 86, 225, 0.35) 0%, rgba(107, 86, 225, 0.08) 55%, transparent 70%);
   filter: blur(8px);
@@ -170,8 +170,8 @@ body {
 .block-screen__monk {
   position: relative;
   z-index: 1;
-  width: 96px;
-  height: 96px;
+  width: 160px;
+  height: 160px;
   object-fit: contain;
   filter: drop-shadow(0 8px 24px rgba(107, 86, 225, 0.4));
   animation: bs-monk-float 6.2s ease-in-out infinite;
@@ -317,13 +317,13 @@ body {
   }
 
   .block-screen__monk {
-    width: 80px;
-    height: 80px;
+    width: 120px;
+    height: 120px;
   }
 
   .block-screen__monk-wrap {
-    width: 120px;
-    height: 100px;
+    width: 160px;
+    height: 140px;
   }
 }
 
