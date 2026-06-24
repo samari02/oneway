@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Intelligent distraction blocker for focused work",
 
-  "incognito": "spanning",
+  "incognito": "split",
   
   "permissions": [
     "storage",
