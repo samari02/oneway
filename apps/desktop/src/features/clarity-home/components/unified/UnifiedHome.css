@@ -1892,6 +1892,17 @@
 
 /* Progress view */
 .progress-view {
+  --uh-purple: #7c3aed;
+  --uh-purple-light: #8b5cf6;
+  --uh-purple-glow: rgba(124, 58, 237, 0.4);
+  --uh-purple-soft: rgba(124, 58, 237, 0.12);
+  --uh-ink: #f4f4f8;
+  --uh-muted: rgba(244, 244, 248, 0.52);
+  --uh-line: rgba(255, 255, 255, 0.06);
+  --uh-glass: linear-gradient(135deg, rgba(15, 15, 25, 0.96) 0%, rgba(20, 18, 35, 0.92) 100%);
+  --uh-radius: 18px;
+  --uh-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
   position: relative;
   display: flex;
   flex-direction: column;

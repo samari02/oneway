@@ -40,15 +40,14 @@ export function useFocusAreaStore(userId: string | undefined) {
   }, [userId])
 
   useEffect(() => {
+    fetchedRef.current = false
+  }, [userId])
+
+  useEffect(() => {
     if (!userId || fetchedRef.current) return
     fetchedRef.current = true
     fetchAreas()
   }, [userId, fetchAreas])
-
-  // Reset when user changes
-  useEffect(() => {
-    fetchedRef.current = false
-  }, [userId])
 
   const addArea = useCallback(
     async (label: string, emoji?: string, color?: string): Promise<FocusArea | null> => {

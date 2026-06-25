@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FocusArea } from '@oneway/shared'
 import {
   computeProgressSummary,
@@ -21,6 +21,13 @@ export function useProgressStats(
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const areasKey = useMemo(
+    () => focusAreas.map((a) => a.id).join(','),
+    [focusAreas],
+  )
+  const areasRef = useRef(focusAreas)
+  areasRef.current = focusAreas
+
   const refetch = useCallback(async () => {
     if (!userId) {
       setLoading(false)
@@ -31,7 +38,7 @@ export function useProgressStats(
     setError(null)
     try {
       const completed = await getCompletedGoalsHistory(userId)
-      setSummary(computeProgressSummary(completed, focusAreas))
+      setSummary(computeProgressSummary(completed, areasRef.current))
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load progress'
       setError(msg)
@@ -39,7 +46,8 @@ export function useProgressStats(
     } finally {
       setLoading(false)
     }
-  }, [userId, focusAreas])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, areasKey])
 
   useEffect(() => {
     void refetch()

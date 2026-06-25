@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { setApiKey, removeApiKey, hasApiKey, getMaskedApiKey } from '@/lib/openai'
 
 type ApiKeySaveState = 'idle' | 'saving' | 'saved' | 'error'
-import { SiteClassificationModal, type SiteClassification, type SiteCategory } from '@/features/stats/components/SiteClassificationModal'
+import { SiteClassificationModal, type SiteCategory } from '@/features/stats/components/SiteClassificationModal'
 import { useAoiPreferences } from '@/features/settings/hooks/useAoiPreferences'
 import { DeleteSiteDomainPicker } from '@/features/settings/components/DeleteSiteDomainPicker'
 import { useFocusAreaStore } from '@/features/clarity-home/hooks/useFocusAreaStore'
@@ -117,41 +117,6 @@ export function SettingsView() {
     }
   }
 
-  const handleDeleteSiteForever = async () => {
-    const domain = normalizeDomainInput(deleteSiteInput)
-    if (!domain) {
-      alert('Enter a domain (e.g. youtube.com)')
-      return
-    }
-    if (
-      !confirm(
-        `Delete all visits, block events, and saved classification for “${domain}” on this Mac? This cannot be undone.`
-      )
-    ) {
-      return
-    }
-    setDeleteSiteBusy(true)
-    try {
-      const result = await invoke<{
-        visitsRemoved: number
-        blocksRemoved: number
-        classificationRemoved: boolean
-      }>('delete_browsing_data_for_domain', { domain })
-      await fetchDataStats()
-      setDeleteSiteInput('')
-      const parts = [
-        `${result.visitsRemoved} visit row(s)`,
-        `${result.blocksRemoved} block event(s)`,
-      ]
-      if (result.classificationRemoved) parts.push('saved site classification')
-      alert(`Removed: ${parts.join(', ')}.`)
-    } catch (e) {
-      console.error('delete_browsing_data_for_domain:', e)
-      alert('Failed to delete: ' + e)
-    } finally {
-      setDeleteSiteBusy(false)
-    }
-  }
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'N/A'
@@ -350,11 +315,6 @@ export function SettingsView() {
         <SiteClassificationModal
           isOpen={isClassificationModalOpen}
           onClose={() => setIsClassificationModalOpen(false)}
-          sites={(dataStats?.topSites || []).map((s): SiteClassification => ({
-            domain: s.domain,
-            visits: s.visits,
-            category: null // Start unclassified - modal loads existing from backend
-          }))}
           onSave={handleClassificationSave}
         />
       </section>

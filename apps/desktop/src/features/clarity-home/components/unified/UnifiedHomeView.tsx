@@ -12,9 +12,9 @@ type TimeOfDay = 'morning' | 'daytime' | 'evening'
 type UnifiedHomeViewProps = {
   firstName: string
   userId: string | undefined
-  dayState: string
   todayPlan: DailyPlan | null
-  onRefetch: () => Promise<void>
+  dayState?: string
+  onRefetch?: () => Promise<void>
   initialIntention?: string
 }
 
