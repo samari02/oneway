@@ -16,8 +16,12 @@ export type ChatMessage = {
 export type MonkChatPhase =
   | 'welcome'
   | 'areas'
+  | 'areas_explore'
   | 'projects'
+  | 'projects_explore'
   | 'tasks'
+  | 'tasks_explore'
+  | 'priorities'
   | 'proposal'
   | 'saving'
   | 'done'
@@ -41,6 +45,11 @@ type MonkChatState = {
   proposedTasks: ProposedTask[]
   collectedAreas: string[]
   collectedProjects: string[]
+  collectedTasks: string[]
+  areaNotes: string
+  projectNotes: string
+  taskNotes: string
+  priorityNotes: string
 }
 
 const AREA_COLORS = [
@@ -56,7 +65,20 @@ const AREA_EMOJIS: Record<string, string> = {
 }
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
-const MODEL = 'gpt-4o-mini'
+const MODEL = 'gpt-4o'
+
+const MONK_SYSTEM_PROMPT = `You are Monk, a warm and thoughtful productivity coach in the Clarity app.
+
+Your style:
+- Speak like a supportive coach having a real conversation, not a form or survey
+- Always reflect back something meaningful the user said before asking your next question
+- Ask ONE focused follow-up question at a time — be curious, gently inquisitive
+- Help the user discover and clarify their focus areas, projects, and priorities through dialogue
+- Keep messages to 2-4 sentences — warm, human, not verbose
+- The app UI is in English, but if the user writes in French, respond naturally in French
+- Never rush to conclusions — explore before proposing anything
+- Do NOT use bullet lists unless reflecting back what the user listed
+- Do NOT propose a plan or structure yet — that comes later`
 
 function msgId(): string {
   return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
@@ -97,8 +119,17 @@ function parseListFromText(text: string): string[] {
     .slice(0, 10)
 }
 
-async function askAiForResponse(
-  systemPrompt: string,
+function buildConversationHistory(
+  messages: ChatMessage[],
+): { role: string; content: string }[] {
+  return messages.map((m) => ({
+    role: m.role === 'monk' ? 'assistant' : 'user',
+    content: m.text,
+  }))
+}
+
+async function askMonk(
+  instruction: string,
   conversationSoFar: { role: string; content: string }[],
 ): Promise<string | null> {
   const apiKey = getApiKey()
@@ -114,11 +145,12 @@ async function askAiForResponse(
       body: JSON.stringify({
         model: MODEL,
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: MONK_SYSTEM_PROMPT },
           ...conversationSoFar,
+          { role: 'user', content: instruction },
         ],
-        temperature: 0.7,
-        max_tokens: 400,
+        temperature: 0.75,
+        max_tokens: 500,
       }),
     })
     if (!res.ok) return null
@@ -132,20 +164,25 @@ async function askAiForResponse(
 async function askAiForTasks(
   areas: string[],
   projects: string[],
-  userTaskText: string,
+  tasks: string[],
+  notes: { areas: string; projects: string; tasks: string; priorities: string },
 ): Promise<{ areas: ProposedArea[]; tasks: ProposedTask[] } | null> {
   const apiKey = getApiKey()
   if (!apiKey) return null
 
-  const prompt = `You are a productivity coach. The user told you about their life.
+  const prompt = `You are a productivity coach. Based on this conversation with the user, generate their workspace.
 
-Areas of focus: ${areas.join(', ')}
+Focus areas mentioned: ${areas.join(', ')}
+Area context: ${notes.areas || '(none)'}
 Projects/goals: ${projects.join(', ')}
-Tasks they mentioned: "${userTaskText}"
+Project context: ${notes.projects || '(none)'}
+Tasks mentioned: ${tasks.join(', ')}
+Task context: ${notes.tasks || '(none)'}
+Priorities: ${notes.priorities || '(none)'}
 
 Generate a JSON response with:
-1. "areas": array of {label, emoji, color} for each focus area (use hex colors from this palette: #7c3aed, #f97316, #22c55e, #3b82f6, #ec4899, #eab308, #14b8a6)
-2. "tasks": array of {title, areaLabel} — clear actionable tasks (verb + object, max 6 words), assigned to the best area label
+1. "areas": array of {label, emoji, color} for each focus area (use hex colors from: #7c3aed, #f97316, #22c55e, #3b82f6, #ec4899, #eab308, #14b8a6)
+2. "tasks": array of {title, areaLabel} — clear actionable tasks (verb + object, max 6 words), assigned to the best area label. Include tasks from the conversation plus any implied by their projects.
 
 Respond ONLY with valid JSON: {"areas": [...], "tasks": [...]}`
 
@@ -160,7 +197,7 @@ Respond ONLY with valid JSON: {"areas": [...], "tasks": [...]}`
         model: MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.4,
-        max_tokens: 800,
+        max_tokens: 1000,
         response_format: { type: 'json_object' },
       }),
     })
@@ -178,22 +215,32 @@ Respond ONLY with valid JSON: {"areas": [...], "tasks": [...]}`
   }
 }
 
+const INITIAL_STATE: MonkChatState = {
+  messages: [],
+  phase: 'welcome',
+  isTyping: false,
+  proposedAreas: [],
+  proposedTasks: [],
+  collectedAreas: [],
+  collectedProjects: [],
+  collectedTasks: [],
+  areaNotes: '',
+  projectNotes: '',
+  taskNotes: '',
+  priorityNotes: '',
+}
+
 export function useMonkChat(
   existingCategories: Category[],
   existingFocusAreas: FocusArea[],
 ) {
-  const [state, setState] = useState<MonkChatState>({
-    messages: [],
-    phase: 'welcome',
-    isTyping: false,
-    proposedAreas: [],
-    proposedTasks: [],
-    collectedAreas: [],
-    collectedProjects: [],
-  })
+  const [state, setState] = useState<MonkChatState>(INITIAL_STATE)
 
   const phaseRef = useRef(state.phase)
   phaseRef.current = state.phase
+
+  const stateRef = useRef(state)
+  stateRef.current = state
 
   const addMessages = useCallback((...msgs: ChatMessage[]) => {
     setState((s) => ({ ...s, messages: [...s.messages, ...msgs] }))
@@ -204,7 +251,7 @@ export function useMonkChat(
   }, [])
 
   const simulateTyping = useCallback(
-    async (delay = 800): Promise<void> => {
+    async (delay = 1200): Promise<void> => {
       setTyping(true)
       await new Promise((r) => setTimeout(r, delay))
       setTyping(false)
@@ -213,22 +260,14 @@ export function useMonkChat(
   )
 
   const start = useCallback(async () => {
-    setState({
-      messages: [],
-      phase: 'welcome',
-      isTyping: false,
-      proposedAreas: [],
-      proposedTasks: [],
-      collectedAreas: [],
-      collectedProjects: [],
-    })
+    setState(INITIAL_STATE)
 
-    await new Promise((r) => setTimeout(r, 300))
+    await new Promise((r) => setTimeout(r, 400))
 
     const hasExisting = existingFocusAreas.length > 0 || existingCategories.length > 1
     const welcomeText = hasExisting
-      ? "Hey — I see you've already got some things set up. Let's make sure I really understand what you're working on. What are the main areas of your life you want to focus on?"
-      : "Hey, I'm Monk. I'm going to help you get organized. Let's start by mapping out your world. What are the big areas of your life you want to track? Think work, health, hobbies, side projects..."
+      ? "Hey — I see you've already got some things set up. I'd love to understand your world a little better before we refine anything. What are the main areas of your life you want to focus on right now?"
+      : "Hey, I'm Monk. I'm here to help you get organized — but first, I want to really understand your world. What are the big areas of your life you want to track? Think work, health, hobbies, side projects… whatever matters to you."
 
     const m = monkMsg(welcomeText, [
       'Work, Health, Learning',
@@ -250,48 +289,149 @@ export function useMonkChat(
 
       addMessages(userMsg(trimmed))
       const currentPhase = phaseRef.current
+      const s = stateRef.current
+      const history = buildConversationHistory(s.messages)
 
       if (currentPhase === 'areas') {
         const areas = parseListFromText(trimmed)
-        setState((s) => ({ ...s, collectedAreas: areas }))
+        setState((prev) => ({
+          ...prev,
+          collectedAreas: areas.length > 0 ? areas : [trimmed],
+          areaNotes: trimmed,
+        }))
 
-        await simulateTyping(1000)
+        await simulateTyping()
 
-        const aiConvo = [
-          {
-            role: 'assistant',
-            content: `The user listed these focus areas: ${areas.join(', ')}. Respond warmly, acknowledge their areas, then ask about their current projects or goals within these areas. Keep it to 2-3 sentences. Be conversational, not formal.`,
-          },
-        ]
-        const aiResponse = await askAiForResponse(
-          'You are Monk, a calm and supportive productivity companion. Speak naturally in English, be warm but concise.',
-          aiConvo,
+        const aiResponse = await askMonk(
+          `The user just shared their focus areas: "${trimmed}". Reflect back what you heard warmly, then ask ONE deeper question — e.g. which area feels most important right now, or what each area means to them personally. Do not ask about projects yet.`,
+          history,
         )
 
         const responseText =
           aiResponse ??
-          `Nice — ${areas.join(', ')}. That's a solid foundation. Now tell me about your current projects or goals. What are you actively working on in these areas?`
+          `I hear you — ${areas.join(', ')}. Those are meaningful areas to focus on. Which of these feels most important to you right now, or is there one that's been neglected lately?`
 
         addMessages(monkMsg(responseText))
-        setState((s) => ({ ...s, phase: 'projects' }))
-      } else if (currentPhase === 'projects') {
-        const projects = parseListFromText(trimmed)
-        setState((s) => ({ ...s, collectedProjects: projects }))
+        setState((prev) => ({ ...prev, phase: 'areas_explore' }))
+      } else if (currentPhase === 'areas_explore') {
+        setState((prev) => ({
+          ...prev,
+          areaNotes: [prev.areaNotes, trimmed].filter(Boolean).join('. '),
+        }))
 
-        await simulateTyping(1000)
+        await simulateTyping()
+
+        const areas = s.collectedAreas
+        const aiResponse = await askMonk(
+          `The user elaborated on their focus areas. Areas so far: ${areas.join(', ')}. Their latest message: "${trimmed}". Acknowledge what they shared, then transition naturally to asking about their current projects or goals within these areas. One warm question about what they're actively working on.`,
+          history,
+        )
 
         const responseText =
-          "Got it. Last thing — what specific tasks do you need to get done this week? Just dump everything that's on your mind."
+          aiResponse ??
+          `Thank you for sharing that — it helps me understand what matters to you. Now, tell me about your current projects or goals. What are you actively working on in these areas?`
+
+        addMessages(
+          monkMsg(responseText, [
+            'Building a side project',
+            'Getting healthier',
+            'Learning something new',
+          ]),
+        )
+        setState((prev) => ({ ...prev, phase: 'projects' }))
+      } else if (currentPhase === 'projects') {
+        const projects = parseListFromText(trimmed)
+        setState((prev) => ({
+          ...prev,
+          collectedProjects: projects.length > 0 ? projects : [trimmed],
+          projectNotes: trimmed,
+        }))
+
+        await simulateTyping()
+
+        const aiResponse = await askMonk(
+          `The user shared their projects/goals: "${trimmed}". Reflect back what you heard, then ask ONE follow-up — e.g. which project excites them most, what's blocking progress, or what success looks like for one of them. Do not ask about tasks yet.`,
+          history,
+        )
+
+        const responseText =
+          aiResponse ??
+          `Those are great goals. Which one feels most alive for you right now — or is there one where you're feeling stuck?`
 
         addMessages(monkMsg(responseText))
-        setState((s) => ({ ...s, phase: 'tasks' }))
+        setState((prev) => ({ ...prev, phase: 'projects_explore' }))
+      } else if (currentPhase === 'projects_explore') {
+        setState((prev) => ({
+          ...prev,
+          projectNotes: [prev.projectNotes, trimmed].filter(Boolean).join('. '),
+        }))
+
+        await simulateTyping()
+
+        const aiResponse = await askMonk(
+          `The user elaborated on their projects. Latest: "${trimmed}". Acknowledge warmly, then ask about specific tasks they need to get done this week — invite them to dump everything on their mind, no need to organize.`,
+          history,
+        )
+
+        const responseText =
+          aiResponse ??
+          `Got it — that gives me a clearer picture. What specific tasks do you need to get done this week? Just dump everything that's on your mind, no need to organize it.`
+
+        addMessages(monkMsg(responseText))
+        setState((prev) => ({ ...prev, phase: 'tasks' }))
       } else if (currentPhase === 'tasks') {
-        setState((s) => ({ ...s, phase: 'proposal', isTyping: true }))
+        const tasks = parseListFromText(trimmed)
+        setState((prev) => ({
+          ...prev,
+          collectedTasks: tasks.length > 0 ? tasks : [trimmed],
+          taskNotes: trimmed,
+        }))
 
-        const areas = state.collectedAreas
-        const projects = state.collectedProjects
+        await simulateTyping()
 
-        const aiResult = await askAiForTasks(areas, projects, trimmed)
+        const aiResponse = await askMonk(
+          `The user listed tasks: "${trimmed}". Reflect back briefly, then ask if anything is missing OR what their top priority is this week. Keep it conversational.`,
+          history,
+        )
+
+        const responseText =
+          aiResponse ??
+          `That's a solid list. Is there anything else weighing on you, or if you had to pick just one thing to move forward this week — what would it be?`
+
+        addMessages(monkMsg(responseText))
+        setState((prev) => ({ ...prev, phase: 'tasks_explore' }))
+      } else if (currentPhase === 'tasks_explore') {
+        setState((prev) => ({
+          ...prev,
+          taskNotes: [prev.taskNotes, trimmed].filter(Boolean).join('. '),
+          priorityNotes: trimmed,
+        }))
+
+        await simulateTyping()
+
+        const aiResponse = await askMonk(
+          `The user shared priorities: "${trimmed}". Acknowledge warmly and let them know you're putting together a plan based on everything they've shared. Keep it brief and encouraging — 1-2 sentences.`,
+          history,
+        )
+
+        const responseText =
+          aiResponse ??
+          `Perfect — I think I have a good picture now. Give me a moment to put together a plan based on everything you've shared.`
+
+        addMessages(monkMsg(responseText))
+        setState((prev) => ({ ...prev, phase: 'priorities', isTyping: true }))
+
+        const areas = s.collectedAreas
+        const projects = s.collectedProjects
+        const tasks = s.collectedTasks.length > 0 ? s.collectedTasks : parseListFromText(s.taskNotes)
+        const notes = {
+          areas: [s.areaNotes, trimmed].filter(Boolean).join('. '),
+          projects: s.projectNotes,
+          tasks: s.taskNotes,
+          priorities: trimmed,
+        }
+
+        const aiResult = await askAiForTasks(areas, projects, tasks, notes)
 
         let proposedAreas: ProposedArea[]
         let proposedTasks: ProposedTask[]
@@ -306,7 +446,7 @@ export function useMonkChat(
             color: pickColor(i),
           }))
 
-          const taskLines = parseListFromText(trimmed)
+          const taskLines = tasks.length > 0 ? tasks : parseListFromText(s.taskNotes)
           proposedTasks = taskLines.map((title) => {
             const bestArea = proposedAreas[0]?.label ?? 'General'
             const lower = title.toLowerCase()
@@ -323,11 +463,11 @@ export function useMonkChat(
 
         const areaList = proposedAreas.map((a) => `${a.emoji} ${a.label}`).join(', ')
         const taskCount = proposedTasks.length
-        const summaryText = `Here's what I've put together:\n\n**Focus Areas:** ${areaList}\n\n**Tasks:** ${taskCount} task${taskCount !== 1 ? 's' : ''} organized across your areas.\n\nDoes this look right? You can confirm to save everything, or tell me what to change.`
+        const summaryText = `Here's what I've put together based on our conversation:\n\n**Focus Areas:** ${areaList}\n\n**Tasks:** ${taskCount} task${taskCount !== 1 ? 's' : ''} organized across your areas.\n\nDoes this look right? You can confirm to save everything, or tell me what to change.`
 
         addMessages(monkMsg(summaryText))
-        setState((s) => ({
-          ...s,
+        setState((prev) => ({
+          ...prev,
           proposedAreas,
           proposedTasks,
           phase: 'proposal',
@@ -335,12 +475,12 @@ export function useMonkChat(
       } else if (currentPhase === 'proposal') {
         const lower = trimmed.toLowerCase()
         const isConfirm =
-          /^(yes|yep|yeah|sure|ok|okay|confirm|looks good|perfect|great|save|do it|go ahead|lgtm|ship it)/i.test(
+          /^(yes|yep|yeah|sure|ok|okay|confirm|looks good|perfect|great|save|do it|go ahead|lgtm|ship it|oui|d'accord|parfait|c'est bon)/i.test(
             lower,
           )
 
         if (isConfirm) {
-          setState((s) => ({ ...s, phase: 'saving' }))
+          setState((prev) => ({ ...prev, phase: 'saving' }))
         } else {
           await simulateTyping(800)
           addMessages(
@@ -351,7 +491,7 @@ export function useMonkChat(
         }
       }
     },
-    [addMessages, simulateTyping, setTyping, state.collectedAreas, state.collectedProjects],
+    [addMessages, simulateTyping, setTyping],
   )
 
   const confirmProposal = useCallback(() => {
@@ -368,15 +508,7 @@ export function useMonkChat(
   }, [addMessages])
 
   const reset = useCallback(() => {
-    setState({
-      messages: [],
-      phase: 'welcome',
-      isTyping: false,
-      proposedAreas: [],
-      proposedTasks: [],
-      collectedAreas: [],
-      collectedProjects: [],
-    })
+    setState(INITIAL_STATE)
   }, [])
 
   return {

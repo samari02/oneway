@@ -12,8 +12,11 @@ import { useCategoryStore } from '../../hooks/useCategoryStore'
 import { useFocusAreaStore } from '../../hooks/useFocusAreaStore'
 import { useTaskStore } from '../../hooks/useTaskStore'
 import { saveUserContext } from '../../api/userContext'
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import { HomeCharacter } from './HomeCharacter'
 import './MonkChatModal.css'
+
+const MONK_AVATAR_SIZE = 50
 
 type MonkChatModalProps = {
   open: boolean
@@ -42,6 +45,27 @@ function CloseIcon() {
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function MicIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Z"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M19 11a7 7 0 0 1-14 0M12 18v3M8 21h8"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   )
@@ -169,8 +193,50 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
   const [showSuccess, setShowSuccess] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const inputBaseRef = useRef('')
+  const sessionTranscriptRef = useRef('')
   const startedRef = useRef(false)
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
+
+  const handleSpeechTranscript = useCallback(
+    (transcript: string, isFinal: boolean) => {
+      const trimmed = transcript.trim()
+      if (!trimmed) return
+
+      if (isFinal) {
+        const base = inputBaseRef.current
+        const session = sessionTranscriptRef.current
+        const combined = [base, session, trimmed].filter(Boolean).join(' ')
+        sessionTranscriptRef.current = [session, trimmed].filter(Boolean).join(' ')
+        inputBaseRef.current = combined
+        setInput(combined)
+        return
+      }
+
+      const base = inputBaseRef.current
+      const session = sessionTranscriptRef.current
+      const preview = [base, session, transcript].filter(Boolean).join(' ')
+      setInput(preview)
+    },
+    [],
+  )
+
+  const {
+    isSupported: isSpeechSupported,
+    isListening,
+    isTranscribing,
+    error: speechError,
+    toggle: toggleSpeech,
+    stop: stopSpeech,
+  } = useSpeechRecognition({ onTranscript: handleSpeechTranscript })
+
+  const handleSpeechToggle = useCallback(() => {
+    if (!isListening) {
+      inputBaseRef.current = input
+      sessionTranscriptRef.current = ''
+    }
+    toggleSpeech()
+  }, [input, isListening, toggleSpeech])
 
   useEffect(() => {
     setPortalTarget(document.querySelector('.app-layout__content') as HTMLElement | null)
@@ -275,9 +341,12 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
   const handleSend = useCallback(() => {
     const text = input.trim()
     if (!text || isTyping) return
+    stopSpeech()
     setInput('')
+    inputBaseRef.current = ''
+    sessionTranscriptRef.current = ''
     send(text)
-  }, [input, isTyping, send])
+  }, [input, isTyping, send, stopSpeech])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -298,12 +367,15 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
   )
 
   const handleClose = useCallback(() => {
+    stopSpeech()
     reset()
     setInput('')
+    inputBaseRef.current = ''
+    sessionTranscriptRef.current = ''
     setIsSaving(false)
     setShowSuccess(false)
     onClose()
-  }, [reset, onClose])
+  }, [reset, onClose, stopSpeech])
 
   if (!open || !portalTarget) return null
 
@@ -343,7 +415,7 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
             >
               {msg.role === 'monk' && (
                 <div className="monk-chat__bubble-avatar">
-                  <HomeCharacter size={36} compact />
+                  <HomeCharacter size={MONK_AVATAR_SIZE} compact />
                 </div>
               )}
               <div className="monk-chat__bubble-content">
@@ -395,7 +467,7 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
             proposedAreas.length > 0 && (
               <div className="monk-chat__bubble monk-chat__bubble--monk">
                 <div className="monk-chat__bubble-avatar">
-                  <HomeCharacter size={36} compact />
+                  <HomeCharacter size={MONK_AVATAR_SIZE} compact />
                 </div>
                 <div className="monk-chat__bubble-content">
                   <ProposalCard
@@ -420,7 +492,7 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
           {isTyping && (
             <div className="monk-chat__bubble monk-chat__bubble--monk">
               <div className="monk-chat__bubble-avatar">
-                <HomeCharacter size={36} compact />
+                <HomeCharacter size={MONK_AVATAR_SIZE} compact />
               </div>
               <div className="monk-chat__bubble-content">
                 <TypingIndicator />
@@ -439,7 +511,8 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
               Done — back to dashboard
             </button>
           ) : (
-            <div className="monk-chat__input-row">
+            <>
+              <div className="monk-chat__input-row">
               <textarea
                 ref={inputRef}
                 className="monk-chat__input"
@@ -447,17 +520,29 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={
-                  phase === 'areas'
+                  phase === 'areas' || phase === 'areas_explore'
                     ? 'e.g. Work, Health, Side Project, Learning…'
-                    : phase === 'projects'
+                    : phase === 'projects' || phase === 'projects_explore'
                       ? 'e.g. Building a productivity app, training for a marathon…'
-                      : phase === 'tasks'
+                      : phase === 'tasks' || phase === 'tasks_explore'
                         ? 'e.g. Finish landing page, go to gym, read chapter 3…'
                         : 'Type a message…'
                 }
                 rows={1}
                 disabled={isInputDisabled}
               />
+              {isSpeechSupported && (
+                <button
+                  type="button"
+                  className={`monk-chat__mic${isListening ? ' monk-chat__mic--listening' : ''}`}
+                  onClick={handleSpeechToggle}
+                  disabled={isInputDisabled || isTranscribing}
+                  aria-pressed={isListening}
+                  aria-label={isListening ? 'Stop voice input' : 'Speak your message'}
+                >
+                  <MicIcon />
+                </button>
+              )}
               <button
                 type="button"
                 className="monk-chat__send"
@@ -468,6 +553,15 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
                 <SendIcon />
               </button>
             </div>
+            {isTranscribing && (
+              <p className="monk-chat__voice-status">Transcribing…</p>
+            )}
+            {speechError && (
+              <p className="monk-chat__voice-error" role="alert">
+                {speechError}
+              </p>
+            )}
+            </>
           )}
         </div>
       </div>
