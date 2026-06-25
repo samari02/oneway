@@ -1173,6 +1173,12 @@
   gap: 8px;
 }
 
+.uh-dash-open__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
 .uh-dash-open__row {
   display: flex;
   align-items: center;
@@ -1204,8 +1210,6 @@
   border-radius: 9px;
   background: color-mix(in srgb, var(--uh-area-color) 18%, transparent);
   color: var(--uh-area-color);
-  font-size: 14px;
-  font-weight: 600;
 }
 
 .uh-dash-open__label {
@@ -1226,6 +1230,30 @@
   display: grid;
   place-items: center;
   color: rgba(244, 244, 248, 0.28);
+  transition: transform 0.2s ease;
+}
+
+.uh-dash-open__row--expanded .uh-dash-open__chevron {
+  transform: rotate(90deg);
+}
+
+.uh-dash-open__tasks {
+  margin: 0;
+  padding: 4px 16px 8px 60px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.uh-dash-open__task {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: rgba(244, 244, 248, 0.72);
 }
 
 .uh-dash-actions {
@@ -1569,7 +1597,7 @@
   height: 28px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--pmd-cat-color) 18%, transparent);
-  font-size: 14px;
+  color: var(--pmd-cat-color);
 }
 
 .pmd-review__group-label {

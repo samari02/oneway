@@ -1,8 +1,9 @@
-import { useMemo, type CSSProperties } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import type { DailyPlan } from '@oneway/shared'
 import { MOCK_CURRENT_FOCUS } from '../../mock-data'
-import { useTaskStore } from '../../hooks/useTaskStore'
+import { useTaskStore, type Task } from '../../hooks/useTaskStore'
 import { useCategoryStore } from '../../hooks/useCategoryStore'
+import { CategoryIcon } from '../CategoryIcon'
 import { HomeCharacter } from './HomeCharacter'
 
 type TimeOfDay = 'morning' | 'daytime' | 'evening'
@@ -140,7 +141,7 @@ type TaskCategoryDisplay = {
   label: string
   count: number
   color: string
-  icon: string
+  tasks: Task[]
 }
 
 export function DefaultHomeDashboard({
@@ -155,24 +156,36 @@ export function DefaultHomeDashboard({
 }: DefaultHomeDashboardProps) {
   const { tasks } = useTaskStore()
   const { categories } = useCategoryStore()
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => new Set())
+
+  const toggleCategory = (catId: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev)
+      if (next.has(catId)) next.delete(catId)
+      else next.add(catId)
+      return next
+    })
+  }
 
   const openTasks = useMemo((): TaskCategoryDisplay[] => {
     const openOnly = tasks.filter((t) => t.status === 'open')
     if (openOnly.length === 0) return []
 
-    const counts = new Map<string, number>()
+    const grouped = new Map<string, Task[]>()
     for (const t of openOnly) {
-      counts.set(t.category, (counts.get(t.category) ?? 0) + 1)
+      const list = grouped.get(t.category) ?? []
+      list.push(t)
+      grouped.set(t.category, list)
     }
 
-    return Array.from(counts.entries()).map(([catId, count]) => {
+    return Array.from(grouped.entries()).map(([catId, catTasks]) => {
       const cat = categories.find((c) => c.id === catId)
       return {
         id: catId,
         label: cat?.label ?? catId.charAt(0).toUpperCase() + catId.slice(1),
-        count,
+        count: catTasks.length,
         color: cat?.color ?? '#a78bfa',
-        icon: cat?.emoji ?? '•',
+        tasks: catTasks,
       }
     }).sort((a, b) => {
       const orderMap = new Map(categories.map((c, i) => [c.id, i]))
@@ -257,24 +270,41 @@ export function DefaultHomeDashboard({
         <span className="uh-dash-section-label">Open Tasks</span>
         {openTasks.length > 0 ? (
           <ul className="uh-dash-open__list">
-            {openTasks.map((cat) => (
-              <li key={cat.id}>
-                <button type="button" className="uh-dash-open__row">
-                  <span
-                    className="uh-dash-open__icon"
-                    style={{ '--uh-area-color': cat.color } as CSSProperties}
-                    aria-hidden
+            {openTasks.map((cat) => {
+              const isExpanded = expandedCategories.has(cat.id)
+              return (
+                <li key={cat.id} className="uh-dash-open__item">
+                  <button
+                    type="button"
+                    className={`uh-dash-open__row${isExpanded ? ' uh-dash-open__row--expanded' : ''}`}
+                    aria-expanded={isExpanded}
+                    onClick={() => toggleCategory(cat.id)}
                   >
-                    {cat.icon}
-                  </span>
-                  <span className="uh-dash-open__label">{cat.label}</span>
-                  <span className="uh-dash-open__count">{cat.count}</span>
-                  <span className="uh-dash-open__chevron" aria-hidden>
-                    <ChevronIcon />
-                  </span>
-                </button>
-              </li>
-            ))}
+                    <span
+                      className="uh-dash-open__icon"
+                      style={{ '--uh-area-color': cat.color } as CSSProperties}
+                      aria-hidden
+                    >
+                      <CategoryIcon categoryId={cat.id} size={16} />
+                    </span>
+                    <span className="uh-dash-open__label">{cat.label}</span>
+                    <span className="uh-dash-open__count">{cat.count}</span>
+                    <span className="uh-dash-open__chevron" aria-hidden>
+                      <ChevronIcon />
+                    </span>
+                  </button>
+                  {isExpanded && (
+                    <ul className="uh-dash-open__tasks">
+                      {cat.tasks.map((task) => (
+                        <li key={task.id} className="uh-dash-open__task">
+                          {task.title}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         ) : (
           <div className="uh-dash-open__empty">

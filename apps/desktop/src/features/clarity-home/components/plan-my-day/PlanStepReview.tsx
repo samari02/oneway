@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import type { Task } from '../../hooks/useTaskStore'
 import type { Category } from '../../hooks/useCategoryStore'
+import { CategoryIcon } from '../CategoryIcon'
 
 type PlanStepReviewProps = {
   tasks: Task[]
@@ -135,7 +136,7 @@ export function PlanStepReview({
                 style={{ '--pmd-cat-color': category.color } as CSSProperties}
                 aria-hidden
               >
-                {category.emoji}
+                <CategoryIcon categoryId={category.id} size={14} />
               </span>
               <span className="pmd-review__group-label">{category.label}</span>
               <span className="pmd-review__group-count">{catTasks.length}</span>
@@ -191,7 +192,7 @@ export function PlanStepReview({
                   >
                     {validCategories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
-                        {cat.emoji} {cat.label}
+                        {cat.label}
                       </option>
                     ))}
                   </select>
