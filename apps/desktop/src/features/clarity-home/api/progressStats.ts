@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { DailyPlan, FocusArea } from '@oneway/shared'
+import type { Task } from '../hooks/useTaskStore'
 import { formatLocalDateKey } from './dailyPlans'
 
 export type CompletedGoalRecord = {
@@ -67,6 +68,42 @@ export function extractCompletedGoals(plans: DailyPlan[]): CompletedGoalRecord[]
   }
 
   return records.sort((a, b) => b.planDate.localeCompare(a.planDate))
+}
+
+export function extractCompletedTasks(
+  tasks: Task[],
+  lookbackDays = 120,
+  now = new Date(),
+): CompletedGoalRecord[] {
+  const start = addDays(now, -lookbackDays)
+  const startKey = formatLocalDateKey(start)
+
+  return tasks
+    .filter((task) => task.status === 'done' && task.completedAt)
+    .map((task) => ({
+      goalId: `task-${task.id}`,
+      title: task.title,
+      areaId: task.category || null,
+      planDate: formatLocalDateKey(new Date(task.completedAt!)),
+    }))
+    .filter((record) => record.planDate >= startKey)
+    .sort((a, b) => b.planDate.localeCompare(a.planDate))
+}
+
+export function mergeCompletedRecords(
+  goals: CompletedGoalRecord[],
+  tasks: CompletedGoalRecord[],
+): CompletedGoalRecord[] {
+  const seen = new Set(goals.map((record) => record.goalId))
+  const merged = [...goals]
+
+  for (const task of tasks) {
+    if (seen.has(task.goalId)) continue
+    seen.add(task.goalId)
+    merged.push(task)
+  }
+
+  return merged.sort((a, b) => b.planDate.localeCompare(a.planDate))
 }
 
 export async function getCompletedGoalsHistory(

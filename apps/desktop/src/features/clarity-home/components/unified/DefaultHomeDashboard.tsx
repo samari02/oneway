@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useCallback, type CSSProperties } from 'react'
+import { useMemo, useState, useRef, useCallback, useEffect, type CSSProperties } from 'react'
 import type { DailyPlan, FocusArea } from '@oneway/shared'
 import { useTaskStore, type Task } from '../../hooks/useTaskStore'
 import { useCategoryStore } from '../../hooks/useCategoryStore'
@@ -112,6 +112,133 @@ function CheckIcon() {
   )
 }
 
+
+function PencilIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function TrashIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M4 7h16M9 7V5h6v2M10 11v6M14 11v6M6 7l1 12h10l1-12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function OpenTaskRow({
+  task,
+  isDone,
+  completing,
+  focusActive,
+  onToggle,
+  onComplete,
+  onSelectFocus,
+  onSaveTitle,
+  onDelete,
+}: {
+  task: Task
+  isDone: boolean
+  completing: boolean
+  focusActive: boolean
+  onToggle: () => void
+  onComplete: () => void
+  onSelectFocus: () => void
+  onSaveTitle: (title: string) => void
+  onDelete: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(task.title)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!editing) setDraft(task.title)
+  }, [task.title, editing])
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus()
+  }, [editing])
+
+  const commitEdit = () => {
+    const next = draft.trim()
+    if (!next) {
+      setDraft(task.title)
+      setEditing(false)
+      return
+    }
+    if (next !== task.title) onSaveTitle(next)
+    setEditing(false)
+  }
+
+  return (
+    <li
+      className={`uh-dash-open__task${isDone ? ' uh-dash-open__task--done' : ''}${completing ? ' uh-dash-open__task--completing' : ''}${editing ? ' uh-dash-open__task--editing' : ''}`}
+    >
+      <TaskCheckbox
+        checked={isDone}
+        label={task.title}
+        onToggle={onToggle}
+        onComplete={onComplete}
+      />
+      {editing ? (
+        <input
+          ref={inputRef}
+          className="uh-dash-open__task-input"
+          value={draft}
+          aria-label="Edit task title"
+          onChange={(e) => setDraft(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commitEdit()
+            if (e.key === 'Escape') {
+              setDraft(task.title)
+              setEditing(false)
+            }
+          }}
+          onBlur={commitEdit}
+        />
+      ) : (
+        <span className="uh-dash-open__task-title">{task.title}</span>
+      )}
+      <div className="uh-dash-open__task-actions">
+        {!isDone && (
+          <TaskFocusButton active={focusActive} label={task.title} onSelect={onSelectFocus} />
+        )}
+        <button
+          type="button"
+          className="uh-dash-open__task-action"
+          aria-label={`Edit "${task.title}"`}
+          onClick={(e) => {
+            e.stopPropagation()
+            setEditing(true)
+          }}
+        >
+          <PencilIcon />
+        </button>
+        <button
+          type="button"
+          className="uh-dash-open__task-action uh-dash-open__task-action--danger"
+          aria-label={`Delete "${task.title}"`}
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete()
+          }}
+        >
+          <TrashIcon />
+        </button>
+      </div>
+    </li>
+  )
+}
+
 function TaskCheckbox({
   checked,
   onToggle,
@@ -129,7 +256,7 @@ function TaskCheckbox({
     if (!checked) {
       setCompleting(true)
       onComplete?.()
-      setTimeout(() => setCompleting(false), 350)
+      setTimeout(() => setCompleting(false), 500)
     }
     onToggle()
   }
@@ -170,10 +297,11 @@ export function DefaultHomeDashboard({
   onPlanMyDay,
   focusAreas,
 }: DefaultHomeDashboardProps) {
-  const { tasks, toggleTask } = useTaskStore()
-  const { taskId: currentFocusTaskId, selectTask } = useCurrentFocus()
+  const { tasks, toggleTask, updateTask, removeTask } = useTaskStore()
+  const { taskId: currentFocusTaskId, selectTask, clearFocusIfTask } = useCurrentFocus()
   const { categories } = useCategoryStore()
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => new Set())
+  const [completedExpanded, setCompletedExpanded] = useState(false)
   const [completingTasks, setCompletingTasks] = useState<Set<string>>(() => new Set())
   const monkNodRef = useRef(false)
   const [monkNod, setMonkNod] = useState(false)
@@ -190,6 +318,7 @@ export function DefaultHomeDashboard({
 
   const handleTaskComplete = useCallback((taskId: string) => {
     setCompletingTasks((prev) => new Set(prev).add(taskId))
+    setCompletedExpanded(true)
     triggerMonkNod()
     setTimeout(() => {
       setCompletingTasks((prev) => {
@@ -197,7 +326,7 @@ export function DefaultHomeDashboard({
         next.delete(taskId)
         return next
       })
-    }, 600)
+    }, 700)
   }, [triggerMonkNod])
 
   const useFocusAreasMode = focusAreas && focusAreas.length > 0
@@ -211,57 +340,91 @@ export function DefaultHomeDashboard({
     })
   }
 
-  const openTasks = useMemo((): TaskCategoryDisplay[] => {
+  const { openTaskCategories, completedTasks } = useMemo(() => {
     const visibleTasks = tasks.filter((t) => t.status !== 'archived')
     const openOnly = visibleTasks.filter((t) => t.status === 'open')
-    if (openOnly.length === 0) return []
+    const doneOnly = visibleTasks
+      .filter((t) => t.status === 'done')
+      .sort((a, b) => {
+        const aTime = a.completedAt ? new Date(a.completedAt).getTime() : 0
+        const bTime = b.completedAt ? new Date(b.completedAt).getTime() : 0
+        return aTime - bTime
+      })
 
     const grouped = new Map<string, Task[]>()
-    for (const t of visibleTasks) {
+    for (const t of openOnly) {
       const list = grouped.get(t.category) ?? []
       list.push(t)
       grouped.set(t.category, list)
     }
 
+    let openTaskCategories: TaskCategoryDisplay[]
+
     if (useFocusAreasMode) {
       const areaMap = new Map(focusAreas.map((a) => [a.id, a]))
-      return Array.from(grouped.entries())
+      openTaskCategories = Array.from(grouped.entries())
         .map(([areaId, areaTasks]) => {
           const area = areaMap.get(areaId)
-          const openCount = areaTasks.filter((t) => t.status === 'open').length
           return {
             id: areaId,
             label: area?.label ?? areaId.charAt(0).toUpperCase() + areaId.slice(1),
-            count: openCount,
+            count: areaTasks.length,
             color: area?.color ?? '#a78bfa',
             tasks: areaTasks,
           }
         })
-        .filter((cat) => cat.count > 0)
         .sort((a, b) => {
           const orderMap = new Map(focusAreas.map((fa) => [fa.id, fa.display_order]))
           return (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99)
         })
+    } else {
+      openTaskCategories = Array.from(grouped.entries())
+        .map(([catId, catTasks]) => {
+          const cat = categories.find((c) => c.id === catId)
+          return {
+            id: catId,
+            label: cat?.label ?? catId.charAt(0).toUpperCase() + catId.slice(1),
+            count: catTasks.length,
+            color: cat?.color ?? '#a78bfa',
+            tasks: catTasks,
+          }
+        })
+        .sort((a, b) => {
+          const orderMap = new Map(categories.map((c, i) => [c.id, i]))
+          return (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99)
+        })
     }
 
-    return Array.from(grouped.entries())
-      .map(([catId, catTasks]) => {
-        const cat = categories.find((c) => c.id === catId)
-        const openCount = catTasks.filter((t) => t.status === 'open').length
-        return {
-          id: catId,
-          label: cat?.label ?? catId.charAt(0).toUpperCase() + catId.slice(1),
-          count: openCount,
-          color: cat?.color ?? '#a78bfa',
-          tasks: catTasks,
-        }
-      })
-      .filter((cat) => cat.count > 0)
-      .sort((a, b) => {
-        const orderMap = new Map(categories.map((c, i) => [c.id, i]))
-        return (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99)
-      })
+    return { openTaskCategories, completedTasks: doneOnly }
   }, [tasks, categories, useFocusAreasMode, focusAreas])
+
+  const hasAnyTasks = openTaskCategories.length > 0 || completedTasks.length > 0
+
+  const renderTaskRow = (task: Task) => {
+    const isDone = task.status === 'done'
+    return (
+      <OpenTaskRow
+        key={task.id}
+        task={task}
+        isDone={isDone}
+        completing={completingTasks.has(task.id)}
+        focusActive={currentFocusTaskId === task.id}
+        onToggle={() => toggleTask(task.id)}
+        onComplete={() => handleTaskComplete(task.id)}
+        onSelectFocus={() => selectTask(task.id, task.title)}
+        onSaveTitle={(title) => {
+          updateTask(task.id, { title })
+          if (currentFocusTaskId === task.id) {
+            selectTask(task.id, title)
+          }
+        }}
+        onDelete={() => {
+          clearFocusIfTask(task.id)
+          removeTask(task.id)
+        }}
+      />
+    )
+  }
 
 
   const planIsPrimary = timeOfDay === 'morning'
@@ -292,11 +455,11 @@ export function DefaultHomeDashboard({
 
       <CurrentFocusSection />
 
-      <section className="uh-dash-open" aria-label="Open tasks">
+      <section className="uh-dash-open" aria-label="Tasks">
         <span className="uh-dash-section-label">Open Tasks</span>
-        {openTasks.length > 0 ? (
+        {openTaskCategories.length > 0 ? (
           <ul className="uh-dash-open__list">
-            {openTasks.map((cat) => {
+            {openTaskCategories.map((cat) => {
               const isExpanded = expandedCategories.has(cat.id)
               return (
                 <li key={cat.id} className="uh-dash-open__item">
@@ -325,30 +488,7 @@ export function DefaultHomeDashboard({
                   >
                     <div className="uh-dash-open__expand-inner">
                       <ul className="uh-dash-open__tasks">
-                        {cat.tasks.map((task) => {
-                          const isDone = task.status === 'done'
-                          return (
-                            <li
-                              key={task.id}
-                              className={`uh-dash-open__task${isDone ? ' uh-dash-open__task--done' : ''}${completingTasks.has(task.id) ? ' uh-dash-open__task--completing' : ''}`}
-                            >
-                              <TaskCheckbox
-                                checked={isDone}
-                                label={task.title}
-                                onToggle={() => toggleTask(task.id)}
-                                onComplete={() => handleTaskComplete(task.id)}
-                              />
-                              <span className="uh-dash-open__task-title">{task.title}</span>
-                              {!isDone && (
-                                <TaskFocusButton
-                                  active={currentFocusTaskId === task.id}
-                                  label={task.title}
-                                  onSelect={() => selectTask(task.id, task.title)}
-                                />
-                              )}
-                            </li>
-                          )
-                        })}
+                        {cat.tasks.map((task) => renderTaskRow(task))}
                       </ul>
                     </div>
                   </div>
@@ -356,9 +496,43 @@ export function DefaultHomeDashboard({
               )
             })}
           </ul>
+        ) : hasAnyTasks ? (
+          <div className="uh-dash-open__empty uh-dash-open__empty--done">
+            All open tasks complete
+          </div>
         ) : (
           <div className="uh-dash-open__empty">
             Plan your day to get started
+          </div>
+        )}
+
+        {completedTasks.length > 0 && (
+          <div className="uh-dash-open__completed">
+            <button
+              type="button"
+              className={`uh-dash-open__completed-row${completedExpanded ? ' uh-dash-open__completed-row--expanded' : ''}`}
+              aria-expanded={completedExpanded}
+              onClick={() => setCompletedExpanded((prev) => !prev)}
+            >
+              <span className="uh-dash-open__completed-icon" aria-hidden>
+                <CheckIcon />
+              </span>
+              <span className="uh-dash-open__completed-label">Completed</span>
+              <span className="uh-dash-open__count">{completedTasks.length}</span>
+              <span className="uh-dash-open__chevron" aria-hidden>
+                <ChevronIcon />
+              </span>
+            </button>
+            <div
+              className={`uh-dash-open__expand${completedExpanded ? ' uh-dash-open__expand--open' : ''}`}
+              aria-hidden={!completedExpanded}
+            >
+              <div className="uh-dash-open__expand-inner">
+                <ul className="uh-dash-open__tasks uh-dash-open__tasks--completed">
+                  {completedTasks.map((task) => renderTaskRow(task))}
+                </ul>
+              </div>
+            </div>
           </div>
         )}
       </section>

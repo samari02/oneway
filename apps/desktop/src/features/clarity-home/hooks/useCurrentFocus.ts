@@ -1,5 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react'
-import { playFocusAlarm } from '../lib/playFocusAlarm'
+import { playFocusAlarm, prepareFocusAlarmAudio } from '../lib/playFocusAlarm'
 
 export const FOCUS_DURATION_PRESETS = [15, 25, 45, 60] as const
 
@@ -20,14 +20,13 @@ const DEFAULT_DURATION: FocusDurationMinutes = 25
 
 const listeners = new Set<() => void>()
 let tickInterval: ReturnType<typeof setInterval> | null = null
-let snapshotCache: CurrentFocusSnapshot | null = null
+let lastAlarmEndsAt: number | null = null
 
 type CurrentFocusSnapshot = CurrentFocusState & {
   remainingSeconds: number
 }
 
 function emitChange() {
-  snapshotCache = null
   listeners.forEach((listener) => listener())
 }
 
@@ -55,12 +54,6 @@ function isValidState(value: unknown): value is CurrentFocusState {
 }
 
 function normalizeState(raw: CurrentFocusState): CurrentFocusState {
-  if (raw.status === 'running' && raw.endsAt !== null) {
-    if (Date.now() >= raw.endsAt) {
-      return { ...raw, status: 'finished', endsAt: null }
-    }
-  }
-
   if (raw.status === 'finished' || raw.status === 'running') {
     if (!raw.taskId || !raw.taskTitle) {
       return createEmptyState()
@@ -84,7 +77,7 @@ function createEmptyState(): CurrentFocusState {
   }
 }
 
-function readState(): CurrentFocusState {
+function readStoredState(): CurrentFocusState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return createEmptyState()
@@ -94,6 +87,36 @@ function readState(): CurrentFocusState {
   } catch {
     return createEmptyState()
   }
+}
+
+function readState(): CurrentFocusState {
+  return finalizeIfExpired(readStoredState())
+}
+
+function getEffectiveState(state: CurrentFocusState): CurrentFocusState {
+  if (state.status === 'running' && state.endsAt !== null && Date.now() >= state.endsAt) {
+    return { ...state, status: 'finished', endsAt: null }
+  }
+  return state
+}
+
+function persistFinishedTimer(state: CurrentFocusState, endsAt: number): CurrentFocusState {
+  const finished: CurrentFocusState = { ...state, status: 'finished', endsAt: null }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(finished))
+  manageTick(finished)
+  if (endsAt !== lastAlarmEndsAt) {
+    lastAlarmEndsAt = endsAt
+    playFocusAlarm()
+  }
+  emitChange()
+  return finished
+}
+
+function finalizeIfExpired(state: CurrentFocusState): CurrentFocusState {
+  if (state.status !== 'running' || state.endsAt === null || Date.now() < state.endsAt) {
+    return state
+  }
+  return persistFinishedTimer(state, state.endsAt)
 }
 
 function writeState(state: CurrentFocusState) {
@@ -106,18 +129,16 @@ function getRemainingSeconds(state: CurrentFocusState): number {
   if (state.status === 'finished') return 0
   if (state.status === 'idle') return state.durationMinutes * 60
   if (!state.endsAt) return state.durationMinutes * 60
+  if (Date.now() >= state.endsAt) return 0
   return Math.max(0, Math.ceil((state.endsAt - Date.now()) / 1000))
 }
 
 function getSnapshot(): CurrentFocusSnapshot {
-  if (!snapshotCache) {
-    const state = readState()
-    snapshotCache = {
-      ...state,
-      remainingSeconds: getRemainingSeconds(state),
-    }
+  const state = getEffectiveState(readStoredState())
+  return {
+    ...state,
+    remainingSeconds: getRemainingSeconds(state),
   }
-  return snapshotCache
 }
 
 function getServerSnapshot(): CurrentFocusSnapshot {
@@ -131,8 +152,8 @@ function manageTick(state: CurrentFocusState) {
   if (state.status === 'running' && state.endsAt !== null) {
     if (!tickInterval) {
       tickInterval = setInterval(() => {
-        const current = readState()
-        if (current.status !== 'running' || current.endsAt === null) {
+        const stored = readStoredState()
+        if (stored.status !== 'running' || stored.endsAt === null) {
           if (tickInterval) {
             clearInterval(tickInterval)
             tickInterval = null
@@ -140,14 +161,13 @@ function manageTick(state: CurrentFocusState) {
           return
         }
 
-        if (Date.now() >= current.endsAt) {
-          writeState({ ...current, status: 'finished', endsAt: null })
-          playFocusAlarm()
+        if (Date.now() >= stored.endsAt) {
+          persistFinishedTimer(stored, stored.endsAt)
           return
         }
 
         emitChange()
-      }, 1000)
+      }, 250)
     }
     return
   }
@@ -158,7 +178,16 @@ function manageTick(state: CurrentFocusState) {
   }
 }
 
-manageTick(readState())
+const initialState = readStoredState()
+if (
+  initialState.status === 'running' &&
+  initialState.endsAt !== null &&
+  Date.now() >= initialState.endsAt
+) {
+  persistFinishedTimer(initialState, initialState.endsAt)
+} else {
+  manageTick(initialState)
+}
 
 export function formatFocusCountdown(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60)
@@ -189,6 +218,8 @@ export function useCurrentFocus() {
   const startTimer = useCallback((durationMinutes?: FocusDurationMinutes) => {
     const current = readState()
     if (!current.taskId || !current.taskTitle) return
+    prepareFocusAlarmAudio()
+    lastAlarmEndsAt = null
     const minutes = durationMinutes ?? current.durationMinutes
     writeState({
       ...current,
@@ -215,6 +246,13 @@ export function useCurrentFocus() {
     writeState(createEmptyState())
   }, [])
 
+  const clearFocusIfTask = useCallback((taskId: string) => {
+    const current = readState()
+    if (current.taskId === taskId) {
+      writeState(createEmptyState())
+    }
+  }, [])
+
   const dismissFinished = useCallback(() => {
     const current = readState()
     if (current.status !== 'finished') return
@@ -236,6 +274,7 @@ export function useCurrentFocus() {
     startTimer,
     stopTimer,
     clearFocus,
+    clearFocusIfTask,
     dismissFinished,
   }
 }

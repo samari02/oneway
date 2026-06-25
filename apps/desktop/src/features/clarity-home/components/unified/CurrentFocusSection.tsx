@@ -18,10 +18,12 @@ function FocusTimerRing({
   remainingSeconds,
   totalSeconds,
   running,
+  finished,
 }: {
   remainingSeconds: number
   totalSeconds: number
   running: boolean
+  finished: boolean
 }) {
   const size = 88
   const stroke = 5
@@ -33,7 +35,7 @@ function FocusTimerRing({
   return (
     <div className="uh-dash-focus__ring-wrap">
       <span className="uh-dash-focus__ring-label">
-        {running ? 'Time left' : 'Focus timer'}
+        {finished ? 'Complete' : running ? 'Time left' : 'Focus timer'}
       </span>
       <svg className="uh-dash-focus__ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <circle
@@ -181,6 +183,7 @@ export function CurrentFocusSection() {
             remainingSeconds={remainingSeconds}
             totalSeconds={totalSeconds}
             running={isRunning}
+            finished={isFinished}
           />
         )}
       </div>
