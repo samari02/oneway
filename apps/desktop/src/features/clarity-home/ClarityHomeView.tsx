@@ -6,12 +6,11 @@ import { UnifiedHomeView } from './components/unified/UnifiedHomeView'
 export function ClarityHomeView() {
   const { user } = useAuth()
   const { settings } = useUserSettings(user?.id)
-  const { dayState, todayPlan, isLoading, refetch } = useDayState({
+  const { todayPlan, isLoading, refetch } = useDayState({
     userId: user?.id,
     eveningReflectionTime: settings?.evening_reflection_time ?? '18:00',
   })
   const firstName = settings?.display_name?.split(' ')[0] || 'Sam'
-  const initialIntention = settings?.north_star_goal?.trim() || ''
 
   if (isLoading) {
     return (
@@ -25,10 +24,9 @@ export function ClarityHomeView() {
     <UnifiedHomeView
       firstName={firstName}
       userId={user?.id}
-      dayState={dayState}
+      dayState="active"
       todayPlan={todayPlan}
       onRefetch={refetch}
-      initialIntention={initialIntention}
     />
   )
 }

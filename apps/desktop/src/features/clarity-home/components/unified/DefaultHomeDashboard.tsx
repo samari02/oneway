@@ -1,16 +1,17 @@
 import { useMemo, type CSSProperties } from 'react'
 import type { DailyPlan } from '@oneway/shared'
-import {
-  MOCK_CURRENT_FOCUS,
-  MOCK_OPEN_TASKS,
-  type OpenTaskCategory,
-} from '../../mock-data'
+import { MOCK_CURRENT_FOCUS } from '../../mock-data'
+import { useTaskStore } from '../../hooks/useTaskStore'
+import { useCategoryStore } from '../../hooks/useCategoryStore'
 import { HomeCharacter } from './HomeCharacter'
+
+type TimeOfDay = 'morning' | 'daytime' | 'evening'
 
 type DefaultHomeDashboardProps = {
   greeting: string
   subtitle: string
   todayPlan: DailyPlan | null
+  timeOfDay: TimeOfDay
   isBusy: boolean
   isResetting: boolean
   onContinueFocus: () => void
@@ -23,32 +24,6 @@ function formatMinutes(totalMinutes: number): string {
   if (hours === 0) return `${minutes}m`
   if (minutes === 0) return `${hours}h`
   return `${hours}h ${minutes}m`
-}
-
-function deriveOpenTasks(plan: DailyPlan | null): OpenTaskCategory[] {
-  if (!plan?.goals.length) return MOCK_OPEN_TASKS
-
-  const areaStyles: Record<string, Pick<OpenTaskCategory, 'color' | 'icon'>> = {
-    clarity: { color: '#7c3aed', icon: '✦' },
-    work: { color: '#3b82f6', icon: '◈' },
-    health: { color: '#22c55e', icon: '♥' },
-    learning: { color: '#f59e0b', icon: '◉' },
-  }
-
-  const counts = new Map<string, number>()
-  for (const goal of plan.goals) {
-    if (goal.status === 'done' || goal.status === 'skipped') continue
-    const area = (goal.area ?? 'clarity').toLowerCase()
-    counts.set(area, (counts.get(area) ?? 0) + 1)
-  }
-
-  if (counts.size === 0) return MOCK_OPEN_TASKS
-
-  return Array.from(counts.entries()).map(([area, count]) => {
-    const style = areaStyles[area] ?? { color: '#a78bfa', icon: '•' }
-    const label = area.charAt(0).toUpperCase() + area.slice(1)
-    return { id: area, label, count, ...style }
-  })
 }
 
 function FocusProgressRing({
@@ -160,15 +135,51 @@ function ChevronIcon() {
   )
 }
 
+type TaskCategoryDisplay = {
+  id: string
+  label: string
+  count: number
+  color: string
+  icon: string
+}
+
 export function DefaultHomeDashboard({
   greeting,
   subtitle,
   todayPlan,
+  timeOfDay,
   isBusy,
   isResetting,
   onContinueFocus,
   onPlanMyDay,
 }: DefaultHomeDashboardProps) {
+  const { tasks } = useTaskStore()
+  const { categories } = useCategoryStore()
+
+  const openTasks = useMemo((): TaskCategoryDisplay[] => {
+    const openOnly = tasks.filter((t) => t.status === 'open')
+    if (openOnly.length === 0) return []
+
+    const counts = new Map<string, number>()
+    for (const t of openOnly) {
+      counts.set(t.category, (counts.get(t.category) ?? 0) + 1)
+    }
+
+    return Array.from(counts.entries()).map(([catId, count]) => {
+      const cat = categories.find((c) => c.id === catId)
+      return {
+        id: catId,
+        label: cat?.label ?? catId.charAt(0).toUpperCase() + catId.slice(1),
+        count,
+        color: cat?.color ?? '#a78bfa',
+        icon: cat?.emoji ?? '•',
+      }
+    }).sort((a, b) => {
+      const orderMap = new Map(categories.map((c, i) => [c.id, i]))
+      return (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99)
+    })
+  }, [tasks, categories])
+
   const focusData = useMemo(() => {
     const priorityGoal = todayPlan?.goals.find((g) => g.id === todayPlan.priority_goal_id)
       ?? todayPlan?.goals.find((g) => g.status !== 'done' && g.status !== 'skipped')
@@ -192,7 +203,8 @@ export function DefaultHomeDashboard({
     }
   }, [todayPlan])
 
-  const openTasks = useMemo(() => deriveOpenTasks(todayPlan), [todayPlan])
+  const planIsPrimary = timeOfDay === 'morning'
+  const bothSecondary = timeOfDay === 'evening'
 
   return (
     <>
@@ -243,59 +255,135 @@ export function DefaultHomeDashboard({
 
       <section className="uh-dash-open" aria-label="Open tasks">
         <span className="uh-dash-section-label">Open Tasks</span>
-        <ul className="uh-dash-open__list">
-          {openTasks.map((task) => (
-            <li key={task.id}>
-              <button type="button" className="uh-dash-open__row">
-                <span
-                  className="uh-dash-open__icon"
-                  style={{ '--uh-area-color': task.color } as CSSProperties}
-                  aria-hidden
-                >
-                  {task.icon}
-                </span>
-                <span className="uh-dash-open__label">{task.label}</span>
-                <span className="uh-dash-open__count">{task.count}</span>
-                <span className="uh-dash-open__chevron" aria-hidden>
-                  <ChevronIcon />
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        {openTasks.length > 0 ? (
+          <ul className="uh-dash-open__list">
+            {openTasks.map((cat) => (
+              <li key={cat.id}>
+                <button type="button" className="uh-dash-open__row">
+                  <span
+                    className="uh-dash-open__icon"
+                    style={{ '--uh-area-color': cat.color } as CSSProperties}
+                    aria-hidden
+                  >
+                    {cat.icon}
+                  </span>
+                  <span className="uh-dash-open__label">{cat.label}</span>
+                  <span className="uh-dash-open__count">{cat.count}</span>
+                  <span className="uh-dash-open__chevron" aria-hidden>
+                    <ChevronIcon />
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="uh-dash-open__empty">
+            Plan your day to get started
+          </div>
+        )}
       </section>
 
       <div className="uh-dash-actions">
-        <button
-          type="button"
-          className="uh-dash-action uh-dash-action--primary"
-          disabled={isBusy}
-          onClick={onContinueFocus}
-        >
-          <span className="uh-dash-action__icon" aria-hidden>
-            <PlayIcon />
-          </span>
-          <span className="uh-dash-action__body">
-            <span className="uh-dash-action__title">Continue Focus</span>
-            <span className="uh-dash-action__subtitle">Enter focus mode and stay protected.</span>
-          </span>
-        </button>
-        <button
-          type="button"
-          className="uh-dash-action uh-dash-action--outline"
-          disabled={isResetting}
-          onClick={onPlanMyDay}
-        >
-          <span className="uh-dash-action__icon uh-dash-action__icon--sparkle" aria-hidden>
-            <SparkleIcon />
-          </span>
-          <span className="uh-dash-action__body">
-            <span className="uh-dash-action__title">Plan My Day</span>
-            <span className="uh-dash-action__subtitle">
-              Add tasks, re-organize, or talk to Clarity.
-            </span>
-          </span>
-        </button>
+        {planIsPrimary ? (
+          <>
+            <button
+              type="button"
+              className="uh-dash-action uh-dash-action--primary"
+              disabled={isResetting}
+              onClick={onPlanMyDay}
+            >
+              <span className="uh-dash-action__icon uh-dash-action__icon--sparkle" aria-hidden>
+                <SparkleIcon />
+              </span>
+              <span className="uh-dash-action__body">
+                <span className="uh-dash-action__title">Plan My Day</span>
+                <span className="uh-dash-action__subtitle">
+                  Add tasks, re-organize, or talk to Clarity.
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              className="uh-dash-action uh-dash-action--outline"
+              disabled={isBusy}
+              onClick={onContinueFocus}
+            >
+              <span className="uh-dash-action__icon" aria-hidden>
+                <PlayIcon />
+              </span>
+              <span className="uh-dash-action__body">
+                <span className="uh-dash-action__title">Continue Focus</span>
+                <span className="uh-dash-action__subtitle">Enter focus mode and stay protected.</span>
+              </span>
+            </button>
+          </>
+        ) : bothSecondary ? (
+          <>
+            <button
+              type="button"
+              className="uh-dash-action uh-dash-action--outline"
+              disabled={isBusy}
+              onClick={onContinueFocus}
+            >
+              <span className="uh-dash-action__icon" aria-hidden>
+                <PlayIcon />
+              </span>
+              <span className="uh-dash-action__body">
+                <span className="uh-dash-action__title">Continue Focus</span>
+                <span className="uh-dash-action__subtitle">Enter focus mode and stay protected.</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              className="uh-dash-action uh-dash-action--outline"
+              disabled={isResetting}
+              onClick={onPlanMyDay}
+            >
+              <span className="uh-dash-action__icon uh-dash-action__icon--sparkle" aria-hidden>
+                <SparkleIcon />
+              </span>
+              <span className="uh-dash-action__body">
+                <span className="uh-dash-action__title">Plan My Day</span>
+                <span className="uh-dash-action__subtitle">
+                  Add tasks, re-organize, or talk to Clarity.
+                </span>
+              </span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="uh-dash-action uh-dash-action--primary"
+              disabled={isBusy}
+              onClick={onContinueFocus}
+            >
+              <span className="uh-dash-action__icon" aria-hidden>
+                <PlayIcon />
+              </span>
+              <span className="uh-dash-action__body">
+                <span className="uh-dash-action__title">Continue Focus</span>
+                <span className="uh-dash-action__subtitle">Enter focus mode and stay protected.</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              className="uh-dash-action uh-dash-action--outline"
+              disabled={isResetting}
+              onClick={onPlanMyDay}
+            >
+              <span className="uh-dash-action__icon uh-dash-action__icon--sparkle" aria-hidden>
+                <SparkleIcon />
+              </span>
+              <span className="uh-dash-action__body">
+                <span className="uh-dash-action__title">Plan My Day</span>
+                <span className="uh-dash-action__subtitle">
+                  Add tasks, re-organize, or talk to Clarity.
+                </span>
+              </span>
+            </button>
+          </>
+        )}
       </div>
 
       <footer className="uh-dash-footer">

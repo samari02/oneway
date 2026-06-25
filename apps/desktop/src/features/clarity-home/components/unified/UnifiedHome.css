@@ -952,7 +952,8 @@
 /* Default home dashboard (active / focus) */
 
 .unified-home__shell--dashboard {
-  max-width: min(720px, 100%);
+  max-width: min(1040px, 100%);
+  padding-inline: clamp(24px, 3vw, 40px);
   gap: clamp(18px, 2.5vh, 28px);
 }
 
@@ -1349,6 +1350,16 @@
   color: #a78bfa;
 }
 
+/* Empty-state for open tasks */
+.uh-dash-open__empty {
+  padding: 20px 16px;
+  border: 1px dashed var(--uh-line);
+  border-radius: 14px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--uh-muted);
+}
+
 @media (max-width: 640px) {
   .uh-dash-header {
     flex-direction: column-reverse;
@@ -1373,4 +1384,250 @@
   .uh-dash-focus__ring-wrap {
     align-self: center;
   }
+}
+
+/* ===== Plan My Day flow ===== */
+
+.pmd-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: min(680px, 100%);
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 44px) clamp(24px, 5vw, 48px) clamp(32px, 5vh, 52px);
+  gap: clamp(20px, 3vh, 28px);
+  animation: pmd-fade-in 0.35s var(--uh-ease) both;
+}
+
+@keyframes pmd-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pmd-view--fade-out {
+  animation: pmd-fade-out 0.35s var(--uh-ease) both;
+}
+
+@keyframes pmd-fade-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+
+.pmd-view__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--uh-muted);
+  font: 500 13px/1 ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+  transition: color 0.15s;
+  align-self: flex-start;
+}
+
+.pmd-view__back:hover {
+  color: var(--uh-ink);
+}
+
+.pmd-view__content {
+  animation: pmd-step-in 0.3s var(--uh-ease) both;
+}
+
+@keyframes pmd-step-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* PlanStepInput */
+.pmd-input {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.pmd-input__hero {
+  display: flex;
+  justify-content: center;
+}
+
+.pmd-input__heading {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.pmd-input__chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pmd-input__field {
+  position: relative;
+  width: 100%;
+}
+
+.pmd-input__submit {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--uh-purple) 0%, var(--uh-purple-light) 100%);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.12s;
+  box-shadow: 0 2px 12px var(--uh-purple-glow);
+}
+
+.pmd-input__submit:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+
+.pmd-input__submit:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pmd-input__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: pmd-spin 0.65s linear infinite;
+}
+
+@keyframes pmd-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pmd-input__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--uh-muted);
+  text-align: center;
+}
+
+/* PlanStepReview */
+.pmd-review {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pmd-review__heading {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  font-size: clamp(1.25rem, 2.8vw, 1.65rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.pmd-review__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pmd-review__group {
+  padding: 16px 18px;
+  border-radius: var(--uh-radius);
+  background: var(--uh-glass);
+  border: 1px solid var(--uh-line);
+  backdrop-filter: blur(16px);
+}
+
+.pmd-review__group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pmd-review__group-dot {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--pmd-cat-color) 18%, transparent);
+  font-size: 14px;
+}
+
+.pmd-review__group-label {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pmd-review__group-count {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--uh-muted);
+}
+
+.pmd-review__tasks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pmd-review__task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.15s;
+}
+
+.pmd-review__task:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pmd-review__task-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.pmd-review__badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #4ade80;
+}
+
+.pmd-review__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
