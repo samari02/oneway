@@ -135,6 +135,7 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
   const preferWhisperRef = useRef(false)
   const listeningRef = useRef(false)
   const onTranscriptRef = useRef(onTranscript)
+  const startWebSpeechRef = useRef<(() => boolean) | null>(null)
   const startWhisperRecordingRef = useRef<(() => Promise<boolean>) | null>(null)
 
   useEffect(() => {
@@ -245,6 +246,11 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
     }
 
     recognition.onerror = (event) => {
+      // Browser ends the session after silence (~5s) with no-speech; onend restarts if still listening.
+      if (event.error === 'no-speech' || event.error === 'aborted') {
+        return
+      }
+
       const message = mapSpeechError(event.error)
       if (
         !preferWhisperRef.current &&
@@ -264,13 +270,24 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
       listeningRef.current = false
       setIsListening(false)
       recognitionRef.current = null
+      engineRef.current = null
     }
 
     recognition.onend = () => {
       if (engineRef.current !== 'webspeech') return
-      listeningRef.current = false
-      setIsListening(false)
+
       recognitionRef.current = null
+
+      if (listeningRef.current) {
+        window.setTimeout(() => {
+          if (!listeningRef.current || engineRef.current !== 'webspeech') return
+          startWebSpeechRef.current?.()
+        }, 50)
+        return
+      }
+
+      setIsListening(false)
+      engineRef.current = null
     }
 
     recognitionRef.current = recognition
@@ -334,8 +351,9 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
   }, [cleanupMedia])
 
   useEffect(() => {
+    startWebSpeechRef.current = startWebSpeech
     startWhisperRecordingRef.current = startWhisperRecording
-  }, [startWhisperRecording])
+  }, [startWebSpeech, startWhisperRecording])
 
   const start = useCallback(async () => {
     setError(null)

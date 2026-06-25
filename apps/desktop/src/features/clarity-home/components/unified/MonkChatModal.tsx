@@ -16,7 +16,7 @@ import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import { HomeCharacter } from './HomeCharacter'
 import './MonkChatModal.css'
 
-const MONK_AVATAR_SIZE = 50
+const MONK_AVATAR_SIZE = 68
 
 type MonkChatModalProps = {
   open: boolean
