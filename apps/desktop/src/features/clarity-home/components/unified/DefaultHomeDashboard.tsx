@@ -1,10 +1,12 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useMemo, useState, useRef, useCallback, type CSSProperties } from 'react'
 import type { DailyPlan, FocusArea } from '@oneway/shared'
 import { MOCK_CURRENT_FOCUS } from '../../mock-data'
 import { useTaskStore, type Task } from '../../hooks/useTaskStore'
 import { useCategoryStore } from '../../hooks/useCategoryStore'
 import { CategoryIcon } from '../CategoryIcon'
 import { HomeCharacter } from './HomeCharacter'
+import { MonkContextPrompt } from './MonkContextPrompt'
+import { EveningReflectionPrompt } from './EveningReflectionPrompt'
 
 type TimeOfDay = 'morning' | 'daytime' | 'evening'
 
@@ -149,21 +151,34 @@ function TaskCheckbox({
   checked,
   onToggle,
   label,
+  onComplete,
 }: {
   checked: boolean
   onToggle: () => void
   label: string
+  onComplete?: () => void
 }) {
+  const [completing, setCompleting] = useState(false)
+
+  const handleToggle = () => {
+    if (!checked) {
+      setCompleting(true)
+      onComplete?.()
+      setTimeout(() => setCompleting(false), 350)
+    }
+    onToggle()
+  }
+
   return (
     <button
       type="button"
-      className={`uh-dash-open__checkbox${checked ? ' uh-dash-open__checkbox--checked' : ''}`}
+      className={`uh-dash-open__checkbox${checked ? ' uh-dash-open__checkbox--checked' : ''}${completing ? ' uh-dash-open__checkbox--completing' : ''}`}
       role="checkbox"
       aria-checked={checked}
       aria-label={`Mark "${label}" as ${checked ? 'open' : 'done'}`}
       onClick={(e) => {
         e.stopPropagation()
-        onToggle()
+        handleToggle()
       }}
     >
       {checked && <CheckIcon />}
@@ -193,6 +208,31 @@ export function DefaultHomeDashboard({
   const { tasks, toggleTask } = useTaskStore()
   const { categories } = useCategoryStore()
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => new Set())
+  const [completingTasks, setCompletingTasks] = useState<Set<string>>(() => new Set())
+  const monkNodRef = useRef(false)
+  const [monkNod, setMonkNod] = useState(false)
+
+  const triggerMonkNod = useCallback(() => {
+    if (monkNodRef.current) return
+    monkNodRef.current = true
+    setMonkNod(true)
+    setTimeout(() => {
+      setMonkNod(false)
+      monkNodRef.current = false
+    }, 500)
+  }, [])
+
+  const handleTaskComplete = useCallback((taskId: string) => {
+    setCompletingTasks((prev) => new Set(prev).add(taskId))
+    triggerMonkNod()
+    setTimeout(() => {
+      setCompletingTasks((prev) => {
+        const next = new Set(prev)
+        next.delete(taskId)
+        return next
+      })
+    }, 600)
+  }, [triggerMonkNod])
 
   const useFocusAreasMode = focusAreas && focusAreas.length > 0
 
@@ -297,12 +337,13 @@ export function DefaultHomeDashboard({
           </div>
         </div>
         <div className="uh-dash-header__hero">
-          <HomeCharacter size={210} />
+          <HomeCharacter size={210} nodding={monkNod} />
           <div className="uh-dash-header__text">
             <h1 className="uh-dash-header__title">{greeting}</h1>
             <p className="uh-dash-header__subtitle">{subtitle}</p>
           </div>
         </div>
+        <MonkContextPrompt />
       </header>
 
       <section className="uh-dash-focus" aria-label="Current focus">
@@ -370,12 +411,13 @@ export function DefaultHomeDashboard({
                           return (
                             <li
                               key={task.id}
-                              className={`uh-dash-open__task${isDone ? ' uh-dash-open__task--done' : ''}`}
+                              className={`uh-dash-open__task${isDone ? ' uh-dash-open__task--done' : ''}${completingTasks.has(task.id) ? ' uh-dash-open__task--completing' : ''}`}
                             >
                               <TaskCheckbox
                                 checked={isDone}
                                 label={task.title}
                                 onToggle={() => toggleTask(task.id)}
+                                onComplete={() => handleTaskComplete(task.id)}
                               />
                               <span className="uh-dash-open__task-title">{task.title}</span>
                             </li>
@@ -394,6 +436,12 @@ export function DefaultHomeDashboard({
           </div>
         )}
       </section>
+
+      <EveningReflectionPrompt
+        todayPlan={todayPlan}
+        focusAreas={focusAreas}
+        onPlanMyDay={onPlanMyDay}
+      />
 
       <div className="uh-dash-actions">
         {planIsPrimary ? (

@@ -4,9 +4,10 @@ import './UnifiedHome.css'
 
 type HomeCharacterProps = {
   size?: number
+  nodding?: boolean
 }
 
-export function HomeCharacter({ size = 160 }: HomeCharacterProps) {
+export function HomeCharacter({ size = 160, nodding = false }: HomeCharacterProps) {
   return (
     <div
       className="uh-character"
@@ -20,7 +21,7 @@ export function HomeCharacter({ size = 160 }: HomeCharacterProps) {
         ))}
       </div>
       <img
-        className="uh-character__img"
+        className={`uh-character__img${nodding ? ' uh-character__img--nod' : ''}`}
         src={HOME_CHARACTER3_SRC}
         alt=""
         width={size}

@@ -1,5 +1,6 @@
 import { useRef, type KeyboardEvent } from 'react'
 import { HomeCharacter } from '../unified/HomeCharacter'
+import { MonkContextPrompt } from '../unified/MonkContextPrompt'
 
 type PlanStepInputProps = {
   text: string
@@ -93,6 +94,8 @@ export function PlanStepInput({
           )}
         </button>
       </div>
+
+      <MonkContextPrompt />
 
       {error && (
         <p className="pmd-input__error" role="alert">

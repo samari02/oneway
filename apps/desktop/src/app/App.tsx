@@ -8,7 +8,7 @@ import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
 import { BoundariesView, ProtectionAlert, useExtensionStatus } from '@/features/boundaries'
-import { ClarityHomeView } from '@/features/clarity-home'
+import { ClarityHomeView, ProgressView } from '@/features/clarity-home'
 import { ClarityHomeErrorBoundary } from '@/features/clarity-home/components/ClarityHomeErrorBoundary'
 import { Mascot, type MascotMood } from '@/features/mascot'
 import { MONK_MINIATURE_SRC } from '@/features/clarity-home/companion-avatars'
@@ -427,6 +427,12 @@ function Dashboard() {
         return (
           <ClarityHomeErrorBoundary>
             <ClarityHomeView />
+          </ClarityHomeErrorBoundary>
+        )
+      case 'progress':
+        return (
+          <ClarityHomeErrorBoundary>
+            <ProgressView />
           </ClarityHomeErrorBoundary>
         )
       case 'screen-time':
