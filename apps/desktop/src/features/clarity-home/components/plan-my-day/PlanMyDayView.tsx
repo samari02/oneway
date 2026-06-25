@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTaskStore, type Task } from '../../hooks/useTaskStore'
+import { useTaskStore } from '../../hooks/useTaskStore'
+import type { Task } from '@oneway/shared'
 import { useCategoryStore } from '../../hooks/useCategoryStore'
 import { useFocusAreaStore } from '../../hooks/useFocusAreaStore'
 import { useAuth } from '@/features/auth'
@@ -11,9 +12,10 @@ type PlanMyDayStep = 'input' | 'review'
 
 type PlanMyDayViewProps = {
   onClose: () => void
+  userId?: string
 }
 
-export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
+export function PlanMyDayView({ onClose, userId }: PlanMyDayViewProps) {
   const [step, setStep] = useState<PlanMyDayStep>('input')
   const [inputDraft, setInputDraft] = useState('')
   const [lastClassifiedText, setLastClassifiedText] = useState('')
@@ -21,7 +23,7 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
   const [stagedTasks, setStagedTasks] = useState<Task[]>([])
   const [fadeOut, setFadeOut] = useState(false)
 
-  const { tasks: existingTasks, mergeTasks } = useTaskStore()
+  const { tasks: existingTasks, mergeTasks } = useTaskStore(userId)
   const { categories } = useCategoryStore()
   const { user } = useAuth()
   const { activeAreas } = useFocusAreaStore(user?.id)

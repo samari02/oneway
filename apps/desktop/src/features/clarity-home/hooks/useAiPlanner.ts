@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { getApiKey } from '@/lib/openai'
-import type { Task } from './useTaskStore'
+import type { Task } from '@oneway/shared'
 import type { Category } from './useCategoryStore'
 import type { FocusArea } from '@oneway/shared'
 
@@ -203,7 +203,7 @@ function classifyLine(line: string, categories: Category[]): PlannerTaskOutput {
 }
 
 function generateId(): string {
-  return `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+  return crypto.randomUUID()
 }
 
 function splitInputLines(rawText: string): string[] {

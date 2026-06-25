@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef, useCallback, useEffect, type CSSProperties } from 'react'
 import type { DailyPlan, FocusArea } from '@oneway/shared'
-import { useTaskStore, type Task } from '../../hooks/useTaskStore'
+import { useTaskStore } from '../../hooks/useTaskStore'
+import type { Task } from '@oneway/shared'
 import { useCategoryStore } from '../../hooks/useCategoryStore'
 import { CategoryIcon } from '../CategoryIcon'
 import { HomeCharacter } from './HomeCharacter'
@@ -21,6 +22,7 @@ type DefaultHomeDashboardProps = {
   onContinueFocus: () => void
   onPlanMyDay: () => void
   focusAreas?: FocusArea[]
+  userId?: string
 }
 
 function BellIcon() {
@@ -296,8 +298,9 @@ export function DefaultHomeDashboard({
   onContinueFocus,
   onPlanMyDay,
   focusAreas,
+  userId,
 }: DefaultHomeDashboardProps) {
-  const { tasks, toggleTask, updateTask, removeTask } = useTaskStore()
+  const { tasks, toggleTask, updateTask, removeTask } = useTaskStore(userId)
   const { taskId: currentFocusTaskId, selectTask, clearFocusIfTask } = useCurrentFocus()
   const { categories } = useCategoryStore()
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => new Set())
@@ -541,6 +544,7 @@ export function DefaultHomeDashboard({
         todayPlan={todayPlan}
         focusAreas={focusAreas}
         onPlanMyDay={onPlanMyDay}
+        userId={userId}
       />
 
       <div className="uh-dash-actions">

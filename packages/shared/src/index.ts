@@ -6,6 +6,7 @@ export * from './types/customBlockingRule'
 export * from './types/user'
 export * from './types/dailyPlan'
 export * from './types/focusArea'
+export * from './types/task'
 
 // Constants
 export * from './constants'

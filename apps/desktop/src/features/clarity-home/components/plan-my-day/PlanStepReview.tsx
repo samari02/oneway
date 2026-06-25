@@ -1,5 +1,5 @@
 import { useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react'
-import type { Task } from '../../hooks/useTaskStore'
+import type { Task } from '@oneway/shared'
 import type { Category } from '../../hooks/useCategoryStore'
 import type { FocusArea } from '@oneway/shared'
 import { CategoryIcon } from '../CategoryIcon'

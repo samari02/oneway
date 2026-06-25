@@ -1,0 +1,109 @@
+.sidebar-music {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.sidebar-music__play,
+.sidebar-music__track-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 11px;
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar-music__play:hover,
+.sidebar-music__track-btn:hover {
+  background: rgba(125, 216, 196, 0.15);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .sidebar-music__play:hover,
+[data-theme="dark"] .sidebar-music__track-btn:hover {
+  background: rgba(107, 86, 225, 0.1);
+}
+
+.sidebar-music__play--active {
+  color: var(--color-mint);
+}
+
+[data-theme="dark"] .sidebar-music__play--active {
+  color: #6b56e1;
+}
+
+.sidebar-music__track-wrap {
+  position: relative;
+}
+
+.sidebar-music__track-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-music__chevron {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.sidebar:hover .sidebar-music__chevron,
+.sidebar--pinned .sidebar-music__chevron {
+  opacity: 0.6;
+}
+
+.sidebar-music__menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .sidebar-music__menu {
+  border-color: rgba(107, 86, 225, 0.2);
+  background: rgba(18, 16, 28, 0.96);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.sidebar-music__menu-item {
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-music__menu-item:hover,
+.sidebar-music__menu-item--active {
+  background: rgba(125, 216, 196, 0.15);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .sidebar-music__menu-item:hover,
+[data-theme="dark"] .sidebar-music__menu-item--active {
+  background: rgba(107, 86, 225, 0.18);
+  color: #e4dff8;
+}

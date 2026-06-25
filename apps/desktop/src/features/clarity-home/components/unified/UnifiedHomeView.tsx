@@ -69,7 +69,7 @@ export function UnifiedHomeView({
       <div className="unified-home">
         <div className="unified-home__bg" aria-hidden />
         <div className="unified-home__shell unified-home__shell--dashboard">
-          <PlanMyDayView onClose={() => setShowPlanMyDay(false)} />
+          <PlanMyDayView onClose={() => setShowPlanMyDay(false)} userId={userId ?? user?.id} />
         </div>
       </div>
     )
@@ -89,6 +89,7 @@ export function UnifiedHomeView({
           onContinueFocus={() => undefined}
           onPlanMyDay={() => setShowPlanMyDay(true)}
           focusAreas={activeAreas}
+          userId={userId ?? user?.id}
         />
       </div>
     </div>

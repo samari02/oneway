@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { DailyPlan, FocusArea } from '@oneway/shared'
-import type { Task } from '../hooks/useTaskStore'
+import type { Task } from '@oneway/shared'
 import { formatLocalDateKey } from './dailyPlans'
 
 export type CompletedGoalRecord = {

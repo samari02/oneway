@@ -10,6 +10,7 @@ type EveningReflectionPromptProps = {
   todayPlan: DailyPlan | null
   focusAreas?: FocusArea[]
   onPlanMyDay: () => void
+  userId?: string
 }
 
 type AreaGroup = {
@@ -87,8 +88,9 @@ export function EveningReflectionPrompt({
   todayPlan,
   focusAreas,
   onPlanMyDay,
+  userId,
 }: EveningReflectionPromptProps) {
-  const { tasks, updateTask } = useTaskStore()
+  const { tasks, updateTask } = useTaskStore(userId)
   const [expanded, setExpanded] = useState(false)
   const [dismissed, setDismissed] = useState(() => getDismissedDate() === formatLocalDateKey())
 

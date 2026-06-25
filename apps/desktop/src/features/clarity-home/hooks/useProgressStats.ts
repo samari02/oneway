@@ -20,7 +20,7 @@ export function useProgressStats(
   userId: string | undefined,
   focusAreas: FocusArea[],
 ): UseProgressStatsResult {
-  const { tasks } = useTaskStore()
+  const { tasks } = useTaskStore(userId)
   const [summary, setSummary] = useState<ProgressSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
