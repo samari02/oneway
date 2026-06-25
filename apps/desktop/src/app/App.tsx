@@ -10,7 +10,6 @@ import { SettingsView } from '@/features/settings'
 import { BoundariesView, ProtectionAlert, useExtensionStatus } from '@/features/boundaries'
 import { ClarityHomeView } from '@/features/clarity-home'
 import { ClarityHomeErrorBoundary } from '@/features/clarity-home/components/ClarityHomeErrorBoundary'
-import { GlobalAmbientMusicBar } from '@/features/clarity-home/components/GlobalAmbientMusicBar'
 import { Mascot, type MascotMood } from '@/features/mascot'
 import { MONK_MINIATURE_SRC } from '@/features/clarity-home/companion-avatars'
 import { AICompanion } from '@/features/ai-companion'
@@ -437,7 +436,11 @@ function Dashboard() {
       case 'settings':
         return <SettingsView />
       default:
-        return <TodayView />
+        return (
+          <ClarityHomeErrorBoundary>
+            <ClarityHomeView />
+          </ClarityHomeErrorBoundary>
+        )
     }
   }
 
@@ -503,8 +506,6 @@ function Dashboard() {
           </div>
         </main>
       </div>
-
-      <GlobalAmbientMusicBar showPlayer={currentView !== 'clarity-home'} />
     </div>
   )
 }

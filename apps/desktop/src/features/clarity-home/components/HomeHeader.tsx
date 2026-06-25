@@ -1,5 +1,4 @@
 import { FocusTrackCard } from './FocusTrackCard'
-import { HeroMascot } from './HeroMascot'
 import { IntentionCard } from './IntentionCard'
 import type { PlanItem } from '../hooks/useMorningFlow'
 
@@ -27,10 +26,6 @@ export function HomeHeader({
           {greeting}, {firstName}
         </h1>
         <p className="ch-home-hero__subtitle">How was your day?</p>
-      </div>
-
-      <div className="ch-home-hero__mascot">
-        <HeroMascot />
       </div>
 
       <div className="ch-home-hero__intention">

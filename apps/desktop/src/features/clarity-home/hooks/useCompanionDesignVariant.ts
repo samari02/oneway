@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useSyncExternalStore } from 'react'
 
 export type CompanionDesignVariant = 'orb' | 'monk'
 
@@ -32,13 +32,5 @@ export function setCompanionDesignVariant(variant: CompanionDesignVariant) {
 export function useCompanionDesignVariant() {
   const variant = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
-  const setVariant = useCallback((next: CompanionDesignVariant) => {
-    setCompanionDesignVariant(next)
-  }, [])
-
-  const toggleVariant = useCallback(() => {
-    setCompanionDesignVariant(variant === 'orb' ? 'monk' : 'orb')
-  }, [variant])
-
-  return { variant, setVariant, toggleVariant, isMonk: variant === 'monk' }
+  return { variant }
 }

@@ -1,3 +1,6 @@
+/** Home shell companion (unified morning/day/evening). */
+export const HOME_CHARACTER3_SRC = '/companion-avatars/character3.png'
+
 /** Hero companion orb image paths (standalone PNG). */
 export const HERO_ORB3_SRC = '/companion-avatars/orb3.png'
 export const HERO_ORB_FALLBACK_SRC = '/companion-avatars/orb.png'

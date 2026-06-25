@@ -1,10 +1,15 @@
 import { supabase } from '@/lib/supabase'
 import type { DailyGoal, DailyPlan, FocusSession } from '@oneway/shared'
 import {
+  getDayPlanStorageKey,
   getTodayDayPlan,
   type DayPlan,
   type MorningFlowState,
 } from '../hooks/useMorningFlow'
+
+export function clearTodayDayPlanLocal(): void {
+  localStorage.removeItem(getDayPlanStorageKey())
+}
 
 export function formatLocalDateKey(date = new Date()): string {
   const y = date.getFullYear()
@@ -132,6 +137,57 @@ export async function getActiveFocusSession(userId: string): Promise<FocusSessio
 
   if (error) throw error
   return (data as FocusSession | null) ?? null
+}
+
+export async function endActiveFocusSessions(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('focus_sessions')
+    .update({
+      status: 'abandoned',
+      ended_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId)
+    .in('status', ['active', 'paused'])
+
+  if (error) throw error
+}
+
+export async function resetTodayPlan(userId: string): Promise<void> {
+  const planDate = formatLocalDateKey()
+
+  await endActiveFocusSessions(userId)
+
+  const { error: deleteError } = await supabase
+    .from('daily_plans')
+    .delete()
+    .eq('user_id', userId)
+    .eq('plan_date', planDate)
+
+  if (deleteError) throw deleteError
+
+  clearTodayDayPlanLocal()
+}
+
+export async function skipEveningReflection(userId: string): Promise<DailyPlan> {
+  const plan = await getTodayPlan(userId)
+  if (!plan) throw new Error('No plan to skip evening reflection for')
+
+  if (plan.id.startsWith('local-')) {
+    const reflected = await createDailyPlan(userId, {
+      user_id: userId,
+      plan_date: formatLocalDateKey(),
+      goals: plan.goals,
+      priority_goal_id: plan.priority_goal_id,
+      blockers: plan.blockers,
+      suggested_duration_minutes: plan.suggested_duration_minutes,
+      status: 'reflected',
+    })
+    clearTodayDayPlanLocal()
+    return reflected
+  }
+
+  return updateDailyPlan(plan.id, { status: 'reflected' })
 }
 
 export async function syncMorningFlowPlan(userId: string, state: MorningFlowState): Promise<DailyPlan | null> {

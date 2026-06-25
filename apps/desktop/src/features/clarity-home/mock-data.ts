@@ -42,3 +42,27 @@ export const MOCK_INSIGHTS = [
 
 export const MOCK_FOOTER_BANNER =
   "Small steps, every day, lead to who you want to become. I'm proud of you."
+
+export const MOCK_CURRENT_FOCUS = {
+  title: 'Avatar Animations',
+  tag: 'Deep Work',
+  startedLabel: 'Started yesterday',
+  totalTime: '2h 15m total',
+  todayMinutes: 45,
+  goalMinutes: 90,
+}
+
+export type OpenTaskCategory = {
+  id: string
+  label: string
+  count: number
+  color: string
+  icon: string
+}
+
+export const MOCK_OPEN_TASKS: OpenTaskCategory[] = [
+  { id: 'clarity', label: 'Clarity', count: 4, color: '#7c3aed', icon: '✦' },
+  { id: 'work', label: 'Work', count: 2, color: '#3b82f6', icon: '◈' },
+  { id: 'health', label: 'Health', count: 1, color: '#22c55e', icon: '♥' },
+  { id: 'learning', label: 'Learning', count: 3, color: '#f59e0b', icon: '◉' },
+]

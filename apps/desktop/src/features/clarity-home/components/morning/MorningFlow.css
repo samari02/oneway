@@ -28,6 +28,12 @@
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+.morning-flow *,
+.morning-flow *::before,
+.morning-flow *::after {
+  box-sizing: border-box;
+}
+
 /* Background */
 .morning-flow__bg {
   position: absolute;
@@ -1195,6 +1201,19 @@
   }
 }
 
+@media (min-width: 900px) {
+  .mf-shell__hero-atmosphere {
+    width: min(520px, 55vw);
+    height: min(380px, 38vw);
+  }
+}
+
+@media (max-width: 768px) {
+  .mf-intention__context {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 640px) {
   .morning-flow__toolbar {
     top: 12px;
@@ -1218,17 +1237,21 @@
     padding-right: 20px;
   }
 
-  .mf-intention__context {
-    grid-template-columns: 1fr;
-  }
-
-  .mf-shell__monk-wrap {
+  .mf-shell__hero-row {
+    display: flex;
     flex-direction: column;
     align-items: center;
     max-width: 100%;
   }
 
+  .mf-shell__monk {
+    grid-column: auto;
+    justify-self: auto;
+  }
+
   .mf-shell__bubble {
+    grid-column: auto;
+    justify-self: auto;
     max-width: 100%;
   }
 
@@ -1276,19 +1299,28 @@
 }
 
 .morning-flow--shell .morning-flow__shell--flow {
-  padding: clamp(16px, 2.5vw, 32px) clamp(20px, 4vw, 48px) clamp(24px, 4vh, 40px);
+  padding: clamp(16px, 2.5vw, 32px) clamp(24px, 3vw, 32px) clamp(24px, 4vh, 40px);
 }
 
 .morning-flow__stage--flow {
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-start;
   overflow-y: auto;
 }
 
 .morning-flow--shell .morning-flow__step {
-  max-width: min(920px, 100%);
+  max-width: none;
   width: 100%;
+  align-items: stretch;
+  align-self: stretch;
   text-align: left;
+}
+
+.morning-flow--shell .mf-plan-review,
+.morning-flow--shell .mf-success,
+.morning-flow--shell .mf-setup {
+  width: 100%;
+  max-width: none;
 }
 
 .mf-shell {
@@ -1326,6 +1358,17 @@
   padding: clamp(4px, 1.5vh, 16px) 0 clamp(8px, 2vh, 20px);
 }
 
+.mf-shell__hero-row {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr auto auto 1fr;
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 40px);
+  width: 100%;
+  max-width: min(1200px, 100%);
+}
+
 .mf-shell__hero-atmosphere {
   position: absolute;
   left: 50%;
@@ -1356,25 +1399,18 @@
   }
 }
 
-.mf-shell__monk-wrap {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(16px, 2.5vw, 32px);
-  width: 100%;
-  max-width: 680px;
-}
-
 .mf-shell__monk {
+  grid-column: 2;
   flex-shrink: 0;
+  justify-self: end;
 }
 
 .mf-shell__bubble {
   position: relative;
-  flex: 0 1 auto;
-  max-width: min(420px, 52vw);
+  grid-column: 3;
+  justify-self: start;
+  min-width: 0;
+  max-width: min(520px, 42vw);
   padding: 14px 18px;
   border-radius: 16px;
   background: var(--mf-glass-strong);
@@ -1450,12 +1486,18 @@
 
 .mf-intention__context {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 20px;
+  width: 100%;
+}
+
+.mf-intention__context:has(> :only-child) {
+  grid-template-columns: 1fr;
 }
 
 .mf-context-card {
+  min-width: 0;
   padding: 14px 16px;
   border-radius: var(--mf-radius);
   background: rgba(8, 8, 16, 0.5);
@@ -1634,4 +1676,31 @@
 .mf-confirm__duration,
 .mf-confirm__blockers {
   color: var(--mf-muted);
+}
+
+/* Evening reflection stub (interim until Phase 5) */
+.mf-shell__footer {
+  width: 100%;
+  margin-top: clamp(20px, 3vh, 28px);
+}
+
+.evening-stub__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: min(360px, 100%);
+  margin: 0 auto;
+}
+
+.evening-stub__hint {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--mf-muted-soft);
+}
+
+.evening-stub__body {
+  min-height: 0;
 }

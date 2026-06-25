@@ -2,6 +2,11 @@ import { useCallback, useSyncExternalStore } from 'react'
 
 const STORAGE_KEY = 'clarity-morning-mode'
 
+// Legacy sidebar toggle persisted this flag; home now defaults to the dashboard on launch.
+if (typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) === 'true') {
+  localStorage.setItem(STORAGE_KEY, 'false')
+}
+
 const listeners = new Set<() => void>()
 
 function subscribe(listener: () => void) {

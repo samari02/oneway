@@ -156,12 +156,12 @@
 /* Hero grid */
 .clarity-home .ch-home-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-rows: auto auto;
   row-gap: clamp(4px, 0.6vw, 8px);
   column-gap: clamp(16px, 2vw, 24px);
   grid-template-areas:
-    "greeting mascot"
+    "greeting greeting"
     "intention focus-track";
 }
 
@@ -185,19 +185,6 @@
   font-size: 15px;
 }
 
-.clarity-home .ch-home-hero__mascot {
-  grid-area: mascot;
-  justify-self: end;
-  align-self: start;
-  position: relative;
-  z-index: 0;
-  /* Fixed slot — mascot is absolutely positioned so variant visuals don't shift layout */
-  width: clamp(200px, 22vw, 280px);
-  height: clamp(220px, 24vw, 300px);
-  margin-bottom: clamp(-56px, -5vw, -36px);
-  overflow: visible;
-}
-
 .clarity-home .ch-home-hero__intention {
   grid-area: intention;
   min-width: 0;
@@ -210,15 +197,6 @@
   min-width: 0;
   position: relative;
   z-index: 1;
-}
-
-/* Hero character (CSS/SVG glowing orb) */
-.clarity-home .ch-hero-mascot-wrap {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* Intention card */
@@ -611,13 +589,8 @@
     grid-template-columns: 1fr;
     grid-template-areas:
       "greeting"
-      "mascot"
       "intention"
       "focus-track";
-  }
-
-  .clarity-home .ch-home-hero__mascot {
-    justify-self: center;
   }
 
   .clarity-home .ch-home__widgets {
