@@ -50,6 +50,43 @@ type MonkChatState = {
   projectNotes: string
   taskNotes: string
   priorityNotes: string
+  savedSummary: { areas: ProposedArea[]; tasks: ProposedTask[] } | null
+}
+
+export type MonkChatPersistedSession = Omit<MonkChatState, 'isTyping'> & {
+  savedAt: number
+}
+
+const MONK_CHAT_SESSION_PREFIX = 'clarity-monk-chat-session'
+
+export function getMonkChatSessionKey(userId: string): string {
+  return `${MONK_CHAT_SESSION_PREFIX}-${userId}`
+}
+
+export function loadMonkChatSession(userId: string): MonkChatPersistedSession | null {
+  try {
+    const raw = localStorage.getItem(getMonkChatSessionKey(userId))
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as MonkChatPersistedSession
+    if (!Array.isArray(parsed.messages) || typeof parsed.phase !== 'string') return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+export function saveMonkChatSession(userId: string, state: MonkChatState): void {
+  const { isTyping: _typing, ...rest } = state
+  const session: MonkChatPersistedSession = { ...rest, savedAt: Date.now() }
+  localStorage.setItem(getMonkChatSessionKey(userId), JSON.stringify(session))
+}
+
+export function clearMonkChatSession(userId: string): void {
+  localStorage.removeItem(getMonkChatSessionKey(userId))
+}
+
+export function hasMonkChatSession(userId: string): boolean {
+  return loadMonkChatSession(userId) !== null
 }
 
 const AREA_COLORS = [
@@ -228,6 +265,7 @@ const INITIAL_STATE: MonkChatState = {
   projectNotes: '',
   taskNotes: '',
   priorityNotes: '',
+  savedSummary: null,
 }
 
 export function useMonkChat(
@@ -258,6 +296,11 @@ export function useMonkChat(
     },
     [setTyping],
   )
+
+  const restore = useCallback((session: MonkChatPersistedSession) => {
+    const { savedAt: _savedAt, ...rest } = session
+    setState({ ...rest, isTyping: false })
+  }, [])
 
   const start = useCallback(async () => {
     setState(INITIAL_STATE)
@@ -498,18 +541,95 @@ export function useMonkChat(
     setState((s) => ({ ...s, phase: 'saving' }))
   }, [])
 
-  const markDone = useCallback(() => {
-    addMessages(
-      monkMsg(
-        "All set! I've saved your focus areas and tasks. You're ready to start making progress.",
+  const updateProposedArea = useCallback((index: number, label: string) => {
+    const trimmed = label.trim()
+    if (!trimmed) return
+    setState((s) => {
+      const oldLabel = s.proposedAreas[index]?.label
+      if (!oldLabel) return s
+      const proposedAreas = s.proposedAreas.map((a, i) =>
+        i === index ? { ...a, label: trimmed } : a,
+      )
+      const proposedTasks = s.proposedTasks.map((t) =>
+        t.areaLabel === oldLabel ? { ...t, areaLabel: trimmed } : t,
+      )
+      return { ...s, proposedAreas, proposedTasks }
+    })
+  }, [])
+
+  const removeProposedArea = useCallback((index: number) => {
+    setState((s) => {
+      const removed = s.proposedAreas[index]
+      if (!removed) return s
+      const proposedAreas = s.proposedAreas.filter((_, i) => i !== index)
+      const fallback = proposedAreas[0]?.label
+      const proposedTasks = fallback
+        ? s.proposedTasks
+            .filter((t) => t.areaLabel !== removed.label)
+            .map((t) =>
+              proposedAreas.some((a) => a.label === t.areaLabel)
+                ? t
+                : { ...t, areaLabel: fallback },
+            )
+        : s.proposedTasks.filter((t) => t.areaLabel !== removed.label)
+      return { ...s, proposedAreas, proposedTasks }
+    })
+  }, [])
+
+  const updateProposedTask = useCallback((index: number, title: string) => {
+    const trimmed = title.trim()
+    if (!trimmed) return
+    setState((s) => ({
+      ...s,
+      proposedTasks: s.proposedTasks.map((t, i) =>
+        i === index ? { ...t, title: trimmed } : t,
       ),
-    )
-    setState((s) => ({ ...s, phase: 'done' }))
-  }, [addMessages])
+    }))
+  }, [])
+
+  const removeProposedTask = useCallback((index: number) => {
+    setState((s) => ({
+      ...s,
+      proposedTasks: s.proposedTasks.filter((_, i) => i !== index),
+    }))
+  }, [])
+
+  const updateProposedTaskArea = useCallback((index: number, areaLabel: string) => {
+    setState((s) => ({
+      ...s,
+      proposedTasks: s.proposedTasks.map((t, i) =>
+        i === index ? { ...t, areaLabel } : t,
+      ),
+    }))
+  }, [])
+
+  const markDone = useCallback(
+    (areas: ProposedArea[], tasks: ProposedTask[]) => {
+      const areaCount = areas.length
+      const taskCount = tasks.length
+      const areaWord = areaCount === 1 ? 'focus area' : 'focus areas'
+      const taskWord = taskCount === 1 ? 'task' : 'tasks'
+      addMessages(
+        monkMsg(
+          `All set! I've saved **${areaCount} ${areaWord}** and **${taskCount} ${taskWord}** to your workspace. You're ready to start making progress.`,
+        ),
+      )
+      setState((s) => ({
+        ...s,
+        phase: 'done',
+        savedSummary: { areas, tasks },
+        proposedAreas: [],
+        proposedTasks: [],
+      }))
+    },
+    [addMessages],
+  )
 
   const reset = useCallback(() => {
     setState(INITIAL_STATE)
   }, [])
+
+  const getPersistableState = useCallback((): MonkChatState => stateRef.current, [])
 
   return {
     messages: state.messages,
@@ -517,10 +637,18 @@ export function useMonkChat(
     isTyping: state.isTyping,
     proposedAreas: state.proposedAreas,
     proposedTasks: state.proposedTasks,
+    savedSummary: state.savedSummary,
     start,
+    restore,
     send,
     confirmProposal,
     markDone,
     reset,
+    getPersistableState,
+    updateProposedArea,
+    removeProposedArea,
+    updateProposedTask,
+    removeProposedTask,
+    updateProposedTaskArea,
   }
 }

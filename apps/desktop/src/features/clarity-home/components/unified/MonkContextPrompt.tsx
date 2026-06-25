@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/features/auth'
 import { getUserContext } from '../../api/userContext'
+import { hasMonkChatSession } from '../../hooks/useMonkChat'
 import { MonkChatModal } from './MonkChatModal'
 
 export function MonkContextPrompt() {
@@ -8,6 +9,7 @@ export function MonkContextPrompt() {
   const [contextText, setContextText] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [chatOpen, setChatOpen] = useState(false)
+  const [hasDraftSession, setHasDraftSession] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -15,11 +17,13 @@ export function MonkContextPrompt() {
       .then((ctx) => setContextText(ctx?.context_text ?? null))
       .catch(() => setContextText(null))
       .finally(() => setLoading(false))
+    setHasDraftSession(hasMonkChatSession(user.id))
   }, [user])
 
   const handleCloseChat = () => {
     setChatOpen(false)
     if (user) {
+      setHasDraftSession(hasMonkChatSession(user.id))
       getUserContext(user.id)
         .then((ctx) => setContextText(ctx?.context_text ?? null))
         .catch(() => {})
@@ -30,7 +34,11 @@ export function MonkContextPrompt() {
 
   return (
     <div className="monk-ctx">
-      {contextText ? (
+      {hasDraftSession && !chatOpen ? (
+        <button type="button" className="monk-ctx__invite monk-ctx__invite--resume" onClick={() => setChatOpen(true)}>
+          Continue your conversation with Monk
+        </button>
+      ) : contextText ? (
         <p className="monk-ctx__status">
           <span className="monk-ctx__dot" aria-hidden />
           Monk knows a bit about you

@@ -7,7 +7,14 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '@/features/auth'
-import { useMonkChat, type ProposedArea, type ProposedTask } from '../../hooks/useMonkChat'
+import {
+  useMonkChat,
+  type ProposedArea,
+  type ProposedTask,
+  loadMonkChatSession,
+  saveMonkChatSession,
+  clearMonkChatSession,
+} from '../../hooks/useMonkChat'
 import { useCategoryStore } from '../../hooks/useCategoryStore'
 import { useFocusAreaStore } from '../../hooks/useFocusAreaStore'
 import { useTaskStore } from '../../hooks/useTaskStore'
@@ -86,30 +93,189 @@ function CheckCircleIcon() {
   )
 }
 
+function EditIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function RemoveIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M18 6L6 18M6 6l12 12"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function SavedSummaryCard({
+  areas,
+  tasks,
+}: {
+  areas: ProposedArea[]
+  tasks: ProposedTask[]
+}) {
+  return (
+    <div className="monk-chat__saved-summary">
+      <div className="monk-chat__saved-summary-header">
+        <CheckCircleIcon />
+        <span>Saved to your workspace</span>
+      </div>
+      <div className="monk-chat__proposal-section">
+        <span className="monk-chat__proposal-label">
+          Focus Areas ({areas.length})
+        </span>
+        <div className="monk-chat__proposal-areas">
+          {areas.map((area) => (
+            <span
+              key={area.label}
+              className="monk-chat__proposal-area monk-chat__proposal-area--readonly"
+              style={{ '--area-color': area.color } as React.CSSProperties}
+            >
+              <span className="monk-chat__proposal-area-emoji">{area.emoji}</span>
+              {area.label}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="monk-chat__proposal-section">
+        <span className="monk-chat__proposal-label">Tasks ({tasks.length})</span>
+        <ul className="monk-chat__proposal-tasks">
+          {tasks.map((task, i) => {
+            const area = areas.find(
+              (a) => a.label.toLowerCase() === task.areaLabel.toLowerCase(),
+            )
+            return (
+              <li key={i} className="monk-chat__proposal-task monk-chat__proposal-task--readonly">
+                <span
+                  className="monk-chat__proposal-task-dot"
+                  style={{ background: area?.color ?? '#7c3aed' }}
+                />
+                <span className="monk-chat__proposal-task-title">{task.title}</span>
+                <span className="monk-chat__proposal-task-area">{task.areaLabel}</span>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
 function ProposalCard({
   areas,
   tasks,
   onConfirm,
   isSaving,
+  onUpdateArea,
+  onRemoveArea,
+  onUpdateTask,
+  onRemoveTask,
+  onUpdateTaskArea,
 }: {
   areas: ProposedArea[]
   tasks: ProposedTask[]
   onConfirm: () => void
   isSaving: boolean
+  onUpdateArea: (index: number, label: string) => void
+  onRemoveArea: (index: number) => void
+  onUpdateTask: (index: number, title: string) => void
+  onRemoveTask: (index: number) => void
+  onUpdateTaskArea: (index: number, areaLabel: string) => void
 }) {
+  const [editingArea, setEditingArea] = useState<number | null>(null)
+  const [editingTask, setEditingTask] = useState<number | null>(null)
+  const [editValue, setEditValue] = useState('')
+
+  const startEditArea = (index: number, current: string) => {
+    setEditingArea(index)
+    setEditingTask(null)
+    setEditValue(current)
+  }
+
+  const commitEditArea = (index: number) => {
+    onUpdateArea(index, editValue)
+    setEditingArea(null)
+    setEditValue('')
+  }
+
+  const startEditTask = (index: number, current: string) => {
+    setEditingTask(index)
+    setEditingArea(null)
+    setEditValue(current)
+  }
+
+  const commitEditTask = (index: number) => {
+    onUpdateTask(index, editValue)
+    setEditingTask(null)
+    setEditValue('')
+  }
+
   return (
     <div className="monk-chat__proposal">
       <div className="monk-chat__proposal-section">
         <span className="monk-chat__proposal-label">Focus Areas</span>
         <div className="monk-chat__proposal-areas">
-          {areas.map((area) => (
+          {areas.map((area, index) => (
             <span
-              key={area.label}
-              className="monk-chat__proposal-area"
+              key={`${area.label}-${index}`}
+              className="monk-chat__proposal-area monk-chat__proposal-area--editable"
               style={{ '--area-color': area.color } as React.CSSProperties}
             >
               <span className="monk-chat__proposal-area-emoji">{area.emoji}</span>
-              {area.label}
+              {editingArea === index ? (
+                <input
+                  className="monk-chat__proposal-inline-input"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onBlur={() => commitEditArea(index)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') commitEditArea(index)
+                    if (e.key === 'Escape') setEditingArea(null)
+                  }}
+                  autoFocus
+                />
+              ) : (
+                <span className="monk-chat__proposal-area-label">{area.label}</span>
+              )}
+              <span className="monk-chat__proposal-item-actions">
+                <button
+                  type="button"
+                  className="monk-chat__proposal-action"
+                  onClick={() => startEditArea(index, area.label)}
+                  aria-label={`Edit ${area.label}`}
+                >
+                  <EditIcon />
+                </button>
+                <button
+                  type="button"
+                  className="monk-chat__proposal-action monk-chat__proposal-action--remove"
+                  onClick={() => onRemoveArea(index)}
+                  aria-label={`Remove ${area.label}`}
+                  disabled={areas.length <= 1}
+                >
+                  <RemoveIcon />
+                </button>
+              </span>
             </span>
           ))}
         </div>
@@ -125,16 +291,55 @@ function ProposalCard({
               (a) => a.label.toLowerCase() === task.areaLabel.toLowerCase(),
             )
             return (
-              <li key={i} className="monk-chat__proposal-task">
+              <li key={i} className="monk-chat__proposal-task monk-chat__proposal-task--editable">
                 <span
                   className="monk-chat__proposal-task-dot"
                   style={{ background: area?.color ?? '#7c3aed' }}
                 />
-                <span className="monk-chat__proposal-task-title">
-                  {task.title}
-                </span>
-                <span className="monk-chat__proposal-task-area">
-                  {task.areaLabel}
+                {editingTask === i ? (
+                  <input
+                    className="monk-chat__proposal-inline-input monk-chat__proposal-inline-input--task"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={() => commitEditTask(i)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') commitEditTask(i)
+                      if (e.key === 'Escape') setEditingTask(null)
+                    }}
+                    autoFocus
+                  />
+                ) : (
+                  <span className="monk-chat__proposal-task-title">{task.title}</span>
+                )}
+                <select
+                  className="monk-chat__proposal-task-select"
+                  value={task.areaLabel}
+                  onChange={(e) => onUpdateTaskArea(i, e.target.value)}
+                  aria-label={`Category for ${task.title}`}
+                >
+                  {areas.map((a) => (
+                    <option key={a.label} value={a.label}>
+                      {a.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="monk-chat__proposal-item-actions">
+                  <button
+                    type="button"
+                    className="monk-chat__proposal-action"
+                    onClick={() => startEditTask(i, task.title)}
+                    aria-label={`Edit ${task.title}`}
+                  >
+                    <EditIcon />
+                  </button>
+                  <button
+                    type="button"
+                    className="monk-chat__proposal-action monk-chat__proposal-action--remove"
+                    onClick={() => onRemoveTask(i)}
+                    aria-label={`Remove ${task.title}`}
+                  >
+                    <RemoveIcon />
+                  </button>
                 </span>
               </li>
             )
@@ -146,7 +351,7 @@ function ProposalCard({
         type="button"
         className="monk-chat__proposal-confirm"
         onClick={onConfirm}
-        disabled={isSaving}
+        disabled={isSaving || areas.length === 0}
       >
         {isSaving ? (
           <span className="monk-chat__spinner" />
@@ -181,21 +386,29 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
     isTyping,
     proposedAreas,
     proposedTasks,
+    savedSummary,
     start,
+    restore,
     send,
     confirmProposal,
     markDone,
     reset,
+    getPersistableState,
+    updateProposedArea,
+    removeProposedArea,
+    updateProposedTask,
+    removeProposedTask,
+    updateProposedTaskArea,
   } = useMonkChat(categories, activeAreas)
 
   const [input, setInput] = useState('')
   const [isSaving, setIsSaving] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
+  const [farewellMessage, setFarewellMessage] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const inputBaseRef = useRef('')
   const sessionTranscriptRef = useRef('')
-  const startedRef = useRef(false)
+  const initializedRef = useRef(false)
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
 
   const handleSpeechTranscript = useCallback(
@@ -243,15 +456,21 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
   }, [])
 
   useEffect(() => {
-    if (open && !startedRef.current) {
-      startedRef.current = true
-      start()
+    if (open && user && !initializedRef.current) {
+      initializedRef.current = true
+      const saved = loadMonkChatSession(user.id)
+      if (saved && saved.messages.length > 0) {
+        restore(saved)
+      } else {
+        start()
+      }
     }
-  }, [open, start])
+  }, [open, user, start, restore])
 
   useEffect(() => {
     if (!open) {
-      startedRef.current = false
+      initializedRef.current = false
+      setFarewellMessage(null)
     }
   }, [open])
 
@@ -270,14 +489,22 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
     }
   }, [isTyping, phase, messages])
 
+  const persistSession = useCallback(() => {
+    if (!user) return
+    saveMonkChatSession(user.id, getPersistableState())
+  }, [user, getPersistableState])
+
   const handleSave = useCallback(async () => {
     if (!user) return
     setIsSaving(true)
 
+    const areasToSave = [...proposedAreas]
+    const tasksToSave = [...proposedTasks]
+
     try {
-      if (proposedAreas.length > 0) {
+      if (areasToSave.length > 0) {
         await addProposedAreas(
-          proposedAreas.map((a) => ({
+          areasToSave.map((a) => ({
             label: a.label,
             emoji: a.emoji,
             color: a.color,
@@ -285,13 +512,8 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
         )
       }
 
-      if (proposedTasks.length > 0) {
-        const areaMap = new Map<string, string>()
-        for (const a of proposedAreas) {
-          areaMap.set(a.label.toLowerCase(), a.label)
-        }
-
-        const tasks = proposedTasks.map((pt) => ({
+      if (tasksToSave.length > 0) {
+        const tasks = tasksToSave.map((pt) => ({
           id: crypto.randomUUID(),
           title: pt.title,
           category: pt.areaLabel,
@@ -303,11 +525,11 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
       }
 
       const contextSummary = [
-        proposedAreas.length > 0
-          ? `Focus areas: ${proposedAreas.map((a) => a.label).join(', ')}`
+        areasToSave.length > 0
+          ? `Focus areas: ${areasToSave.map((a) => a.label).join(', ')}`
           : '',
-        proposedTasks.length > 0
-          ? `Tasks: ${proposedTasks.map((t) => t.title).join(', ')}`
+        tasksToSave.length > 0
+          ? `Tasks: ${tasksToSave.map((t) => t.title).join(', ')}`
           : '',
       ]
         .filter(Boolean)
@@ -320,17 +542,26 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
         })
       }
 
-      setShowSuccess(true)
-      markDone()
-
-      setTimeout(() => {
-        setIsSaving(false)
-      }, 500)
+      markDone(areasToSave, tasksToSave)
+      setIsSaving(false)
     } catch (err) {
       console.error('[monk-chat] Failed to save:', err)
       setIsSaving(false)
     }
-  }, [user, proposedAreas, proposedTasks, addProposedAreas, mergeTasks, markDone])
+  }, [
+    user,
+    proposedAreas,
+    proposedTasks,
+    addProposedAreas,
+    mergeTasks,
+    markDone,
+  ])
+
+  useEffect(() => {
+    if (phase === 'done' && user) {
+      persistSession()
+    }
+  }, [phase, user, persistSession])
 
   useEffect(() => {
     if (phase === 'saving') {
@@ -366,16 +597,40 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
     [send],
   )
 
+  const handleContinueLater = useCallback(() => {
+    stopSpeech()
+    persistSession()
+    setFarewellMessage("I'll be here when you're back.")
+    setInput('')
+    inputBaseRef.current = ''
+    sessionTranscriptRef.current = ''
+    setTimeout(() => {
+      setFarewellMessage(null)
+      onClose()
+    }, 1200)
+  }, [persistSession, onClose, stopSpeech])
+
   const handleClose = useCallback(() => {
     stopSpeech()
-    reset()
+    if (phase !== 'welcome' && messages.length > 0) {
+      persistSession()
+    }
     setInput('')
     inputBaseRef.current = ''
     sessionTranscriptRef.current = ''
     setIsSaving(false)
-    setShowSuccess(false)
     onClose()
-  }, [reset, onClose, stopSpeech])
+  }, [persistSession, onClose, stopSpeech, phase, messages.length])
+
+  const handleStartFresh = useCallback(() => {
+    if (!user) return
+    clearMonkChatSession(user.id)
+    reset()
+    setInput('')
+    inputBaseRef.current = ''
+    sessionTranscriptRef.current = ''
+    start()
+  }, [user, reset, start])
 
   if (!open || !portalTarget) return null
 
@@ -383,7 +638,7 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
     isTyping || phase === 'saving' || phase === 'done'
 
   const modal = (
-    <div className="monk-chat-overlay" onClick={handleClose}>
+    <div className="monk-chat-overlay" onClick={handleContinueLater}>
       <div
         className="monk-chat"
         onClick={(e) => e.stopPropagation()}
@@ -397,14 +652,25 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
               {isTyping ? 'typing…' : 'online'}
             </span>
           </div>
-          <button
-            type="button"
-            className="monk-chat__close"
-            onClick={handleClose}
-            aria-label="Close chat"
-          >
-            <CloseIcon />
-          </button>
+          <div className="monk-chat__header-actions">
+            {phase !== 'done' && phase !== 'saving' && (
+              <button
+                type="button"
+                className="monk-chat__continue-later"
+                onClick={handleContinueLater}
+              >
+                Continue later
+              </button>
+            )}
+            <button
+              type="button"
+              className="monk-chat__close"
+              onClick={handleClose}
+              aria-label="Close chat"
+            >
+              <CloseIcon />
+            </button>
+          </div>
         </header>
 
         <div className="monk-chat__messages" ref={scrollRef}>
@@ -475,17 +741,33 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
                     tasks={proposedTasks}
                     onConfirm={confirmProposal}
                     isSaving={isSaving}
+                    onUpdateArea={updateProposedArea}
+                    onRemoveArea={removeProposedArea}
+                    onUpdateTask={updateProposedTask}
+                    onRemoveTask={removeProposedTask}
+                    onUpdateTaskArea={updateProposedTaskArea}
                   />
                 </div>
               </div>
             )}
 
-          {showSuccess && (
-            <div className="monk-chat__success">
-              <div className="monk-chat__success-icon">
-                <CheckCircleIcon />
+          {phase === 'done' && savedSummary && (
+            <div className="monk-chat__bubble monk-chat__bubble--monk">
+              <div className="monk-chat__bubble-avatar">
+                <HomeCharacter size={MONK_AVATAR_SIZE} compact />
               </div>
-              <span>Workspace saved successfully</span>
+              <div className="monk-chat__bubble-content">
+                <SavedSummaryCard
+                  areas={savedSummary.areas}
+                  tasks={savedSummary.tasks}
+                />
+              </div>
+            </div>
+          )}
+
+          {farewellMessage && (
+            <div className="monk-chat__farewell">
+              <span>{farewellMessage}</span>
             </div>
           )}
 
@@ -503,13 +785,22 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
 
         <div className="monk-chat__input-area">
           {phase === 'done' ? (
-            <button
-              type="button"
-              className="monk-chat__done-btn"
-              onClick={handleClose}
-            >
-              Done — back to dashboard
-            </button>
+            <div className="monk-chat__done-actions">
+              <button
+                type="button"
+                className="monk-chat__done-btn"
+                onClick={handleClose}
+              >
+                Done — back to dashboard
+              </button>
+              <button
+                type="button"
+                className="monk-chat__fresh-btn"
+                onClick={handleStartFresh}
+              >
+                Start fresh conversation
+              </button>
+            </div>
           ) : (
             <>
               <div className="monk-chat__input-row">
