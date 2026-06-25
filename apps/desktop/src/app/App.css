@@ -169,6 +169,7 @@
   min-height: 0; /* Critical for nested flex scroll */
   margin-left: 72px; /* Sidebar collapsed width */
   transition: margin-left 0.25s ease;
+  position: relative;
 }
 
 /* When sidebar is pinned, increase margin */

@@ -254,6 +254,11 @@
   animation: uh-character-idle 6s ease-in-out infinite;
 }
 
+.uh-character--compact .uh-character__img {
+  filter: drop-shadow(0 2px 8px rgba(124, 58, 237, 0.2));
+  animation: none;
+}
+
 @keyframes uh-character-idle {
   0%, 100% { transform: translateY(0) scale(1); }
   50% { transform: translateY(-6px) scale(1.025); }

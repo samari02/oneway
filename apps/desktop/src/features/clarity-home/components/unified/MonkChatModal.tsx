@@ -173,7 +173,7 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
-    setPortalTarget(document.querySelector('.app-layout__content'))
+    setPortalTarget(document.querySelector('.app-layout__content') as HTMLElement | null)
   }, [])
 
   useEffect(() => {
@@ -420,7 +420,7 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
           {isTyping && (
             <div className="monk-chat__bubble monk-chat__bubble--monk">
               <div className="monk-chat__bubble-avatar">
-                <HomeCharacter size={40} />
+                <HomeCharacter size={36} compact />
               </div>
               <div className="monk-chat__bubble-content">
                 <TypingIndicator />

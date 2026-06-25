@@ -5,21 +5,31 @@ import './UnifiedHome.css'
 type HomeCharacterProps = {
   size?: number
   nodding?: boolean
+  /** Minimal effects for inline chat avatars */
+  compact?: boolean
 }
 
-export function HomeCharacter({ size = 160, nodding = false }: HomeCharacterProps) {
+export function HomeCharacter({
+  size = 160,
+  nodding = false,
+  compact = false,
+}: HomeCharacterProps) {
   return (
     <div
-      className="uh-character"
+      className={`uh-character${compact ? ' uh-character--compact' : ''}`}
       style={{ '--uh-character-size': `${size}px` } as CSSProperties}
     >
-      <div className="uh-character__glow" aria-hidden />
-      <div className="uh-character__particles" aria-hidden />
-      <div className="uh-character__stars" aria-hidden>
-        {Array.from({ length: 12 }, (_, i) => (
-          <span key={i} />
-        ))}
-      </div>
+      {!compact && (
+        <>
+          <div className="uh-character__glow" aria-hidden />
+          <div className="uh-character__particles" aria-hidden />
+          <div className="uh-character__stars" aria-hidden>
+            {Array.from({ length: 12 }, (_, i) => (
+              <span key={i} />
+            ))}
+          </div>
+        </>
+      )}
       <img
         className={`uh-character__img${nodding ? ' uh-character__img--nod' : ''}`}
         src={HOME_CHARACTER3_SRC}
