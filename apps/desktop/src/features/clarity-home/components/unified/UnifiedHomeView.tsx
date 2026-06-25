@@ -63,7 +63,7 @@ export function UnifiedHomeView({
     return (
       <div className="unified-home">
         <div className="unified-home__bg" aria-hidden />
-        <div className="unified-home__shell">
+        <div className="unified-home__shell unified-home__shell--dashboard">
           <PlanMyDayView onClose={() => setShowPlanMyDay(false)} />
         </div>
       </div>

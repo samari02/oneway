@@ -21,7 +21,7 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
 
   const { tasks: existingTasks, mergeTasks } = useTaskStore()
   const { categories } = useCategoryStore()
-  const { isProcessing, error, planFromText, reset } = useAiPlanner(categories)
+  const { isProcessing, error, planFromText, reset } = useAiPlanner(categories, existingTasks)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -87,11 +87,6 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
     }, 350)
   }, [stagedTasks, mergeTasks, reset, onClose])
 
-  const handleEdit = useCallback(() => {
-    setIsAppendMode(false)
-    setStep('input')
-  }, [])
-
   const handleAddMore = useCallback(() => {
     setIsAppendMode(true)
     setInputDraft((prev) => (prev.endsWith('\n') || !prev ? prev : `${prev}\n`))
@@ -133,7 +128,6 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
             categories={categories}
             existingTaskTitles={existingTitles}
             onConfirm={handleConfirm}
-            onEdit={handleEdit}
             onTasksChange={handleTasksChange}
             onAddMore={handleAddMore}
           />

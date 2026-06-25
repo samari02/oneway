@@ -1392,10 +1392,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: min(680px, 100%);
-  margin: 0 auto;
-  padding: clamp(24px, 4vw, 44px) clamp(24px, 5vw, 48px) clamp(32px, 5vh, 52px);
-  gap: clamp(20px, 3vh, 28px);
+  gap: clamp(18px, 2.5vh, 28px);
   animation: pmd-fade-in 0.35s var(--uh-ease) both;
 }
 
@@ -1445,7 +1442,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: clamp(16px, 2vh, 24px);
 }
 
 .pmd-input__hero {
@@ -1532,7 +1529,7 @@
 .pmd-review {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(18px, 2.5vh, 28px);
 }
 
 .pmd-review__heading {
@@ -1547,11 +1544,11 @@
 .pmd-review__groups {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: clamp(12px, 1.5vh, 16px);
 }
 
 .pmd-review__group {
-  padding: 16px 18px;
+  padding: clamp(14px, 2vw, 18px) clamp(16px, 2vw, 20px);
   border-radius: var(--uh-radius);
   background: var(--uh-glass);
   border: 1px solid var(--uh-line);
@@ -1595,13 +1592,13 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .pmd-review__task {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 10px 12px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
@@ -1620,26 +1617,37 @@
   gap: 2px;
 }
 
-.pmd-review__task-title-btn {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  cursor: text;
-  width: 100%;
-}
-
-.pmd-review__task-title-btn:hover .pmd-review__task-title {
-  color: var(--uh-ink);
-}
-
 .pmd-review__task-title {
   display: block;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.4;
   color: var(--uh-ink);
-  transition: color 0.15s;
+}
+
+.pmd-review__task-edit {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--uh-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.pmd-review__task:hover .pmd-review__task-edit {
+  opacity: 1;
+}
+
+.pmd-review__task-edit:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--uh-ink);
 }
 
 .pmd-review__task-raw {
@@ -1726,5 +1734,6 @@
 .pmd-review__actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  margin-top: clamp(4px, 1vh, 8px);
 }

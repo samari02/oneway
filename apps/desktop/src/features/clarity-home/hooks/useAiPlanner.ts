@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { getApiKey } from '@/lib/openai'
 import type { Task } from './useTaskStore'
 import type { Category } from './useCategoryStore'
 
@@ -8,22 +9,28 @@ type AiPlannerResult = {
   error: string | null
 }
 
-/** Shape returned by the planner API (mock and future OpenAI). */
+/** Shape returned by the planner API (mock and OpenAI). */
 export type PlannerTaskOutput = {
   title: string
   rawInput: string
   category: string
 }
 
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
+const MODEL = 'gpt-4o-mini'
+
 const KEYWORD_RULES: { pattern: RegExp; category: string }[] = [
-  { pattern: /\b(gym|exercise|workout|run|yoga|meditat|walk|stretch|health|sleep|water|diet)\b/i, category: 'health' },
-  { pattern: /\b(proposal|deck|meeting|email|client|report|deadline|standup|review|sprint|jira|ticket|invoice|presentation|slack)\b/i, category: 'work' },
+  { pattern: /\b(gym|exercise|workout|run|yoga|meditat|walk|stretch|health|sleep|water|diet|calendar)\b/i, category: 'health' },
+  { pattern: /\b(proposal|deck|meeting|email|client|report|deadline|standup|review|sprint|jira|ticket|invoice|presentation|slack|kpmg)\b/i, category: 'work' },
   { pattern: /\b(read|study|learn|course|tutorial|book|research|practice|lesson|chapter)\b/i, category: 'learning' },
   { pattern: /\b(clarity|ship|build|code|design|feature|bug|deploy|mvp|prototype|refactor|component)\b/i, category: 'clarity' },
 ]
 
 const ACTION_VERBS =
-  /^(read|fix|finish|write|send|call|buy|make|prep|review|update|deploy|ship|build|code|design|run|walk|study|learn|practice|go)\b/i
+  /^(read|fix|finish|write|send|call|buy|make|prep|review|update|deploy|ship|build|code|design|run|walk|study|learn|practice|go|reorganize|organize|schedule|plan|complete|finish)\b/i
+
+const INTENT_PREFIX =
+  /^(?:today\s+)?(?:(?:i\s+)?(?:want\s+to|need\s+to|have\s+to|gotta|going\s+to|gonna)\s+)/i
 
 function cleanRawLine(line: string): string {
   return line.trim().replace(/^[-•*]\s*/, '').replace(/^\d+[.)]\s*/, '')
@@ -40,6 +47,32 @@ function truncateWords(text: string, maxWords: number): string {
   return words.slice(0, maxWords).join(' ')
 }
 
+function stripIntentPrefix(raw: string): string {
+  return raw.replace(INTENT_PREFIX, '').trim()
+}
+
+function stripPossessives(text: string): string {
+  return text.replace(/\b(my|the)\b/gi, '').replace(/\s+/g, ' ').trim()
+}
+
+function formatEntity(entity: string): string {
+  if (entity === entity.toUpperCase()) return entity
+  const lower = entity.toLowerCase()
+  if (/^[a-z]{2,6}$/.test(entity) && !/[aeiou]/i.test(entity)) {
+    return entity.toUpperCase()
+  }
+  return capitalizeFirst(lower)
+}
+
+/** Move trailing "for ENTITY" to the front: "phase 2 for kpmg" → "KPMG phase 2" */
+function reorderForEntity(phrase: string): string {
+  const match = phrase.match(/^(.+?)\s+for\s+(\S+)\s*$/i)
+  if (!match) return phrase
+
+  const [, rest, entity] = match
+  return `${formatEntity(entity)} ${rest.trim()}`
+}
+
 /** Rewrite a raw brain-dump line into a clear, actionable title (~6 words max). */
 export function reformulateTitle(rawLine: string): string {
   const raw = cleanRawLine(rawLine)
@@ -51,19 +84,30 @@ export function reformulateTitle(rawLine: string): string {
     return 'Go to the gym'
   }
 
-  const proposalMatch = raw.match(/^proposal\s+(\S+)$/i)
+  let text = stripIntentPrefix(raw)
+
+  const getDoneMatch = text.match(/^get\s+(.+?)\s+done$/i)
+  if (getDoneMatch) {
+    const subject = reorderForEntity(stripPossessives(getDoneMatch[1]))
+    return truncateWords(`Finish ${capitalizeFirst(subject)}`, 6)
+  }
+
+  const proposalMatch = text.match(/^proposal\s+(\S+)$/i)
   if (proposalMatch) {
-    const entity = proposalMatch[1]
-    const formatted =
-      entity === entity.toUpperCase() ? entity : capitalizeFirst(entity)
-    return truncateWords(`Finish ${formatted} proposal`, 6)
+    return truncateWords(`Finish ${formatEntity(proposalMatch[1])} proposal`, 6)
   }
 
-  if (ACTION_VERBS.test(raw)) {
-    return truncateWords(capitalizeFirst(raw), 6)
+  text = stripPossessives(text)
+
+  if (ACTION_VERBS.test(text)) {
+    return truncateWords(capitalizeFirst(text), 6)
   }
 
-  return truncateWords(capitalizeFirst(raw), 6)
+  if (/^(re)?organiz(e|ing)\b/i.test(text)) {
+    return truncateWords(capitalizeFirst(text), 6)
+  }
+
+  return truncateWords(capitalizeFirst(text), 6)
 }
 
 export function buildPlannerPrompt(
@@ -94,16 +138,20 @@ User input:
 ${rawText.trim()}
 """
 
-For each distinct task, return JSON array items with:
-- "title": reformulated clear actionable phrase (verb + object, max ~6 words)
-- "rawInput": the original line from the user input
+For each distinct task, return JSON with a "tasks" array. Each item must have:
+- "title": reformulated clear actionable phrase (verb + object, max ~6 words). MUST differ from rawInput.
+- "rawInput": the original line from the user input (verbatim)
 - "category": one of the category ids above
 
 Examples:
 - "gym" → title: "Go to the gym", rawInput: "gym"
 - "proposal kpmg" → title: "Finish KPMG proposal", rawInput: "proposal kpmg"
+- "I want to reorganize my calendar" → title: "Reorganize calendar", rawInput: "I want to reorganize my calendar"
+- "today i want to get phase 2 for kpmg done" → title: "Finish KPMG phase 2", rawInput: "today i want to get phase 2 for kpmg done"
 - "read chapter 3" → title: "Read chapter 3", rawInput: "read chapter 3"
-- "fix onboarding bug" → title: "Fix onboarding bug", rawInput: "fix onboarding bug"`
+- "fix onboarding bug" → title: "Fix onboarding bug", rawInput: "fix onboarding bug"
+
+Respond ONLY with valid JSON: {"tasks": [{ "title": "...", "rawInput": "...", "category": "..." }]}`
 }
 
 function resolveCategoryId(preferred: string, categories: Category[]): string {
@@ -168,9 +216,87 @@ function splitInputLines(rawText: string): string[] {
   })
 }
 
-/** Mock planner — uses same output shape as a future OpenAI call. */
+/** Mock planner — uses same output shape as the OpenAI call. */
 export function mockPlanFromText(rawText: string, categories: Category[]): PlannerTaskOutput[] {
   return splitInputLines(rawText).map((line) => classifyLine(line, categories))
+}
+
+function normalizePlannerOutput(
+  items: PlannerTaskOutput[],
+  categories: Category[],
+): PlannerTaskOutput[] {
+  return items
+    .filter((item) => item.title?.trim() && item.rawInput?.trim())
+    .map((item) => ({
+      title: item.title.trim(),
+      rawInput: item.rawInput.trim(),
+      category: resolveCategoryId(item.category, categories),
+    }))
+}
+
+function parseOpenAiResponse(content: string, categories: Category[]): PlannerTaskOutput[] | null {
+  try {
+    const parsed = JSON.parse(content) as unknown
+    const rawItems = Array.isArray(parsed)
+      ? parsed
+      : parsed && typeof parsed === 'object' && Array.isArray((parsed as { tasks?: unknown }).tasks)
+        ? (parsed as { tasks: PlannerTaskOutput[] }).tasks
+        : null
+
+    if (!rawItems || rawItems.length === 0) return null
+
+    const normalized = normalizePlannerOutput(rawItems, categories)
+    return normalized.length > 0 ? normalized : null
+  } catch {
+    return null
+  }
+}
+
+async function callOpenAiPlanner(
+  rawText: string,
+  categories: Category[],
+  existingTasks: Task[],
+): Promise<PlannerTaskOutput[] | null> {
+  const apiKey = getApiKey()
+  if (!apiKey) return null
+
+  try {
+    const response = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a personal task planner. Respond ONLY with valid JSON containing a "tasks" array.',
+          },
+          { role: 'user', content: buildPlannerPrompt(rawText, categories, existingTasks) },
+        ],
+        temperature: 0.4,
+        max_tokens: 1000,
+        response_format: { type: 'json_object' },
+      }),
+    })
+
+    if (!response.ok) {
+      console.warn('[ai-planner] OpenAI error, using fallback')
+      return null
+    }
+
+    const data = await response.json()
+    const content = data.choices?.[0]?.message?.content
+    if (typeof content !== 'string') return null
+
+    return parseOpenAiResponse(content, categories)
+  } catch (err) {
+    console.warn('[ai-planner] OpenAI call failed, using fallback', err)
+    return null
+  }
 }
 
 function plannerOutputToTasks(outputs: PlannerTaskOutput[]): Task[] {
@@ -185,11 +311,23 @@ function plannerOutputToTasks(outputs: PlannerTaskOutput[]): Task[] {
   }))
 }
 
-function parseAndClassify(rawText: string, categories: Category[]): Task[] {
+async function planTasksFromText(
+  rawText: string,
+  categories: Category[],
+  existingTasks: Task[],
+): Promise<Task[]> {
+  const aiResult = await callOpenAiPlanner(rawText, categories, existingTasks)
+  if (aiResult) {
+    return plannerOutputToTasks(aiResult)
+  }
+
   return plannerOutputToTasks(mockPlanFromText(rawText, categories))
 }
 
-export function useAiPlanner(categories: Category[]): AiPlannerResult & {
+export function useAiPlanner(
+  categories: Category[],
+  existingTasks: Task[] = [],
+): AiPlannerResult & {
   planFromText: (rawText: string) => Promise<Task[]>
   reset: () => void
 } {
@@ -208,12 +346,10 @@ export function useAiPlanner(categories: Category[]): AiPlannerResult & {
       setError(null)
 
       const safeCategories = Array.isArray(categories) ? categories : []
+      const safeExisting = Array.isArray(existingTasks) ? existingTasks : []
 
       try {
-        // Simulate AI processing delay; future: call OpenAI with buildPlannerPrompt(...)
-        await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 600))
-
-        const result = parseAndClassify(rawText, safeCategories)
+        const result = await planTasksFromText(rawText, safeCategories, safeExisting)
         setTasks(result)
         return result
       } catch (err) {
@@ -224,7 +360,7 @@ export function useAiPlanner(categories: Category[]): AiPlannerResult & {
         setIsProcessing(false)
       }
     },
-    [categories],
+    [categories, existingTasks],
   )
 
   const reset = useCallback(() => {

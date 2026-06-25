@@ -7,7 +7,6 @@ type PlanStepReviewProps = {
   categories: Category[]
   existingTaskTitles: Set<string>
   onConfirm: () => void
-  onEdit: () => void
   onTasksChange: (tasks: Task[]) => void
   onAddMore: () => void
 }
@@ -20,9 +19,9 @@ function CheckIcon() {
   )
 }
 
-function EditIcon() {
+function PencilIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
@@ -52,7 +51,6 @@ export function PlanStepReview({
   categories,
   existingTaskTitles,
   onConfirm,
-  onEdit,
   onTasksChange,
   onAddMore,
 }: PlanStepReviewProps) {
@@ -158,19 +156,26 @@ export function PlanStepReview({
                         aria-label="Edit task title"
                       />
                     ) : (
-                      <button
-                        type="button"
-                        className="pmd-review__task-title-btn"
-                        onClick={() => startEditing(task)}
-                        title="Click to rename"
-                      >
+                      <>
                         <span className="pmd-review__task-title">{task.title}</span>
-                      </button>
-                    )}
-                    {task.rawInput && task.rawInput !== task.title && (
-                      <span className="pmd-review__task-raw">{task.rawInput}</span>
+                        {task.rawInput && task.rawInput !== task.title && (
+                          <span className="pmd-review__task-raw">{task.rawInput}</span>
+                        )}
+                      </>
                     )}
                   </div>
+
+                  {editingId !== task.id && (
+                    <button
+                      type="button"
+                      className="pmd-review__task-edit"
+                      onClick={() => startEditing(task)}
+                      aria-label={`Rename ${task.title}`}
+                      title="Rename task"
+                    >
+                      <PencilIcon />
+                    </button>
+                  )}
 
                   <select
                     className="pmd-review__category-select"
@@ -221,10 +226,6 @@ export function PlanStepReview({
         <button type="button" className="uh-btn uh-btn--ghost uh-btn--wide" onClick={onAddMore}>
           <PlusIcon />
           Add more
-        </button>
-        <button type="button" className="uh-btn uh-btn--ghost uh-btn--wide" onClick={onEdit}>
-          <EditIcon />
-          Edit
         </button>
       </div>
     </div>
