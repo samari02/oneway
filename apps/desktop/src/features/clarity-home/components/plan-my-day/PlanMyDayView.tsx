@@ -13,6 +13,9 @@ type PlanMyDayViewProps = {
 
 export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
   const [step, setStep] = useState<PlanMyDayStep>('input')
+  const [inputDraft, setInputDraft] = useState('')
+  const [lastClassifiedText, setLastClassifiedText] = useState('')
+  const [isAppendMode, setIsAppendMode] = useState(false)
   const [stagedTasks, setStagedTasks] = useState<Task[]>([])
   const [fadeOut, setFadeOut] = useState(false)
 
@@ -40,16 +43,39 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
 
   const handleSubmit = useCallback(
     async (text: string) => {
+      setInputDraft(text)
+
+      let textToClassify = text
+      let appendToExisting = false
+
+      if (isAppendMode && lastClassifiedText) {
+        const prev = lastClassifiedText.trimEnd()
+        if (text.startsWith(prev)) {
+          textToClassify = text.slice(prev.length).trim()
+          if (!textToClassify) return
+          appendToExisting = true
+        } else {
+          setIsAppendMode(false)
+        }
+      }
+
       try {
-        const result = await planFromText(text)
+        const result = await planFromText(textToClassify)
         if (!mountedRef.current || !Array.isArray(result) || result.length === 0) return
-        setStagedTasks(result)
+
+        if (appendToExisting) {
+          setStagedTasks((prev) => [...prev, ...result])
+        } else {
+          setStagedTasks(result)
+        }
+        setLastClassifiedText(text)
+        setIsAppendMode(false)
         setStep('review')
       } catch {
         // planFromText handles errors internally; guard against unexpected failures
       }
     },
-    [planFromText],
+    [planFromText, isAppendMode, lastClassifiedText],
   )
 
   const handleConfirm = useCallback(() => {
@@ -62,7 +88,18 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
   }, [stagedTasks, mergeTasks, reset, onClose])
 
   const handleEdit = useCallback(() => {
+    setIsAppendMode(false)
     setStep('input')
+  }, [])
+
+  const handleAddMore = useCallback(() => {
+    setIsAppendMode(true)
+    setInputDraft((prev) => (prev.endsWith('\n') || !prev ? prev : `${prev}\n`))
+    setStep('input')
+  }, [])
+
+  const handleTasksChange = useCallback((tasks: Task[]) => {
+    setStagedTasks(tasks)
   }, [])
 
   return (
@@ -81,7 +118,14 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
 
       <div className="pmd-view__content" key={step}>
         {step === 'input' && (
-          <PlanStepInput onSubmit={handleSubmit} isProcessing={isProcessing} error={error} />
+          <PlanStepInput
+            text={inputDraft}
+            onTextChange={setInputDraft}
+            onSubmit={handleSubmit}
+            isProcessing={isProcessing}
+            error={error}
+            isAppendMode={isAppendMode}
+          />
         )}
         {step === 'review' && (
           <PlanStepReview
@@ -90,6 +134,8 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
             existingTaskTitles={existingTitles}
             onConfirm={handleConfirm}
             onEdit={handleEdit}
+            onTasksChange={handleTasksChange}
+            onAddMore={handleAddMore}
           />
         )}
       </div>

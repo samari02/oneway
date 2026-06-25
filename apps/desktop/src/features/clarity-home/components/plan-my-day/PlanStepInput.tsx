@@ -1,16 +1,25 @@
-import { useRef, useState, type KeyboardEvent } from 'react'
+import { useRef, type KeyboardEvent } from 'react'
 import { HomeCharacter } from '../unified/HomeCharacter'
 
 type PlanStepInputProps = {
+  text: string
+  onTextChange: (text: string) => void
   onSubmit: (text: string) => void | Promise<void>
   isProcessing: boolean
   error?: string | null
+  isAppendMode?: boolean
 }
 
 const QUICK_CHIPS = ['Add tasks', 'Reorganize', 'Clear my mind'] as const
 
-export function PlanStepInput({ onSubmit, isProcessing, error }: PlanStepInputProps) {
-  const [text, setText] = useState('')
+export function PlanStepInput({
+  text,
+  onTextChange,
+  onSubmit,
+  isProcessing,
+  error,
+  isAppendMode = false,
+}: PlanStepInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const handleSubmit = () => {
@@ -28,7 +37,7 @@ export function PlanStepInput({ onSubmit, isProcessing, error }: PlanStepInputPr
 
   const handleChip = (chip: string) => {
     const prefix = chip === 'Add tasks' ? '' : chip === 'Reorganize' ? 'Reorganize: ' : ''
-    setText((prev) => (prev ? `${prev}\n${prefix}` : prefix))
+    onTextChange(text ? `${text}\n${prefix}` : prefix)
     textareaRef.current?.focus()
   }
 
@@ -38,7 +47,9 @@ export function PlanStepInput({ onSubmit, isProcessing, error }: PlanStepInputPr
         <HomeCharacter size={100} />
       </div>
 
-      <h2 className="pmd-input__heading">What&apos;s on your mind today?</h2>
+      <h2 className="pmd-input__heading">
+        {isAppendMode ? 'Add a few more tasks' : "What's on your mind today?"}
+      </h2>
 
       <div className="pmd-input__chips">
         {QUICK_CHIPS.map((chip) => (
@@ -59,7 +70,7 @@ export function PlanStepInput({ onSubmit, isProcessing, error }: PlanStepInputPr
           ref={textareaRef}
           className="uh-morning-input__textarea"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => onTextChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type your tasks, goals, or just brain-dump everything…"
           rows={4}

@@ -1612,12 +1612,102 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
-.pmd-review__task-title {
+.pmd-review__task-body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pmd-review__task-title-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: text;
+  width: 100%;
+}
+
+.pmd-review__task-title-btn:hover .pmd-review__task-title {
+  color: var(--uh-ink);
+}
+
+.pmd-review__task-title {
+  display: block;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.4;
+  color: var(--uh-ink);
+  transition: color 0.15s;
+}
+
+.pmd-review__task-raw {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--uh-muted);
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pmd-review__task-input {
+  width: 100%;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border: 1px solid var(--uh-purple);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--uh-ink);
+  font: 400 14px/1.4 ui-sans-serif, system-ui, sans-serif;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--uh-purple-glow);
+}
+
+.pmd-review__category-select {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--uh-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--uh-muted);
+  font: 500 11px/1 ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  max-width: 110px;
+}
+
+.pmd-review__category-select:hover,
+.pmd-review__category-select:focus {
+  border-color: color-mix(in srgb, var(--pmd-cat-color) 50%, var(--uh-line));
+  color: var(--uh-ink);
+  outline: none;
+}
+
+.pmd-review__remove {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--uh-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.pmd-review__task:hover .pmd-review__remove {
+  opacity: 1;
+}
+
+.pmd-review__remove:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
 }
 
 .pmd-review__badge {

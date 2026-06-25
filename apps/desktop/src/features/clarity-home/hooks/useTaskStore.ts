@@ -11,6 +11,7 @@ export type Task = {
   createdAt: string
   completedAt?: string
   source: TaskSource
+  rawInput?: string
 }
 
 const STORAGE_KEY = 'clarity-tasks'
