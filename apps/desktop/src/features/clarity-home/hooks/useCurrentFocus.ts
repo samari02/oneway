@@ -21,12 +21,14 @@ const DEFAULT_DURATION: FocusDurationMinutes = 25
 const listeners = new Set<() => void>()
 let tickInterval: ReturnType<typeof setInterval> | null = null
 let lastAlarmEndsAt: number | null = null
+let snapshotCache: CurrentFocusSnapshot | null = null
 
 type CurrentFocusSnapshot = CurrentFocusState & {
   remainingSeconds: number
 }
 
 function emitChange() {
+  snapshotCache = null
   listeners.forEach((listener) => listener())
 }
 
@@ -134,11 +136,14 @@ function getRemainingSeconds(state: CurrentFocusState): number {
 }
 
 function getSnapshot(): CurrentFocusSnapshot {
-  const state = getEffectiveState(readStoredState())
-  return {
-    ...state,
-    remainingSeconds: getRemainingSeconds(state),
+  if (!snapshotCache) {
+    const state = getEffectiveState(readStoredState())
+    snapshotCache = {
+      ...state,
+      remainingSeconds: getRemainingSeconds(state),
+    }
   }
+  return snapshotCache
 }
 
 function getServerSnapshot(): CurrentFocusSnapshot {
