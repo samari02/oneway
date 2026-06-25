@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { useAuth } from '@/features/auth'
+import type { ViewType } from '@/features/navigation'
 import { supabase } from '@/lib/supabase'
 import { setApiKey, removeApiKey, hasApiKey, getMaskedApiKey } from '@/lib/openai'
 
@@ -30,7 +31,11 @@ interface DataStats {
   topSites?: Array<{ domain: string; visits: number; category: string }>
 }
 
-export function SettingsView() {
+interface SettingsViewProps {
+  onNavigateToView?: (view: ViewType) => void
+}
+
+export function SettingsView({ onNavigateToView }: SettingsViewProps) {
   const { user, signOut } = useAuth()
   const { preferences: aoiPrefs, isLoading: aoiLoading, updatePreferences: updateAoiPrefs } =
     useAoiPreferences()
@@ -528,6 +533,21 @@ export function SettingsView() {
             </p>
           )}
         </div>
+      </section>
+
+      {/* Features Pending */}
+      <section className="settings-section">
+        <h2 className="settings-section__title">Features Pending</h2>
+        <p className="settings-section__description">
+          Screens not yet in the main navigation.
+        </p>
+        <button
+          type="button"
+          className="settings-button settings-button--secondary settings-button--small"
+          onClick={() => onNavigateToView?.('today')}
+        >
+          Open Today
+        </button>
       </section>
 
       {/* Dev Section - Remove before production */}

@@ -138,7 +138,7 @@
 .app-layout__alert {
   position: fixed;
   top: 38px;
-  left: 64px; /* Sidebar collapsed width */
+  left: 72px; /* Sidebar collapsed width */
   right: 0;
   z-index: 150;
   padding: var(--space-sm) var(--space-lg);
@@ -146,12 +146,12 @@
 }
 
 .app-layout--sidebar-pinned .app-layout__alert {
-  left: 172px; /* Sidebar expanded width */
+  left: 200px; /* Sidebar expanded width */
 }
 
 .app-layout__body:has(.sidebar:hover) ~ .app-layout__alert,
 .app-layout__body:has(.sidebar:hover) + .app-layout__alert {
-  left: 172px;
+  left: 200px;
 }
 
 .app-layout__body {
@@ -167,18 +167,18 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0; /* Critical for nested flex scroll */
-  margin-left: 64px; /* Sidebar collapsed width */
+  margin-left: 72px; /* Sidebar collapsed width */
   transition: margin-left 0.25s ease;
 }
 
 /* When sidebar is pinned, increase margin */
 .app-layout--sidebar-pinned .app-layout__content {
-  margin-left: 172px; /* Sidebar expanded width */
+  margin-left: 200px; /* Sidebar expanded width */
 }
 
 /* When sidebar is hovered, also increase margin (responsive) */
 .app-layout__body:has(.sidebar:hover) .app-layout__content {
-  margin-left: 172px;
+  margin-left: 200px;
 }
 
 .app-layout__view {

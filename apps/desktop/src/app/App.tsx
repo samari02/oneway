@@ -440,7 +440,7 @@ function Dashboard() {
       case 'boundaries':
         return user ? <BoundariesView userId={user.id} /> : null
       case 'settings':
-        return <SettingsView />
+        return <SettingsView onNavigateToView={setCurrentView} />
       default:
         return (
           <ClarityHomeErrorBoundary>
