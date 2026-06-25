@@ -1,0 +1,104 @@
+.user-context-input {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.user-context-input--compact {
+  gap: 16px;
+}
+
+.user-context-input--loading {
+  opacity: 0.5;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.user-context-input__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-context-input__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text, #e2e8f0);
+  margin: 0;
+}
+
+.user-context-input__desc,
+.user-context-input__lead {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #94a3b8);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.user-context-input__textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border, #334155);
+  background: var(--color-surface, #1e293b);
+  color: var(--color-text, #e2e8f0);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.user-context-input__textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #7c3aed);
+}
+
+.user-context-input__textarea::placeholder {
+  color: var(--color-text-muted, #64748b);
+}
+
+.user-context-input__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.user-context-input__btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.user-context-input__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.user-context-input__btn--primary {
+  background: var(--color-primary, #7c3aed);
+  color: #fff;
+}
+
+.user-context-input__btn--primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.user-context-input__btn--ghost {
+  background: transparent;
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.user-context-input__btn--ghost:hover:not(:disabled) {
+  color: var(--color-text, #e2e8f0);
+}
+
+.user-context-input__hint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #64748b);
+  margin: 0;
+}

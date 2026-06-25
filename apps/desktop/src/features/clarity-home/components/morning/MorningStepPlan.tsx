@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PlanItem, PlanItemKind } from '../../hooks/useMorningFlow'
+import type { FocusArea } from '@oneway/shared'
 
 const KIND_LABELS: Record<PlanItem['kind'], string> = {
   goal: 'Goals',
@@ -197,6 +198,7 @@ type MorningStepPlanProps = {
   onUpdateItem: (id: string, text: string) => void
   onDeleteItem: (id: string) => void
   onAddItem: (kind: PlanItemKind, text: string, area?: string) => void
+  focusAreas?: FocusArea[]
 }
 
 export function MorningStepPlan({
@@ -207,6 +209,7 @@ export function MorningStepPlan({
   onUpdateItem,
   onDeleteItem,
   onAddItem,
+  focusAreas,
 }: MorningStepPlanProps) {
   const areaGroups = items.reduce<Map<string, PlanItem[]>>((acc, item) => {
     const area = item.area?.trim() || DEFAULT_AREA
@@ -216,9 +219,22 @@ export function MorningStepPlan({
     return acc
   }, new Map())
 
+  const resolveAreaLabel = (areaKey: string): string => {
+    if (!focusAreas || focusAreas.length === 0) return areaKey
+    const match = focusAreas.find(
+      (fa) => fa.id === areaKey || fa.label.toLowerCase() === areaKey.toLowerCase(),
+    )
+    return match ? `${match.emoji ?? ''} ${match.label}`.trim() : areaKey
+  }
+
   const sortedAreas = [...areaGroups.keys()].sort((a, b) => {
     if (a === DEFAULT_AREA) return 1
     if (b === DEFAULT_AREA) return -1
+    if (focusAreas && focusAreas.length > 0) {
+      const orderA = focusAreas.find((fa) => fa.id === a || fa.label.toLowerCase() === a.toLowerCase())?.display_order ?? 99
+      const orderB = focusAreas.find((fa) => fa.id === b || fa.label.toLowerCase() === b.toLowerCase())?.display_order ?? 99
+      return orderA - orderB
+    }
     return a.localeCompare(b)
   })
 
@@ -234,7 +250,7 @@ export function MorningStepPlan({
         <div className="mf-plan-groups">
           {sortedAreas.map((area) => (
             <div key={area} className="mf-plan-group">
-              <h3 className="mf-plan-group__label">{area}</h3>
+              <h3 className="mf-plan-group__label">{resolveAreaLabel(area)}</h3>
               <div className="mf-plan-group__items" role="list">
                 {areaGroups.get(area)?.map((item) => (
                   <PlanItemRow

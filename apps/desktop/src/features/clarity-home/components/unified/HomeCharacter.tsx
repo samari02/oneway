@@ -14,6 +14,11 @@ export function HomeCharacter({ size = 160 }: HomeCharacterProps) {
     >
       <div className="uh-character__glow" aria-hidden />
       <div className="uh-character__particles" aria-hidden />
+      <div className="uh-character__stars" aria-hidden>
+        {Array.from({ length: 12 }, (_, i) => (
+          <span key={i} />
+        ))}
+      </div>
       <img
         className="uh-character__img"
         src={HOME_CHARACTER3_SRC}

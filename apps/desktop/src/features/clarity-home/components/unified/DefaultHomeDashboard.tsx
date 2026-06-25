@@ -1,5 +1,5 @@
 import { useMemo, useState, type CSSProperties } from 'react'
-import type { DailyPlan } from '@oneway/shared'
+import type { DailyPlan, FocusArea } from '@oneway/shared'
 import { MOCK_CURRENT_FOCUS } from '../../mock-data'
 import { useTaskStore, type Task } from '../../hooks/useTaskStore'
 import { useCategoryStore } from '../../hooks/useCategoryStore'
@@ -17,6 +17,7 @@ type DefaultHomeDashboardProps = {
   isResetting: boolean
   onContinueFocus: () => void
   onPlanMyDay: () => void
+  focusAreas?: FocusArea[]
 }
 
 function formatMinutes(totalMinutes: number): string {
@@ -136,6 +137,40 @@ function ChevronIcon() {
   )
 }
 
+function CheckIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <polyline points="20 6 9 17 4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function TaskCheckbox({
+  checked,
+  onToggle,
+  label,
+}: {
+  checked: boolean
+  onToggle: () => void
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      className={`uh-dash-open__checkbox${checked ? ' uh-dash-open__checkbox--checked' : ''}`}
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={`Mark "${label}" as ${checked ? 'open' : 'done'}`}
+      onClick={(e) => {
+        e.stopPropagation()
+        onToggle()
+      }}
+    >
+      {checked && <CheckIcon />}
+    </button>
+  )
+}
+
 type TaskCategoryDisplay = {
   id: string
   label: string
@@ -153,10 +188,13 @@ export function DefaultHomeDashboard({
   isResetting,
   onContinueFocus,
   onPlanMyDay,
+  focusAreas,
 }: DefaultHomeDashboardProps) {
-  const { tasks } = useTaskStore()
+  const { tasks, toggleTask } = useTaskStore()
   const { categories } = useCategoryStore()
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => new Set())
+
+  const useFocusAreasMode = focusAreas && focusAreas.length > 0
 
   const toggleCategory = (catId: string) => {
     setExpandedCategories((prev) => {
@@ -168,30 +206,56 @@ export function DefaultHomeDashboard({
   }
 
   const openTasks = useMemo((): TaskCategoryDisplay[] => {
-    const openOnly = tasks.filter((t) => t.status === 'open')
+    const visibleTasks = tasks.filter((t) => t.status !== 'archived')
+    const openOnly = visibleTasks.filter((t) => t.status === 'open')
     if (openOnly.length === 0) return []
 
     const grouped = new Map<string, Task[]>()
-    for (const t of openOnly) {
+    for (const t of visibleTasks) {
       const list = grouped.get(t.category) ?? []
       list.push(t)
       grouped.set(t.category, list)
     }
 
-    return Array.from(grouped.entries()).map(([catId, catTasks]) => {
-      const cat = categories.find((c) => c.id === catId)
-      return {
-        id: catId,
-        label: cat?.label ?? catId.charAt(0).toUpperCase() + catId.slice(1),
-        count: catTasks.length,
-        color: cat?.color ?? '#a78bfa',
-        tasks: catTasks,
-      }
-    }).sort((a, b) => {
-      const orderMap = new Map(categories.map((c, i) => [c.id, i]))
-      return (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99)
-    })
-  }, [tasks, categories])
+    if (useFocusAreasMode) {
+      const areaMap = new Map(focusAreas.map((a) => [a.id, a]))
+      return Array.from(grouped.entries())
+        .map(([areaId, areaTasks]) => {
+          const area = areaMap.get(areaId)
+          const openCount = areaTasks.filter((t) => t.status === 'open').length
+          return {
+            id: areaId,
+            label: area?.label ?? areaId.charAt(0).toUpperCase() + areaId.slice(1),
+            count: openCount,
+            color: area?.color ?? '#a78bfa',
+            tasks: areaTasks,
+          }
+        })
+        .filter((cat) => cat.count > 0)
+        .sort((a, b) => {
+          const orderMap = new Map(focusAreas.map((fa) => [fa.id, fa.display_order]))
+          return (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99)
+        })
+    }
+
+    return Array.from(grouped.entries())
+      .map(([catId, catTasks]) => {
+        const cat = categories.find((c) => c.id === catId)
+        const openCount = catTasks.filter((t) => t.status === 'open').length
+        return {
+          id: catId,
+          label: cat?.label ?? catId.charAt(0).toUpperCase() + catId.slice(1),
+          count: openCount,
+          color: cat?.color ?? '#a78bfa',
+          tasks: catTasks,
+        }
+      })
+      .filter((cat) => cat.count > 0)
+      .sort((a, b) => {
+        const orderMap = new Map(categories.map((c, i) => [c.id, i]))
+        return (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99)
+      })
+  }, [tasks, categories, useFocusAreasMode, focusAreas])
 
   const focusData = useMemo(() => {
     const priorityGoal = todayPlan?.goals.find((g) => g.id === todayPlan.priority_goal_id)
@@ -222,11 +286,7 @@ export function DefaultHomeDashboard({
   return (
     <>
       <header className="uh-dash-header">
-        <div className="uh-dash-header__text">
-          <h1 className="uh-dash-header__title">{greeting}</h1>
-          <p className="uh-dash-header__subtitle">{subtitle}</p>
-        </div>
-        <div className="uh-dash-header__aside">
+        <div className="uh-dash-header__toolbar">
           <div className="uh-dash-header__actions">
             <button type="button" className="uh-dash-icon-btn" aria-label="Notifications">
               <BellIcon />
@@ -235,7 +295,13 @@ export function DefaultHomeDashboard({
               <SparkleIcon />
             </button>
           </div>
-          <HomeCharacter size={112} />
+        </div>
+        <div className="uh-dash-header__hero">
+          <HomeCharacter size={210} />
+          <div className="uh-dash-header__text">
+            <h1 className="uh-dash-header__title">{greeting}</h1>
+            <p className="uh-dash-header__subtitle">{subtitle}</p>
+          </div>
         </div>
       </header>
 
@@ -293,15 +359,31 @@ export function DefaultHomeDashboard({
                       <ChevronIcon />
                     </span>
                   </button>
-                  {isExpanded && (
-                    <ul className="uh-dash-open__tasks">
-                      {cat.tasks.map((task) => (
-                        <li key={task.id} className="uh-dash-open__task">
-                          {task.title}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <div
+                    className={`uh-dash-open__expand${isExpanded ? ' uh-dash-open__expand--open' : ''}`}
+                    aria-hidden={!isExpanded}
+                  >
+                    <div className="uh-dash-open__expand-inner">
+                      <ul className="uh-dash-open__tasks">
+                        {cat.tasks.map((task) => {
+                          const isDone = task.status === 'done'
+                          return (
+                            <li
+                              key={task.id}
+                              className={`uh-dash-open__task${isDone ? ' uh-dash-open__task--done' : ''}`}
+                            >
+                              <TaskCheckbox
+                                checked={isDone}
+                                label={task.title}
+                                onToggle={() => toggleTask(task.id)}
+                              />
+                              <span className="uh-dash-open__task-title">{task.title}</span>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
+                  </div>
                 </li>
               )
             })}

@@ -8,6 +8,11 @@ type ApiKeySaveState = 'idle' | 'saving' | 'saved' | 'error'
 import { SiteClassificationModal, type SiteClassification, type SiteCategory } from '@/features/stats/components/SiteClassificationModal'
 import { useAoiPreferences } from '@/features/settings/hooks/useAoiPreferences'
 import { DeleteSiteDomainPicker } from '@/features/settings/components/DeleteSiteDomainPicker'
+import { useFocusAreaStore } from '@/features/clarity-home/hooks/useFocusAreaStore'
+import { FocusAreaManager } from '@/features/clarity-home/components/FocusAreaManager'
+import { UserContextInput } from '@/features/clarity-home/components/UserContextInput'
+import '@/features/clarity-home/components/FocusAreaManager.css'
+import '@/features/clarity-home/components/UserContextInput.css'
 import './SettingsView.css'
 
 function normalizeDomainInput(raw: string): string {
@@ -29,6 +34,15 @@ export function SettingsView() {
   const { user, signOut } = useAuth()
   const { preferences: aoiPrefs, isLoading: aoiLoading, updatePreferences: updateAoiPrefs } =
     useAoiPreferences()
+  const {
+    activeAreas,
+    archivedAreas,
+    addArea,
+    editArea,
+    archive,
+    reactivate,
+    remove,
+  } = useFocusAreaStore(user?.id)
   const [aoiDomainInput, setAoiDomainInput] = useState('')
   const [resetting, setResetting] = useState(false)
   const [apiKeyInput, setApiKeyInput] = useState('')
@@ -237,6 +251,24 @@ export function SettingsView() {
         >
           Sign Out
         </button>
+      </section>
+
+      {/* Focus Areas Section */}
+      <section className="settings-section">
+        <FocusAreaManager
+          activeAreas={activeAreas}
+          archivedAreas={archivedAreas}
+          onAdd={addArea}
+          onEdit={editArea}
+          onArchive={archive}
+          onReactivate={reactivate}
+          onDelete={remove}
+        />
+      </section>
+
+      {/* About Me / User Context Section */}
+      <section className="settings-section">
+        <UserContextInput />
       </section>
 
       {/* Strictness Section (Coming Soon) */}

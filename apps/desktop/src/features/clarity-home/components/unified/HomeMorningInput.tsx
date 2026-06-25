@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { extractMorningPlan } from '@/lib/morning-plan'
+import type { FocusArea } from '@oneway/shared'
 import { toPlanItems } from '../../hooks/useMorningFlow'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import {
@@ -16,6 +17,8 @@ const PLACEHOLDER =
 type HomeMorningInputProps = {
   carriedForwardText?: string
   showCarriedCard: boolean
+  focusAreas?: FocusArea[]
+  userContext?: string
   onBrainDumpChange: (value: string) => void
   onPlanExtracted: (
     dump: string,
@@ -36,6 +39,8 @@ type HomeMorningInputProps = {
 export function HomeMorningInput({
   carriedForwardText,
   showCarriedCard,
+  focusAreas,
+  userContext,
   onBrainDumpChange,
   onPlanExtracted,
   onCarryForward,
@@ -110,7 +115,7 @@ export function HomeMorningInput({
     onExtractingChange(true)
 
     try {
-      const result = await extractMorningPlan(trimmed)
+      const result = await extractMorningPlan(trimmed, { focusAreas, userContext })
       const planItems = toPlanItems(result.items)
       onPlanExtracted(trimmed, planItems, {
         summaryFrame: result.summaryFrame,

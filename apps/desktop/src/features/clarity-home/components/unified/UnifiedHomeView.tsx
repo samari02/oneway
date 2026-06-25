@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { DailyPlan } from '@oneway/shared'
 import { useAmbientMusicPlayer } from '../../hooks/useAmbientMusicPlayer'
+import { useFocusAreaStore } from '../../hooks/useFocusAreaStore'
+import { useAuth } from '@/features/auth'
 import { DefaultHomeDashboard } from './DefaultHomeDashboard'
 import { PlanMyDayView } from '../plan-my-day/PlanMyDayView'
 import './UnifiedHome.css'
@@ -47,9 +49,12 @@ function getSubtitle(time: TimeOfDay): string {
 
 export function UnifiedHomeView({
   firstName,
+  userId,
   todayPlan,
 }: UnifiedHomeViewProps) {
   const [showPlanMyDay, setShowPlanMyDay] = useState(false)
+  const { user } = useAuth()
+  const { activeAreas } = useFocusAreaStore(userId ?? user?.id)
 
   const timeOfDay = getTimeOfDay()
   const isMorningHours = timeOfDay === 'morning'
@@ -83,6 +88,7 @@ export function UnifiedHomeView({
           isResetting={false}
           onContinueFocus={() => undefined}
           onPlanMyDay={() => setShowPlanMyDay(true)}
+          focusAreas={activeAreas}
         />
       </div>
     </div>

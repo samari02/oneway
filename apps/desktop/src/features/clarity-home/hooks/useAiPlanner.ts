@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { getApiKey } from '@/lib/openai'
 import type { Task } from './useTaskStore'
 import type { Category } from './useCategoryStore'
+import type { FocusArea } from '@oneway/shared'
 
 type AiPlannerResult = {
   tasks: Task[]
@@ -14,6 +15,7 @@ export type PlannerTaskOutput = {
   title: string
   rawInput: string
   category: string
+  focus_area_id?: string
 }
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
@@ -114,20 +116,31 @@ export function buildPlannerPrompt(
   rawText: string,
   categories: Category[],
   existingTasks: Task[],
+  focusAreas?: FocusArea[],
 ): string {
-  const categoryList = categories
-    .filter((c) => c?.id)
-    .map((c) => `- ${c.id}: ${c.emoji} ${c.label}`)
-    .join('\n')
+  const useFocusAreas = focusAreas && focusAreas.length > 0
+
+  const categoryList = useFocusAreas
+    ? focusAreas
+        .filter((a) => a.status === 'active')
+        .map((a) => `- ${a.id}: ${a.emoji ?? '•'} ${a.label}`)
+        .join('\n')
+    : categories
+        .filter((c) => c?.id)
+        .map((c) => `- ${c.id}: ${c.emoji} ${c.label}`)
+        .join('\n')
 
   const existingList =
     existingTasks.length > 0
       ? existingTasks.map((t) => `- ${t.title} (${t.category})`).join('\n')
       : '(none)'
 
+  const categoryField = useFocusAreas ? 'focus_area_id' : 'category'
+  const categoryLabel = useFocusAreas ? 'Focus Areas' : 'Categories'
+
   return `You are a personal task planner. Parse the user's brain dump into clear, actionable tasks.
 
-Categories (assign exactly one per task):
+${categoryLabel} (assign exactly one per task):
 ${categoryList}
 
 Existing tasks (avoid duplicates):
@@ -141,7 +154,7 @@ ${rawText.trim()}
 For each distinct task, return JSON with a "tasks" array. Each item must have:
 - "title": reformulated clear actionable phrase (verb + object, max ~6 words). MUST differ from rawInput.
 - "rawInput": the original line from the user input (verbatim)
-- "category": one of the category ids above
+- "${categoryField}": one of the ${categoryLabel.toLowerCase()} ids above
 
 Examples:
 - "gym" → title: "Go to the gym", rawInput: "gym"
@@ -151,7 +164,7 @@ Examples:
 - "read chapter 3" → title: "Read chapter 3", rawInput: "read chapter 3"
 - "fix onboarding bug" → title: "Fix onboarding bug", rawInput: "fix onboarding bug"
 
-Respond ONLY with valid JSON: {"tasks": [{ "title": "...", "rawInput": "...", "category": "..." }]}`
+Respond ONLY with valid JSON: {"tasks": [{ "title": "...", "rawInput": "...", "${categoryField}": "..." }]}`
 }
 
 function resolveCategoryId(preferred: string, categories: Category[]): string {
@@ -234,7 +247,7 @@ function normalizePlannerOutput(
     }))
 }
 
-function parseOpenAiResponse(content: string, categories: Category[]): PlannerTaskOutput[] | null {
+function parseOpenAiResponse(content: string, categories: Category[], focusAreas?: FocusArea[]): PlannerTaskOutput[] | null {
   try {
     const parsed = JSON.parse(content) as unknown
     const rawItems = Array.isArray(parsed)
@@ -245,6 +258,18 @@ function parseOpenAiResponse(content: string, categories: Category[]): PlannerTa
 
     if (!rawItems || rawItems.length === 0) return null
 
+    // If using focus areas, map focus_area_id back to category field
+    if (focusAreas && focusAreas.length > 0) {
+      const mapped = rawItems.map((item: Record<string, unknown>) => ({
+        title: item.title as string,
+        rawInput: item.rawInput as string,
+        category: (item.focus_area_id as string) ?? (item.category as string) ?? '',
+        focus_area_id: item.focus_area_id as string | undefined,
+      }))
+      const normalized = normalizePlannerOutputWithFocusAreas(mapped, focusAreas)
+      return normalized.length > 0 ? normalized : null
+    }
+
     const normalized = normalizePlannerOutput(rawItems, categories)
     return normalized.length > 0 ? normalized : null
   } catch {
@@ -252,10 +277,28 @@ function parseOpenAiResponse(content: string, categories: Category[]): PlannerTa
   }
 }
 
+function normalizePlannerOutputWithFocusAreas(
+  items: PlannerTaskOutput[],
+  focusAreas: FocusArea[],
+): PlannerTaskOutput[] {
+  const areaIds = new Set(focusAreas.map((a) => a.id))
+  const fallback = focusAreas[0]?.id ?? ''
+
+  return items
+    .filter((item) => item.title?.trim() && item.rawInput?.trim())
+    .map((item) => ({
+      title: item.title.trim(),
+      rawInput: item.rawInput.trim(),
+      category: areaIds.has(item.category) ? item.category : fallback,
+      focus_area_id: areaIds.has(item.category) ? item.category : fallback,
+    }))
+}
+
 async function callOpenAiPlanner(
   rawText: string,
   categories: Category[],
   existingTasks: Task[],
+  focusAreas?: FocusArea[],
 ): Promise<PlannerTaskOutput[] | null> {
   const apiKey = getApiKey()
   if (!apiKey) return null
@@ -275,7 +318,7 @@ async function callOpenAiPlanner(
             content:
               'You are a personal task planner. Respond ONLY with valid JSON containing a "tasks" array.',
           },
-          { role: 'user', content: buildPlannerPrompt(rawText, categories, existingTasks) },
+          { role: 'user', content: buildPlannerPrompt(rawText, categories, existingTasks, focusAreas) },
         ],
         temperature: 0.4,
         max_tokens: 1000,
@@ -292,7 +335,7 @@ async function callOpenAiPlanner(
     const content = data.choices?.[0]?.message?.content
     if (typeof content !== 'string') return null
 
-    return parseOpenAiResponse(content, categories)
+    return parseOpenAiResponse(content, categories, focusAreas)
   } catch (err) {
     console.warn('[ai-planner] OpenAI call failed, using fallback', err)
     return null
@@ -315,8 +358,9 @@ async function planTasksFromText(
   rawText: string,
   categories: Category[],
   existingTasks: Task[],
+  focusAreas?: FocusArea[],
 ): Promise<Task[]> {
-  const aiResult = await callOpenAiPlanner(rawText, categories, existingTasks)
+  const aiResult = await callOpenAiPlanner(rawText, categories, existingTasks, focusAreas)
   if (aiResult) {
     return plannerOutputToTasks(aiResult)
   }
@@ -327,6 +371,7 @@ async function planTasksFromText(
 export function useAiPlanner(
   categories: Category[],
   existingTasks: Task[] = [],
+  focusAreas?: FocusArea[],
 ): AiPlannerResult & {
   planFromText: (rawText: string) => Promise<Task[]>
   reset: () => void
@@ -349,7 +394,7 @@ export function useAiPlanner(
       const safeExisting = Array.isArray(existingTasks) ? existingTasks : []
 
       try {
-        const result = await planTasksFromText(rawText, safeCategories, safeExisting)
+        const result = await planTasksFromText(rawText, safeCategories, safeExisting, focusAreas)
         setTasks(result)
         return result
       } catch (err) {
@@ -360,7 +405,7 @@ export function useAiPlanner(
         setIsProcessing(false)
       }
     },
-    [categories, existingTasks],
+    [categories, existingTasks, focusAreas],
   )
 
   const reset = useCallback(() => {

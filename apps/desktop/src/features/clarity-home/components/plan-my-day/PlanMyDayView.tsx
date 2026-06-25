@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTaskStore, type Task } from '../../hooks/useTaskStore'
 import { useCategoryStore } from '../../hooks/useCategoryStore'
+import { useFocusAreaStore } from '../../hooks/useFocusAreaStore'
+import { useAuth } from '@/features/auth'
 import { useAiPlanner } from '../../hooks/useAiPlanner'
 import { PlanStepInput } from './PlanStepInput'
 import { PlanStepReview } from './PlanStepReview'
@@ -21,7 +23,9 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
 
   const { tasks: existingTasks, mergeTasks } = useTaskStore()
   const { categories } = useCategoryStore()
-  const { isProcessing, error, planFromText, reset } = useAiPlanner(categories, existingTasks)
+  const { user } = useAuth()
+  const { activeAreas } = useFocusAreaStore(user?.id)
+  const { isProcessing, error, planFromText, reset } = useAiPlanner(categories, existingTasks, activeAreas)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -130,6 +134,7 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
             onConfirm={handleConfirm}
             onTasksChange={handleTasksChange}
             onAddMore={handleAddMore}
+            focusAreas={activeAreas}
           />
         )}
       </div>

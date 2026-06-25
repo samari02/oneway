@@ -1,5 +1,7 @@
 import { MORNING_AMBIENT_AUDIO_SRC } from '../../companion-avatars'
 import { useMorningAmbientAudio } from '../../hooks/useMorningAmbientAudio'
+import { useFocusAreaStore } from '../../hooks/useFocusAreaStore'
+import { useAuth } from '@/features/auth'
 import { AmbientMusicPlayer } from '../AmbientMusicPlayer'
 import type { DayPlan } from '../../hooks/useMorningFlow'
 import { useMorningFlow } from '../../hooks/useMorningFlow'
@@ -59,6 +61,9 @@ export function MorningFlowView({
     goBack,
     completeFlow,
   } = useMorningFlow({ initialIntention, initialCarriedForward })
+
+  const { user } = useAuth()
+  const { activeAreas } = useFocusAreaStore(user?.id)
 
   const music = useMorningAmbientAudio(MORNING_AMBIENT_AUDIO_SRC)
   const stepClass = `morning-flow__step morning-flow__step--${direction}`
@@ -121,6 +126,7 @@ export function MorningFlowView({
                   onUpdateItem={updateItem}
                   onDeleteItem={deleteItem}
                   onAddItem={addItem}
+                  focusAreas={activeAreas}
                 />
               )}
 

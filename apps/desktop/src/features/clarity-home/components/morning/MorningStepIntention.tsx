@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { extractMorningPlan } from '@/lib/morning-plan'
+import type { FocusArea } from '@oneway/shared'
 import { toPlanItems } from '../../hooks/useMorningFlow'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import {
@@ -18,6 +19,8 @@ type MorningStepIntentionProps = {
   carriedForwardText?: string
   showCarriedCard: boolean
   yesterdayGoals?: YesterdayGoal[]
+  focusAreas?: FocusArea[]
+  userContext?: string
   onBrainDumpChange: (value: string) => void
   onPlanExtracted: (
     dump: string,
@@ -40,6 +43,8 @@ export function MorningStepIntention({
   carriedForwardText,
   showCarriedCard,
   yesterdayGoals = MOCK_YESTERDAY_GOALS,
+  focusAreas,
+  userContext,
   onBrainDumpChange,
   onPlanExtracted,
   onCarryForward,
@@ -105,7 +110,7 @@ export function MorningStepIntention({
     onExtractingChange(true)
 
     try {
-      const result = await extractMorningPlan(trimmed)
+      const result = await extractMorningPlan(trimmed, { focusAreas, userContext })
       const planItems = toPlanItems(result.items)
       onPlanExtracted(trimmed, planItems, {
         summaryFrame: result.summaryFrame,

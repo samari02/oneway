@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import type { Task } from '../../hooks/useTaskStore'
 import type { Category } from '../../hooks/useCategoryStore'
+import type { FocusArea } from '@oneway/shared'
 import { CategoryIcon } from '../CategoryIcon'
 
 type PlanStepReviewProps = {
@@ -10,6 +11,7 @@ type PlanStepReviewProps = {
   onConfirm: () => void
   onTasksChange: (tasks: Task[]) => void
   onAddMore: () => void
+  focusAreas?: FocusArea[]
 }
 
 function CheckIcon() {
@@ -54,9 +56,12 @@ export function PlanStepReview({
   onConfirm,
   onTasksChange,
   onAddMore,
+  focusAreas,
 }: PlanStepReviewProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
+
+  const useFocusAreasMode = focusAreas && focusAreas.length > 0
 
   const validCategories = useMemo(
     () => categories.filter((c) => c?.id).sort((a, b) => a.order - b.order),
@@ -71,6 +76,21 @@ export function PlanStepReview({
       map.set(task.category, list)
     }
 
+    if (useFocusAreasMode) {
+      const areaOrder = new Map(focusAreas.map((a) => [a.id, a.display_order]))
+      return Array.from(map.entries())
+        .sort(([a], [b]) => (areaOrder.get(a) ?? 99) - (areaOrder.get(b) ?? 99))
+        .map(([areaId, areaTasks]) => {
+          const area = focusAreas.find((a) => a.id === areaId)
+          return {
+            category: area
+              ? { id: area.id, label: area.label, emoji: area.emoji ?? '•', color: area.color ?? '#a78bfa', order: area.display_order }
+              : { id: areaId, label: areaId, emoji: '•', color: '#a78bfa', order: 99 },
+            tasks: areaTasks,
+          }
+        })
+    }
+
     const catOrder = new Map(validCategories.map((c, i) => [c.id, i]))
     return Array.from(map.entries())
       .sort(([a], [b]) => (catOrder.get(a) ?? 99) - (catOrder.get(b) ?? 99))
@@ -81,7 +101,7 @@ export function PlanStepReview({
           tasks: catTasks,
         }
       })
-  }, [tasks, validCategories])
+  }, [tasks, validCategories, useFocusAreasMode, focusAreas])
 
   const isNew = (title: string) =>
     !existingTaskTitles.has(title.trim().toLowerCase().replace(/\s+/g, ' '))
@@ -185,16 +205,24 @@ export function PlanStepReview({
                     aria-label={`Category for ${task.title}`}
                     style={
                       {
-                        '--pmd-cat-color':
-                          validCategories.find((c) => c.id === task.category)?.color ?? category.color,
+                        '--pmd-cat-color': useFocusAreasMode
+                          ? (focusAreas.find((a) => a.id === task.category)?.color ?? category.color)
+                          : (validCategories.find((c) => c.id === task.category)?.color ?? category.color),
                       } as CSSProperties
                     }
                   >
-                    {validCategories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.label}
-                      </option>
-                    ))}
+                    {useFocusAreasMode
+                      ? focusAreas.filter((a) => a.status === 'active').map((area) => (
+                          <option key={area.id} value={area.id}>
+                            {area.emoji ?? ''} {area.label}
+                          </option>
+                        ))
+                      : validCategories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.label}
+                          </option>
+                        ))
+                    }
                   </select>
 
                   {isNew(task.title) && <span className="pmd-review__badge">New</span>}
