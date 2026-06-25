@@ -42,7 +42,7 @@ export function PlanStepReview({
       map.set(task.category, list)
     }
 
-    const catOrder = new Map(categories.map((c, i) => [c.id, i]))
+    const catOrder = new Map(categories.filter((c) => c?.id).map((c, i) => [c.id, i]))
     return Array.from(map.entries())
       .sort(([a], [b]) => (catOrder.get(a) ?? 99) - (catOrder.get(b) ?? 99))
       .map(([catId, catTasks]) => {

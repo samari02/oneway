@@ -17,11 +17,23 @@ const KEYWORD_RULES: { pattern: RegExp; category: string }[] = [
   { pattern: /\b(clarity|ship|build|code|design|feature|bug|deploy|mvp|prototype|refactor|component)\b/i, category: 'clarity' },
 ]
 
+function resolveCategoryId(preferred: string, categories: Category[]): string {
+  const valid = categories.filter((c) => c?.id)
+  if (valid.length === 0) return preferred
+
+  const ids = new Set(valid.map((c) => c.id))
+  if (ids.has(preferred)) return preferred
+
+  const defaultCat = valid.find((c) => c.id === 'clarity')
+  return defaultCat?.id ?? valid[0].id
+}
+
 function classifyLine(line: string, categories: Category[]): ClassifyResult {
   const trimmed = line.trim().replace(/^[-•*]\s*/, '').replace(/^\d+[.)]\s*/, '')
-  if (!trimmed) return { title: line.trim(), category: 'clarity', source: 'ai' }
+  const fallbackCategory = resolveCategoryId('clarity', categories)
+  if (!trimmed) return { title: line.trim(), category: fallbackCategory, source: 'ai' }
 
-  const categoryIds = new Set(categories.map((c) => c.id))
+  const categoryIds = new Set(categories.filter((c) => c?.id).map((c) => c.id))
 
   for (const rule of KEYWORD_RULES) {
     if (rule.pattern.test(trimmed) && categoryIds.has(rule.category)) {
@@ -29,7 +41,7 @@ function classifyLine(line: string, categories: Category[]): ClassifyResult {
     }
   }
 
-  return { title: trimmed, category: 'clarity', source: 'ai' }
+  return { title: trimmed, category: fallbackCategory, source: 'ai' }
 }
 
 function generateId(): string {
@@ -96,11 +108,13 @@ export function useAiPlanner(categories: Category[]): AiPlannerResult & {
       setIsProcessing(true)
       setError(null)
 
+      const safeCategories = Array.isArray(categories) ? categories : []
+
       try {
         // Simulate AI processing delay
         await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 600))
 
-        const result = parseAndClassify(rawText, categories)
+        const result = parseAndClassify(rawText, safeCategories)
         setTasks(result)
         return result
       } catch (err) {

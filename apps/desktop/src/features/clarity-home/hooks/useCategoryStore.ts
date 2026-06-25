@@ -28,12 +28,26 @@ function subscribe(l: () => void) {
   return () => listeners.delete(l)
 }
 
+function isValidCategory(value: unknown): value is Category {
+  if (!value || typeof value !== 'object') return false
+  const cat = value as Partial<Category>
+  return (
+    typeof cat.id === 'string' &&
+    typeof cat.label === 'string' &&
+    typeof cat.emoji === 'string' &&
+    typeof cat.color === 'string' &&
+    typeof cat.order === 'number'
+  )
+}
+
 function readCategories(): Category[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return DEFAULT_CATEGORIES
-    const parsed = JSON.parse(raw) as Category[]
-    return parsed.length > 0 ? parsed : DEFAULT_CATEGORIES
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return DEFAULT_CATEGORIES
+    const valid = parsed.filter(isValidCategory)
+    return valid.length > 0 ? valid : DEFAULT_CATEGORIES
   } catch {
     return DEFAULT_CATEGORIES
   }

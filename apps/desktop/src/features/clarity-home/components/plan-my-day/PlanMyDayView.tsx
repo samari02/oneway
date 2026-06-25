@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTaskStore, type Task } from '../../hooks/useTaskStore'
 import { useCategoryStore } from '../../hooks/useCategoryStore'
 import { useAiPlanner } from '../../hooks/useAiPlanner'
@@ -18,19 +18,35 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
 
   const { tasks: existingTasks, mergeTasks } = useTaskStore()
   const { categories } = useCategoryStore()
-  const { isProcessing, planFromText, reset } = useAiPlanner(categories)
+  const { isProcessing, error, planFromText, reset } = useAiPlanner(categories)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   const existingTitles = useMemo(
-    () => new Set(existingTasks.map((t) => t.title.trim().toLowerCase().replace(/\s+/g, ' '))),
+    () =>
+      new Set(
+        existingTasks
+          .filter((t) => typeof t.title === 'string')
+          .map((t) => t.title.trim().toLowerCase().replace(/\s+/g, ' ')),
+      ),
     [existingTasks],
   )
 
   const handleSubmit = useCallback(
     async (text: string) => {
-      const result = await planFromText(text)
-      if (result.length > 0) {
+      try {
+        const result = await planFromText(text)
+        if (!mountedRef.current || !Array.isArray(result) || result.length === 0) return
         setStagedTasks(result)
         setStep('review')
+      } catch {
+        // planFromText handles errors internally; guard against unexpected failures
       }
     },
     [planFromText],
@@ -65,7 +81,7 @@ export function PlanMyDayView({ onClose }: PlanMyDayViewProps) {
 
       <div className="pmd-view__content" key={step}>
         {step === 'input' && (
-          <PlanStepInput onSubmit={handleSubmit} isProcessing={isProcessing} />
+          <PlanStepInput onSubmit={handleSubmit} isProcessing={isProcessing} error={error} />
         )}
         {step === 'review' && (
           <PlanStepReview

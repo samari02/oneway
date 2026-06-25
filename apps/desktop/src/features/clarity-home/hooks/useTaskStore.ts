@@ -26,10 +26,26 @@ function subscribe(l: () => void) {
   return () => listeners.delete(l)
 }
 
+function isValidTask(value: unknown): value is Task {
+  if (!value || typeof value !== 'object') return false
+  const task = value as Partial<Task>
+  return (
+    typeof task.id === 'string' &&
+    typeof task.title === 'string' &&
+    typeof task.category === 'string' &&
+    typeof task.status === 'string' &&
+    typeof task.createdAt === 'string' &&
+    typeof task.source === 'string'
+  )
+}
+
 function readTasks(): Task[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as Task[]) : []
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(isValidTask)
   } catch {
     return []
   }
@@ -122,10 +138,13 @@ export function useTaskStore() {
     writeTasks(updated)
   }, [])
 
-  const mergeTasks = useCallback((incoming: Task[]) => {
+  const mergeTasks = useCallback((incoming: Task[] | undefined) => {
+    if (!Array.isArray(incoming) || incoming.length === 0) return
     const current = readTasks()
     const existingNormalized = new Set(current.map((t) => normalizeTitle(t.title)))
-    const newTasks = incoming.filter((t) => !existingNormalized.has(normalizeTitle(t.title)))
+    const newTasks = incoming.filter(
+      (t) => isValidTask(t) && !existingNormalized.has(normalizeTitle(t.title)),
+    )
     if (newTasks.length === 0) return
     invalidateCache()
     writeTasks([...current, ...newTasks])

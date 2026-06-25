@@ -1521,6 +1521,13 @@
   text-align: center;
 }
 
+.pmd-input__error {
+  margin: 0;
+  font-size: 13px;
+  color: #f87171;
+  text-align: center;
+}
+
 /* PlanStepReview */
 .pmd-review {
   display: flex;

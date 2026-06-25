@@ -2,20 +2,21 @@ import { useRef, useState, type KeyboardEvent } from 'react'
 import { HomeCharacter } from '../unified/HomeCharacter'
 
 type PlanStepInputProps = {
-  onSubmit: (text: string) => void
+  onSubmit: (text: string) => void | Promise<void>
   isProcessing: boolean
+  error?: string | null
 }
 
 const QUICK_CHIPS = ['Add tasks', 'Reorganize', 'Clear my mind'] as const
 
-export function PlanStepInput({ onSubmit, isProcessing }: PlanStepInputProps) {
+export function PlanStepInput({ onSubmit, isProcessing, error }: PlanStepInputProps) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const handleSubmit = () => {
     const trimmed = text.trim()
     if (!trimmed || isProcessing) return
-    onSubmit(trimmed)
+    void onSubmit(trimmed)
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -81,6 +82,12 @@ export function PlanStepInput({ onSubmit, isProcessing }: PlanStepInputProps) {
           )}
         </button>
       </div>
+
+      {error && (
+        <p className="pmd-input__error" role="alert">
+          {error}
+        </p>
+      )}
 
       <p className="pmd-input__hint">
         ⌘+Enter to submit · Separate tasks with new lines or commas
