@@ -1,6 +1,11 @@
 import { useCallback, useRef, useState } from 'react'
 import { getApiKey } from '@/lib/openai'
 import type { FocusArea } from '@oneway/shared'
+import {
+  deleteSession,
+  getSession,
+  upsertSession,
+} from '../api/monkChatSession'
 import type { Category } from './useCategoryStore'
 
 export type ChatRole = 'monk' | 'user'
@@ -58,35 +63,161 @@ export type MonkChatPersistedSession = Omit<MonkChatState, 'isTyping'> & {
 }
 
 const MONK_CHAT_SESSION_PREFIX = 'clarity-monk-chat-session'
+const SAVE_DEBOUNCE_MS = 800
+
+const sessionCache = new Map<string, MonkChatPersistedSession | null>()
+const pendingSaveTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const fetchPromises = new Map<string, Promise<MonkChatPersistedSession | null>>()
 
 export function getMonkChatSessionKey(userId: string): string {
   return `${MONK_CHAT_SESSION_PREFIX}-${userId}`
 }
 
-export function loadMonkChatSession(userId: string): MonkChatPersistedSession | null {
+function loadLocalMonkChatSession(userId: string): MonkChatPersistedSession | null {
   try {
     const raw = localStorage.getItem(getMonkChatSessionKey(userId))
     if (!raw) return null
     const parsed = JSON.parse(raw) as MonkChatPersistedSession
     if (!Array.isArray(parsed.messages) || typeof parsed.phase !== 'string') return null
-    return parsed
+    return {
+      ...parsed,
+      savedSummary: parsed.savedSummary ?? null,
+    }
   } catch {
     return null
   }
 }
 
-export function saveMonkChatSession(userId: string, state: MonkChatState): void {
-  const { isTyping: _typing, ...rest } = state
-  const session: MonkChatPersistedSession = { ...rest, savedAt: Date.now() }
-  localStorage.setItem(getMonkChatSessionKey(userId), JSON.stringify(session))
+function clearLocalMonkChatSession(userId: string): void {
+  localStorage.removeItem(getMonkChatSessionKey(userId))
 }
 
-export function clearMonkChatSession(userId: string): void {
-  localStorage.removeItem(getMonkChatSessionKey(userId))
+function toPersistedSession(state: MonkChatState, savedAt = Date.now()): MonkChatPersistedSession {
+  const { isTyping: _typing, ...rest } = state
+  return { ...rest, savedAt }
+}
+
+async function migrateLocalMonkChatSessionToSupabase(
+  userId: string,
+  remoteSession: MonkChatPersistedSession | null,
+): Promise<MonkChatPersistedSession | null> {
+  if (remoteSession) {
+    clearLocalMonkChatSession(userId)
+    return remoteSession
+  }
+
+  const localSession = loadLocalMonkChatSession(userId)
+  if (!localSession) return null
+
+  try {
+    await upsertSession(userId, localSession)
+    clearLocalMonkChatSession(userId)
+  } catch (err) {
+    console.error('[monk-chat] Failed to migrate local session:', err)
+  }
+
+  return localSession
+}
+
+export async function fetchMonkChatSession(
+  userId: string,
+): Promise<MonkChatPersistedSession | null> {
+  const cached = sessionCache.get(userId)
+  if (cached !== undefined) return cached
+
+  const inFlight = fetchPromises.get(userId)
+  if (inFlight) return inFlight
+
+  const promise = (async () => {
+    try {
+      const remoteSession = await getSession(userId)
+      const session = await migrateLocalMonkChatSessionToSupabase(userId, remoteSession)
+      sessionCache.set(userId, session)
+      return session
+    } catch (err) {
+      console.error('[monk-chat] Failed to load session:', err)
+      const fallback = loadLocalMonkChatSession(userId)
+      sessionCache.set(userId, fallback)
+      return fallback
+    } finally {
+      fetchPromises.delete(userId)
+    }
+  })()
+
+  fetchPromises.set(userId, promise)
+  return promise
+}
+
+export function loadMonkChatSession(userId: string): MonkChatPersistedSession | null {
+  if (sessionCache.has(userId)) {
+    return sessionCache.get(userId) ?? null
+  }
+  return loadLocalMonkChatSession(userId)
+}
+
+function scheduleSave(userId: string, session: MonkChatPersistedSession): void {
+  const existing = pendingSaveTimers.get(userId)
+  if (existing) clearTimeout(existing)
+
+  pendingSaveTimers.set(
+    userId,
+    setTimeout(() => {
+      pendingSaveTimers.delete(userId)
+      void upsertSession(userId, session).catch((err) => {
+        console.error('[monk-chat] Failed to save session:', err)
+      })
+    }, SAVE_DEBOUNCE_MS),
+  )
+}
+
+export function saveMonkChatSession(
+  userId: string,
+  state: MonkChatState,
+  options?: { immediate?: boolean },
+): void {
+  const session = toPersistedSession(state)
+  sessionCache.set(userId, session)
+
+  if (options?.immediate) {
+    const pending = pendingSaveTimers.get(userId)
+    if (pending) {
+      clearTimeout(pending)
+      pendingSaveTimers.delete(userId)
+    }
+    void upsertSession(userId, session).catch((err) => {
+      console.error('[monk-chat] Failed to save session:', err)
+    })
+    return
+  }
+
+  scheduleSave(userId, session)
+}
+
+export async function clearMonkChatSession(userId: string): Promise<void> {
+  const pending = pendingSaveTimers.get(userId)
+  if (pending) {
+    clearTimeout(pending)
+    pendingSaveTimers.delete(userId)
+  }
+
+  sessionCache.set(userId, null)
+  clearLocalMonkChatSession(userId)
+
+  try {
+    await deleteSession(userId)
+  } catch (err) {
+    console.error('[monk-chat] Failed to delete session:', err)
+  }
 }
 
 export function hasMonkChatSession(userId: string): boolean {
   return loadMonkChatSession(userId) !== null
+}
+
+export function isInProgressMonkSession(
+  session: MonkChatPersistedSession | null,
+): boolean {
+  return Boolean(session && session.phase !== 'done' && session.messages.length > 0)
 }
 
 const AREA_COLORS = [

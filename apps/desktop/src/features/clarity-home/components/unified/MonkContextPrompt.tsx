@@ -1,36 +1,53 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/features/auth'
 import { getUserContext } from '../../api/userContext'
-import { hasMonkChatSession } from '../../hooks/useMonkChat'
+import {
+  fetchMonkChatSession,
+  isInProgressMonkSession,
+} from '../../hooks/useMonkChat'
 import { MonkChatModal } from './MonkChatModal'
 
 export function MonkContextPrompt() {
   const { user } = useAuth()
   const [contextText, setContextText] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sessionLoading, setSessionLoading] = useState(true)
   const [chatOpen, setChatOpen] = useState(false)
   const [hasDraftSession, setHasDraftSession] = useState(false)
 
   useEffect(() => {
     if (!user) return
+
+    setSessionLoading(true)
+    void fetchMonkChatSession(user.id)
+      .then((session) => setHasDraftSession(isInProgressMonkSession(session)))
+      .catch(() => setHasDraftSession(false))
+      .finally(() => setSessionLoading(false))
+
     getUserContext(user.id)
       .then((ctx) => setContextText(ctx?.context_text ?? null))
       .catch(() => setContextText(null))
       .finally(() => setLoading(false))
-    setHasDraftSession(hasMonkChatSession(user.id))
   }, [user])
+
+  const refreshDraftSession = () => {
+    if (!user) return
+    void fetchMonkChatSession(user.id)
+      .then((session) => setHasDraftSession(isInProgressMonkSession(session)))
+      .catch(() => setHasDraftSession(false))
+  }
 
   const handleCloseChat = () => {
     setChatOpen(false)
     if (user) {
-      setHasDraftSession(hasMonkChatSession(user.id))
+      refreshDraftSession()
       getUserContext(user.id)
         .then((ctx) => setContextText(ctx?.context_text ?? null))
         .catch(() => {})
     }
   }
 
-  if (loading) return null
+  if (loading || sessionLoading) return null
 
   return (
     <div className="monk-ctx">

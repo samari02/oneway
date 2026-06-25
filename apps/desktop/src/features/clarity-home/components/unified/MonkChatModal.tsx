@@ -11,7 +11,7 @@ import {
   useMonkChat,
   type ProposedArea,
   type ProposedTask,
-  loadMonkChatSession,
+  fetchMonkChatSession,
   saveMonkChatSession,
   clearMonkChatSession,
 } from '../../hooks/useMonkChat'
@@ -437,6 +437,7 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
   const {
     isSupported: isSpeechSupported,
     isListening,
+    isStarting,
     isTranscribing,
     error: speechError,
     toggle: toggleSpeech,
@@ -444,12 +445,12 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
   } = useSpeechRecognition({ onTranscript: handleSpeechTranscript })
 
   const handleSpeechToggle = useCallback(() => {
-    if (!isListening) {
+    if (!isListening && !isStarting) {
       inputBaseRef.current = input
       sessionTranscriptRef.current = ''
     }
     toggleSpeech()
-  }, [input, isListening, toggleSpeech])
+  }, [input, isListening, isStarting, toggleSpeech])
 
   useEffect(() => {
     setPortalTarget(document.querySelector('.app-layout__content') as HTMLElement | null)
@@ -458,11 +459,19 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
   useEffect(() => {
     if (open && user && !initializedRef.current) {
       initializedRef.current = true
-      const saved = loadMonkChatSession(user.id)
-      if (saved && saved.messages.length > 0) {
-        restore(saved)
-      } else {
-        start()
+      let cancelled = false
+
+      void fetchMonkChatSession(user.id).then((saved) => {
+        if (cancelled) return
+        if (saved && saved.messages.length > 0) {
+          restore(saved)
+        } else {
+          start()
+        }
+      })
+
+      return () => {
+        cancelled = true
       }
     }
   }, [open, user, start, restore])
@@ -491,7 +500,7 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
 
   const persistSession = useCallback(() => {
     if (!user) return
-    saveMonkChatSession(user.id, getPersistableState())
+    saveMonkChatSession(user.id, getPersistableState(), { immediate: true })
   }, [user, getPersistableState])
 
   const handleSave = useCallback(async () => {
@@ -624,18 +633,27 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
 
   const handleStartFresh = useCallback(() => {
     if (!user) return
-    clearMonkChatSession(user.id)
-    reset()
-    setInput('')
-    inputBaseRef.current = ''
-    sessionTranscriptRef.current = ''
-    start()
+    void clearMonkChatSession(user.id).then(() => {
+      reset()
+      setInput('')
+      inputBaseRef.current = ''
+      sessionTranscriptRef.current = ''
+      start()
+    })
   }, [user, reset, start])
 
   if (!open || !portalTarget) return null
 
   const isInputDisabled =
     isTyping || phase === 'saving' || phase === 'done'
+
+  const micDisabledReason = isInputDisabled
+    ? 'Wait for Monk to finish typing'
+    : isStarting
+      ? 'Starting microphone…'
+      : isTranscribing
+        ? 'Transcribing your voice…'
+        : undefined
 
   const modal = (
     <div className="monk-chat-overlay" onClick={handleContinueLater}>
@@ -825,13 +843,15 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
               {isSpeechSupported && (
                 <button
                   type="button"
-                  className={`monk-chat__mic${isListening ? ' monk-chat__mic--listening' : ''}`}
+                  className={`monk-chat__mic${isListening ? ' monk-chat__mic--listening' : ''}${isStarting ? ' monk-chat__mic--starting' : ''}`}
                   onClick={handleSpeechToggle}
-                  disabled={isInputDisabled || isTranscribing}
+                  disabled={isInputDisabled || isTranscribing || isStarting}
                   aria-pressed={isListening}
                   aria-label={isListening ? 'Stop voice input' : 'Speak your message'}
+                  title={micDisabledReason}
                 >
                   <MicIcon />
+                  <span className="monk-chat__mic-ring" aria-hidden />
                 </button>
               )}
               <button
@@ -844,8 +864,20 @@ export function MonkChatModal({ open, onClose }: MonkChatModalProps) {
                 <SendIcon />
               </button>
             </div>
-            {isTranscribing && (
-              <p className="monk-chat__voice-status">Transcribing…</p>
+            {(isStarting || isListening || isTranscribing) && (
+              <p className="monk-chat__voice-status" role="status" aria-live="polite">
+                {(isStarting || isListening) && (
+                  <span
+                    className={`monk-chat__voice-status-dot${isListening ? ' monk-chat__voice-status-dot--listening' : ''}`}
+                    aria-hidden
+                  />
+                )}
+                {isStarting
+                  ? 'Starting mic…'
+                  : isListening
+                    ? 'Listening…'
+                    : 'Transcribing…'}
+              </p>
             )}
             {speechError && (
               <p className="monk-chat__voice-error" role="alert">

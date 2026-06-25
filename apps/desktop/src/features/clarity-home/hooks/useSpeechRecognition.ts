@@ -125,6 +125,7 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
   const isSupported = hasWebSpeech || canRecord
 
   const [isListening, setIsListening] = useState(false)
+  const [isStarting, setIsStarting] = useState(false)
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
@@ -134,6 +135,7 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
   const engineRef = useRef<SpeechEngine>(null)
   const preferWhisperRef = useRef(false)
   const listeningRef = useRef(false)
+  const startingRef = useRef(false)
   const onTranscriptRef = useRef(onTranscript)
   const startWebSpeechRef = useRef<(() => boolean) | null>(null)
   const startWhisperRecordingRef = useRef<(() => Promise<boolean>) | null>(null)
@@ -323,11 +325,33 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
       mediaStreamRef.current = stream
       mediaChunksRef.current = []
 
+      stream.getTracks().forEach((track) => {
+        track.onended = () => {
+          console.warn('[useSpeechRecognition] Microphone track ended unexpectedly')
+          if (listeningRef.current && engineRef.current === 'whisper') {
+            listeningRef.current = false
+            setIsListening(false)
+            engineRef.current = null
+            cleanupMedia()
+          }
+        }
+      })
+
       const mimeType = pickRecorderMimeType()
       const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           mediaChunksRef.current.push(event.data)
+        }
+      }
+      recorder.onerror = (event) => {
+        console.error('[useSpeechRecognition] MediaRecorder error:', event)
+        if (listeningRef.current && engineRef.current === 'whisper') {
+          listeningRef.current = false
+          setIsListening(false)
+          engineRef.current = null
+          setError('Could not record audio. Try again or keep typing.')
+          cleanupMedia()
         }
       }
 
@@ -356,50 +380,61 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
   }, [startWebSpeech, startWhisperRecording])
 
   const start = useCallback(async () => {
+    if (startingRef.current || listeningRef.current) return
+
+    startingRef.current = true
+    setIsStarting(true)
     setError(null)
 
-    const mic = await requestMicrophoneAccess()
-    if (!mic.ok) {
-      setError(mic.message)
-      return
-    }
+    try {
+      const whisperAvailable = canRecord && hasApiKey()
+      const useWhisper = preferWhisperRef.current || (!hasWebSpeech && (whisperAvailable || isTauri))
 
-    const whisperAvailable = canRecord && hasApiKey()
-    const useWhisper = preferWhisperRef.current || (!hasWebSpeech && (whisperAvailable || isTauri))
-    if (useWhisper) {
-      await startWhisperRecording()
-      return
-    }
-
-    if (hasWebSpeech) {
-      const started = startWebSpeech()
-      if (started) return
-      if (whisperAvailable) {
-        preferWhisperRef.current = true
+      // Whisper acquires the mic once inside startWhisperRecording — skip preflight getUserMedia.
+      if (useWhisper) {
         await startWhisperRecording()
         return
       }
-      setError('Could not start voice input. Try again.')
-      return
-    }
 
-    if (whisperAvailable) {
-      await startWhisperRecording()
-      return
-    }
+      const mic = await requestMicrophoneAccess()
+      if (!mic.ok) {
+        setError(mic.message)
+        return
+      }
 
-    if (isTauri && canRecord && !hasApiKey()) {
-      setError(OPENAI_KEY_SETTINGS_HINT)
-      return
-    }
+      if (hasWebSpeech) {
+        const started = startWebSpeech()
+        if (started) return
+        if (whisperAvailable) {
+          preferWhisperRef.current = true
+          await startWhisperRecording()
+          return
+        }
+        setError('Could not start voice input. Try again.')
+        return
+      }
 
-    setError('Voice input is not available in this environment.')
+      if (whisperAvailable) {
+        await startWhisperRecording()
+        return
+      }
+
+      if (isTauri && canRecord && !hasApiKey()) {
+        setError(OPENAI_KEY_SETTINGS_HINT)
+        return
+      }
+
+      setError('Voice input is not available in this environment.')
+    } finally {
+      startingRef.current = false
+      setIsStarting(false)
+    }
   }, [canRecord, hasWebSpeech, isTauri, startWebSpeech, startWhisperRecording])
 
   const toggle = useCallback(() => {
     if (listeningRef.current) {
       stop()
-    } else {
+    } else if (!startingRef.current) {
       void start()
     }
   }, [start, stop])
@@ -419,6 +454,7 @@ export function useSpeechRecognition({ onTranscript, lang }: UseSpeechRecognitio
   return {
     isSupported,
     isListening,
+    isStarting,
     isTranscribing,
     error,
     start,
