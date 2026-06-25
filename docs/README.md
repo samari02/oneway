@@ -7,6 +7,7 @@
 ## Structure
 
 ### [01-vision/](./01-vision/) — Why we build this
+- [PRODUCT-SPEC.md](./01-vision/PRODUCT-SPEC.md) — **Canonical product spec** (Clarity design v2: adaptive home, Monk AI, focus sessions)
 - [concept.md](./01-vision/concept.md) — Mission, philosophy, persona
 - [product-principles.md](./01-vision/product-principles.md) — Design principles
 - [roadmap.md](./01-vision/roadmap.md) — Shipped vs planned
