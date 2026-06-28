@@ -54,6 +54,11 @@ const PLANNING_LABELS: Record<TaskPlanning, string> = {
 
 const PLANNING_CYCLE: TaskPlanning[] = ['today', 'next', 'later', 'backlog']
 
+const CATEGORY_COLORS = [
+  '#7c3aed', '#f97316', '#22c55e', '#3b82f6',
+  '#ec4899', '#eab308', '#06b6d4', '#f43f5e',
+]
+
 type ColumnMeta = {
   id: string
   label: string
@@ -406,17 +411,23 @@ export function TasksView() {
     removeTask,
     toggleTask,
   } = useTaskStore(user?.id)
-  const { categories } = useCategoryStore()
-  const { activeAreas } = useFocusAreaStore(user?.id)
+  const { categories, addCategory } = useCategoryStore()
+  const { activeAreas, addArea } = useFocusAreaStore(user?.id)
 
   const [viewMode, setViewMode] = useState<ViewMode>('plan')
   const [addingTask, setAddingTask] = useState(false)
+  const [addingCategory, setAddingCategory] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [newTaskCategory, setNewTaskCategory] = useState('')
+  const [newTaskPlanning, setNewTaskPlanning] = useState<TaskPlanning>('backlog')
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [newCategoryEmoji, setNewCategoryEmoji] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [sortBy, setSortBy] = useState<SortMode>('manual')
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [columnItems, setColumnItems] = useState<Record<string, string[]>>({})
   const addInputRef = useRef<HTMLInputElement>(null)
+  const addCategoryInputRef = useRef<HTMLInputElement>(null)
 
   const useFocusAreasMode = activeAreas.length > 0
   const validCategories = useMemo(
@@ -493,6 +504,10 @@ export function TasksView() {
   useEffect(() => {
     if (addingTask) addInputRef.current?.focus()
   }, [addingTask])
+
+  useEffect(() => {
+    if (addingCategory) addCategoryInputRef.current?.focus()
+  }, [addingCategory])
 
   const getCategoryMeta = useCallback(
     (task: Task): { label: string; color: string } => {
@@ -619,24 +634,72 @@ export function TasksView() {
     })
   }
 
-  const handleAddTask = () => {
-    const title = newTaskTitle.trim()
-    if (!title) return
-    const category = filterCategory !== 'all' ? filterCategory : defaultCategory
-    addTask(title, category, 'manual', 'backlog')
+  const openAddTask = () => {
+    setAddingCategory(false)
+    setNewTaskCategory(filterCategory !== 'all' ? filterCategory : defaultCategory)
+    setNewTaskPlanning('backlog')
+    setAddingTask(true)
+  }
+
+  const openAddCategory = () => {
+    setAddingTask(false)
+    setAddingCategory(true)
+  }
+
+  const resetAddTask = () => {
     setNewTaskTitle('')
+    setNewTaskCategory(defaultCategory)
+    setNewTaskPlanning('backlog')
     setAddingTask(false)
   }
 
-  const handleAddKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const resetAddCategory = () => {
+    setNewCategoryName('')
+    setNewCategoryEmoji('')
+    setAddingCategory(false)
+  }
+
+  const handleAddTask = () => {
+    const title = newTaskTitle.trim()
+    if (!title || !newTaskCategory) return
+    addTask(title, newTaskCategory, 'manual', newTaskPlanning)
+    resetAddTask()
+  }
+
+  const handleAddCategory = async () => {
+    const name = newCategoryName.trim()
+    if (!name) return
+    const colorIndex = (useFocusAreasMode ? activeAreas.length : validCategories.length) % CATEGORY_COLORS.length
+    const color = CATEGORY_COLORS[colorIndex]
+
+    if (useFocusAreasMode) {
+      const area = await addArea(name, newCategoryEmoji || undefined, color)
+      if (area) {
+        setNewTaskCategory(area.id)
+        if (viewMode === 'projects') setFilterCategory(area.id)
+      }
+    } else {
+      const cat = addCategory(name, newCategoryEmoji || '📁', color)
+      setNewTaskCategory(cat.id)
+      if (viewMode === 'projects') setFilterCategory(cat.id)
+    }
+    resetAddCategory()
+  }
+
+  const handleAddTaskKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault()
       handleAddTask()
     }
-    if (e.key === 'Escape') {
-      setNewTaskTitle('')
-      setAddingTask(false)
+    if (e.key === 'Escape') resetAddTask()
+  }
+
+  const handleAddCategoryKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      void handleAddCategory()
     }
+    if (e.key === 'Escape') resetAddCategory()
   }
 
   const handleCyclePlanning = (id: string) => {
@@ -660,10 +723,22 @@ export function TasksView() {
         <header className="tasks-view__header">
           <div className="tasks-view__header-row">
             <h1 className="tasks-view__title">Tasks</h1>
-            <button type="button" className="tasks-view__add-btn" onClick={() => setAddingTask(true)}>
-              <PlusIcon />
-              Add task
-            </button>
+            <div className="tasks-view__header-actions">
+              {viewMode !== 'completed' && (
+                <button
+                  type="button"
+                  className="tasks-view__add-btn tasks-view__add-btn--secondary"
+                  onClick={openAddCategory}
+                >
+                  <PlusIcon />
+                  {useFocusAreasMode ? 'Add project' : 'Add category'}
+                </button>
+              )}
+              <button type="button" className="tasks-view__add-btn" onClick={openAddTask}>
+                <PlusIcon />
+                Add task
+              </button>
+            </div>
           </div>
 
           <div className="tasks-view__tabs" role="tablist" aria-label="Task views">
@@ -739,39 +814,106 @@ export function TasksView() {
           )}
         </header>
 
+        {addingCategory && (
+          <div className="tasks-view__add-form">
+            <div className="tasks-view__add-form-row">
+              <input
+                type="text"
+                className="tasks-view__add-input tasks-view__add-input--emoji"
+                placeholder="📁"
+                value={newCategoryEmoji}
+                onChange={(e) => setNewCategoryEmoji(e.target.value)}
+                maxLength={2}
+                aria-label="Category emoji"
+              />
+              <input
+                ref={addCategoryInputRef}
+                type="text"
+                className="tasks-view__add-input"
+                placeholder={useFocusAreasMode ? 'Project name' : 'Category name'}
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={handleAddCategoryKeyDown}
+                aria-label={useFocusAreasMode ? 'New project name' : 'New category name'}
+              />
+              <button
+                type="button"
+                className="tasks-view__add-submit"
+                onClick={() => void handleAddCategory()}
+                disabled={!newCategoryName.trim()}
+              >
+                Add
+              </button>
+              <button type="button" className="tasks-view__add-cancel" onClick={resetAddCategory}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {addingTask && (
-          <div className="tasks-view__add-row">
-            <input
-              ref={addInputRef}
-              type="text"
-              className="tasks-view__add-input"
-              placeholder="What needs to get done?"
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              onKeyDown={handleAddKeyDown}
-              onBlur={() => {
-                if (!newTaskTitle.trim()) setAddingTask(false)
-              }}
-              aria-label="New task title"
-            />
-            <button
-              type="button"
-              className="tasks-view__add-submit"
-              onClick={handleAddTask}
-              disabled={!newTaskTitle.trim()}
-            >
-              Add
-            </button>
-            <button
-              type="button"
-              className="tasks-view__add-cancel"
-              onClick={() => {
-                setNewTaskTitle('')
-                setAddingTask(false)
-              }}
-            >
-              Cancel
-            </button>
+          <div className="tasks-view__add-form">
+            <div className="tasks-view__add-form-row">
+              <input
+                ref={addInputRef}
+                type="text"
+                className="tasks-view__add-input tasks-view__add-input--title"
+                placeholder="What needs to get done?"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                onKeyDown={handleAddTaskKeyDown}
+                aria-label="New task title"
+              />
+              <label className="tasks-view__add-field">
+                <span className="tasks-view__add-field-label">
+                  {useFocusAreasMode ? 'Project' : 'Category'}
+                </span>
+                <select
+                  className="tasks-view__filter-select tasks-view__add-select"
+                  value={newTaskCategory}
+                  onChange={(e) => setNewTaskCategory(e.target.value)}
+                  aria-label="Task category"
+                >
+                  {useFocusAreasMode
+                    ? activeAreas.map((area) => (
+                        <option key={area.id} value={area.id}>
+                          {area.emoji ?? ''} {area.label}
+                        </option>
+                      ))
+                    : validCategories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.label}
+                        </option>
+                      ))}
+                </select>
+              </label>
+              <label className="tasks-view__add-field">
+                <span className="tasks-view__add-field-label">Planning</span>
+                <select
+                  className="tasks-view__filter-select tasks-view__add-select"
+                  value={newTaskPlanning}
+                  onChange={(e) => setNewTaskPlanning(e.target.value as TaskPlanning)}
+                  aria-label="Task planning horizon"
+                >
+                  {PLANNING_CYCLE.map((p) => (
+                    <option key={p} value={p}>
+                      {PLANNING_LABELS[p]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="tasks-view__add-submit"
+                onClick={handleAddTask}
+                disabled={!newTaskTitle.trim() || !newTaskCategory}
+              >
+                Add
+              </button>
+              <button type="button" className="tasks-view__add-cancel" onClick={resetAddTask}>
+                Cancel
+              </button>
+            </div>
           </div>
         )}
 

@@ -112,7 +112,7 @@ input, textarea, select {
 .page-content {
   max-width: 1000px;
   margin: 0 auto;
-  padding: var(--space-lg);
+  padding: var(--content-padding-y) var(--content-padding-x);
 }
 
 /* ========================================

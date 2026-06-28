@@ -3,7 +3,7 @@
    ======================================== */
 
 .settings-view {
-  padding: var(--space-lg);
+  padding: var(--content-padding-y) var(--content-padding-x);
   max-width: 100%;
   overflow-y: auto;
 }

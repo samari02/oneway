@@ -55,6 +55,11 @@
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 48px;
+
+  /* Page content insets — unified horizontal margins across views */
+  --content-padding-x: 16px;
+  --content-padding-y: 20px;
+  --content-shell-padding: clamp(20px, 3vh, 36px) var(--content-padding-x) clamp(24px, 4vh, 40px);
   
   /* Border Radius */
   --radius-sm: 8px;

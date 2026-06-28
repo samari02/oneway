@@ -106,7 +106,7 @@
 }
 
 .morning-flow__shell--welcome {
-  padding: clamp(44px, 6vh, 60px) clamp(24px, 5vw, 48px) clamp(40px, 7vh, 72px);
+  padding: clamp(44px, 6vh, 60px) var(--content-padding-x) clamp(40px, 7vh, 72px);
 }
 
 .morning-flow__welcome-stage {
@@ -642,7 +642,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  padding: clamp(20px, 3vw, 36px) clamp(24px, 5vw, 48px) clamp(32px, 5vh, 56px);
+  padding: clamp(20px, 3vw, 36px) var(--content-padding-x) clamp(32px, 5vh, 56px);
 }
 
 .morning-flow__top-bar {
@@ -1299,7 +1299,7 @@
 }
 
 .morning-flow--shell .morning-flow__shell--flow {
-  padding: clamp(16px, 2.5vw, 32px) clamp(24px, 3vw, 32px) clamp(24px, 4vh, 40px);
+  padding: clamp(16px, 2.5vw, 32px) var(--content-padding-x) clamp(24px, 4vh, 40px);
 }
 
 .morning-flow__stage--flow {

@@ -9,7 +9,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  padding: var(--space-xl) var(--space-2xl);
+  padding: var(--space-lg) var(--content-padding-x);
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-light);
 }
@@ -49,7 +49,7 @@
 .app-blocking-view__scrollable {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-2xl);
+  padding: var(--content-padding-y) var(--content-padding-x);
 }
 
 .app-blocking-view__content {
