@@ -39,17 +39,27 @@ import {
 } from '../hooks/useTaskStore'
 import { useCategoryStore } from '../hooks/useCategoryStore'
 import { useFocusAreaStore } from '../hooks/useFocusAreaStore'
+import { useCurrentFocus } from '../hooks/useCurrentFocus'
 import { CategoryIcon } from './CategoryIcon'
 import './TasksView.css'
 
 type ViewMode = 'plan' | 'projects' | 'completed'
+type LayoutMode = 'board' | 'list'
 type SortMode = 'manual' | 'alphabetical' | 'created_at'
+type TodayLoadLevel = 'light' | 'neutral' | 'overloaded'
 
 const PLANNING_LABELS: Record<TaskPlanning, string> = {
   today: 'Today',
   next: 'Next',
   later: 'Later',
   backlog: 'Backlog',
+}
+
+const PLANNING_COLORS: Record<TaskPlanning, string> = {
+  today: '#22c55e',
+  next: '#3b82f6',
+  later: '#94a3b8',
+  backlog: '#64748b',
 }
 
 const PLANNING_CYCLE: TaskPlanning[] = ['today', 'next', 'later', 'backlog']
@@ -59,11 +69,14 @@ const CATEGORY_COLORS = [
   '#ec4899', '#eab308', '#06b6d4', '#f43f5e',
 ]
 
+const MAX_PLAN_TODAY_PICK = 3
+
 type ColumnMeta = {
   id: string
   label: string
   color: string
   emoji?: string | null
+  planning?: TaskPlanning
 }
 
 function CheckIcon() {
@@ -104,6 +117,19 @@ function GripIcon() {
   )
 }
 
+function FocusIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function sortTasksList(tasks: Task[], sortBy: SortMode): Task[] {
   if (sortBy === 'manual') return tasks
   const copy = [...tasks]
@@ -126,26 +152,46 @@ function findContainerId(
   return Object.keys(items).find((key) => items[key].includes(String(id)))
 }
 
+function isWithinLastDays(isoDate: string | undefined, days: number): boolean {
+  if (!isoDate) return false
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
+  return new Date(isoDate).getTime() >= cutoff
+}
+
+function getTodayLoadLevel(count: number): TodayLoadLevel {
+  if (count <= 3) return 'light'
+  if (count <= 5) return 'neutral'
+  return 'overloaded'
+}
+
 function SortableTaskCard({
   task,
-  showCategoryBadge,
-  showPlanningBadge,
-  categoryLabel,
+  planningColor,
   categoryColor,
+  categoryOptions,
+  showPlanningDot,
+  showFocusButton,
+  showPlanningBadge,
   onToggle,
   onSaveTitle,
   onDelete,
+  onCategoryChange,
   onCyclePlanning,
+  onFocus,
 }: {
   task: Task
-  showCategoryBadge: boolean
-  showPlanningBadge: boolean
-  categoryLabel: string
+  planningColor?: string
   categoryColor: string
+  categoryOptions: { id: string; label: string }[]
+  showPlanningDot: boolean
+  showFocusButton: boolean
+  showPlanningBadge: boolean
   onToggle: () => void
   onSaveTitle: (title: string) => void
   onDelete: () => void
+  onCategoryChange: (categoryId: string) => void
   onCyclePlanning?: () => void
+  onFocus?: () => void
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(task.title)
@@ -174,23 +220,24 @@ function SortableTaskCard({
     setEditing(false)
   }
 
+  const planning = task.planning ?? 'backlog'
+
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.35 : 1,
+    transition: isDragging ? undefined : transition,
+    opacity: isDragging ? 0.25 : 1,
   }
-
-  const planning = task.planning ?? 'backlog'
 
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className={`tasks-view__card${isDragging ? ' tasks-view__card--dragging' : ''}`}
+      className={`tasks-view__card${isDragging ? ' tasks-view__card--dragging' : ''}${isDragging ? '' : ' tasks-view__card--snap'}`}
+      data-planning={planning}
     >
       <button
         type="button"
-        className="tasks-view__drag-handle"
+        className="tasks-view__drag-handle tasks-view__card-hover"
         aria-label={`Drag ${task.title}`}
         {...attributes}
         {...listeners}
@@ -208,6 +255,15 @@ function SortableTaskCard({
       >
         <CheckIcon />
       </button>
+
+      {showPlanningDot && planningColor && (
+        <span
+          className="tasks-view__planning-dot"
+          style={{ '--tasks-plan-color': planningColor } as CSSProperties}
+          title={PLANNING_LABELS[planning]}
+          aria-hidden
+        />
+      )}
 
       {editing ? (
         <input
@@ -231,19 +287,30 @@ function SortableTaskCard({
         </button>
       )}
 
-      {showCategoryBadge && (
-        <span
-          className="tasks-view__badge tasks-view__badge--category"
-          style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
-        >
-          {categoryLabel}
-        </span>
-      )}
+      <span
+        className="tasks-view__category-dot"
+        style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
+        title={categoryOptions.find((c) => c.id === task.category)?.label ?? task.category}
+        aria-hidden
+      />
+
+      <select
+        className="tasks-view__card-select tasks-view__card-hover"
+        value={task.category}
+        onChange={(e) => onCategoryChange(e.target.value)}
+        aria-label="Change category"
+      >
+        {categoryOptions.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
 
       {showPlanningBadge && (
         <button
           type="button"
-          className={`tasks-view__badge tasks-view__badge--planning tasks-view__badge--planning-${planning}`}
+          className={`tasks-view__badge tasks-view__badge--planning tasks-view__badge--planning-${planning} tasks-view__card-hover`}
           onClick={onCyclePlanning}
           title="Click to change planning horizon"
         >
@@ -251,9 +318,21 @@ function SortableTaskCard({
         </button>
       )}
 
+      {showFocusButton && onFocus && (
+        <button
+          type="button"
+          className="tasks-view__focus-btn tasks-view__card-hover"
+          aria-label={`Focus on "${task.title}"`}
+          title="Start focus timer"
+          onClick={onFocus}
+        >
+          <FocusIcon />
+        </button>
+      )}
+
       <button
         type="button"
-        className="tasks-view__delete"
+        className="tasks-view__delete tasks-view__card-hover"
         aria-label={`Delete "${task.title}"`}
         onClick={onDelete}
       >
@@ -263,48 +342,229 @@ function SortableTaskCard({
   )
 }
 
+function ColumnQuickAdd({
+  placeholder,
+  onAdd,
+}: {
+  placeholder: string
+  onAdd: (title: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus()
+  }, [open])
+
+  const submit = () => {
+    const trimmed = title.trim()
+    if (!trimmed) return
+    onAdd(trimmed)
+    setTitle('')
+    setOpen(false)
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className="tasks-view__column-add"
+        onClick={() => setOpen(true)}
+      >
+        <PlusIcon />
+        Add
+      </button>
+    )
+  }
+
+  return (
+    <div className="tasks-view__column-add-form">
+      <input
+        ref={inputRef}
+        type="text"
+        className="tasks-view__column-add-input"
+        placeholder={placeholder}
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            submit()
+          }
+          if (e.key === 'Escape') {
+            setTitle('')
+            setOpen(false)
+          }
+        }}
+        aria-label={placeholder}
+      />
+      <button type="button" className="tasks-view__column-add-submit" onClick={submit} disabled={!title.trim()}>
+        Add
+      </button>
+    </div>
+  )
+}
+
+function PlanTodayModal({
+  candidates,
+  getCategoryMeta,
+  onClose,
+  onConfirm,
+}: {
+  candidates: Task[]
+  getCategoryMeta: (task: Task) => { label: string; color: string }
+  onClose: () => void
+  onConfirm: (ids: string[]) => void
+}) {
+  const [selected, setSelected] = useState<string[]>([])
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id)
+      if (prev.length >= MAX_PLAN_TODAY_PICK) return prev
+      return [...prev, id]
+    })
+  }
+
+  return (
+    <div className="tasks-view__modal-backdrop" role="presentation" onClick={onClose}>
+      <div
+        className="tasks-view__modal"
+        role="dialog"
+        aria-labelledby="plan-today-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="plan-today-title" className="tasks-view__modal-title">Plan today</h2>
+        <p className="tasks-view__modal-desc">
+          Pick up to {MAX_PLAN_TODAY_PICK} tasks from Next, Later, or Backlog to move into Today.
+        </p>
+
+        {candidates.length === 0 ? (
+          <p className="tasks-view__modal-empty">No tasks available to plan. Add one in another column first.</p>
+        ) : (
+          <ul className="tasks-view__modal-list">
+            {candidates.map((task) => {
+              const meta = getCategoryMeta(task)
+              const planning = task.planning ?? 'backlog'
+              const isSelected = selected.includes(task.id)
+              return (
+                <li key={task.id}>
+                  <button
+                    type="button"
+                    className={`tasks-view__modal-item${isSelected ? ' tasks-view__modal-item--selected' : ''}`}
+                    onClick={() => toggle(task.id)}
+                  >
+                    <span
+                      className="tasks-view__planning-dot"
+                      style={{ '--tasks-plan-color': PLANNING_COLORS[planning] } as CSSProperties}
+                      aria-hidden
+                    />
+                    <span className="tasks-view__modal-item-title">{task.title}</span>
+                    <span
+                      className="tasks-view__category-dot"
+                      style={{ '--tasks-cat-color': meta.color } as CSSProperties}
+                      aria-hidden
+                    />
+                    <span className="tasks-view__modal-item-meta">{PLANNING_LABELS[planning]}</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+
+        <div className="tasks-view__modal-actions">
+          <button type="button" className="tasks-view__add-cancel" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="tasks-view__add-submit"
+            disabled={selected.length === 0}
+            onClick={() => onConfirm(selected)}
+          >
+            Move to Today ({selected.length})
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function KanbanColumn({
   column,
   taskIds,
   tasksById,
-  emptyHint,
-  showOverLimit,
-  showCategoryBadge,
-  showPlanningBadge,
+  isPlanningColumn,
+  todayLoadLevel,
+  todayProgress,
+  emptyAction,
+  showPlanningDot,
+  showFocusOnToday,
+  categoryOptions,
   getCategoryMeta,
   onToggle,
   onSaveTitle,
   onDelete,
+  onCategoryChange,
   onCyclePlanning,
+  onFocus,
+  onQuickAdd,
 }: {
   column: ColumnMeta
   taskIds: string[]
   tasksById: Map<string, Task>
-  emptyHint?: string
-  showOverLimit?: boolean
-  showCategoryBadge: boolean
-  showPlanningBadge: boolean
+  isPlanningColumn: boolean
+  todayLoadLevel?: TodayLoadLevel
+  todayProgress?: { done: number; total: number }
+  emptyAction?: { label: string; onClick: () => void }
+  showPlanningDot: boolean
+  showFocusOnToday: boolean
+  categoryOptions: { id: string; label: string }[]
   getCategoryMeta: (task: Task) => { label: string; color: string }
   onToggle: (id: string) => void
   onSaveTitle: (id: string, title: string) => void
   onDelete: (id: string) => void
+  onCategoryChange: (id: string, categoryId: string) => void
   onCyclePlanning?: (id: string) => void
+  onFocus?: (task: Task) => void
+  onQuickAdd: (title: string) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
+  const planning = column.planning
+  const accentColor = planning ? PLANNING_COLORS[planning] : column.color
+
+  const columnClass = [
+    'tasks-view__column',
+    isOver ? 'tasks-view__column--over' : '',
+    isPlanningColumn && planning ? `tasks-view__column--plan-${planning}` : '',
+    todayLoadLevel === 'light' ? 'tasks-view__column--load-light' : '',
+    todayLoadLevel === 'overloaded' ? 'tasks-view__column--load-overloaded' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <section
       ref={setNodeRef}
-      className={`tasks-view__column${isOver ? ' tasks-view__column--over' : ''}${showOverLimit ? ' tasks-view__column--warn' : ''}`}
+      className={columnClass}
+      style={
+        isPlanningColumn && planning
+          ? ({ '--tasks-column-accent': accentColor } as CSSProperties)
+          : undefined
+      }
     >
       <header className="tasks-view__column-header">
         <span
           className="tasks-view__column-dot"
-          style={{ '--tasks-cat-color': column.color } as CSSProperties}
+          style={{ '--tasks-cat-color': accentColor } as CSSProperties}
           aria-hidden
         >
           {column.emoji ? (
             <span className="tasks-view__column-emoji">{column.emoji}</span>
+          ) : isPlanningColumn ? (
+            <span className="tasks-view__column-plan-dot" />
           ) : (
             <CategoryIcon categoryId={column.id} size={14} />
           )}
@@ -313,9 +573,23 @@ function KanbanColumn({
         <span className="tasks-view__column-count">{taskIds.length}</span>
       </header>
 
-      {showOverLimit && (
+      {todayProgress && todayProgress.total > 0 && (
+        <div className="tasks-view__today-progress">
+          <div className="tasks-view__today-progress-track" aria-hidden>
+            <div
+              className="tasks-view__today-progress-fill"
+              style={{ width: `${Math.round((todayProgress.done / todayProgress.total) * 100)}%` }}
+            />
+          </div>
+          <span className="tasks-view__today-progress-label">
+            {todayProgress.done}/{todayProgress.total} done
+          </span>
+        </div>
+      )}
+
+      {todayLoadLevel === 'overloaded' && (
         <p className="tasks-view__column-hint tasks-view__column-hint--warn">
-          Consider moving some tasks — Today works best with 5 or fewer.
+          Overloaded? Move some → Next
         </p>
       )}
 
@@ -325,28 +599,185 @@ function KanbanColumn({
             const task = tasksById.get(id)
             if (!task) return null
             const meta = getCategoryMeta(task)
+            const taskPlanning = task.planning ?? 'backlog'
             return (
               <SortableTaskCard
                 key={id}
                 task={task}
-                showCategoryBadge={showCategoryBadge}
-                showPlanningBadge={showPlanningBadge}
-                categoryLabel={meta.label}
+                planningColor={showPlanningDot ? PLANNING_COLORS[taskPlanning] : undefined}
                 categoryColor={meta.color}
+                categoryOptions={categoryOptions}
+                showPlanningDot={showPlanningDot}
+                showFocusButton={showFocusOnToday && taskPlanning === 'today'}
+                showPlanningBadge={!isPlanningColumn}
                 onToggle={() => onToggle(id)}
                 onSaveTitle={(title) => onSaveTitle(id, title)}
                 onDelete={() => onDelete(id)}
+                onCategoryChange={(catId) => onCategoryChange(id, catId)}
                 onCyclePlanning={onCyclePlanning ? () => onCyclePlanning(id) : undefined}
+                onFocus={onFocus ? () => onFocus(task) : undefined}
               />
             )
           })}
         </ul>
       </SortableContext>
 
-      {taskIds.length === 0 && emptyHint && (
-        <p className="tasks-view__column-hint">{emptyHint}</p>
+      {taskIds.length === 0 && (
+        <div className="tasks-view__column-empty">
+          {column.id === 'today' ? (
+            <>
+              <p className="tasks-view__column-hint">Nothing for today.</p>
+              {emptyAction && (
+                <button type="button" className="tasks-view__plan-btn" onClick={emptyAction.onClick}>
+                  {emptyAction.label}
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="tasks-view__column-hint">Drag tasks here or add below</p>
+          )}
+        </div>
       )}
+
+      <ColumnQuickAdd placeholder={`Add to ${column.label}…`} onAdd={onQuickAdd} />
     </section>
+  )
+}
+
+function TaskListRow({
+  task,
+  categoryOptions,
+  categoryColor,
+  onToggle,
+  onSaveTitle,
+  onDelete,
+  onCategoryChange,
+  onPlanningChange,
+  onFocus,
+}: {
+  task: Task
+  categoryOptions: { id: string; label: string }[]
+  categoryColor: string
+  onToggle: () => void
+  onSaveTitle: (title: string) => void
+  onDelete: () => void
+  onCategoryChange: (categoryId: string) => void
+  onPlanningChange: (planning: TaskPlanning) => void
+  onFocus?: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(task.title)
+  const planning = task.planning ?? 'backlog'
+
+  useEffect(() => {
+    if (!editing) setDraft(task.title)
+  }, [task.title, editing])
+
+  const commitEdit = () => {
+    const next = draft.trim()
+    if (!next) {
+      setDraft(task.title)
+      setEditing(false)
+      return
+    }
+    if (next !== task.title) onSaveTitle(next)
+    setEditing(false)
+  }
+
+  return (
+    <tr className="tasks-view__list-row" data-planning={planning}>
+      <td className="tasks-view__list-cell tasks-view__list-cell--check">
+        <button
+          type="button"
+          className="tasks-view__checkbox"
+          role="checkbox"
+          aria-checked={false}
+          aria-label={`Mark "${task.title}" as done`}
+          onClick={onToggle}
+        >
+          <CheckIcon />
+        </button>
+      </td>
+      <td className="tasks-view__list-cell tasks-view__list-cell--title">
+        {editing ? (
+          <input
+            className="tasks-view__task-input"
+            value={draft}
+            aria-label="Edit task title"
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitEdit()
+              if (e.key === 'Escape') {
+                setDraft(task.title)
+                setEditing(false)
+              }
+            }}
+            onBlur={commitEdit}
+            autoFocus
+          />
+        ) : (
+          <button type="button" className="tasks-view__task-title" onClick={() => setEditing(true)}>
+            {task.title}
+          </button>
+        )}
+      </td>
+      <td className="tasks-view__list-cell">
+        <div className="tasks-view__list-project">
+          <span
+            className="tasks-view__category-dot"
+            style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
+            aria-hidden
+          />
+          <select
+            className="tasks-view__filter-select tasks-view__list-select"
+            value={task.category}
+            onChange={(e) => onCategoryChange(e.target.value)}
+            aria-label={`Project for ${task.title}`}
+          >
+            {categoryOptions.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </td>
+      <td className="tasks-view__list-cell">
+        <select
+          className={`tasks-view__filter-select tasks-view__list-select tasks-view__list-select--planning tasks-view__list-select--planning-${planning}`}
+          value={planning}
+          onChange={(e) => onPlanningChange(e.target.value as TaskPlanning)}
+          aria-label={`Planning for ${task.title}`}
+        >
+          {PLANNING_CYCLE.map((p) => (
+            <option key={p} value={p}>
+              {PLANNING_LABELS[p]}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td className="tasks-view__list-cell tasks-view__list-cell--actions">
+        {planning === 'today' && onFocus && (
+          <button
+            type="button"
+            className="tasks-view__focus-btn tasks-view__focus-btn--list"
+            aria-label={`Focus on "${task.title}"`}
+            title="Start focus timer"
+            onClick={onFocus}
+          >
+            <FocusIcon />
+          </button>
+        )}
+        <button
+          type="button"
+          className="tasks-view__delete tasks-view__delete--visible"
+          aria-label={`Delete "${task.title}"`}
+          onClick={onDelete}
+        >
+          <TrashIcon />
+        </button>
+      </td>
+    </tr>
   )
 }
 
@@ -379,11 +810,11 @@ function CompletedTaskRow({
       </button>
       <span className="tasks-view__task-title tasks-view__task-title--done">{task.title}</span>
       <span
-        className="tasks-view__badge tasks-view__badge--category"
+        className="tasks-view__category-dot"
         style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
-      >
-        {categoryLabel}
-      </span>
+        title={categoryLabel}
+        aria-hidden
+      />
       <span className={`tasks-view__badge tasks-view__badge--planning tasks-view__badge--planning-${planning}`}>
         {PLANNING_LABELS[planning]}
       </span>
@@ -413,10 +844,13 @@ export function TasksView() {
   } = useTaskStore(user?.id)
   const { categories, addCategory } = useCategoryStore()
   const { activeAreas, addArea } = useFocusAreaStore(user?.id)
+  const { selectTask, startTimer } = useCurrentFocus()
 
   const [viewMode, setViewMode] = useState<ViewMode>('plan')
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('board')
   const [addingTask, setAddingTask] = useState(false)
   const [addingCategory, setAddingCategory] = useState(false)
+  const [planTodayOpen, setPlanTodayOpen] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskCategory, setNewTaskCategory] = useState('')
   const [newTaskPlanning, setNewTaskPlanning] = useState<TaskPlanning>('backlog')
@@ -457,9 +891,18 @@ export function TasksView() {
       PLANNING_COLUMNS.map((id) => ({
         id,
         label: PLANNING_LABELS[id],
-        color: id === 'today' ? '#7c3aed' : '#a78bfa',
+        color: PLANNING_COLORS[id],
+        planning: id,
       })),
     [],
+  )
+
+  const categoryOptions = useMemo(
+    () =>
+      useFocusAreasMode
+        ? activeAreas.map((a) => ({ id: a.id, label: a.label }))
+        : validCategories.map((c) => ({ id: c.id, label: c.label })),
+    [useFocusAreasMode, activeAreas, validCategories],
   )
 
   const defaultCategory = useFocusAreasMode
@@ -477,6 +920,38 @@ export function TasksView() {
     if (filterCategory === 'all') return done
     return done.filter((t) => t.category === filterCategory)
   }, [tasks, filterCategory])
+
+  const planningCounts = useMemo(() => {
+    const allOpen = tasks.filter((t) => t.status === 'open')
+    const grouped = groupTasksByPlanning(allOpen)
+    return {
+      today: grouped.today.length,
+      next: grouped.next.length,
+      later: grouped.later.length,
+      doneThisWeek: tasks.filter(
+        (t) => t.status === 'done' && isWithinLastDays(t.completedAt, 7),
+      ).length,
+    }
+  }, [tasks])
+
+  const todayProgress = useMemo(() => {
+    const todayTasks = tasks.filter((t) => (t.planning ?? 'backlog') === 'today')
+    return {
+      done: todayTasks.filter((t) => t.status === 'done').length,
+      total: todayTasks.length,
+    }
+  }, [tasks])
+
+  const planTodayCandidates = useMemo(() => {
+    return sortTasksList(
+      tasks.filter(
+        (t) =>
+          t.status === 'open' &&
+          ['next', 'later', 'backlog'].includes(t.planning ?? 'backlog'),
+      ),
+      'manual',
+    )
+  }, [tasks])
 
   const tasksById = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks])
 
@@ -525,6 +1000,14 @@ export function TasksView() {
       }
     },
     [useFocusAreasMode, activeAreas, validCategories],
+  )
+
+  const handleFocusTask = useCallback(
+    (task: Task) => {
+      selectTask(task.id, task.title)
+      startTimer()
+    },
+    [selectTask, startTimer],
   )
 
   const sensors = useSensors(
@@ -666,6 +1149,21 @@ export function TasksView() {
     resetAddTask()
   }
 
+  const handleQuickAdd = (columnId: string, title: string) => {
+    if (viewMode === 'plan') {
+      addTask(title, defaultCategory, 'manual', columnId as TaskPlanning)
+    } else {
+      addTask(title, columnId, 'manual', 'backlog')
+    }
+  }
+
+  const handlePlanTodayConfirm = (ids: string[]) => {
+    for (const id of ids) {
+      updateTask(id, { planning: 'today' })
+    }
+    setPlanTodayOpen(false)
+  }
+
   const handleAddCategory = async () => {
     const name = newCategoryName.trim()
     if (!name) return
@@ -710,10 +1208,17 @@ export function TasksView() {
 
   const openCount = tasks.filter((t) => t.status === 'open').length
   const completedCount = tasks.filter((t) => t.status === 'done').length
-  const todayCount = (columnItems.today ?? derivedColumnItems.today ?? []).length
+  const todayOpenCount = planningCounts.today
+  const todayLoadLevel = getTodayLoadLevel(todayOpenCount)
 
   const activeDragTask = activeDragId ? tasksById.get(activeDragId) : undefined
   const columns = viewMode === 'plan' ? planColumns : projectColumns
+  const showBoard = layoutMode === 'board' || viewMode !== 'plan'
+
+  const listTasks = useMemo(
+    () => sortTasksList(openTasks, sortBy),
+    [openTasks, sortBy],
+  )
 
   return (
     <div className="tasks-view">
@@ -772,8 +1277,47 @@ export function TasksView() {
             </button>
           </div>
 
+          {viewMode === 'plan' && (
+            <div className="tasks-view__summary" aria-label="Task summary">
+              <span className="tasks-view__summary-item tasks-view__summary-item--today">
+                Today: {planningCounts.today}
+              </span>
+              <span className="tasks-view__summary-sep" aria-hidden>·</span>
+              <span className="tasks-view__summary-item tasks-view__summary-item--next">
+                Next: {planningCounts.next}
+              </span>
+              <span className="tasks-view__summary-sep" aria-hidden>·</span>
+              <span className="tasks-view__summary-item tasks-view__summary-item--later">
+                Later: {planningCounts.later}
+              </span>
+              <span className="tasks-view__summary-sep" aria-hidden>·</span>
+              <span className="tasks-view__summary-item">
+                Done this week: {planningCounts.doneThisWeek}
+              </span>
+            </div>
+          )}
+
           {viewMode !== 'completed' && (
             <div className="tasks-view__toolbar">
+              {viewMode === 'plan' && (
+                <div className="tasks-view__layout-toggle" role="group" aria-label="Layout">
+                  <button
+                    type="button"
+                    className={`tasks-view__layout-btn${layoutMode === 'board' ? ' tasks-view__layout-btn--active' : ''}`}
+                    onClick={() => setLayoutMode('board')}
+                  >
+                    Board
+                  </button>
+                  <button
+                    type="button"
+                    className={`tasks-view__layout-btn${layoutMode === 'list' ? ' tasks-view__layout-btn--active' : ''}`}
+                    onClick={() => setLayoutMode('list')}
+                  >
+                    List
+                  </button>
+                </div>
+              )}
+
               <label className="tasks-view__filter">
                 <span className="tasks-view__filter-label">Category</span>
                 <select
@@ -941,7 +1485,7 @@ export function TasksView() {
           </div>
         )}
 
-        {!loading && !error && viewMode !== 'completed' && openCount > 0 && (
+        {!loading && !error && viewMode !== 'completed' && openCount > 0 && showBoard && (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCorners}
@@ -959,31 +1503,95 @@ export function TasksView() {
                     column={column}
                     taskIds={taskIds}
                     tasksById={tasksById}
-                    emptyHint={isToday ? 'Drag tasks here or add new' : undefined}
-                    showOverLimit={isToday && todayCount > 5}
-                    showCategoryBadge={viewMode === 'plan'}
-                    showPlanningBadge={viewMode === 'projects'}
+                    isPlanningColumn={viewMode === 'plan'}
+                    todayLoadLevel={isToday ? todayLoadLevel : undefined}
+                    todayProgress={isToday && viewMode === 'plan' ? todayProgress : undefined}
+                    emptyAction={
+                      isToday && viewMode === 'plan'
+                        ? { label: 'Plan tasks →', onClick: () => setPlanTodayOpen(true) }
+                        : undefined
+                    }
+                    showPlanningDot={viewMode === 'plan'}
+                    showFocusOnToday={viewMode === 'plan'}
+                    categoryOptions={categoryOptions}
                     getCategoryMeta={getCategoryMeta}
                     onToggle={toggleTask}
                     onSaveTitle={(id, title) => updateTask(id, { title })}
                     onDelete={removeTask}
+                    onCategoryChange={(id, catId) => updateTask(id, { category: catId })}
                     onCyclePlanning={viewMode === 'projects' ? handleCyclePlanning : undefined}
+                    onFocus={handleFocusTask}
+                    onQuickAdd={(title) => handleQuickAdd(column.id, title)}
                   />
                 )
               })}
             </div>
 
-            <DragOverlay>
+            <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
               {activeDragTask ? (
                 <div className="tasks-view__card tasks-view__card--overlay">
-                  <span className="tasks-view__drag-handle">
-                    <GripIcon />
-                  </span>
+                  <span
+                    className="tasks-view__planning-dot"
+                    style={
+                      {
+                        '--tasks-plan-color': PLANNING_COLORS[activeDragTask.planning ?? 'backlog'],
+                      } as CSSProperties
+                    }
+                  />
                   <span className="tasks-view__task-title">{activeDragTask.title}</span>
+                  <span
+                    className="tasks-view__category-dot"
+                    style={
+                      {
+                        '--tasks-cat-color': getCategoryMeta(activeDragTask).color,
+                      } as CSSProperties
+                    }
+                  />
                 </div>
               ) : null}
             </DragOverlay>
           </DndContext>
+        )}
+
+        {!loading && !error && viewMode === 'plan' && layoutMode === 'list' && openCount > 0 && (
+          <div className="tasks-view__list-wrap">
+            <table className="tasks-view__list">
+              <thead>
+                <tr>
+                  <th className="tasks-view__list-head tasks-view__list-head--check" scope="col" />
+                  <th className="tasks-view__list-head" scope="col">Title</th>
+                  <th className="tasks-view__list-head" scope="col">
+                    {useFocusAreasMode ? 'Project' : 'Category'}
+                  </th>
+                  <th className="tasks-view__list-head" scope="col">Planning</th>
+                  <th className="tasks-view__list-head tasks-view__list-head--actions" scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {listTasks.map((task) => {
+                  const meta = getCategoryMeta(task)
+                  return (
+                    <TaskListRow
+                      key={task.id}
+                      task={task}
+                      categoryOptions={categoryOptions}
+                      categoryColor={meta.color}
+                      onToggle={() => toggleTask(task.id)}
+                      onSaveTitle={(title) => updateTask(task.id, { title })}
+                      onDelete={() => removeTask(task.id)}
+                      onCategoryChange={(catId) => updateTask(task.id, { category: catId })}
+                      onPlanningChange={(planning) => updateTask(task.id, { planning })}
+                      onFocus={
+                        (task.planning ?? 'backlog') === 'today'
+                          ? () => handleFocusTask(task)
+                          : undefined
+                      }
+                    />
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {!loading && !error && viewMode === 'completed' && completedTasks.length > 0 && (
@@ -1004,6 +1612,15 @@ export function TasksView() {
           </ul>
         )}
       </div>
+
+      {planTodayOpen && (
+        <PlanTodayModal
+          candidates={planTodayCandidates}
+          getCategoryMeta={getCategoryMeta}
+          onClose={() => setPlanTodayOpen(false)}
+          onConfirm={handlePlanTodayConfirm}
+        />
+      )}
     </div>
   )
 }
