@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react'
-import type { Task, TaskSource, TaskStatus } from '@oneway/shared'
+import type { Task, TaskPlanning, TaskSource, TaskStatus } from '@oneway/shared'
 import {
   createTask,
   createTasks,
@@ -9,7 +9,9 @@ import {
   updateTaskById,
 } from '../api/tasks'
 
-export type { Task, TaskSource, TaskStatus }
+export type { Task, TaskPlanning, TaskSource, TaskStatus }
+
+export const PLANNING_COLUMNS: TaskPlanning[] = ['today', 'next', 'later', 'backlog']
 
 type TaskStoreSnapshot = {
   tasks: Task[]
@@ -66,6 +68,52 @@ function generateId(): string {
   return crypto.randomUUID()
 }
 
+function compareTasks(a: Task, b: Task): number {
+  const orderA = a.sort_order ?? 0
+  const orderB = b.sort_order ?? 0
+  if (orderA !== orderB) return orderA - orderB
+  return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+}
+
+export function groupTasksByPlanning(tasks: Task[]): Record<TaskPlanning, Task[]> {
+  const groups: Record<TaskPlanning, Task[]> = {
+    today: [],
+    next: [],
+    later: [],
+    backlog: [],
+  }
+
+  for (const task of tasks) {
+    const planning = task.planning ?? 'backlog'
+    groups[planning].push(task)
+  }
+
+  for (const key of PLANNING_COLUMNS) {
+    groups[key].sort(compareTasks)
+  }
+
+  return groups
+}
+
+export function groupTasksByCategory(tasks: Task[], categoryIds: string[]): Record<string, Task[]> {
+  const groups: Record<string, Task[]> = {}
+  for (const id of categoryIds) {
+    groups[id] = []
+  }
+
+  for (const task of tasks) {
+    const key = groups[task.category] ? task.category : categoryIds[0] ?? task.category
+    if (!groups[key]) groups[key] = []
+    groups[key].push(task)
+  }
+
+  for (const key of Object.keys(groups)) {
+    groups[key].sort(compareTasks)
+  }
+
+  return groups
+}
+
 async function loadTasksForUser(userId: string): Promise<void> {
   const generation = ++fetchGeneration
   setSnapshot({ ...snapshot, loading: true, error: null })
@@ -84,6 +132,17 @@ async function loadTasksForUser(userId: string): Promise<void> {
     if (generation !== fetchGeneration || activeUserId !== userId) return
     const msg = err instanceof Error ? err.message : 'Failed to load tasks'
     setSnapshot({ tasks: [], loading: false, error: msg })
+  }
+}
+
+function buildTaskUpdates(task: Task) {
+  return {
+    title: task.title,
+    category: task.category,
+    status: task.status,
+    completed_at: task.completedAt ?? null,
+    planning: task.planning ?? 'backlog',
+    sort_order: task.sort_order ?? 0,
   }
 }
 
@@ -120,8 +179,18 @@ export function useTaskStore(userId: string | undefined) {
   )
 
   const addTask = useCallback(
-    (title: string, category: string, source: TaskSource = 'manual'): Task | null => {
+    (
+      title: string,
+      category: string,
+      source: TaskSource = 'manual',
+      planning: TaskPlanning = 'backlog',
+    ): Task | null => {
       if (!userId) return null
+
+      const columnTasks = snapshot.tasks.filter(
+        (t) => t.status === 'open' && (t.planning ?? 'backlog') === planning,
+      )
+      const maxOrder = columnTasks.reduce((max, t) => Math.max(max, t.sort_order ?? 0), -1)
 
       const task: Task = {
         id: generateId(),
@@ -130,6 +199,8 @@ export function useTaskStore(userId: string | undefined) {
         status: 'open',
         createdAt: new Date().toISOString(),
         source,
+        planning,
+        sort_order: maxOrder + 1,
       }
 
       patchTasks((current) => [...current, task])
@@ -145,7 +216,10 @@ export function useTaskStore(userId: string | undefined) {
   )
 
   const updateTask = useCallback(
-    (id: string, updates: Partial<Pick<Task, 'title' | 'category' | 'status'>>) => {
+    (
+      id: string,
+      updates: Partial<Pick<Task, 'title' | 'category' | 'status' | 'planning' | 'sort_order'>>,
+    ) => {
       if (!userId) return
 
       const previous = snapshot.tasks
@@ -166,15 +240,106 @@ export function useTaskStore(userId: string | undefined) {
       const updated = snapshot.tasks.find((t) => t.id === id)
       if (!updated) return
 
-      void updateTaskById(id, {
-        title: updated.title,
-        category: updated.category,
-        status: updated.status,
-        completed_at: updated.completedAt ?? null,
-      }).catch((err) => {
+      void updateTaskById(id, buildTaskUpdates(updated)).catch((err) => {
         console.error('[tasks] Failed to update:', err)
         setSnapshot({ ...snapshot, tasks: previous })
       })
+    },
+    [userId],
+  )
+
+  const reorderTask = useCallback(
+    (taskId: string, targetPlanning: TaskPlanning, orderedIds: string[]) => {
+      if (!userId) return
+
+      const previous = snapshot.tasks
+      const orderMap = new Map(orderedIds.map((id, index) => [id, index]))
+
+      patchTasks((current) =>
+        current.map((t) => {
+          if (!orderMap.has(t.id)) return t
+          return {
+            ...t,
+            planning: t.id === taskId ? targetPlanning : t.planning ?? 'backlog',
+            sort_order: orderMap.get(t.id),
+          }
+        }),
+      )
+
+      const changed = snapshot.tasks.filter((t) => orderMap.has(t.id))
+      void Promise.all(changed.map((t) => updateTaskById(t.id, buildTaskUpdates(t)))).catch(
+        (err) => {
+          console.error('[tasks] Failed to reorder:', err)
+          setSnapshot({ ...snapshot, tasks: previous })
+        },
+      )
+    },
+    [userId],
+  )
+
+  const applyColumnOrders = useCallback(
+    (mode: 'planning' | 'category', columns: Record<string, string[]>) => {
+      if (!userId) return
+
+      const previous = snapshot.tasks
+      const patches = new Map<string, Partial<Task>>()
+
+      for (const [columnKey, ids] of Object.entries(columns)) {
+        ids.forEach((id, index) => {
+          patches.set(id, {
+            sort_order: index,
+            ...(mode === 'planning'
+              ? { planning: columnKey as TaskPlanning }
+              : { category: columnKey }),
+          })
+        })
+      }
+
+      patchTasks((current) =>
+        current.map((t) => {
+          const patch = patches.get(t.id)
+          return patch ? { ...t, ...patch } : t
+        }),
+      )
+
+      const changed = snapshot.tasks.filter((t) => patches.has(t.id))
+      if (changed.length === 0) return
+
+      void Promise.all(changed.map((t) => updateTaskById(t.id, buildTaskUpdates(t)))).catch(
+        (err) => {
+          console.error('[tasks] Failed to apply column orders:', err)
+          setSnapshot({ ...snapshot, tasks: previous })
+        },
+      )
+    },
+    [userId],
+  )
+
+  const reorderTaskByCategory = useCallback(
+    (taskId: string, targetCategory: string, orderedIds: string[]) => {
+      if (!userId) return
+
+      const previous = snapshot.tasks
+      const orderMap = new Map(orderedIds.map((id, index) => [id, index]))
+
+      patchTasks((current) =>
+        current.map((t) => {
+          if (!orderMap.has(t.id)) return t
+          return {
+            ...t,
+            category: t.id === taskId ? targetCategory : t.category,
+            sort_order: orderMap.get(t.id),
+          }
+        }),
+      )
+
+      const changed = snapshot.tasks.filter((t) => orderMap.has(t.id))
+      void Promise.all(changed.map((t) => updateTaskById(t.id, buildTaskUpdates(t)))).catch(
+        (err) => {
+          console.error('[tasks] Failed to reorder by category:', err)
+          setSnapshot({ ...snapshot, tasks: previous })
+        },
+      )
     },
     [userId],
   )
@@ -214,10 +379,7 @@ export function useTaskStore(userId: string | undefined) {
       const updated = snapshot.tasks.find((t) => t.id === id)
       if (!updated) return
 
-      void updateTaskById(id, {
-        status: updated.status,
-        completed_at: updated.completedAt ?? null,
-      }).catch((err) => {
+      void updateTaskById(id, buildTaskUpdates(updated)).catch((err) => {
         console.error('[tasks] Failed to toggle:', err)
         setSnapshot({ ...snapshot, tasks: previous })
       })
@@ -239,6 +401,8 @@ export function useTaskStore(userId: string | undefined) {
         ...task,
         id: task.id || generateId(),
         createdAt: task.createdAt || new Date().toISOString(),
+        planning: task.planning ?? 'backlog',
+        sort_order: task.sort_order ?? 0,
       }))
 
       patchTasks((current) => [...current, ...withIds])
@@ -278,6 +442,9 @@ export function useTaskStore(userId: string | undefined) {
     error,
     addTask,
     updateTask,
+    reorderTask,
+    reorderTaskByCategory,
+    applyColumnOrders,
     removeTask,
     toggleTask,
     mergeTasks,

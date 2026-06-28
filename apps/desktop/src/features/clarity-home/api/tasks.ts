@@ -1,8 +1,23 @@
 import { supabase } from '@/lib/supabase'
-import type { ClarityTaskInsert, ClarityTaskRow, ClarityTaskUpdate, Task } from '@oneway/shared'
+import type {
+  ClarityTaskInsert,
+  ClarityTaskRow,
+  ClarityTaskUpdate,
+  Task,
+  TaskPlanning,
+} from '@oneway/shared'
 
 export const LOCAL_TASKS_STORAGE_KEY = 'clarity-tasks'
 const CURRENT_FOCUS_STORAGE_KEY = 'clarity-current-focus'
+
+const VALID_PLANNING = new Set<TaskPlanning>(['today', 'next', 'later', 'backlog'])
+
+function normalizePlanning(value: unknown): TaskPlanning {
+  if (typeof value === 'string' && VALID_PLANNING.has(value as TaskPlanning)) {
+    return value as TaskPlanning
+  }
+  return 'backlog'
+}
 
 export function rowToTask(row: ClarityTaskRow): Task {
   return {
@@ -14,6 +29,8 @@ export function rowToTask(row: ClarityTaskRow): Task {
     completedAt: row.completed_at ?? undefined,
     source: row.source,
     rawInput: row.raw_input ?? undefined,
+    planning: normalizePlanning(row.planning),
+    sort_order: typeof row.sort_order === 'number' ? row.sort_order : 0,
   }
 }
 
@@ -27,6 +44,8 @@ export function taskToInsert(userId: string, task: Task): ClarityTaskInsert {
     source: task.source,
     raw_input: task.rawInput ?? null,
     completed_at: task.completedAt ?? null,
+    planning: task.planning ?? 'backlog',
+    sort_order: task.sort_order ?? 0,
     created_at: task.createdAt,
   }
 }
@@ -42,6 +61,17 @@ function isValidLocalTask(value: unknown): value is Task {
     typeof task.createdAt === 'string' &&
     typeof task.source === 'string'
   )
+}
+
+function isPlanningColumnError(error: { message?: string } | null): boolean {
+  const msg = error?.message ?? ''
+  return msg.includes('planning') || msg.includes('sort_order')
+}
+
+function insertWithoutPlanning(userId: string, task: Task): Omit<ClarityTaskInsert, 'planning' | 'sort_order'> {
+  const row = taskToInsert(userId, task)
+  const { planning: _p, sort_order: _s, ...rest } = row
+  return rest
 }
 
 function normalizeTitle(title: string): string {
@@ -84,18 +114,39 @@ export async function getTasks(userId: string): Promise<Task[]> {
     .from('tasks')
     .select('*')
     .eq('user_id', userId)
+    .order('planning', { ascending: true })
+    .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
 
-  if (error) throw error
+  if (error) {
+    // Graceful fallback when planning/sort_order columns don't exist yet
+    if (error.message?.includes('planning') || error.message?.includes('sort_order')) {
+      const fallback = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true })
+      if (fallback.error) throw fallback.error
+      return ((fallback.data as ClarityTaskRow[]) ?? []).map(rowToTask)
+    }
+    throw error
+  }
   return ((data as ClarityTaskRow[]) ?? []).map(rowToTask)
 }
 
 export async function createTask(userId: string, task: Task): Promise<Task> {
-  const { data, error } = await supabase
-    .from('tasks')
-    .insert(taskToInsert(userId, task))
-    .select()
-    .single()
+  const payload = taskToInsert(userId, task)
+  const { data, error } = await supabase.from('tasks').insert(payload).select().single()
+
+  if (error && isPlanningColumnError(error)) {
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('tasks')
+      .insert(insertWithoutPlanning(userId, task))
+      .select()
+      .single()
+    if (fallbackError) throw fallbackError
+    return rowToTask(fallbackData as ClarityTaskRow)
+  }
 
   if (error) throw error
   return rowToTask(data as ClarityTaskRow)
@@ -109,20 +160,38 @@ export async function createTasks(userId: string, tasks: Task[]): Promise<Task[]
     .insert(tasks.map((task) => taskToInsert(userId, task)))
     .select()
 
+  if (error && isPlanningColumnError(error)) {
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('tasks')
+      .insert(tasks.map((task) => insertWithoutPlanning(userId, task)))
+      .select()
+    if (fallbackError) throw fallbackError
+    return ((fallbackData as ClarityTaskRow[]) ?? []).map(rowToTask)
+  }
+
   if (error) throw error
   return ((data as ClarityTaskRow[]) ?? []).map(rowToTask)
 }
 
 export async function updateTaskById(id: string, updates: ClarityTaskUpdate): Promise<Task> {
-  const { data, error } = await supabase
-    .from('tasks')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .select()
-    .single()
+  const payload = {
+    ...updates,
+    updated_at: new Date().toISOString(),
+  }
+
+  const { data, error } = await supabase.from('tasks').update(payload).eq('id', id).select().single()
+
+  if (error && isPlanningColumnError(error)) {
+    const { planning: _p, sort_order: _s, ...rest } = updates
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('tasks')
+      .update({ ...rest, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    if (fallbackError) throw fallbackError
+    return rowToTask(fallbackData as ClarityTaskRow)
+  }
 
   if (error) throw error
   return rowToTask(data as ClarityTaskRow)

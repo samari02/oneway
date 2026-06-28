@@ -1,22 +1,64 @@
-import { useMemo, useRef, useState, useEffect, type CSSProperties, type KeyboardEvent } from 'react'
-import type { Task } from '@oneway/shared'
-import type { FocusArea } from '@oneway/shared'
+import {
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  type CSSProperties,
+  type KeyboardEvent,
+} from 'react'
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCorners,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+  type UniqueIdentifier,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import type { Task, TaskPlanning } from '@oneway/shared'
 import { useAuth } from '@/features/auth'
-import { useTaskStore } from '../hooks/useTaskStore'
-import { useCategoryStore, type Category } from '../hooks/useCategoryStore'
+import {
+  PLANNING_COLUMNS,
+  groupTasksByCategory,
+  groupTasksByPlanning,
+  useTaskStore,
+} from '../hooks/useTaskStore'
+import { useCategoryStore } from '../hooks/useCategoryStore'
 import { useFocusAreaStore } from '../hooks/useFocusAreaStore'
 import { CategoryIcon } from './CategoryIcon'
 import './TasksView.css'
 
-type TabId = 'all' | 'completed'
-type SortMode = 'alphabetical' | 'created_at'
+type ViewMode = 'plan' | 'projects' | 'completed'
+type SortMode = 'manual' | 'alphabetical' | 'created_at'
 
-type GroupDisplay = {
+const PLANNING_LABELS: Record<TaskPlanning, string> = {
+  today: 'Today',
+  next: 'Next',
+  later: 'Later',
+  backlog: 'Backlog',
+}
+
+const PLANNING_CYCLE: TaskPlanning[] = ['today', 'next', 'later', 'backlog']
+
+type ColumnMeta = {
   id: string
   label: string
   color: string
   emoji?: string | null
-  tasks: Task[]
 }
 
 function CheckIcon() {
@@ -44,7 +86,21 @@ function TrashIcon() {
   )
 }
 
-function sortTasks(tasks: Task[], sortBy: SortMode): Task[] {
+function GripIcon() {
+  return (
+    <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor" aria-hidden>
+      <circle cx="2.5" cy="2" r="1.2" />
+      <circle cx="7.5" cy="2" r="1.2" />
+      <circle cx="2.5" cy="7" r="1.2" />
+      <circle cx="7.5" cy="7" r="1.2" />
+      <circle cx="2.5" cy="12" r="1.2" />
+      <circle cx="7.5" cy="12" r="1.2" />
+    </svg>
+  )
+}
+
+function sortTasksList(tasks: Task[], sortBy: SortMode): Task[] {
+  if (sortBy === 'manual') return tasks
   const copy = [...tasks]
   if (sortBy === 'alphabetical') {
     return copy.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
@@ -52,76 +108,47 @@ function sortTasks(tasks: Task[], sortBy: SortMode): Task[] {
   return copy.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 }
 
-function groupTasks(
-  tasks: Task[],
-  categories: Category[],
-  focusAreas: FocusArea[],
-  useFocusAreasMode: boolean,
-  sortBy: SortMode,
-): GroupDisplay[] {
-  const grouped = new Map<string, Task[]>()
-  for (const t of tasks) {
-    const list = grouped.get(t.category) ?? []
-    list.push(t)
-    grouped.set(t.category, list)
-  }
-
-  if (useFocusAreasMode) {
-    const areaMap = new Map(focusAreas.map((a) => [a.id, a]))
-    const orderMap = new Map(focusAreas.map((fa) => [fa.id, fa.display_order]))
-    return Array.from(grouped.entries())
-      .map(([areaId, areaTasks]) => {
-        const area = areaMap.get(areaId)
-        return {
-          id: areaId,
-          label: area?.label ?? areaId.charAt(0).toUpperCase() + areaId.slice(1),
-          color: area?.color ?? '#a78bfa',
-          emoji: area?.emoji,
-          tasks: sortTasks(areaTasks, sortBy),
-        }
-      })
-      .sort((a, b) => (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99))
-  }
-
-  const orderMap = new Map(categories.map((c, i) => [c.id, i]))
-  return Array.from(grouped.entries())
-    .map(([catId, catTasks]) => {
-      const cat = categories.find((c) => c.id === catId)
-      return {
-        id: catId,
-        label: cat?.label ?? catId.charAt(0).toUpperCase() + catId.slice(1),
-        color: cat?.color ?? '#a78bfa',
-        emoji: cat?.emoji,
-        tasks: sortTasks(catTasks, sortBy),
-      }
-    })
-    .sort((a, b) => (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99))
+function nextPlanning(current: TaskPlanning): TaskPlanning {
+  const index = PLANNING_CYCLE.indexOf(current)
+  return PLANNING_CYCLE[(index + 1) % PLANNING_CYCLE.length]
 }
 
-function TaskRow({
+function findContainerId(
+  id: UniqueIdentifier,
+  items: Record<string, string[]>,
+): string | undefined {
+  if (id in items) return String(id)
+  return Object.keys(items).find((key) => items[key].includes(String(id)))
+}
+
+function SortableTaskCard({
   task,
-  isDone,
-  categories,
-  focusAreas,
-  useFocusAreasMode,
+  showCategoryBadge,
+  showPlanningBadge,
+  categoryLabel,
+  categoryColor,
   onToggle,
   onSaveTitle,
-  onChangeCategory,
   onDelete,
+  onCyclePlanning,
 }: {
   task: Task
-  isDone: boolean
-  categories: Category[]
-  focusAreas: FocusArea[]
-  useFocusAreasMode: boolean
+  showCategoryBadge: boolean
+  showPlanningBadge: boolean
+  categoryLabel: string
+  categoryColor: string
   onToggle: () => void
   onSaveTitle: (title: string) => void
-  onChangeCategory: (category: string) => void
   onDelete: () => void
+  onCyclePlanning?: () => void
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(task.title)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+  })
 
   useEffect(() => {
     if (!editing) setDraft(task.title)
@@ -142,23 +169,39 @@ function TaskRow({
     setEditing(false)
   }
 
-  const categoryColor = useFocusAreasMode
-    ? (focusAreas.find((a) => a.id === task.category)?.color ?? '#a78bfa')
-    : (categories.find((c) => c.id === task.category)?.color ?? '#a78bfa')
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.35 : 1,
+  }
 
-  const validCategories = categories.filter((c) => c?.id).sort((a, b) => a.order - b.order)
+  const planning = task.planning ?? 'backlog'
 
   return (
-    <li className={`tasks-view__task${isDone ? ' tasks-view__task--done' : ''}${editing ? ' tasks-view__task--editing' : ''}`}>
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`tasks-view__card${isDragging ? ' tasks-view__card--dragging' : ''}`}
+    >
       <button
         type="button"
-        className={`tasks-view__checkbox${isDone ? ' tasks-view__checkbox--checked' : ''}`}
+        className="tasks-view__drag-handle"
+        aria-label={`Drag ${task.title}`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripIcon />
+      </button>
+
+      <button
+        type="button"
+        className="tasks-view__checkbox"
         role="checkbox"
-        aria-checked={isDone}
-        aria-label={`Mark "${task.title}" as ${isDone ? 'open' : 'done'}`}
+        aria-checked={false}
+        aria-label={`Mark "${task.title}" as done`}
         onClick={onToggle}
       >
-        {isDone && <CheckIcon />}
+        <CheckIcon />
       </button>
 
       {editing ? (
@@ -178,34 +221,30 @@ function TaskRow({
           onBlur={commitEdit}
         />
       ) : (
-        <button
-          type="button"
-          className="tasks-view__task-title"
-          onClick={() => setEditing(true)}
-        >
+        <button type="button" className="tasks-view__task-title" onClick={() => setEditing(true)}>
           {task.title}
         </button>
       )}
 
-      <select
-        className="tasks-view__category-select"
-        value={task.category}
-        onChange={(e) => onChangeCategory(e.target.value)}
-        aria-label={`Category for ${task.title}`}
-        style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
-      >
-        {useFocusAreasMode
-          ? focusAreas.filter((a) => a.status === 'active').map((area) => (
-              <option key={area.id} value={area.id}>
-                {area.emoji ?? ''} {area.label}
-              </option>
-            ))
-          : validCategories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.label}
-              </option>
-            ))}
-      </select>
+      {showCategoryBadge && (
+        <span
+          className="tasks-view__badge tasks-view__badge--category"
+          style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
+        >
+          {categoryLabel}
+        </span>
+      )}
+
+      {showPlanningBadge && (
+        <button
+          type="button"
+          className={`tasks-view__badge tasks-view__badge--planning tasks-view__badge--planning-${planning}`}
+          onClick={onCyclePlanning}
+          title="Click to change planning horizon"
+        >
+          {PLANNING_LABELS[planning]}
+        </button>
+      )}
 
       <button
         type="button"
@@ -219,17 +258,164 @@ function TaskRow({
   )
 }
 
+function KanbanColumn({
+  column,
+  taskIds,
+  tasksById,
+  emptyHint,
+  showOverLimit,
+  showCategoryBadge,
+  showPlanningBadge,
+  getCategoryMeta,
+  onToggle,
+  onSaveTitle,
+  onDelete,
+  onCyclePlanning,
+}: {
+  column: ColumnMeta
+  taskIds: string[]
+  tasksById: Map<string, Task>
+  emptyHint?: string
+  showOverLimit?: boolean
+  showCategoryBadge: boolean
+  showPlanningBadge: boolean
+  getCategoryMeta: (task: Task) => { label: string; color: string }
+  onToggle: (id: string) => void
+  onSaveTitle: (id: string, title: string) => void
+  onDelete: (id: string) => void
+  onCyclePlanning?: (id: string) => void
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: column.id })
+
+  return (
+    <section
+      ref={setNodeRef}
+      className={`tasks-view__column${isOver ? ' tasks-view__column--over' : ''}${showOverLimit ? ' tasks-view__column--warn' : ''}`}
+    >
+      <header className="tasks-view__column-header">
+        <span
+          className="tasks-view__column-dot"
+          style={{ '--tasks-cat-color': column.color } as CSSProperties}
+          aria-hidden
+        >
+          {column.emoji ? (
+            <span className="tasks-view__column-emoji">{column.emoji}</span>
+          ) : (
+            <CategoryIcon categoryId={column.id} size={14} />
+          )}
+        </span>
+        <span className="tasks-view__column-label">{column.label}</span>
+        <span className="tasks-view__column-count">{taskIds.length}</span>
+      </header>
+
+      {showOverLimit && (
+        <p className="tasks-view__column-hint tasks-view__column-hint--warn">
+          Consider moving some tasks — Today works best with 5 or fewer.
+        </p>
+      )}
+
+      <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+        <ul className="tasks-view__column-list">
+          {taskIds.map((id) => {
+            const task = tasksById.get(id)
+            if (!task) return null
+            const meta = getCategoryMeta(task)
+            return (
+              <SortableTaskCard
+                key={id}
+                task={task}
+                showCategoryBadge={showCategoryBadge}
+                showPlanningBadge={showPlanningBadge}
+                categoryLabel={meta.label}
+                categoryColor={meta.color}
+                onToggle={() => onToggle(id)}
+                onSaveTitle={(title) => onSaveTitle(id, title)}
+                onDelete={() => onDelete(id)}
+                onCyclePlanning={onCyclePlanning ? () => onCyclePlanning(id) : undefined}
+              />
+            )
+          })}
+        </ul>
+      </SortableContext>
+
+      {taskIds.length === 0 && emptyHint && (
+        <p className="tasks-view__column-hint">{emptyHint}</p>
+      )}
+    </section>
+  )
+}
+
+function CompletedTaskRow({
+  task,
+  categoryLabel,
+  categoryColor,
+  onToggle,
+  onDelete,
+}: {
+  task: Task
+  categoryLabel: string
+  categoryColor: string
+  onToggle: () => void
+  onDelete: () => void
+}) {
+  const planning = task.planning ?? 'backlog'
+
+  return (
+    <li className="tasks-view__card tasks-view__card--done">
+      <button
+        type="button"
+        className="tasks-view__checkbox tasks-view__checkbox--checked"
+        role="checkbox"
+        aria-checked
+        aria-label={`Mark "${task.title}" as open`}
+        onClick={onToggle}
+      >
+        <CheckIcon />
+      </button>
+      <span className="tasks-view__task-title tasks-view__task-title--done">{task.title}</span>
+      <span
+        className="tasks-view__badge tasks-view__badge--category"
+        style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
+      >
+        {categoryLabel}
+      </span>
+      <span className={`tasks-view__badge tasks-view__badge--planning tasks-view__badge--planning-${planning}`}>
+        {PLANNING_LABELS[planning]}
+      </span>
+      <button
+        type="button"
+        className="tasks-view__delete tasks-view__delete--visible"
+        aria-label={`Delete "${task.title}"`}
+        onClick={onDelete}
+      >
+        <TrashIcon />
+      </button>
+    </li>
+  )
+}
+
 export function TasksView() {
   const { user } = useAuth()
-  const { tasks, loading, error, addTask, updateTask, removeTask, toggleTask } = useTaskStore(user?.id)
+  const {
+    tasks,
+    loading,
+    error,
+    addTask,
+    updateTask,
+    applyColumnOrders,
+    removeTask,
+    toggleTask,
+  } = useTaskStore(user?.id)
   const { categories } = useCategoryStore()
   const { activeAreas } = useFocusAreaStore(user?.id)
 
-  const [activeTab, setActiveTab] = useState<TabId>('all')
+  const [viewMode, setViewMode] = useState<ViewMode>('plan')
   const [addingTask, setAddingTask] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('all')
-  const [sortBy, setSortBy] = useState<SortMode>('created_at')
+  const [sortBy, setSortBy] = useState<SortMode>('manual')
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const [columnItems, setColumnItems] = useState<Record<string, string[]>>({})
   const addInputRef = useRef<HTMLInputElement>(null)
 
   const useFocusAreasMode = activeAreas.length > 0
@@ -238,40 +424,206 @@ export function TasksView() {
     [categories],
   )
 
+  const projectColumns = useMemo((): ColumnMeta[] => {
+    if (useFocusAreasMode) {
+      return activeAreas.map((area) => ({
+        id: area.id,
+        label: area.label,
+        color: area.color ?? '#a78bfa',
+        emoji: area.emoji,
+      }))
+    }
+    return validCategories.map((cat) => ({
+      id: cat.id,
+      label: cat.label,
+      color: cat.color,
+      emoji: cat.emoji,
+    }))
+  }, [useFocusAreasMode, activeAreas, validCategories])
+
+  const planColumns = useMemo(
+    (): ColumnMeta[] =>
+      PLANNING_COLUMNS.map((id) => ({
+        id,
+        label: PLANNING_LABELS[id],
+        color: id === 'today' ? '#7c3aed' : '#a78bfa',
+      })),
+    [],
+  )
+
   const defaultCategory = useFocusAreasMode
     ? (activeAreas[0]?.id ?? validCategories[0]?.id ?? 'clarity')
     : (validCategories[0]?.id ?? 'clarity')
+
+  const openTasks = useMemo(() => {
+    const visible = tasks.filter((t) => t.status === 'open')
+    if (filterCategory === 'all') return visible
+    return visible.filter((t) => t.category === filterCategory)
+  }, [tasks, filterCategory])
+
+  const completedTasks = useMemo(() => {
+    const done = tasks.filter((t) => t.status === 'done')
+    if (filterCategory === 'all') return done
+    return done.filter((t) => t.category === filterCategory)
+  }, [tasks, filterCategory])
+
+  const tasksById = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks])
+
+  const derivedColumnItems = useMemo(() => {
+    if (viewMode === 'completed') return {}
+
+    const sorted = sortTasksList(openTasks, sortBy)
+    if (viewMode === 'plan') {
+      const grouped = groupTasksByPlanning(sorted)
+      return Object.fromEntries(PLANNING_COLUMNS.map((key) => [key, grouped[key].map((t) => t.id)]))
+    }
+
+    const grouped = groupTasksByCategory(
+      sorted,
+      projectColumns.map((c) => c.id),
+    )
+    return Object.fromEntries(projectColumns.map((col) => [col.id, (grouped[col.id] ?? []).map((t) => t.id)]))
+  }, [viewMode, openTasks, sortBy, projectColumns])
+
+  useEffect(() => {
+    if (activeDragId) return
+    setColumnItems(derivedColumnItems)
+  }, [derivedColumnItems, activeDragId])
 
   useEffect(() => {
     if (addingTask) addInputRef.current?.focus()
   }, [addingTask])
 
-  const filteredTasks = useMemo(() => {
-    const visible = tasks.filter((t) => t.status !== 'archived')
-    const byTab = visible.filter((t) => (activeTab === 'all' ? t.status === 'open' : t.status === 'done'))
-    if (filterCategory === 'all') return byTab
-    return byTab.filter((t) => t.category === filterCategory)
-  }, [tasks, activeTab, filterCategory])
-
-  const grouped = useMemo(
-    () => groupTasks(filteredTasks, validCategories, activeAreas, useFocusAreasMode, sortBy),
-    [filteredTasks, validCategories, activeAreas, useFocusAreasMode, sortBy],
+  const getCategoryMeta = useCallback(
+    (task: Task): { label: string; color: string } => {
+      if (useFocusAreasMode) {
+        const area = activeAreas.find((a) => a.id === task.category)
+        return {
+          label: area?.label ?? task.category,
+          color: area?.color ?? '#a78bfa',
+        }
+      }
+      const cat = validCategories.find((c) => c.id === task.category)
+      return {
+        label: cat?.label ?? task.category,
+        color: cat?.color ?? '#a78bfa',
+      }
+    },
+    [useFocusAreasMode, activeAreas, validCategories],
   )
 
-  const openCount = useMemo(
-    () => tasks.filter((t) => t.status === 'open').length,
-    [tasks],
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
-  const completedCount = useMemo(
-    () => tasks.filter((t) => t.status === 'done').length,
-    [tasks],
-  )
+
+  const resolveOverContainer = (
+    overId: string,
+    items: Record<string, string[]>,
+  ): string | undefined => findContainerId(overId, items) ?? (overId in items ? overId : undefined)
+
+  const handleDragStart = (event: DragStartEvent) => {
+    if (sortBy !== 'manual') setSortBy('manual')
+    setActiveDragId(String(event.active.id))
+  }
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event
+    if (!over) return
+
+    const activeId = String(active.id)
+    const overId = String(over.id)
+
+    setColumnItems((prev) => {
+      const activeContainer = findContainerId(activeId, prev)
+      const overContainer = resolveOverContainer(overId, prev)
+
+      if (!activeContainer || !overContainer || activeContainer === overContainer) return prev
+
+      const activeItems = [...prev[activeContainer]]
+      const overItems = [...prev[overContainer]]
+      const activeIndex = activeItems.indexOf(activeId)
+      if (activeIndex === -1) return prev
+
+      activeItems.splice(activeIndex, 1)
+
+      const overIndex = overItems.indexOf(overId)
+      if (overIndex >= 0) {
+        overItems.splice(overIndex, 0, activeId)
+      } else {
+        overItems.push(activeId)
+      }
+
+      return {
+        ...prev,
+        [activeContainer]: activeItems,
+        [overContainer]: overItems,
+      }
+    })
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveDragId(null)
+
+    if (!over) return
+
+    const activeId = String(active.id)
+    const overId = String(over.id)
+
+    setColumnItems((prev) => {
+      const activeContainer = findContainerId(activeId, prev)
+      const overContainer = resolveOverContainer(overId, prev)
+
+      if (!activeContainer || !overContainer) return prev
+
+      let nextItems = prev
+
+      if (activeContainer === overContainer) {
+        const items = [...(prev[activeContainer] ?? [])]
+        const oldIndex = items.indexOf(activeId)
+        const newIndex = items.indexOf(overId)
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+          nextItems = {
+            ...prev,
+            [activeContainer]: arrayMove(items, oldIndex, newIndex),
+          }
+        }
+      } else {
+        const activeItems = [...(prev[activeContainer] ?? [])]
+        const overItems = [...(prev[overContainer] ?? [])]
+        const activeIndex = activeItems.indexOf(activeId)
+        if (activeIndex >= 0) {
+          activeItems.splice(activeIndex, 1)
+          const overIndex = overItems.indexOf(overId)
+          if (overIndex >= 0) {
+            overItems.splice(overIndex, 0, activeId)
+          } else {
+            overItems.push(activeId)
+          }
+          nextItems = {
+            ...prev,
+            [activeContainer]: activeItems,
+            [overContainer]: overItems,
+          }
+        }
+      }
+
+      if (viewMode === 'plan') {
+        applyColumnOrders('planning', nextItems)
+      } else if (viewMode === 'projects') {
+        applyColumnOrders('category', nextItems)
+      }
+
+      return nextItems
+    })
+  }
 
   const handleAddTask = () => {
     const title = newTaskTitle.trim()
     if (!title) return
     const category = filterCategory !== 'all' ? filterCategory : defaultCategory
-    addTask(title, category, 'manual')
+    addTask(title, category, 'manual', 'backlog')
     setNewTaskTitle('')
     setAddingTask(false)
   }
@@ -287,6 +639,19 @@ export function TasksView() {
     }
   }
 
+  const handleCyclePlanning = (id: string) => {
+    const task = tasksById.get(id)
+    if (!task) return
+    updateTask(id, { planning: nextPlanning(task.planning ?? 'backlog') })
+  }
+
+  const openCount = tasks.filter((t) => t.status === 'open').length
+  const completedCount = tasks.filter((t) => t.status === 'done').length
+  const todayCount = (columnItems.today ?? derivedColumnItems.today ?? []).length
+
+  const activeDragTask = activeDragId ? tasksById.get(activeDragId) : undefined
+  const columns = viewMode === 'plan' ? planColumns : projectColumns
+
   return (
     <div className="tasks-view">
       <div className="tasks-view__bg" aria-hidden />
@@ -294,77 +659,84 @@ export function TasksView() {
       <div className="tasks-view__shell">
         <header className="tasks-view__header">
           <div className="tasks-view__header-row">
-            <h1 className="tasks-view__title">All Tasks</h1>
-            <button
-              type="button"
-              className="tasks-view__add-btn"
-              onClick={() => setAddingTask(true)}
-            >
+            <h1 className="tasks-view__title">Tasks</h1>
+            <button type="button" className="tasks-view__add-btn" onClick={() => setAddingTask(true)}>
               <PlusIcon />
               Add task
             </button>
           </div>
 
-          <div className="tasks-view__tabs" role="tablist" aria-label="Task filters">
+          <div className="tasks-view__tabs" role="tablist" aria-label="Task views">
             <button
               type="button"
               role="tab"
-              aria-selected={activeTab === 'all'}
-              className={`tasks-view__tab${activeTab === 'all' ? ' tasks-view__tab--active' : ''}`}
-              onClick={() => setActiveTab('all')}
+              aria-selected={viewMode === 'plan'}
+              className={`tasks-view__tab${viewMode === 'plan' ? ' tasks-view__tab--active' : ''}`}
+              onClick={() => setViewMode('plan')}
             >
-              All
-              {openCount > 0 && <span className="tasks-view__tab-count">{openCount}</span>}
+              Plan
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={activeTab === 'completed'}
-              className={`tasks-view__tab${activeTab === 'completed' ? ' tasks-view__tab--active' : ''}`}
-              onClick={() => setActiveTab('completed')}
+              aria-selected={viewMode === 'projects'}
+              className={`tasks-view__tab${viewMode === 'projects' ? ' tasks-view__tab--active' : ''}`}
+              onClick={() => setViewMode('projects')}
+            >
+              Projects
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === 'completed'}
+              className={`tasks-view__tab${viewMode === 'completed' ? ' tasks-view__tab--active' : ''}`}
+              onClick={() => setViewMode('completed')}
             >
               Completed
               {completedCount > 0 && <span className="tasks-view__tab-count">{completedCount}</span>}
             </button>
           </div>
 
-          <div className="tasks-view__toolbar">
-            <label className="tasks-view__filter">
-              <span className="tasks-view__filter-label">Category</span>
-              <select
-                className="tasks-view__filter-select"
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                aria-label="Filter by category"
-              >
-                <option value="all">All categories</option>
-                {useFocusAreasMode
-                  ? activeAreas.map((area) => (
-                      <option key={area.id} value={area.id}>
-                        {area.emoji ?? ''} {area.label}
-                      </option>
-                    ))
-                  : validCategories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.label}
-                      </option>
-                    ))}
-              </select>
-            </label>
+          {viewMode !== 'completed' && (
+            <div className="tasks-view__toolbar">
+              <label className="tasks-view__filter">
+                <span className="tasks-view__filter-label">Category</span>
+                <select
+                  className="tasks-view__filter-select"
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  aria-label="Filter by category"
+                >
+                  <option value="all">All categories</option>
+                  {useFocusAreasMode
+                    ? activeAreas.map((area) => (
+                        <option key={area.id} value={area.id}>
+                          {area.emoji ?? ''} {area.label}
+                        </option>
+                      ))
+                    : validCategories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.label}
+                        </option>
+                      ))}
+                </select>
+              </label>
 
-            <label className="tasks-view__filter">
-              <span className="tasks-view__filter-label">Sort</span>
-              <select
-                className="tasks-view__filter-select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortMode)}
-                aria-label="Sort tasks"
-              >
-                <option value="created_at">Newest first</option>
-                <option value="alphabetical">Alphabetical</option>
-              </select>
-            </label>
-          </div>
+              <label className="tasks-view__filter">
+                <span className="tasks-view__filter-label">Sort</span>
+                <select
+                  className="tasks-view__filter-select"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortMode)}
+                  aria-label="Sort tasks"
+                >
+                  <option value="manual">Manual (drag order)</option>
+                  <option value="created_at">Newest first</option>
+                  <option value="alphabetical">Alphabetical</option>
+                </select>
+              </label>
+            </div>
+          )}
         </header>
 
         {addingTask && (
@@ -415,52 +787,79 @@ export function TasksView() {
           </div>
         )}
 
-        {!loading && !error && grouped.length === 0 && (
+        {!loading && !error && viewMode === 'completed' && completedTasks.length === 0 && (
           <div className="tasks-view__empty">
-            <p className="tasks-view__empty-text">
-              {activeTab === 'all' ? 'No open tasks yet. Add one to get started.' : 'No completed tasks yet.'}
-            </p>
+            <p className="tasks-view__empty-text">No completed tasks yet.</p>
           </div>
         )}
 
-        {!loading && !error && grouped.length > 0 && (
-          <div className="tasks-view__groups">
-            {grouped.map(({ id, label, color, emoji, tasks: groupTasks }) => (
-              <section key={id} className="tasks-view__group">
-                <header className="tasks-view__group-header">
-                  <span
-                    className="tasks-view__group-dot"
-                    style={{ '--tasks-cat-color': color } as CSSProperties}
-                    aria-hidden
-                  >
-                    {emoji ? (
-                      <span className="tasks-view__group-emoji">{emoji}</span>
-                    ) : (
-                      <CategoryIcon categoryId={id} size={14} />
-                    )}
-                  </span>
-                  <span className="tasks-view__group-label">{label.toUpperCase()}</span>
-                  <span className="tasks-view__group-count">{groupTasks.length}</span>
-                </header>
-                <ul className="tasks-view__tasks">
-                  {groupTasks.map((task) => (
-                    <TaskRow
-                      key={task.id}
-                      task={task}
-                      isDone={task.status === 'done'}
-                      categories={validCategories}
-                      focusAreas={activeAreas}
-                      useFocusAreasMode={useFocusAreasMode}
-                      onToggle={() => toggleTask(task.id)}
-                      onSaveTitle={(title) => updateTask(task.id, { title })}
-                      onChangeCategory={(category) => updateTask(task.id, { category })}
-                      onDelete={() => removeTask(task.id)}
-                    />
-                  ))}
-                </ul>
-              </section>
-            ))}
+        {!loading && !error && viewMode !== 'completed' && openCount === 0 && (
+          <div className="tasks-view__empty">
+            <p className="tasks-view__empty-text">No open tasks yet. Add one to get started.</p>
           </div>
+        )}
+
+        {!loading && !error && viewMode !== 'completed' && openCount > 0 && (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="tasks-view__board">
+              {columns.map((column) => {
+                const taskIds = columnItems[column.id] ?? []
+                const isToday = column.id === 'today'
+                return (
+                  <KanbanColumn
+                    key={column.id}
+                    column={column}
+                    taskIds={taskIds}
+                    tasksById={tasksById}
+                    emptyHint={isToday ? 'Drag tasks here or add new' : undefined}
+                    showOverLimit={isToday && todayCount > 5}
+                    showCategoryBadge={viewMode === 'plan'}
+                    showPlanningBadge={viewMode === 'projects'}
+                    getCategoryMeta={getCategoryMeta}
+                    onToggle={toggleTask}
+                    onSaveTitle={(id, title) => updateTask(id, { title })}
+                    onDelete={removeTask}
+                    onCyclePlanning={viewMode === 'projects' ? handleCyclePlanning : undefined}
+                  />
+                )
+              })}
+            </div>
+
+            <DragOverlay>
+              {activeDragTask ? (
+                <div className="tasks-view__card tasks-view__card--overlay">
+                  <span className="tasks-view__drag-handle">
+                    <GripIcon />
+                  </span>
+                  <span className="tasks-view__task-title">{activeDragTask.title}</span>
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        )}
+
+        {!loading && !error && viewMode === 'completed' && completedTasks.length > 0 && (
+          <ul className="tasks-view__completed-list">
+            {sortTasksList(completedTasks, sortBy === 'manual' ? 'created_at' : sortBy).map((task) => {
+              const meta = getCategoryMeta(task)
+              return (
+                <CompletedTaskRow
+                  key={task.id}
+                  task={task}
+                  categoryLabel={meta.label}
+                  categoryColor={meta.color}
+                  onToggle={() => toggleTask(task.id)}
+                  onDelete={() => removeTask(task.id)}
+                />
+              )
+            })}
+          </ul>
         )}
       </div>
     </div>
