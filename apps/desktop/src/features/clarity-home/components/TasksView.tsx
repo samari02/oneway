@@ -16,6 +16,7 @@ import {
   useDroppable,
   useSensor,
   useSensors,
+  type DragCancelEvent,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
@@ -78,6 +79,16 @@ type ColumnMeta = {
   emoji?: string | null
   planning?: TaskPlanning
 }
+
+type HierarchyMeta = {
+  label: string
+  color: string
+  bucketLabel: string
+  subLabel: string
+  badge: string
+}
+
+type CategoryOption = { id: string; label: string; bucketId?: string | null }
 
 function CheckIcon() {
   return (
@@ -168,7 +179,9 @@ function SortableTaskCard({
   task,
   planningColor,
   categoryColor,
+  hierarchyMeta,
   categoryOptions,
+  showHierarchyBadge,
   showPlanningDot,
   showFocusButton,
   showPlanningBadge,
@@ -182,7 +195,9 @@ function SortableTaskCard({
   task: Task
   planningColor?: string
   categoryColor: string
-  categoryOptions: { id: string; label: string }[]
+  hierarchyMeta: HierarchyMeta
+  categoryOptions: CategoryOption[]
+  showHierarchyBadge: boolean
   showPlanningDot: boolean
   showFocusButton: boolean
   showPlanningBadge: boolean
@@ -287,18 +302,28 @@ function SortableTaskCard({
         </button>
       )}
 
-      <span
-        className="tasks-view__category-dot"
-        style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
-        title={categoryOptions.find((c) => c.id === task.category)?.label ?? task.category}
-        aria-hidden
-      />
+      {showHierarchyBadge ? (
+        <span
+          className="tasks-view__badge tasks-view__badge--category"
+          style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
+          title={hierarchyMeta.badge}
+        >
+          {hierarchyMeta.badge}
+        </span>
+      ) : (
+        <span
+          className="tasks-view__category-dot"
+          style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
+          title={hierarchyMeta.label}
+          aria-hidden
+        />
+      )}
 
       <select
         className="tasks-view__card-select tasks-view__card-hover"
         value={task.category}
         onChange={(e) => onCategoryChange(e.target.value)}
-        aria-label="Change category"
+        aria-label="Change sub-category"
       >
         {categoryOptions.map((opt) => (
           <option key={opt.id} value={opt.id}>
@@ -408,16 +433,24 @@ function ColumnQuickAdd({
 
 function PlanTodayModal({
   candidates,
-  getCategoryMeta,
+  getHierarchyMeta,
   onClose,
   onConfirm,
 }: {
   candidates: Task[]
-  getCategoryMeta: (task: Task) => { label: string; color: string }
+  getHierarchyMeta: (task: Task) => HierarchyMeta
   onClose: () => void
   onConfirm: (ids: string[]) => void
 }) {
   const [selected, setSelected] = useState<string[]>([])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -445,7 +478,7 @@ function PlanTodayModal({
         ) : (
           <ul className="tasks-view__modal-list">
             {candidates.map((task) => {
-              const meta = getCategoryMeta(task)
+              const meta = getHierarchyMeta(task)
               const planning = task.planning ?? 'backlog'
               const isSelected = selected.includes(task.id)
               return (
@@ -462,10 +495,11 @@ function PlanTodayModal({
                     />
                     <span className="tasks-view__modal-item-title">{task.title}</span>
                     <span
-                      className="tasks-view__category-dot"
+                      className="tasks-view__badge tasks-view__badge--category"
                       style={{ '--tasks-cat-color': meta.color } as CSSProperties}
-                      aria-hidden
-                    />
+                    >
+                      {meta.badge}
+                    </span>
                     <span className="tasks-view__modal-item-meta">{PLANNING_LABELS[planning]}</span>
                   </button>
                 </li>
@@ -502,8 +536,9 @@ function KanbanColumn({
   emptyAction,
   showPlanningDot,
   showFocusOnToday,
+  showHierarchyBadge,
   categoryOptions,
-  getCategoryMeta,
+  getHierarchyMeta,
   onToggle,
   onSaveTitle,
   onDelete,
@@ -521,8 +556,9 @@ function KanbanColumn({
   emptyAction?: { label: string; onClick: () => void }
   showPlanningDot: boolean
   showFocusOnToday: boolean
-  categoryOptions: { id: string; label: string }[]
-  getCategoryMeta: (task: Task) => { label: string; color: string }
+  showHierarchyBadge: boolean
+  categoryOptions: CategoryOption[]
+  getHierarchyMeta: (task: Task) => HierarchyMeta
   onToggle: (id: string) => void
   onSaveTitle: (id: string, title: string) => void
   onDelete: (id: string) => void
@@ -598,7 +634,7 @@ function KanbanColumn({
           {taskIds.map((id) => {
             const task = tasksById.get(id)
             if (!task) return null
-            const meta = getCategoryMeta(task)
+            const meta = getHierarchyMeta(task)
             const taskPlanning = task.planning ?? 'backlog'
             return (
               <SortableTaskCard
@@ -606,7 +642,9 @@ function KanbanColumn({
                 task={task}
                 planningColor={showPlanningDot ? PLANNING_COLORS[taskPlanning] : undefined}
                 categoryColor={meta.color}
+                hierarchyMeta={meta}
                 categoryOptions={categoryOptions}
+                showHierarchyBadge={showHierarchyBadge}
                 showPlanningDot={showPlanningDot}
                 showFocusButton={showFocusOnToday && taskPlanning === 'today'}
                 showPlanningBadge={!isPlanningColumn}
@@ -647,7 +685,7 @@ function KanbanColumn({
 function TaskListRow({
   task,
   categoryOptions,
-  categoryColor,
+  hierarchyMeta,
   onToggle,
   onSaveTitle,
   onDelete,
@@ -656,8 +694,8 @@ function TaskListRow({
   onFocus,
 }: {
   task: Task
-  categoryOptions: { id: string; label: string }[]
-  categoryColor: string
+  categoryOptions: CategoryOption[]
+  hierarchyMeta: HierarchyMeta
   onToggle: () => void
   onSaveTitle: (title: string) => void
   onDelete: () => void
@@ -722,25 +760,26 @@ function TaskListRow({
         )}
       </td>
       <td className="tasks-view__list-cell">
-        <div className="tasks-view__list-project">
-          <span
-            className="tasks-view__category-dot"
-            style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
-            aria-hidden
-          />
-          <select
-            className="tasks-view__filter-select tasks-view__list-select"
-            value={task.category}
-            onChange={(e) => onCategoryChange(e.target.value)}
-            aria-label={`Project for ${task.title}`}
-          >
-            {categoryOptions.map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <span
+          className="tasks-view__badge tasks-view__badge--category tasks-view__list-badge"
+          style={{ '--tasks-cat-color': hierarchyMeta.color } as CSSProperties}
+        >
+          {hierarchyMeta.badge}
+        </span>
+      </td>
+      <td className="tasks-view__list-cell">
+        <select
+          className="tasks-view__filter-select tasks-view__list-select"
+          value={task.category}
+          onChange={(e) => onCategoryChange(e.target.value)}
+          aria-label={`Sub-category for ${task.title}`}
+        >
+          {categoryOptions.map((opt) => (
+            <option key={opt.id} value={opt.id}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </td>
       <td className="tasks-view__list-cell">
         <select
@@ -783,14 +822,12 @@ function TaskListRow({
 
 function CompletedTaskRow({
   task,
-  categoryLabel,
-  categoryColor,
+  hierarchyMeta,
   onToggle,
   onDelete,
 }: {
   task: Task
-  categoryLabel: string
-  categoryColor: string
+  hierarchyMeta: HierarchyMeta
   onToggle: () => void
   onDelete: () => void
 }) {
@@ -810,11 +847,12 @@ function CompletedTaskRow({
       </button>
       <span className="tasks-view__task-title tasks-view__task-title--done">{task.title}</span>
       <span
-        className="tasks-view__category-dot"
-        style={{ '--tasks-cat-color': categoryColor } as CSSProperties}
-        title={categoryLabel}
-        aria-hidden
-      />
+        className="tasks-view__badge tasks-view__badge--category"
+        style={{ '--tasks-cat-color': hierarchyMeta.color } as CSSProperties}
+        title={hierarchyMeta.badge}
+      >
+        {hierarchyMeta.badge}
+      </span>
       <span className={`tasks-view__badge tasks-view__badge--planning tasks-view__badge--planning-${planning}`}>
         {PLANNING_LABELS[planning]}
       </span>
@@ -842,21 +880,33 @@ export function TasksView() {
     removeTask,
     toggleTask,
   } = useTaskStore(user?.id)
-  const { categories, addCategory } = useCategoryStore()
-  const { activeAreas, addArea } = useFocusAreaStore(user?.id)
+  const { categories, addBucket, addSub, getBuckets, getSubsForBucket, getBucketForSub, getAllSubs } =
+    useCategoryStore()
+  const {
+    activeAreas,
+    addBucket: addFocusBucket,
+    addSub: addFocusSub,
+    getBuckets: getFocusBuckets,
+    getSubsForBucket: getFocusSubsForBucket,
+    getBucketForSub: getFocusBucketForSub,
+    getAllSubs: getFocusAllSubs,
+  } = useFocusAreaStore(user?.id)
   const { selectTask, startTimer } = useCurrentFocus()
 
   const [viewMode, setViewMode] = useState<ViewMode>('plan')
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('board')
   const [addingTask, setAddingTask] = useState(false)
   const [addingCategory, setAddingCategory] = useState(false)
+  const [addingCategoryMode, setAddingCategoryMode] = useState<'bucket' | 'sub'>('sub')
   const [planTodayOpen, setPlanTodayOpen] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [newTaskBucket, setNewTaskBucket] = useState('')
   const [newTaskCategory, setNewTaskCategory] = useState('')
   const [newTaskPlanning, setNewTaskPlanning] = useState<TaskPlanning>('backlog')
   const [newCategoryName, setNewCategoryName] = useState('')
   const [newCategoryEmoji, setNewCategoryEmoji] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('all')
+  const [activeBucketId, setActiveBucketId] = useState<string>('')
   const [sortBy, setSortBy] = useState<SortMode>('manual')
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [columnItems, setColumnItems] = useState<Record<string, string[]>>({})
@@ -864,27 +914,53 @@ export function TasksView() {
   const addCategoryInputRef = useRef<HTMLInputElement>(null)
 
   const useFocusAreasMode = activeAreas.length > 0
+
+  const buckets = useMemo(() => {
+    if (useFocusAreasMode) return getFocusBuckets()
+    return getBuckets()
+  }, [useFocusAreasMode, getFocusBuckets, getBuckets, activeAreas, categories])
+
+  const allSubs = useMemo(() => {
+    if (useFocusAreasMode) return getFocusAllSubs()
+    return getAllSubs()
+  }, [useFocusAreasMode, getFocusAllSubs, getAllSubs, activeAreas, categories])
+
+  useEffect(() => {
+    if (buckets.length === 0) {
+      setActiveBucketId('')
+      return
+    }
+    if (!activeBucketId || !buckets.some((b) => b.id === activeBucketId)) {
+      setActiveBucketId(buckets[0].id)
+    }
+  }, [buckets, activeBucketId])
+
+  const activeBucketSubs = useMemo(() => {
+    if (!activeBucketId) return []
+    if (useFocusAreasMode) return getFocusSubsForBucket(activeBucketId)
+    return getSubsForBucket(activeBucketId)
+  }, [useFocusAreasMode, activeBucketId, getFocusSubsForBucket, getSubsForBucket, activeAreas, categories])
+
+  const newTaskSubOptions = useMemo(() => {
+    if (!newTaskBucket) return allSubs
+    if (useFocusAreasMode) return getFocusSubsForBucket(newTaskBucket)
+    return getSubsForBucket(newTaskBucket)
+  }, [newTaskBucket, allSubs, useFocusAreasMode, getFocusSubsForBucket, getSubsForBucket, activeAreas, categories])
+
   const validCategories = useMemo(
     () => categories.filter((c) => c?.id).sort((a, b) => a.order - b.order),
     [categories],
   )
 
   const projectColumns = useMemo((): ColumnMeta[] => {
-    if (useFocusAreasMode) {
-      return activeAreas.map((area) => ({
-        id: area.id,
-        label: area.label,
-        color: area.color ?? '#a78bfa',
-        emoji: area.emoji,
-      }))
-    }
-    return validCategories.map((cat) => ({
-      id: cat.id,
-      label: cat.label,
-      color: cat.color,
-      emoji: cat.emoji,
+    if (viewMode !== 'projects') return []
+    return activeBucketSubs.map((sub) => ({
+      id: sub.id,
+      label: sub.label,
+      color: ('color' in sub && sub.color) ? (sub.color as string) : '#a78bfa',
+      emoji: 'emoji' in sub ? (sub.emoji as string | null) : null,
     }))
-  }, [useFocusAreasMode, activeAreas, validCategories])
+  }, [viewMode, activeBucketSubs])
 
   const planColumns = useMemo(
     (): ColumnMeta[] =>
@@ -897,29 +973,52 @@ export function TasksView() {
     [],
   )
 
-  const categoryOptions = useMemo(
-    () =>
-      useFocusAreasMode
-        ? activeAreas.map((a) => ({ id: a.id, label: a.label }))
-        : validCategories.map((c) => ({ id: c.id, label: c.label })),
-    [useFocusAreasMode, activeAreas, validCategories],
-  )
+  const categoryOptions = useMemo((): CategoryOption[] => {
+    return allSubs.map((sub) => {
+      const bucket = useFocusAreasMode ? getFocusBucketForSub(sub.id) : getBucketForSub(sub.id)
+      return {
+        id: sub.id,
+        label: sub.label,
+        bucketId: bucket?.id ?? null,
+      }
+    })
+  }, [allSubs, useFocusAreasMode, getFocusBucketForSub, getBucketForSub])
 
-  const defaultCategory = useFocusAreasMode
-    ? (activeAreas[0]?.id ?? validCategories[0]?.id ?? 'clarity')
-    : (validCategories[0]?.id ?? 'clarity')
+  const defaultBucket = buckets[0]?.id ?? ''
+  const defaultSub =
+    (activeBucketId ? activeBucketSubs[0]?.id : allSubs[0]?.id) ??
+    allSubs[0]?.id ??
+    ''
 
   const openTasks = useMemo(() => {
     const visible = tasks.filter((t) => t.status === 'open')
     if (filterCategory === 'all') return visible
+    if (filterCategory.startsWith('bucket:')) {
+      const bucketId = filterCategory.slice('bucket:'.length)
+      const subIds = new Set(
+        (useFocusAreasMode ? getFocusSubsForBucket(bucketId) : getSubsForBucket(bucketId)).map(
+          (s) => s.id,
+        ),
+      )
+      return visible.filter((t) => subIds.has(t.category) || t.category === bucketId)
+    }
     return visible.filter((t) => t.category === filterCategory)
-  }, [tasks, filterCategory])
+  }, [tasks, filterCategory, useFocusAreasMode, getFocusSubsForBucket, getSubsForBucket])
 
   const completedTasks = useMemo(() => {
     const done = tasks.filter((t) => t.status === 'done')
     if (filterCategory === 'all') return done
+    if (filterCategory.startsWith('bucket:')) {
+      const bucketId = filterCategory.slice('bucket:'.length)
+      const subIds = new Set(
+        (useFocusAreasMode ? getFocusSubsForBucket(bucketId) : getSubsForBucket(bucketId)).map(
+          (s) => s.id,
+        ),
+      )
+      return done.filter((t) => subIds.has(t.category) || t.category === bucketId)
+    }
     return done.filter((t) => t.category === filterCategory)
-  }, [tasks, filterCategory])
+  }, [tasks, filterCategory, useFocusAreasMode, getFocusSubsForBucket, getSubsForBucket])
 
   const planningCounts = useMemo(() => {
     const allOpen = tasks.filter((t) => t.status === 'open')
@@ -964,12 +1063,18 @@ export function TasksView() {
       return Object.fromEntries(PLANNING_COLUMNS.map((key) => [key, grouped[key].map((t) => t.id)]))
     }
 
+    const subIds = new Set(projectColumns.map((c) => c.id))
+    const bucketLegacyIds = new Set([activeBucketId].filter(Boolean))
+    const projectTasks = sorted.filter(
+      (t) => subIds.has(t.category) || bucketLegacyIds.has(t.category),
+    )
+
     const grouped = groupTasksByCategory(
-      sorted,
+      projectTasks,
       projectColumns.map((c) => c.id),
     )
     return Object.fromEntries(projectColumns.map((col) => [col.id, (grouped[col.id] ?? []).map((t) => t.id)]))
-  }, [viewMode, openTasks, sortBy, projectColumns])
+  }, [viewMode, openTasks, sortBy, projectColumns, activeBucketId])
 
   useEffect(() => {
     if (activeDragId) return
@@ -984,22 +1089,67 @@ export function TasksView() {
     if (addingCategory) addCategoryInputRef.current?.focus()
   }, [addingCategory])
 
-  const getCategoryMeta = useCallback(
-    (task: Task): { label: string; color: string } => {
+  const getHierarchyMeta = useCallback(
+    (task: Task): HierarchyMeta => {
       if (useFocusAreasMode) {
-        const area = activeAreas.find((a) => a.id === task.category)
+        const sub = activeAreas.find((a) => a.id === task.category)
+        if (!sub) {
+          return {
+            label: task.category,
+            color: '#a78bfa',
+            bucketLabel: task.category,
+            subLabel: '—',
+            badge: task.category,
+          }
+        }
+        if (!sub.parent_id) {
+          return {
+            label: sub.label,
+            color: sub.color ?? '#a78bfa',
+            bucketLabel: sub.label,
+            subLabel: 'All',
+            badge: `${sub.label} · All`,
+          }
+        }
+        const bucket = getFocusBucketForSub(sub.id)
         return {
-          label: area?.label ?? task.category,
-          color: area?.color ?? '#a78bfa',
+          label: sub.label,
+          color: sub.color ?? '#a78bfa',
+          bucketLabel: bucket?.label ?? '—',
+          subLabel: sub.label,
+          badge: `${bucket?.label ?? '—'} · ${sub.label}`,
         }
       }
-      const cat = validCategories.find((c) => c.id === task.category)
+
+      const sub = validCategories.find((c) => c.id === task.category)
+      if (!sub) {
+        return {
+          label: task.category,
+          color: '#a78bfa',
+          bucketLabel: task.category,
+          subLabel: '—',
+          badge: task.category,
+        }
+      }
+      if (sub.parentId === null) {
+        return {
+          label: sub.label,
+          color: sub.color,
+          bucketLabel: sub.label,
+          subLabel: 'All',
+          badge: `${sub.label} · All`,
+        }
+      }
+      const bucket = getBucketForSub(sub.id)
       return {
-        label: cat?.label ?? task.category,
-        color: cat?.color ?? '#a78bfa',
+        label: sub.label,
+        color: sub.color,
+        bucketLabel: bucket?.label ?? '—',
+        subLabel: sub.label,
+        badge: `${bucket?.label ?? '—'} · ${sub.label}`,
       }
     },
-    [useFocusAreasMode, activeAreas, validCategories],
+    [useFocusAreasMode, activeAreas, validCategories, getFocusBucketForSub, getBucketForSub],
   )
 
   const handleFocusTask = useCallback(
@@ -1058,6 +1208,10 @@ export function TasksView() {
         [overContainer]: overItems,
       }
     })
+  }
+
+  const handleDragCancel = (_event: DragCancelEvent) => {
+    setActiveDragId(null)
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -1119,19 +1273,32 @@ export function TasksView() {
 
   const openAddTask = () => {
     setAddingCategory(false)
-    setNewTaskCategory(filterCategory !== 'all' ? filterCategory : defaultCategory)
+    const bucket = filterCategory.startsWith('bucket:')
+      ? filterCategory.slice('bucket:'.length)
+      : activeBucketId || defaultBucket
+    setNewTaskBucket(bucket)
+    const subs = bucket
+      ? (useFocusAreasMode ? getFocusSubsForBucket(bucket) : getSubsForBucket(bucket))
+      : allSubs
+    const sub =
+      filterCategory !== 'all' && !filterCategory.startsWith('bucket:')
+        ? filterCategory
+        : (subs[0]?.id ?? defaultSub)
+    setNewTaskCategory(sub)
     setNewTaskPlanning('backlog')
     setAddingTask(true)
   }
 
-  const openAddCategory = () => {
+  const openAddCategory = (mode: 'bucket' | 'sub' = 'sub') => {
     setAddingTask(false)
+    setAddingCategoryMode(mode)
     setAddingCategory(true)
   }
 
   const resetAddTask = () => {
     setNewTaskTitle('')
-    setNewTaskCategory(defaultCategory)
+    setNewTaskBucket(defaultBucket)
+    setNewTaskCategory(defaultSub)
     setNewTaskPlanning('backlog')
     setAddingTask(false)
   }
@@ -1151,7 +1318,9 @@ export function TasksView() {
 
   const handleQuickAdd = (columnId: string, title: string) => {
     if (viewMode === 'plan') {
-      addTask(title, defaultCategory, 'manual', columnId as TaskPlanning)
+      const subId = defaultSub || newTaskCategory
+      if (!subId) return
+      addTask(title, subId, 'manual', columnId as TaskPlanning)
     } else {
       addTask(title, columnId, 'manual', 'backlog')
     }
@@ -1167,19 +1336,25 @@ export function TasksView() {
   const handleAddCategory = async () => {
     const name = newCategoryName.trim()
     if (!name) return
-    const colorIndex = (useFocusAreasMode ? activeAreas.length : validCategories.length) % CATEGORY_COLORS.length
+    const colorIndex =
+      (addingCategoryMode === 'bucket' ? buckets.length : activeBucketSubs.length) %
+      CATEGORY_COLORS.length
     const color = CATEGORY_COLORS[colorIndex]
 
     if (useFocusAreasMode) {
-      const area = await addArea(name, newCategoryEmoji || undefined, color)
-      if (area) {
-        setNewTaskCategory(area.id)
-        if (viewMode === 'projects') setFilterCategory(area.id)
+      if (addingCategoryMode === 'bucket') {
+        const area = await addFocusBucket(name, newCategoryEmoji || undefined, color)
+        if (area) setActiveBucketId(area.id)
+      } else if (activeBucketId) {
+        const area = await addFocusSub(activeBucketId, name, newCategoryEmoji || undefined, color)
+        if (area) setNewTaskCategory(area.id)
       }
-    } else {
-      const cat = addCategory(name, newCategoryEmoji || '📁', color)
+    } else if (addingCategoryMode === 'bucket') {
+      const cat = addBucket(name, newCategoryEmoji || '📁', color)
+      setActiveBucketId(cat.id)
+    } else if (activeBucketId) {
+      const cat = addSub(activeBucketId, name, newCategoryEmoji || '📁', color)
       setNewTaskCategory(cat.id)
-      if (viewMode === 'projects') setFilterCategory(cat.id)
     }
     resetAddCategory()
   }
@@ -1230,14 +1405,27 @@ export function TasksView() {
             <h1 className="tasks-view__title">Tasks</h1>
             <div className="tasks-view__header-actions">
               {viewMode !== 'completed' && (
-                <button
-                  type="button"
-                  className="tasks-view__add-btn tasks-view__add-btn--secondary"
-                  onClick={openAddCategory}
-                >
-                  <PlusIcon />
-                  {useFocusAreasMode ? 'Add project' : 'Add category'}
-                </button>
+                <>
+                  {viewMode === 'projects' && (
+                    <button
+                      type="button"
+                      className="tasks-view__add-btn tasks-view__add-btn--secondary"
+                      onClick={() => openAddCategory('sub')}
+                      disabled={!activeBucketId}
+                    >
+                      <PlusIcon />
+                      Add sub
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="tasks-view__add-btn tasks-view__add-btn--secondary"
+                    onClick={() => openAddCategory('bucket')}
+                  >
+                    <PlusIcon />
+                    Add bucket
+                  </button>
+                </>
               )}
               <button type="button" className="tasks-view__add-btn" onClick={openAddTask}>
                 <PlusIcon />
@@ -1276,6 +1464,24 @@ export function TasksView() {
               {completedCount > 0 && <span className="tasks-view__tab-count">{completedCount}</span>}
             </button>
           </div>
+
+          {viewMode === 'projects' && buckets.length > 0 && (
+            <div className="tasks-view__bucket-tabs" role="tablist" aria-label="Project buckets">
+              {buckets.map((bucket) => (
+                <button
+                  key={bucket.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeBucketId === bucket.id}
+                  className={`tasks-view__bucket-tab${activeBucketId === bucket.id ? ' tasks-view__bucket-tab--active' : ''}`}
+                  onClick={() => setActiveBucketId(bucket.id)}
+                >
+                  {'emoji' in bucket && bucket.emoji ? `${bucket.emoji} ` : ''}
+                  {bucket.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {viewMode === 'plan' && (
             <div className="tasks-view__summary" aria-label="Task summary">
@@ -1319,25 +1525,27 @@ export function TasksView() {
               )}
 
               <label className="tasks-view__filter">
-                <span className="tasks-view__filter-label">Category</span>
+                <span className="tasks-view__filter-label">Filter</span>
                 <select
                   className="tasks-view__filter-select"
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  aria-label="Filter by category"
+                  aria-label="Filter by bucket or sub-category"
                 >
-                  <option value="all">All categories</option>
-                  {useFocusAreasMode
-                    ? activeAreas.map((area) => (
-                        <option key={area.id} value={area.id}>
-                          {area.emoji ?? ''} {area.label}
-                        </option>
-                      ))
-                    : validCategories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.label}
+                  <option value="all">All</option>
+                  {buckets.map((bucket) => (
+                    <optgroup key={bucket.id} label={bucket.label}>
+                      <option value={`bucket:${bucket.id}`}>{bucket.label} (all subs)</option>
+                      {(useFocusAreasMode
+                        ? getFocusSubsForBucket(bucket.id)
+                        : getSubsForBucket(bucket.id)
+                      ).map((sub) => (
+                        <option key={sub.id} value={sub.id}>
+                          {sub.label}
                         </option>
                       ))}
+                    </optgroup>
+                  ))}
                 </select>
               </label>
 
@@ -1374,11 +1582,11 @@ export function TasksView() {
                 ref={addCategoryInputRef}
                 type="text"
                 className="tasks-view__add-input"
-                placeholder={useFocusAreasMode ? 'Project name' : 'Category name'}
+                placeholder={addingCategoryMode === 'bucket' ? 'Bucket name' : 'Sub-category name'}
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 onKeyDown={handleAddCategoryKeyDown}
-                aria-label={useFocusAreasMode ? 'New project name' : 'New category name'}
+                aria-label={addingCategoryMode === 'bucket' ? 'New bucket name' : 'New sub-category name'}
               />
               <button
                 type="button"
@@ -1409,26 +1617,46 @@ export function TasksView() {
                 aria-label="New task title"
               />
               <label className="tasks-view__add-field">
-                <span className="tasks-view__add-field-label">
-                  {useFocusAreasMode ? 'Project' : 'Category'}
-                </span>
+                <span className="tasks-view__add-field-label">Bucket</span>
+                <select
+                  className="tasks-view__filter-select tasks-view__add-select"
+                  value={newTaskBucket}
+                  onChange={(e) => {
+                    const bucketId = e.target.value
+                    setNewTaskBucket(bucketId)
+                    const subs = useFocusAreasMode
+                      ? getFocusSubsForBucket(bucketId)
+                      : getSubsForBucket(bucketId)
+                    setNewTaskCategory(subs[0]?.id ?? '')
+                  }}
+                  aria-label="Task bucket"
+                >
+                  {buckets.map((bucket) => (
+                    <option key={bucket.id} value={bucket.id}>
+                      {'emoji' in bucket && bucket.emoji ? `${bucket.emoji} ` : ''}
+                      {bucket.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="tasks-view__add-field">
+                <span className="tasks-view__add-field-label">Sub-category</span>
                 <select
                   className="tasks-view__filter-select tasks-view__add-select"
                   value={newTaskCategory}
                   onChange={(e) => setNewTaskCategory(e.target.value)}
-                  aria-label="Task category"
+                  aria-label="Task sub-category"
+                  disabled={newTaskSubOptions.length === 0}
                 >
-                  {useFocusAreasMode
-                    ? activeAreas.map((area) => (
-                        <option key={area.id} value={area.id}>
-                          {area.emoji ?? ''} {area.label}
-                        </option>
-                      ))
-                    : validCategories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.label}
-                        </option>
-                      ))}
+                  {newTaskSubOptions.length === 0 ? (
+                    <option value="">Create a sub-category first</option>
+                  ) : (
+                    newTaskSubOptions.map((sub) => (
+                      <option key={sub.id} value={sub.id}>
+                        {sub.label}
+                      </option>
+                    ))
+                  )}
                 </select>
               </label>
               <label className="tasks-view__add-field">
@@ -1485,13 +1713,25 @@ export function TasksView() {
           </div>
         )}
 
-        {!loading && !error && viewMode !== 'completed' && openCount > 0 && showBoard && (
+        {!loading && !error && viewMode === 'projects' && activeBucketId && activeBucketSubs.length === 0 && (
+          <div className="tasks-view__empty">
+            <p className="tasks-view__empty-text">
+              No sub-categories in this bucket yet. Create one to organize tasks.
+            </p>
+            <button type="button" className="tasks-view__plan-btn" onClick={() => openAddCategory('sub')}>
+              Add sub-category →
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && viewMode !== 'completed' && openCount > 0 && showBoard && !(viewMode === 'projects' && activeBucketSubs.length === 0) && (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCorners}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
           >
             <div className="tasks-view__board">
               {columns.map((column) => {
@@ -1513,8 +1753,9 @@ export function TasksView() {
                     }
                     showPlanningDot={viewMode === 'plan'}
                     showFocusOnToday={viewMode === 'plan'}
+                    showHierarchyBadge={viewMode === 'plan'}
                     categoryOptions={categoryOptions}
-                    getCategoryMeta={getCategoryMeta}
+                    getHierarchyMeta={getHierarchyMeta}
                     onToggle={toggleTask}
                     onSaveTitle={(id, title) => updateTask(id, { title })}
                     onDelete={removeTask}
@@ -1540,13 +1781,15 @@ export function TasksView() {
                   />
                   <span className="tasks-view__task-title">{activeDragTask.title}</span>
                   <span
-                    className="tasks-view__category-dot"
+                    className="tasks-view__badge tasks-view__badge--category"
                     style={
                       {
-                        '--tasks-cat-color': getCategoryMeta(activeDragTask).color,
+                        '--tasks-cat-color': getHierarchyMeta(activeDragTask).color,
                       } as CSSProperties
                     }
-                  />
+                  >
+                    {getHierarchyMeta(activeDragTask).badge}
+                  </span>
                 </div>
               ) : null}
             </DragOverlay>
@@ -1560,22 +1803,21 @@ export function TasksView() {
                 <tr>
                   <th className="tasks-view__list-head tasks-view__list-head--check" scope="col" />
                   <th className="tasks-view__list-head" scope="col">Title</th>
-                  <th className="tasks-view__list-head" scope="col">
-                    {useFocusAreasMode ? 'Project' : 'Category'}
-                  </th>
+                  <th className="tasks-view__list-head" scope="col">Bucket · Sub</th>
+                  <th className="tasks-view__list-head" scope="col">Sub-category</th>
                   <th className="tasks-view__list-head" scope="col">Planning</th>
                   <th className="tasks-view__list-head tasks-view__list-head--actions" scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {listTasks.map((task) => {
-                  const meta = getCategoryMeta(task)
+                  const meta = getHierarchyMeta(task)
                   return (
                     <TaskListRow
                       key={task.id}
                       task={task}
                       categoryOptions={categoryOptions}
-                      categoryColor={meta.color}
+                      hierarchyMeta={meta}
                       onToggle={() => toggleTask(task.id)}
                       onSaveTitle={(title) => updateTask(task.id, { title })}
                       onDelete={() => removeTask(task.id)}
@@ -1597,13 +1839,12 @@ export function TasksView() {
         {!loading && !error && viewMode === 'completed' && completedTasks.length > 0 && (
           <ul className="tasks-view__completed-list">
             {sortTasksList(completedTasks, sortBy === 'manual' ? 'created_at' : sortBy).map((task) => {
-              const meta = getCategoryMeta(task)
+              const meta = getHierarchyMeta(task)
               return (
                 <CompletedTaskRow
                   key={task.id}
                   task={task}
-                  categoryLabel={meta.label}
-                  categoryColor={meta.color}
+                  hierarchyMeta={meta}
                   onToggle={() => toggleTask(task.id)}
                   onDelete={() => removeTask(task.id)}
                 />
@@ -1616,7 +1857,7 @@ export function TasksView() {
       {planTodayOpen && (
         <PlanTodayModal
           candidates={planTodayCandidates}
-          getCategoryMeta={getCategoryMeta}
+          getHierarchyMeta={getHierarchyMeta}
           onClose={() => setPlanTodayOpen(false)}
           onConfirm={handlePlanTodayConfirm}
         />

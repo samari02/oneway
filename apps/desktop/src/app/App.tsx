@@ -464,7 +464,7 @@ function Dashboard() {
 
   return (
     <div className={`app-layout ${sidebarPinned ? 'app-layout--sidebar-pinned' : ''}`}>
-      {/* Titlebar for drag region - spans full width */}
+      {/* Titlebar drag via startDragging() — no CSS -webkit-app-region (breaks sidebar in Tauri) */}
       <div className="app-titlebar" onMouseDown={handleDragStart}>
         <div className="app-titlebar__spacer" />
         <span className="app-titlebar__title">Clarity</span>
@@ -499,7 +499,7 @@ function Dashboard() {
       </div>
       
       {/* Global Protection Alert - shows on all views when protection is compromised */}
-      {extensionStatus?.alertLevel !== 'ok' && currentView !== 'boundaries' && (
+      {extensionStatus && extensionStatus.alertLevel !== 'ok' && currentView !== 'boundaries' && (
         <div className="app-layout__alert">
           <ProtectionAlert status={extensionStatus} />
         </div>

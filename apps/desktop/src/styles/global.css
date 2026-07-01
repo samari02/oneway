@@ -16,6 +16,13 @@ html, body, #root {
   overflow: hidden;
 }
 
+/* Tauri macOS: "Overlay" titlebar creates an implicit native drag region.
+   Reset globally so ONLY startDragging() API controls window drag. */
+html {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
 body {
   font-family: var(--font-family);
   font-size: var(--font-size-md);

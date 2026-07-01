@@ -152,6 +152,46 @@
   font-variant-numeric: tabular-nums;
 }
 
+.tasks-view__bucket-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tasks-view__bucket-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: 1px solid var(--tasks-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tasks-muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--tasks-ease), border-color var(--tasks-ease), color var(--tasks-ease);
+}
+
+.tasks-view__bucket-tab:hover {
+  color: var(--tasks-ink);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.tasks-view__bucket-tab--active {
+  background: rgba(124, 58, 237, 0.18);
+  border-color: rgba(124, 58, 237, 0.4);
+  color: var(--tasks-ink);
+}
+
+.tasks-view__list-badge {
+  display: inline-block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Summary counters */
 .tasks-view__summary {
   display: flex;
@@ -965,16 +1005,28 @@
   color: #f87171;
 }
 
-/* Plan today modal */
+/* Plan today modal — scope to main content so sidebar stays clickable */
 .tasks-view__modal-backdrop {
   position: fixed;
-  inset: 0;
-  z-index: 100;
+  top: 38px;
+  left: 72px;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
   display: grid;
   place-items: center;
   padding: 24px;
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(4px);
+  transition: left 0.25s ease;
+}
+
+.app-layout--sidebar-pinned .tasks-view__modal-backdrop {
+  left: 200px;
+}
+
+.app-layout__body:has(.sidebar:hover) .tasks-view__modal-backdrop {
+  left: 200px;
 }
 
 .tasks-view__modal {

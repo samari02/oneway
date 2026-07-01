@@ -26,7 +26,8 @@
 .app-titlebar {
   position: fixed;
   top: 0;
-  left: 0;
+  /* Content area only — sidebar column stays no-drag (Tauri WKWebView) */
+  left: 72px;
   right: 0;
   height: 38px;
   display: flex;
@@ -36,14 +37,18 @@
   background: linear-gradient(135deg, rgba(125, 216, 196, 0.08) 0%, rgba(167, 139, 250, 0.06) 50%, rgba(255, 155, 133, 0.04) 100%);
   border-bottom: 1px solid rgba(125, 216, 196, 0.15);
   z-index: 200;
-  -webkit-app-region: drag; /* Enable window dragging */
-  app-region: drag;
   user-select: none;
+  transition: left 0.25s ease;
+}
+
+.app-layout--sidebar-pinned .app-titlebar,
+.app-layout:has(.sidebar:hover) .app-titlebar {
+  left: 200px;
 }
 
 /* Spacer to push content past traffic lights */
 .app-titlebar__spacer {
-  width: 70px;
+  width: 0;
   flex-shrink: 0;
 }
 
@@ -145,13 +150,9 @@
   transition: left 0.25s ease;
 }
 
-.app-layout--sidebar-pinned .app-layout__alert {
+.app-layout--sidebar-pinned .app-layout__alert,
+.app-layout:has(.sidebar:hover) .app-layout__alert {
   left: 200px; /* Sidebar expanded width */
-}
-
-.app-layout__body:has(.sidebar:hover) ~ .app-layout__alert,
-.app-layout__body:has(.sidebar:hover) + .app-layout__alert {
-  left: 200px;
 }
 
 .app-layout__body {

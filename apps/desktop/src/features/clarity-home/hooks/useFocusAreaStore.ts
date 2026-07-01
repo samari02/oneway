@@ -27,6 +27,40 @@ export function useFocusAreaStore(userId: string | undefined) {
   const activeAreas = state.areas.filter((a) => a.status === 'active')
   const archivedAreas = state.areas.filter((a) => a.status === 'archived')
 
+  const getBuckets = useCallback(
+    () =>
+      activeAreas
+        .filter((a) => !a.parent_id)
+        .sort((a, b) => a.display_order - b.display_order),
+    [activeAreas],
+  )
+
+  const getSubsForBucket = useCallback(
+    (bucketId: string) =>
+      activeAreas
+        .filter((a) => a.parent_id === bucketId)
+        .sort((a, b) => a.display_order - b.display_order),
+    [activeAreas],
+  )
+
+  const getBucketForSub = useCallback(
+    (subId: string): FocusArea | undefined => {
+      const sub = activeAreas.find((a) => a.id === subId)
+      if (!sub) return undefined
+      if (!sub.parent_id) return sub
+      return activeAreas.find((a) => a.id === sub.parent_id)
+    },
+    [activeAreas],
+  )
+
+  const getAllSubs = useCallback(
+    () =>
+      activeAreas
+        .filter((a) => a.parent_id)
+        .sort((a, b) => a.display_order - b.display_order),
+    [activeAreas],
+  )
+
   const fetchAreas = useCallback(async () => {
     if (!userId) return
     setState((s) => ({ ...s, loading: true, error: null }))
@@ -50,15 +84,24 @@ export function useFocusAreaStore(userId: string | undefined) {
   }, [userId, fetchAreas])
 
   const addArea = useCallback(
-    async (label: string, emoji?: string, color?: string): Promise<FocusArea | null> => {
+    async (
+      label: string,
+      emoji?: string,
+      color?: string,
+      parentId?: string | null,
+    ): Promise<FocusArea | null> => {
       if (!userId) return null
       try {
-        const maxOrder = state.areas.reduce((max, a) => Math.max(max, a.display_order), -1)
+        const siblings = parentId
+          ? state.areas.filter((a) => a.parent_id === parentId)
+          : state.areas.filter((a) => !a.parent_id)
+        const maxOrder = siblings.reduce((max, a) => Math.max(max, a.display_order), -1)
         const area = await createFocusArea({
           user_id: userId,
           label,
           emoji: emoji ?? null,
           color: color ?? null,
+          parent_id: parentId ?? null,
           source: 'user',
           status: 'active',
           confidence: 1.0,
@@ -75,6 +118,17 @@ export function useFocusAreaStore(userId: string | undefined) {
     [userId, state.areas],
   )
 
+  const addBucket = useCallback(
+    async (label: string, emoji?: string, color?: string) => addArea(label, emoji, color, null),
+    [addArea],
+  )
+
+  const addSub = useCallback(
+    async (bucketId: string, label: string, emoji?: string, color?: string) =>
+      addArea(label, emoji, color, bucketId),
+    [addArea],
+  )
+
   const addProposedAreas = useCallback(
     async (proposals: Array<{ label: string; emoji?: string; color?: string }>): Promise<FocusArea[]> => {
       if (!userId) return []
@@ -85,6 +139,7 @@ export function useFocusAreaStore(userId: string | undefined) {
           label: p.label,
           emoji: p.emoji ?? null,
           color: p.color ?? null,
+          parent_id: null,
           source: 'ai_proposed' as const,
           status: 'active' as const,
           confidence: 0.8,
@@ -172,6 +227,8 @@ export function useFocusAreaStore(userId: string | undefined) {
     error: state.error,
     fetchAreas,
     addArea,
+    addBucket,
+    addSub,
     addProposedAreas,
     editArea,
     archive,
@@ -179,5 +236,9 @@ export function useFocusAreaStore(userId: string | undefined) {
     remove,
     getAreaById,
     getAreaByLabel,
+    getBuckets,
+    getSubsForBucket,
+    getBucketForSub,
+    getAllSubs,
   }
 }

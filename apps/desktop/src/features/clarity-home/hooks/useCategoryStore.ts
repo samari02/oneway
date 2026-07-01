@@ -6,15 +6,17 @@ export type Category = {
   emoji: string
   color: string
   order: number
+  parentId: string | null
 }
 
 const STORAGE_KEY = 'clarity-categories'
+const GENERAL_BUCKET_ID = 'bucket-general'
 
 const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'clarity', label: 'Clarity', emoji: '💻', color: '#7c3aed', order: 0 },
-  { id: 'work', label: 'Work', emoji: '💼', color: '#f97316', order: 1 },
-  { id: 'health', label: 'Health', emoji: '❤️', color: '#22c55e', order: 2 },
-  { id: 'learning', label: 'Learning', emoji: '📘', color: '#3b82f6', order: 3 },
+  { id: 'clarity', label: 'Clarity', emoji: '💻', color: '#7c3aed', order: 0, parentId: null },
+  { id: 'work', label: 'Work', emoji: '💼', color: '#f97316', order: 1, parentId: null },
+  { id: 'health', label: 'Health', emoji: '❤️', color: '#22c55e', order: 2, parentId: null },
+  { id: 'learning', label: 'Learning', emoji: '📘', color: '#3b82f6', order: 3, parentId: null },
 ]
 
 const listeners = new Set<() => void>()
@@ -28,16 +30,49 @@ function subscribe(l: () => void) {
   return () => listeners.delete(l)
 }
 
-function isValidCategory(value: unknown): value is Category {
-  if (!value || typeof value !== 'object') return false
-  const cat = value as Partial<Category>
-  return (
-    typeof cat.id === 'string' &&
-    typeof cat.label === 'string' &&
-    typeof cat.emoji === 'string' &&
-    typeof cat.color === 'string' &&
-    typeof cat.order === 'number'
+function normalizeCategory(raw: Partial<Category>): Category | null {
+  if (
+    typeof raw.id !== 'string' ||
+    typeof raw.label !== 'string' ||
+    typeof raw.emoji !== 'string' ||
+    typeof raw.color !== 'string' ||
+    typeof raw.order !== 'number'
+  ) {
+    return null
+  }
+  return {
+    id: raw.id,
+    label: raw.label,
+    emoji: raw.emoji,
+    color: raw.color,
+    order: raw.order,
+    parentId: raw.parentId ?? null,
+  }
+}
+
+/** Flat legacy categories → subs under a General bucket. Default seed categories stay as buckets. */
+function migrateFlatCategories(cats: Category[]): Category[] {
+  const hasHierarchy = cats.some((c) => c.parentId !== null)
+  if (hasHierarchy) return cats
+
+  const isDefaultSeed = cats.every((c) =>
+    DEFAULT_CATEGORIES.some((d) => d.id === c.id && d.parentId === null),
   )
+  if (isDefaultSeed && cats.length === DEFAULT_CATEGORIES.length) {
+    return DEFAULT_CATEGORIES
+  }
+
+  const general: Category = {
+    id: GENERAL_BUCKET_ID,
+    label: 'General',
+    emoji: '📁',
+    color: '#64748b',
+    order: -1,
+    parentId: null,
+  }
+
+  const migrated = cats.map((c) => ({ ...c, parentId: GENERAL_BUCKET_ID as string }))
+  return [general, ...migrated]
 }
 
 function readCategories(): Category[] {
@@ -46,8 +81,9 @@ function readCategories(): Category[] {
     if (!raw) return DEFAULT_CATEGORIES
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return DEFAULT_CATEGORIES
-    const valid = parsed.filter(isValidCategory)
-    return valid.length > 0 ? valid : DEFAULT_CATEGORIES
+    const valid = parsed.map(normalizeCategory).filter((c): c is Category => c !== null)
+    if (valid.length === 0) return DEFAULT_CATEGORIES
+    return migrateFlatCategories(valid)
   } catch {
     return DEFAULT_CATEGORIES
   }
@@ -73,28 +109,86 @@ function invalidateCache() {
   snapshotCache = null
 }
 
+export function getBucketsFromCategories(categories: Category[]): Category[] {
+  return categories.filter((c) => c.parentId === null).sort((a, b) => a.order - b.order)
+}
+
+export function getSubsForBucketFromCategories(categories: Category[], bucketId: string): Category[] {
+  return categories.filter((c) => c.parentId === bucketId).sort((a, b) => a.order - b.order)
+}
+
+export function getBucketForSubFromCategories(categories: Category[], subId: string): Category | undefined {
+  const sub = categories.find((c) => c.id === subId)
+  if (!sub?.parentId) return sub?.parentId === null ? sub : undefined
+  return categories.find((c) => c.id === sub.parentId)
+}
+
+export function getAllSubsFromCategories(categories: Category[]): Category[] {
+  return categories.filter((c) => c.parentId !== null).sort((a, b) => a.order - b.order)
+}
+
 export function useCategoryStore() {
   const categories = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
-  const addCategory = useCallback((label: string, emoji: string, color: string): Category => {
-    const current = readCategories()
-    const id = `cat-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-    const cat: Category = { id, label, emoji, color, order: current.length }
-    invalidateCache()
-    writeCategories([...current, cat])
-    return cat
-  }, [])
+  const getBuckets = useCallback(
+    () => getBucketsFromCategories(categories),
+    [categories],
+  )
 
-  const updateCategory = useCallback((id: string, updates: Partial<Pick<Category, 'label' | 'emoji' | 'color' | 'order'>>) => {
-    const current = readCategories()
-    invalidateCache()
-    writeCategories(current.map((c) => (c.id === id ? { ...c, ...updates } : c)))
-  }, [])
+  const getSubsForBucket = useCallback(
+    (bucketId: string) => getSubsForBucketFromCategories(categories, bucketId),
+    [categories],
+  )
+
+  const getBucketForSub = useCallback(
+    (subId: string) => getBucketForSubFromCategories(categories, subId),
+    [categories],
+  )
+
+  const getAllSubs = useCallback(
+    () => getAllSubsFromCategories(categories),
+    [categories],
+  )
+
+  const addCategory = useCallback(
+    (label: string, emoji: string, color: string, parentId: string | null = null): Category => {
+      const current = readCategories()
+      const siblings = parentId
+        ? current.filter((c) => c.parentId === parentId)
+        : current.filter((c) => c.parentId === null)
+      const id = `cat-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      const cat: Category = { id, label, emoji, color, order: siblings.length, parentId }
+      invalidateCache()
+      writeCategories([...current, cat])
+      return cat
+    },
+    [],
+  )
+
+  const addBucket = useCallback(
+    (label: string, emoji: string, color: string) => addCategory(label, emoji, color, null),
+    [addCategory],
+  )
+
+  const addSub = useCallback(
+    (bucketId: string, label: string, emoji: string, color: string) =>
+      addCategory(label, emoji, color, bucketId),
+    [addCategory],
+  )
+
+  const updateCategory = useCallback(
+    (id: string, updates: Partial<Pick<Category, 'label' | 'emoji' | 'color' | 'order' | 'parentId'>>) => {
+      const current = readCategories()
+      invalidateCache()
+      writeCategories(current.map((c) => (c.id === id ? { ...c, ...updates } : c)))
+    },
+    [],
+  )
 
   const removeCategory = useCallback((id: string) => {
     const current = readCategories()
     invalidateCache()
-    writeCategories(current.filter((c) => c.id !== id))
+    writeCategories(current.filter((c) => c.id !== id && c.parentId !== id))
   }, [])
 
   const getCategoryById = useCallback(
@@ -102,5 +196,18 @@ export function useCategoryStore() {
     [categories],
   )
 
-  return { categories, addCategory, updateCategory, removeCategory, getCategoryById, DEFAULT_CATEGORIES }
+  return {
+    categories,
+    addCategory,
+    addBucket,
+    addSub,
+    updateCategory,
+    removeCategory,
+    getCategoryById,
+    getBuckets,
+    getSubsForBucket,
+    getBucketForSub,
+    getAllSubs,
+    DEFAULT_CATEGORIES,
+  }
 }

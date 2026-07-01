@@ -19,6 +19,19 @@ use serde::{Deserialize, Serialize};
 
 use crate::app_data;
 
+/// Log without panicking when stderr is unavailable (Tauri IPC / GUI apps).
+fn monitor_log(args: std::fmt::Arguments<'_>) {
+    // `eprintln!` uses `_eprint`, which panics on lock/write failure (→ SIGABRT in the app).
+    let _ = std::io::Write::write_fmt(&mut std::io::stderr(), args);
+    let _ = std::io::Write::write_all(&mut std::io::stderr(), b"\n");
+}
+
+macro_rules! monitor_log {
+    ($($arg:tt)*) => {
+        monitor_log(format_args!($($arg)*))
+    };
+}
+
 /// Icon cache stored in ~/.clarity/icon-cache.json
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 struct IconCache {
@@ -176,7 +189,7 @@ pub fn terminate_app(bundle_id: &str) -> bool {
         .output();
     
     if quit_result.is_ok() {
-        eprintln!("[AppMonitor] Sent quit to app: {}", bundle_id);
+        monitor_log!("[AppMonitor] Sent quit to app: {}", bundle_id);
         return true;
     }
     
@@ -193,11 +206,11 @@ pub fn terminate_app(bundle_id: &str) -> bool {
 #[cfg(target_os = "macos")]
 pub fn start_monitoring() {
     if MONITORING_ACTIVE.swap(true, Ordering::SeqCst) {
-        eprintln!("[AppMonitor] Already monitoring");
+        monitor_log!("[AppMonitor] Already monitoring");
         return;
     }
     
-    eprintln!("[AppMonitor] Starting app monitoring");
+    monitor_log!("[AppMonitor] Starting app monitoring");
     
     thread::spawn(|| {
         let mut last_app: Option<String> = None;
@@ -218,7 +231,7 @@ pub fn start_monitoring() {
                     
                     // Check if this app should be blocked
                     if app_data::is_app_blocked(&bundle_id) {
-                        eprintln!("[AppMonitor] Blocked app detected: {} ({})", app_name, bundle_id);
+                        monitor_log!("[AppMonitor] Blocked app detected: {} ({})", app_name, bundle_id);
                         
                         // Terminate the blocked app
                         if terminate_app(&bundle_id) {
@@ -226,7 +239,7 @@ pub fn start_monitoring() {
                         }
                     } else {
                         // Record activation
-                        eprintln!("[AppMonitor] App activated: {} ({})", app_name, bundle_id);
+                        monitor_log!("[AppMonitor] App activated: {} ({})", app_name, bundle_id);
                         app_data::app_activated(bundle_id.clone(), app_name);
                     }
                     
@@ -243,14 +256,14 @@ pub fn start_monitoring() {
             app_data::app_deactivated(prev);
         }
         
-        eprintln!("[AppMonitor] Monitoring stopped");
+        monitor_log!("[AppMonitor] Monitoring stopped");
     });
 }
 
 /// Stop monitoring app activations
 pub fn stop_monitoring() {
     MONITORING_ACTIVE.store(false, Ordering::SeqCst);
-    eprintln!("[AppMonitor] Stopping app monitoring");
+    monitor_log!("[AppMonitor] Stopping app monitoring");
 }
 
 /// Check if monitoring is active
@@ -434,7 +447,7 @@ pub fn terminate_app(_bundle_id: &str) -> bool {
 
 #[cfg(not(target_os = "macos"))]
 pub fn start_monitoring() {
-    eprintln!("[AppMonitor] Not supported on this platform");
+    monitor_log!("[AppMonitor] Not supported on this platform");
 }
 
 #[cfg(not(target_os = "macos"))]

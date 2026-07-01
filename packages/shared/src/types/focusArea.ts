@@ -7,6 +7,7 @@ export type FocusArea = {
   label: string
   emoji: string | null
   color: string | null
+  parent_id: string | null
   source: FocusAreaSource
   status: FocusAreaStatus
   confidence: number
@@ -27,7 +28,7 @@ export type FocusAreaInsert = Omit<
 }
 
 export type FocusAreaUpdate = Partial<
-  Pick<FocusArea, 'label' | 'emoji' | 'color' | 'status' | 'display_order' | 'confidence' | 'mention_count' | 'last_seen_at'>
+  Pick<FocusArea, 'label' | 'emoji' | 'color' | 'parent_id' | 'status' | 'display_order' | 'confidence' | 'mention_count' | 'last_seen_at'>
 >
 
 export type UserContext = {

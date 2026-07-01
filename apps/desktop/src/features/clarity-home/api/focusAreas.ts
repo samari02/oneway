@@ -9,7 +9,10 @@ export async function getFocusAreas(userId: string): Promise<FocusArea[]> {
     .order('display_order', { ascending: true })
 
   if (error) throw error
-  return (data as FocusArea[]) ?? []
+  return ((data as FocusArea[]) ?? []).map((area) => ({
+    ...area,
+    parent_id: area.parent_id ?? null,
+  }))
 }
 
 export async function getActiveFocusAreas(userId: string): Promise<FocusArea[]> {
@@ -21,7 +24,10 @@ export async function getActiveFocusAreas(userId: string): Promise<FocusArea[]> 
     .order('display_order', { ascending: true })
 
   if (error) throw error
-  return (data as FocusArea[]) ?? []
+  return ((data as FocusArea[]) ?? []).map((area) => ({
+    ...area,
+    parent_id: area.parent_id ?? null,
+  }))
 }
 
 export async function createFocusArea(area: FocusAreaInsert): Promise<FocusArea> {
@@ -32,7 +38,7 @@ export async function createFocusArea(area: FocusAreaInsert): Promise<FocusArea>
     .single()
 
   if (error) throw error
-  return data as FocusArea
+  return { ...(data as FocusArea), parent_id: (data as FocusArea).parent_id ?? null }
 }
 
 export async function createFocusAreas(areas: FocusAreaInsert[]): Promise<FocusArea[]> {
@@ -44,7 +50,10 @@ export async function createFocusAreas(areas: FocusAreaInsert[]): Promise<FocusA
     .select()
 
   if (error) throw error
-  return (data as FocusArea[]) ?? []
+  return ((data as FocusArea[]) ?? []).map((area) => ({
+    ...area,
+    parent_id: area.parent_id ?? null,
+  }))
 }
 
 export async function updateFocusArea(
@@ -59,7 +68,7 @@ export async function updateFocusArea(
     .single()
 
   if (error) throw error
-  return data as FocusArea
+  return { ...(data as FocusArea), parent_id: (data as FocusArea).parent_id ?? null }
 }
 
 export async function archiveFocusArea(id: string): Promise<FocusArea> {
