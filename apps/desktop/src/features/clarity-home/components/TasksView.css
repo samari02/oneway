@@ -473,7 +473,7 @@
 }
 
 .tasks-view__empty {
-  padding: 32px 20px;
+  padding: 32px var(--content-padding-x);
   text-align: center;
 }
 
@@ -1189,9 +1189,143 @@
   width: 40px;
 }
 
+.tasks-view__list-head--grip {
+  width: 36px;
+}
+
 .tasks-view__list-head--actions {
   width: 88px;
   text-align: right;
+}
+
+.tasks-view__list-cell--grip {
+  width: 36px;
+  padding-left: 10px;
+  padding-right: 4px;
+}
+
+.tasks-view__drag-handle--list {
+  width: 22px;
+  height: 22px;
+}
+
+.tasks-view__list-bucket {
+  background: rgba(255, 255, 255, 0.02);
+  transition:
+    background var(--tasks-ease),
+    box-shadow var(--tasks-ease);
+}
+
+.tasks-view__list-bucket--over {
+  background: rgba(124, 58, 237, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.35);
+}
+
+.tasks-view__list-bucket-label {
+  padding-top: 12px;
+  padding-bottom: 8px;
+}
+
+.tasks-view__list-bucket-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+.tasks-view__list-bucket-emoji {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.tasks-view__list-bucket-name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tasks-muted);
+}
+
+.tasks-view__list-bucket-meta {
+  margin-left: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(244, 244, 248, 0.35);
+}
+
+.tasks-view__list-sub {
+  transition:
+    background var(--tasks-ease),
+    box-shadow var(--tasks-ease),
+    opacity 0.15s ease;
+}
+
+.tasks-view__list-sub--over {
+  background: rgba(124, 58, 237, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.3);
+}
+
+.tasks-view__list-sub--dragging {
+  opacity: 0.35;
+}
+
+.tasks-view__list-sub-label {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-left: 28px;
+}
+
+.tasks-view__list-sub-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--tasks-cat-color, #a78bfa);
+  vertical-align: middle;
+}
+
+.tasks-view__list-sub-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(244, 244, 248, 0.82);
+}
+
+.tasks-view__list-sub-meta {
+  margin-left: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(244, 244, 248, 0.35);
+}
+
+.tasks-view__list-row--dragging {
+  opacity: 0.35;
+}
+
+.tasks-view__list-row .tasks-view__list-cell--title,
+.tasks-view__list-row .tasks-view__list-cell--check,
+.tasks-view__list-row .tasks-view__list-cell--grip {
+  padding-left: 28px;
+}
+
+.tasks-view__list-row .tasks-view__list-cell--grip {
+  padding-left: 10px;
+}
+
+.tasks-view__list-drag-overlay {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(20, 18, 35, 0.98);
+  border: 1px solid rgba(124, 58, 237, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  color: var(--tasks-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: grabbing;
 }
 
 .tasks-view__list-row:hover {
@@ -1245,15 +1379,14 @@
   border-color: rgba(100, 116, 139, 0.3);
 }
 
-/* Completed list */
+/* Completed list — inner card padding only; horizontal page inset comes from .tasks-view__shell */
 .tasks-view__completed-list {
   margin: 0;
-  padding: 0;
+  padding: clamp(14px, 2vw, 18px);
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: clamp(14px, 2vw, 18px);
   border-radius: var(--tasks-radius);
   background: var(--tasks-glass);
   border: 1px solid var(--tasks-line);

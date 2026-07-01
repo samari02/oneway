@@ -1,4 +1,20 @@
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCorners,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragCancelEvent,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { Task } from '@oneway/shared'
 import { CategoryIcon } from './CategoryIcon'
 import { TaskDetailPanel } from './TaskDetailPanel'
@@ -11,6 +27,10 @@ import {
   planningStyle,
 } from './tasksViewShared'
 import './HierarchyView.css'
+
+const HIER_BUCKET_PREFIX = 'hierarchy-bucket:'
+const HIER_SUB_PREFIX = 'hierarchy-sub:'
+const HIER_TASK_PREFIX = 'hierarchy-task:'
 
 type HierarchyViewProps = {
   buckets: HierarchyItem[]
@@ -29,6 +49,8 @@ type HierarchyViewProps = {
   onToggleTask: (taskId: string) => void
   onUpdateTask: (taskId: string, updates: Partial<Pick<Task, 'title' | 'planning' | 'rawInput'>>) => void
   onDeleteTask: (taskId: string) => void
+  onMoveSubToBucket: (subId: string, bucketId: string) => void
+  onMoveTaskToSub: (taskId: string, subId: string) => void
 }
 
 function countTasksForBucket(
@@ -44,6 +66,109 @@ function countTasksForSub(tasks: Task[], subId: string): number {
   return tasks.filter((t) => t.status === 'open' && t.category === subId).length
 }
 
+function HierarchyBucketItem({
+  bucket,
+  count,
+  selected,
+  acceptSubDrop,
+  onSelect,
+}: {
+  bucket: HierarchyItem
+  count: number
+  selected: boolean
+  acceptSubDrop: boolean
+  onSelect: () => void
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: `${HIER_BUCKET_PREFIX}${bucket.id}` })
+  const showOver = acceptSubDrop && isOver
+
+  return (
+    <li ref={setNodeRef}>
+      <button
+        type="button"
+        className={`hierarchy-view__item${selected ? ' hierarchy-view__item--selected' : ''}${showOver ? ' hierarchy-view__item--over' : ''}`}
+        onClick={onSelect}
+      >
+        <span className="hierarchy-view__item-icon" aria-hidden>
+          {bucket.emoji ? (
+            <span className="hierarchy-view__item-emoji">{bucket.emoji}</span>
+          ) : (
+            <CategoryIcon categoryId={bucket.id} size={16} />
+          )}
+        </span>
+        <span className="hierarchy-view__item-label">{bucket.label}</span>
+        <span className="hierarchy-view__item-count">{count}</span>
+      </button>
+    </li>
+  )
+}
+
+function HierarchySubItem({
+  sub,
+  count,
+  selected,
+  acceptTaskDrop,
+  onSelect,
+}: {
+  sub: HierarchyItem
+  count: number
+  selected: boolean
+  acceptTaskDrop: boolean
+  onSelect: () => void
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    transform,
+    isDragging,
+  } = useDraggable({ id: `${HIER_SUB_PREFIX}${sub.id}` })
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `${HIER_SUB_PREFIX}${sub.id}` })
+
+  const setNodeRef = (node: HTMLLIElement | null) => {
+    setDragRef(node)
+    setDropRef(node)
+  }
+
+  const style: CSSProperties = {
+    transform: transform ? CSS.Translate.toString(transform) : undefined,
+    opacity: isDragging ? 0.35 : 1,
+  }
+
+  const showOver = acceptTaskDrop && isOver
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`hierarchy-view__sub-row${isDragging ? ' hierarchy-view__sub-row--dragging' : ''}`}
+    >
+      <div
+        className={`hierarchy-view__item hierarchy-view__item--sub${selected ? ' hierarchy-view__item--selected' : ''}${showOver ? ' hierarchy-view__item--over' : ''}`}
+      >
+        <button
+          type="button"
+          className="hierarchy-view__item-grip"
+          aria-label={`Drag sub-bucket ${sub.label}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripIcon />
+        </button>
+        <button type="button" className="hierarchy-view__item-body" onClick={onSelect}>
+          <span
+            className="hierarchy-view__item-dot"
+            style={{ '--tasks-cat-color': sub.color ?? '#a78bfa' } as CSSProperties}
+            aria-hidden
+          />
+          <span className="hierarchy-view__item-label">{sub.label}</span>
+          <span className="hierarchy-view__item-count">{count}</span>
+        </button>
+      </div>
+    </li>
+  )
+}
+
 function HierarchyTaskCard({
   task,
   selected,
@@ -57,14 +182,35 @@ function HierarchyTaskCard({
 }) {
   const planning = task.planning ?? 'backlog'
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({ id: `${HIER_TASK_PREFIX}${task.id}` })
+
+  const style: CSSProperties = {
+    transform: transform ? CSS.Translate.toString(transform) : undefined,
+    opacity: isDragging ? 0.35 : 1,
+  }
+
   return (
     <li
-      className={`hierarchy-view__task${selected ? ' hierarchy-view__task--selected' : ''}`}
+      ref={setNodeRef}
+      style={style}
+      className={`hierarchy-view__task${selected ? ' hierarchy-view__task--selected' : ''}${isDragging ? ' hierarchy-view__task--dragging' : ''}`}
       data-planning={planning}
     >
-      <span className="hierarchy-view__task-grip" aria-hidden>
+      <button
+        type="button"
+        className="hierarchy-view__task-grip"
+        aria-label={`Drag task ${task.title}`}
+        {...attributes}
+        {...listeners}
+      >
         <GripIcon />
-      </span>
+      </button>
       <button
         type="button"
         className="hierarchy-view__checkbox"
@@ -237,7 +383,16 @@ export function HierarchyView({
   onToggleTask,
   onUpdateTask,
   onDeleteTask,
+  onMoveSubToBucket,
+  onMoveTaskToSub,
 }: HierarchyViewProps) {
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
   const openTasks = tasks.filter((t) => t.status === 'open')
   const selectedBucket = buckets.find((b) => b.id === selectedBucketId)
   const subs = selectedBucketId ? getSubsForBucket(selectedBucketId) : []
@@ -260,158 +415,197 @@ export function HierarchyView({
       })()
     : null
 
+  const draggingSub = activeDragId?.startsWith(HIER_SUB_PREFIX) ?? false
+  const draggingTask = activeDragId?.startsWith(HIER_TASK_PREFIX) ?? false
+
+  const activeDragLabel = (() => {
+    if (!activeDragId) return null
+    if (activeDragId.startsWith(HIER_SUB_PREFIX)) {
+      const subId = activeDragId.slice(HIER_SUB_PREFIX.length)
+      const sub =
+        subs.find((s) => s.id === subId)
+        ?? buckets.flatMap((b) => getSubsForBucket(b.id)).find((s) => s.id === subId)
+      return sub?.label ?? 'Sub-bucket'
+    }
+    if (activeDragId.startsWith(HIER_TASK_PREFIX)) {
+      const taskId = activeDragId.slice(HIER_TASK_PREFIX.length)
+      return tasks.find((t) => t.id === taskId)?.title ?? 'Task'
+    }
+    return null
+  })()
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(String(event.active.id))
+  }
+
+  const handleDragCancel = (_event: DragCancelEvent) => {
+    setActiveDragId(null)
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveDragId(null)
+    if (!over) return
+
+    const activeId = String(active.id)
+    const overId = String(over.id)
+
+    if (activeId.startsWith(HIER_SUB_PREFIX) && overId.startsWith(HIER_BUCKET_PREFIX)) {
+      const subId = activeId.slice(HIER_SUB_PREFIX.length)
+      const bucketId = overId.slice(HIER_BUCKET_PREFIX.length)
+      onMoveSubToBucket(subId, bucketId)
+      return
+    }
+
+    if (activeId.startsWith(HIER_TASK_PREFIX) && overId.startsWith(HIER_SUB_PREFIX)) {
+      const taskId = activeId.slice(HIER_TASK_PREFIX.length)
+      const subId = overId.slice(HIER_SUB_PREFIX.length)
+      onMoveTaskToSub(taskId, subId)
+    }
+  }
+
   return (
-    <div className={`hierarchy-view${selectedTask ? ' hierarchy-view--with-panel' : ''}`}>
-      <div className="hierarchy-view__columns">
-        {/* Column 1: Buckets */}
-        <section className="hierarchy-view__col" aria-label="Buckets">
-          <header className="hierarchy-view__col-header">
-            <span className="hierarchy-view__col-title">Buckets</span>
-          </header>
-          <ul className="hierarchy-view__list">
-            {buckets.map((bucket) => {
-              const count = countTasksForBucket(openTasks, bucket.id, getSubsForBucket)
-              const isSelected = bucket.id === selectedBucketId
-              return (
-                <li key={bucket.id}>
-                  <button
-                    type="button"
-                    className={`hierarchy-view__item${isSelected ? ' hierarchy-view__item--selected' : ''}`}
-                    onClick={() => onSelectBucket(bucket.id)}
-                  >
-                    <span className="hierarchy-view__item-icon" aria-hidden>
-                      {bucket.emoji ? (
-                        <span className="hierarchy-view__item-emoji">{bucket.emoji}</span>
-                      ) : (
-                        <CategoryIcon categoryId={bucket.id} size={16} />
-                      )}
-                    </span>
-                    <span className="hierarchy-view__item-label">{bucket.label}</span>
-                    <span className="hierarchy-view__item-count">{count}</span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-          <InlineAdd
-            placeholder="New bucket"
-            onSubmit={(name) => void onAddBucket(name)}
-            className="hierarchy-view__add-trigger--footer"
-          />
-        </section>
-
-        {/* Column 2: Sub-buckets */}
-        <section className="hierarchy-view__col" aria-label="Sub-buckets">
-          <header className="hierarchy-view__col-header">
-            <span className="hierarchy-view__col-title">
-              Sub-buckets
-              {selectedBucket && (
-                <span className="hierarchy-view__col-context"> · {selectedBucket.label}</span>
-              )}
-            </span>
-            {selectedBucketId && (
-              <SubBucketAddButton
-                onAdd={(name) => void onAddSub(selectedBucketId, name)}
-              />
-            )}
-          </header>
-          {!selectedBucketId ? (
-            <p className="hierarchy-view__empty-hint">Select a bucket</p>
-          ) : subs.length === 0 ? (
-            <div className="hierarchy-view__empty-col">
-              <p className="hierarchy-view__empty-hint">No sub-buckets yet</p>
-              <InlineAdd
-                placeholder="New sub-bucket"
-                onSubmit={(name) => void onAddSub(selectedBucketId, name)}
-              />
-            </div>
-          ) : (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      <div className={`hierarchy-view${selectedTask ? ' hierarchy-view--with-panel' : ''}`}>
+        <div className="hierarchy-view__columns">
+          {/* Column 1: Buckets */}
+          <section className="hierarchy-view__col" aria-label="Buckets">
+            <header className="hierarchy-view__col-header">
+              <span className="hierarchy-view__col-title">Buckets</span>
+            </header>
             <ul className="hierarchy-view__list">
-              {subs.map((sub) => {
-                const count = countTasksForSub(openTasks, sub.id)
-                const isSelected = sub.id === selectedSubId
-                return (
-                  <li key={sub.id}>
-                    <button
-                      type="button"
-                      className={`hierarchy-view__item${isSelected ? ' hierarchy-view__item--selected' : ''}`}
-                      onClick={() => onSelectSub(sub.id)}
-                    >
-                      <span
-                        className="hierarchy-view__item-dot"
-                        style={{ '--tasks-cat-color': sub.color ?? '#a78bfa' } as CSSProperties}
-                        aria-hidden
-                      />
-                      <span className="hierarchy-view__item-label">{sub.label}</span>
-                      <span className="hierarchy-view__item-count">{count}</span>
-                    </button>
-                  </li>
-                )
-              })}
+              {buckets.map((bucket) => (
+                <HierarchyBucketItem
+                  key={bucket.id}
+                  bucket={bucket}
+                  count={countTasksForBucket(openTasks, bucket.id, getSubsForBucket)}
+                  selected={bucket.id === selectedBucketId}
+                  acceptSubDrop={draggingSub}
+                  onSelect={() => onSelectBucket(bucket.id)}
+                />
+              ))}
             </ul>
-          )}
-        </section>
+            <InlineAdd
+              placeholder="New bucket"
+              onSubmit={(name) => void onAddBucket(name)}
+              className="hierarchy-view__add-trigger--footer"
+            />
+          </section>
 
-        {/* Column 3: Tasks */}
-        <section className="hierarchy-view__col hierarchy-view__col--tasks" aria-label="Tasks">
-          <header className="hierarchy-view__col-header">
-            <span className="hierarchy-view__col-title">
-              Tasks
-              {selectedSub && (
-                <span className="hierarchy-view__col-context"> · {selectedSub.label}</span>
+          {/* Column 2: Sub-buckets */}
+          <section className="hierarchy-view__col" aria-label="Sub-buckets">
+            <header className="hierarchy-view__col-header">
+              <span className="hierarchy-view__col-title">
+                Sub-buckets
+                {selectedBucket && (
+                  <span className="hierarchy-view__col-context"> · {selectedBucket.label}</span>
+                )}
+              </span>
+              {selectedBucketId && (
+                <SubBucketAddButton
+                  onAdd={(name) => void onAddSub(selectedBucketId, name)}
+                />
               )}
-            </span>
-          </header>
-          {!selectedSubId ? (
-            <p className="hierarchy-view__empty-hint">Select a sub-bucket</p>
-          ) : subTasks.length === 0 ? (
-            <div className="hierarchy-view__empty-col">
-              <p className="hierarchy-view__empty-hint">No tasks yet</p>
-              <InlineAdd
-                placeholder="Add task"
-                onSubmit={(title) => onAddTask(title, selectedSubId)}
-              />
-            </div>
-          ) : (
-            <>
-              <ul className="hierarchy-view__task-list">
-                {subTasks.map((task) => (
-                  <HierarchyTaskCard
-                    key={task.id}
-                    task={task}
-                    selected={task.id === selectedTaskId}
-                    onSelect={() => onSelectTask(task.id)}
-                    onToggle={() => onToggleTask(task.id)}
+            </header>
+            {!selectedBucketId ? (
+              <p className="hierarchy-view__empty-hint">Select a bucket</p>
+            ) : subs.length === 0 ? (
+              <div className="hierarchy-view__empty-col">
+                <p className="hierarchy-view__empty-hint">No sub-buckets yet</p>
+                <InlineAdd
+                  placeholder="New sub-bucket"
+                  onSubmit={(name) => void onAddSub(selectedBucketId, name)}
+                />
+              </div>
+            ) : (
+              <ul className="hierarchy-view__list">
+                {subs.map((sub) => (
+                  <HierarchySubItem
+                    key={sub.id}
+                    sub={sub}
+                    count={countTasksForSub(openTasks, sub.id)}
+                    selected={sub.id === selectedSubId}
+                    acceptTaskDrop={draggingTask}
+                    onSelect={() => onSelectSub(sub.id)}
                   />
                 ))}
               </ul>
-              <InlineAdd
-                placeholder="Add task"
-                onSubmit={(title) => onAddTask(title, selectedSubId)}
-                className="hierarchy-view__add-trigger--footer"
-              />
-            </>
-          )}
-        </section>
+            )}
+          </section>
+
+          {/* Column 3: Tasks */}
+          <section className="hierarchy-view__col hierarchy-view__col--tasks" aria-label="Tasks">
+            <header className="hierarchy-view__col-header">
+              <span className="hierarchy-view__col-title">
+                Tasks
+                {selectedSub && (
+                  <span className="hierarchy-view__col-context"> · {selectedSub.label}</span>
+                )}
+              </span>
+            </header>
+            {!selectedSubId ? (
+              <p className="hierarchy-view__empty-hint">Select a sub-bucket</p>
+            ) : subTasks.length === 0 ? (
+              <div className="hierarchy-view__empty-col">
+                <p className="hierarchy-view__empty-hint">No tasks yet</p>
+                <InlineAdd
+                  placeholder="Add task"
+                  onSubmit={(title) => onAddTask(title, selectedSubId)}
+                />
+              </div>
+            ) : (
+              <>
+                <ul className="hierarchy-view__task-list">
+                  {subTasks.map((task) => (
+                    <HierarchyTaskCard
+                      key={task.id}
+                      task={task}
+                      selected={task.id === selectedTaskId}
+                      onSelect={() => onSelectTask(task.id)}
+                      onToggle={() => onToggleTask(task.id)}
+                    />
+                  ))}
+                </ul>
+                <InlineAdd
+                  placeholder="Add task"
+                  onSubmit={(title) => onAddTask(title, selectedSubId)}
+                  className="hierarchy-view__add-trigger--footer"
+                />
+              </>
+            )}
+          </section>
+        </div>
+
+        {selectedTask && taskMeta && (
+          <TaskDetailPanel
+            task={selectedTask}
+            bucketLabel={taskMeta.bucketLabel}
+            subLabel={taskMeta.subLabel}
+            subColor={taskMeta.subColor}
+            onClose={() => onSelectTask(null)}
+            onSaveTitle={(title) => onUpdateTask(selectedTask.id, { title })}
+            onPlanningChange={(planning) => onUpdateTask(selectedTask.id, { planning })}
+            onRawInputChange={(rawInput) => onUpdateTask(selectedTask.id, { rawInput })}
+            onToggle={() => onToggleTask(selectedTask.id)}
+            onDelete={() => {
+              onDeleteTask(selectedTask.id)
+              onSelectTask(null)
+            }}
+          />
+        )}
       </div>
 
-      {selectedTask && taskMeta && (
-        <TaskDetailPanel
-          task={selectedTask}
-          bucketLabel={taskMeta.bucketLabel}
-          subLabel={taskMeta.subLabel}
-          subColor={taskMeta.subColor}
-          onClose={() => onSelectTask(null)}
-          onSaveTitle={(title) => onUpdateTask(selectedTask.id, { title })}
-          onPlanningChange={(planning) => onUpdateTask(selectedTask.id, { planning })}
-          onRawInputChange={(rawInput) => onUpdateTask(selectedTask.id, { rawInput })}
-          onToggle={() => onToggleTask(selectedTask.id)}
-          onDelete={() => {
-            onDeleteTask(selectedTask.id)
-            onSelectTask(null)
-          }}
-        />
-      )}
-    </div>
+      <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
+        {activeDragLabel ? (
+          <div className="hierarchy-view__drag-overlay">{activeDragLabel}</div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   )
 }

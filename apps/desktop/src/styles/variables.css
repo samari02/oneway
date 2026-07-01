@@ -56,8 +56,9 @@
   --space-xl: 32px;
   --space-2xl: 48px;
 
-  /* Page content insets — unified horizontal margins across views */
-  --content-padding-x: 16px;
+  /* Page content insets — change --content-padding-x to adjust left/right margins app-wide.
+     Used by view shells (Tasks, Home, Progress, Settings, Screen Time, etc.) via --content-shell-padding. */
+  --content-padding-x: 12px;
   --content-padding-y: 20px;
   --content-shell-padding: clamp(20px, 3vh, 36px) var(--content-padding-x) clamp(24px, 4vh, 40px);
   

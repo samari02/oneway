@@ -115,7 +115,8 @@ input, textarea, select {
   overflow-x: hidden;
 }
 
-/* Centered content with max-width - used inside scrollable area */
+/* Centered content with max-width - used inside scrollable area.
+   Horizontal inset uses --content-padding-x from variables.css */
 .page-content {
   max-width: 1000px;
   margin: 0 auto;

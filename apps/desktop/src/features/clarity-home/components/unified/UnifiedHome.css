@@ -1032,7 +1032,6 @@
 
 .unified-home__shell--dashboard {
   max-width: min(1040px, 100%);
-  padding-inline: var(--content-padding-x);
   gap: clamp(18px, 2.5vh, 28px);
 }
 

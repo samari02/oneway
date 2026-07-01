@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  Fragment,
   type CSSProperties,
   type KeyboardEvent,
 } from 'react'
@@ -13,6 +14,7 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCorners,
+  useDraggable,
   useDroppable,
   useSensor,
   useSensors,
@@ -60,6 +62,10 @@ type SortMode = 'manual' | 'alphabetical' | 'created_at'
 type TodayLoadLevel = 'light' | 'neutral' | 'overloaded'
 
 const MAX_PLAN_TODAY_PICK = 3
+
+const LIST_BUCKET_PREFIX = 'list-bucket:'
+const LIST_SUB_PREFIX = 'list-sub:'
+const LIST_TASK_PREFIX = 'list-task:'
 
 type ColumnMeta = {
   id: string
@@ -615,6 +621,103 @@ function KanbanColumn({
   )
 }
 
+function ListBucketRow({
+  bucket,
+  subCount,
+  acceptSubDrop,
+}: {
+  bucket: { id: string; label: string; emoji?: string | null }
+  subCount: number
+  acceptSubDrop: boolean
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: `${LIST_BUCKET_PREFIX}${bucket.id}` })
+  const showOver = acceptSubDrop && isOver
+
+  return (
+    <tr
+      ref={setNodeRef}
+      className={`tasks-view__list-bucket${isOver ? ' tasks-view__list-bucket--over' : ''}`}
+    >
+      <td className="tasks-view__list-cell tasks-view__list-cell--grip" aria-hidden />
+      <td className="tasks-view__list-cell tasks-view__list-bucket-label" colSpan={6}>
+        <span className="tasks-view__list-bucket-icon" aria-hidden>
+          {bucket.emoji ? (
+            <span className="tasks-view__list-bucket-emoji">{bucket.emoji}</span>
+          ) : (
+            <CategoryIcon categoryId={bucket.id} size={14} />
+          )}
+        </span>
+        <span className="tasks-view__list-bucket-name">{bucket.label}</span>
+        <span className="tasks-view__list-bucket-meta">
+          {subCount} sub{subCount === 1 ? '' : 's'}
+        </span>
+      </td>
+    </tr>
+  )
+}
+
+function ListSubRow({
+  sub,
+  taskCount,
+  acceptTaskDrop,
+}: {
+  sub: { id: string; label: string; color?: string }
+  taskCount: number
+  acceptTaskDrop: boolean
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    transform,
+    isDragging,
+  } = useDraggable({ id: `${LIST_SUB_PREFIX}${sub.id}` })
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `${LIST_SUB_PREFIX}${sub.id}` })
+
+  const setNodeRef = (node: HTMLTableRowElement | null) => {
+    setDragRef(node)
+    setDropRef(node)
+  }
+
+  const style: CSSProperties = {
+    transform: transform ? CSS.Translate.toString(transform) : undefined,
+    opacity: isDragging ? 0.35 : 1,
+  }
+
+  const showOver = acceptTaskDrop && isOver
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`tasks-view__list-sub${showOver ? ' tasks-view__list-sub--over' : ''}${isDragging ? ' tasks-view__list-sub--dragging' : ''}`}
+    >
+      <td className="tasks-view__list-cell tasks-view__list-cell--grip">
+        <button
+          type="button"
+          className="tasks-view__drag-handle tasks-view__drag-handle--list"
+          aria-label={`Drag sub-bucket ${sub.label}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripIcon />
+        </button>
+      </td>
+      <td className="tasks-view__list-cell tasks-view__list-sub-label" colSpan={6}>
+        <span
+          className="tasks-view__list-sub-dot"
+          style={{ '--tasks-cat-color': sub.color ?? '#a78bfa' } as CSSProperties}
+          aria-hidden
+        />
+        <span className="tasks-view__list-sub-name">{sub.label}</span>
+        <span className="tasks-view__list-sub-meta">
+          {taskCount} task{taskCount === 1 ? '' : 's'}
+        </span>
+      </td>
+    </tr>
+  )
+}
+
 function TaskListRow({
   task,
   categoryOptions,
@@ -640,6 +743,14 @@ function TaskListRow({
   const [draft, setDraft] = useState(task.title)
   const planning = task.planning ?? 'backlog'
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({ id: `${LIST_TASK_PREFIX}${task.id}` })
+
   useEffect(() => {
     if (!editing) setDraft(task.title)
   }, [task.title, editing])
@@ -655,8 +766,29 @@ function TaskListRow({
     setEditing(false)
   }
 
+  const style: CSSProperties = {
+    transform: transform ? CSS.Translate.toString(transform) : undefined,
+    opacity: isDragging ? 0.35 : 1,
+  }
+
   return (
-    <tr className="tasks-view__list-row" data-planning={planning}>
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`tasks-view__list-row${isDragging ? ' tasks-view__list-row--dragging' : ''}`}
+      data-planning={planning}
+    >
+      <td className="tasks-view__list-cell tasks-view__list-cell--grip">
+        <button
+          type="button"
+          className="tasks-view__drag-handle tasks-view__drag-handle--list"
+          aria-label={`Drag task ${task.title}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripIcon />
+        </button>
+      </td>
       <td className="tasks-view__list-cell tasks-view__list-cell--check">
         <button
           type="button"
@@ -813,7 +945,7 @@ export function TasksView() {
     removeTask,
     toggleTask,
   } = useTaskStore(user?.id)
-  const { categories, addBucket, addSub, getBuckets, getSubsForBucket, getBucketForSub, getAllSubs } =
+  const { categories, addBucket, addSub, getBuckets, getSubsForBucket, getBucketForSub, getAllSubs, updateCategory } =
     useCategoryStore()
   const {
     activeAreas,
@@ -823,6 +955,7 @@ export function TasksView() {
     getSubsForBucket: getFocusSubsForBucket,
     getBucketForSub: getFocusBucketForSub,
     getAllSubs: getFocusAllSubs,
+    editArea,
   } = useFocusAreaStore(user?.id)
   const { selectTask, startTimer } = useCurrentFocus()
 
@@ -839,6 +972,7 @@ export function TasksView() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<SortMode>('manual')
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const [activeListDragId, setActiveListDragId] = useState<string | null>(null)
   const [columnItems, setColumnItems] = useState<Record<string, string[]>>({})
   const addInputRef = useRef<HTMLInputElement>(null)
 
@@ -1317,6 +1451,28 @@ export function TasksView() {
     setSelectedTaskId(null)
   }
 
+  const handleHierarchyMoveSubToBucket = useCallback(
+    (subId: string, bucketId: string) => {
+      const currentBucket = useFocusAreasMode ? getFocusBucketForSub(subId) : getBucketForSub(subId)
+      if (!currentBucket || currentBucket.id === bucketId) return
+      if (useFocusAreasMode) {
+        void editArea(subId, { parent_id: bucketId })
+      } else {
+        updateCategory(subId, { parentId: bucketId })
+      }
+    },
+    [useFocusAreasMode, getFocusBucketForSub, getBucketForSub, editArea, updateCategory],
+  )
+
+  const handleHierarchyMoveTaskToSub = useCallback(
+    (taskId: string, subId: string) => {
+      const task = tasksById.get(taskId)
+      if (!task || task.category === subId) return
+      updateTask(taskId, { category: subId })
+    },
+    [tasksById, updateTask],
+  )
+
   const openCount = tasks.filter((t) => t.status === 'open').length
   const completedCount = tasks.filter((t) => t.status === 'done').length
   const todayOpenCount = planningCounts.today
@@ -1329,6 +1485,101 @@ export function TasksView() {
     () => sortTasksList(openTasks, sortBy),
     [openTasks, sortBy],
   )
+
+  const listTasksByCategory = useMemo(() => {
+    const grouped = new Map<string, Task[]>()
+    for (const task of listTasks) {
+      const existing = grouped.get(task.category) ?? []
+      existing.push(task)
+      grouped.set(task.category, existing)
+    }
+    return grouped
+  }, [listTasks])
+
+  const listBuckets = useMemo(() => {
+    if (filterCategory.startsWith('bucket:')) {
+      const bucketId = filterCategory.slice('bucket:'.length)
+      return buckets.filter((bucket) => bucket.id === bucketId)
+    }
+    if (filterCategory !== 'all') {
+      const bucket = useFocusAreasMode
+        ? getFocusBucketForSub(filterCategory)
+        : getBucketForSub(filterCategory)
+      return bucket ? [bucket] : buckets
+    }
+    return buckets
+  }, [
+    buckets,
+    filterCategory,
+    useFocusAreasMode,
+    getFocusBucketForSub,
+    getBucketForSub,
+  ])
+
+  const getListSubsForBucket = useCallback(
+    (bucketId: string) => {
+      const subs = useFocusAreasMode ? getFocusSubsForBucket(bucketId) : getSubsForBucket(bucketId)
+      if (filterCategory !== 'all' && !filterCategory.startsWith('bucket:')) {
+        return subs.filter((sub) => sub.id === filterCategory)
+      }
+      return subs
+    },
+    [useFocusAreasMode, getFocusSubsForBucket, getSubsForBucket, filterCategory],
+  )
+
+  const handleListDragStart = (event: DragStartEvent) => {
+    setActiveListDragId(String(event.active.id))
+  }
+
+  const handleListDragCancel = (_event: DragCancelEvent) => {
+    setActiveListDragId(null)
+  }
+
+  const handleListDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveListDragId(null)
+    if (!over) return
+
+    const activeId = String(active.id)
+    const overId = String(over.id)
+
+    if (activeId.startsWith(LIST_SUB_PREFIX) && overId.startsWith(LIST_BUCKET_PREFIX)) {
+      const subId = activeId.slice(LIST_SUB_PREFIX.length)
+      const bucketId = overId.slice(LIST_BUCKET_PREFIX.length)
+      const currentBucket = useFocusAreasMode ? getFocusBucketForSub(subId) : getBucketForSub(subId)
+      if (!currentBucket || currentBucket.id === bucketId) return
+      if (useFocusAreasMode) {
+        void editArea(subId, { parent_id: bucketId })
+      } else {
+        updateCategory(subId, { parentId: bucketId })
+      }
+      return
+    }
+
+    if (activeId.startsWith(LIST_TASK_PREFIX) && overId.startsWith(LIST_SUB_PREFIX)) {
+      const taskId = activeId.slice(LIST_TASK_PREFIX.length)
+      const subId = overId.slice(LIST_SUB_PREFIX.length)
+      const task = tasksById.get(taskId)
+      if (!task || task.category === subId) return
+      updateTask(taskId, { category: subId })
+    }
+  }
+
+  const activeListDragLabel = useMemo(() => {
+    if (!activeListDragId) return null
+    if (activeListDragId.startsWith(LIST_SUB_PREFIX)) {
+      const subId = activeListDragId.slice(LIST_SUB_PREFIX.length)
+      return allSubs.find((sub) => sub.id === subId)?.label ?? 'Sub-bucket'
+    }
+    if (activeListDragId.startsWith(LIST_TASK_PREFIX)) {
+      const taskId = activeListDragId.slice(LIST_TASK_PREFIX.length)
+      return tasksById.get(taskId)?.title ?? 'Task'
+    }
+    return null
+  }, [activeListDragId, allSubs, tasksById])
+
+  const listDraggingSub = activeListDragId?.startsWith(LIST_SUB_PREFIX) ?? false
+  const listDraggingTask = activeListDragId?.startsWith(LIST_TASK_PREFIX) ?? false
 
   return (
     <div className="tasks-view">
@@ -1584,6 +1835,8 @@ export function TasksView() {
             onToggleTask={toggleTask}
             onUpdateTask={(id, updates) => updateTask(id, updates)}
             onDeleteTask={removeTask}
+            onMoveSubToBucket={handleHierarchyMoveSubToBucket}
+            onMoveTaskToSub={handleHierarchyMoveTaskToSub}
           />
         )}
 
@@ -1664,50 +1917,97 @@ export function TasksView() {
           </DndContext>
         )}
 
-        {!loading && !error && viewLayout === 'list' && openCount === 0 && (
+        {!loading && !error && viewLayout === 'list' && openCount === 0 && buckets.length === 0 && (
           <div className="tasks-view__empty">
             <p className="tasks-view__empty-text">No open tasks yet. Add one to get started.</p>
           </div>
         )}
 
-        {!loading && !error && viewLayout === 'list' && openCount > 0 && (
-          <div className="tasks-view__list-wrap">
-            <table className="tasks-view__list">
-              <thead>
-                <tr>
-                  <th className="tasks-view__list-head tasks-view__list-head--check" scope="col" />
-                  <th className="tasks-view__list-head" scope="col">Title</th>
-                  <th className="tasks-view__list-head" scope="col">Bucket · Sub</th>
-                  <th className="tasks-view__list-head" scope="col">Sub-category</th>
-                  <th className="tasks-view__list-head" scope="col">Planning</th>
-                  <th className="tasks-view__list-head tasks-view__list-head--actions" scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {listTasks.map((task) => {
-                  const meta = getHierarchyMeta(task)
-                  return (
-                    <TaskListRow
-                      key={task.id}
-                      task={task}
-                      categoryOptions={categoryOptions}
-                      hierarchyMeta={meta}
-                      onToggle={() => toggleTask(task.id)}
-                      onSaveTitle={(title) => updateTask(task.id, { title })}
-                      onDelete={() => removeTask(task.id)}
-                      onCategoryChange={(catId) => updateTask(task.id, { category: catId })}
-                      onPlanningChange={(planning) => updateTask(task.id, { planning })}
-                      onFocus={
-                        (task.planning ?? 'backlog') === 'today'
-                          ? () => handleFocusTask(task)
-                          : undefined
-                      }
-                    />
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+        {!loading && !error && viewLayout === 'list' && (openCount > 0 || buckets.length > 0) && (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleListDragStart}
+            onDragEnd={handleListDragEnd}
+            onDragCancel={handleListDragCancel}
+          >
+            <div className="tasks-view__list-wrap">
+              <table className="tasks-view__list">
+                <thead>
+                  <tr>
+                    <th className="tasks-view__list-head tasks-view__list-head--grip" scope="col" aria-label="Drag" />
+                    <th className="tasks-view__list-head tasks-view__list-head--check" scope="col" />
+                    <th className="tasks-view__list-head" scope="col">Title</th>
+                    <th className="tasks-view__list-head" scope="col">Bucket · Sub</th>
+                    <th className="tasks-view__list-head" scope="col">Sub-category</th>
+                    <th className="tasks-view__list-head" scope="col">Planning</th>
+                    <th className="tasks-view__list-head tasks-view__list-head--actions" scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {listBuckets.map((bucket) => {
+                    const subs = getListSubsForBucket(bucket.id)
+                    return (
+                      <Fragment key={`bucket-group-${bucket.id}`}>
+                        <ListBucketRow
+                          bucket={{
+                            id: bucket.id,
+                            label: bucket.label,
+                            emoji: 'emoji' in bucket ? (bucket.emoji as string | null) : null,
+                          }}
+                          subCount={subs.length}
+                          acceptSubDrop={listDraggingSub}
+                        />
+                        {subs.map((sub) => {
+                          const tasks = listTasksByCategory.get(sub.id) ?? []
+                          return (
+                            <Fragment key={`sub-group-${sub.id}`}>
+                              <ListSubRow
+                                sub={{
+                                  id: sub.id,
+                                  label: sub.label,
+                                  color: 'color' in sub && sub.color ? String(sub.color) : undefined,
+                                }}
+                                taskCount={tasks.length}
+                                acceptTaskDrop={listDraggingTask}
+                              />
+                              {tasks.map((task) => {
+                                const meta = getHierarchyMeta(task)
+                                return (
+                                  <TaskListRow
+                                    key={task.id}
+                                    task={task}
+                                    categoryOptions={categoryOptions}
+                                    hierarchyMeta={meta}
+                                    onToggle={() => toggleTask(task.id)}
+                                    onSaveTitle={(title) => updateTask(task.id, { title })}
+                                    onDelete={() => removeTask(task.id)}
+                                    onCategoryChange={(catId) => updateTask(task.id, { category: catId })}
+                                    onPlanningChange={(planning) => updateTask(task.id, { planning })}
+                                    onFocus={
+                                      (task.planning ?? 'backlog') === 'today'
+                                        ? () => handleFocusTask(task)
+                                        : undefined
+                                    }
+                                  />
+                                )
+                              })}
+                            </Fragment>
+                          )
+                        })}
+                      </Fragment>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
+              {activeListDragLabel ? (
+                <div className="tasks-view__list-drag-overlay">{activeListDragLabel}</div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         )}
 
         {!loading && !error && viewLayout === 'completed' && completedTasks.length > 0 && (
