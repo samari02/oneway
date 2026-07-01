@@ -50,16 +50,20 @@ function normalizeCategory(raw: Partial<Category>): Category | null {
   }
 }
 
-/** Flat legacy categories → subs under a General bucket. Default seed categories stay as buckets. */
+/** Flat legacy categories → preserve known seeds as buckets, reparent the rest under General. */
 function migrateFlatCategories(cats: Category[]): Category[] {
   const hasHierarchy = cats.some((c) => c.parentId !== null)
   if (hasHierarchy) return cats
 
-  const isDefaultSeed = cats.every((c) =>
-    DEFAULT_CATEGORIES.some((d) => d.id === c.id && d.parentId === null),
-  )
-  if (isDefaultSeed && cats.length === DEFAULT_CATEGORIES.length) {
-    return DEFAULT_CATEGORIES
+  const defaultIds = new Set(DEFAULT_CATEGORIES.map((d) => d.id))
+  const seedBuckets = cats.filter((c) => defaultIds.has(c.id))
+  const nonSeed = cats.filter((c) => !defaultIds.has(c.id))
+
+  if (seedBuckets.length > 0) {
+    const buckets = seedBuckets.map((c) => ({ ...c, parentId: null }))
+    const fallbackBucket = buckets[0].id
+    const subs = nonSeed.map((c) => ({ ...c, parentId: fallbackBucket }))
+    return [...buckets, ...subs]
   }
 
   const general: Category = {

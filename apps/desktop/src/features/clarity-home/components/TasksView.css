@@ -148,6 +148,35 @@
   color: var(--tasks-ink);
 }
 
+.tasks-view__tabs-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tasks-view__organize-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid rgba(124, 58, 237, 0.45);
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.22);
+  color: #c4b5fd;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--tasks-ease), border-color var(--tasks-ease), color var(--tasks-ease);
+}
+
+.tasks-view__organize-btn:hover {
+  background: rgba(124, 58, 237, 0.32);
+  border-color: rgba(124, 58, 237, 0.6);
+  color: #e9d5ff;
+}
+
 .tasks-view__tabs {
   display: flex;
   gap: 4px;

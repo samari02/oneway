@@ -16,6 +16,41 @@ type FocusAreaStoreState = {
   error: string | null
 }
 
+const GENERAL_REPAIR_KEY = 'clarity-focus-general-repaired'
+
+/**
+ * Detect and repair the degenerate state left by migration 023: a single
+ * synthetic "General" bucket with every real area parented under it.
+ * Promotes all children to top-level buckets and removes the General row.
+ */
+async function repairGeneralBucket(areas: FocusArea[]): Promise<FocusArea[] | null> {
+  const active = areas.filter((a) => a.status === 'active')
+  const buckets = active.filter((a) => !a.parent_id)
+  if (buckets.length !== 1) return null
+  const general = buckets[0]
+  if (general.label !== 'General' || general.source !== 'user') return null
+
+  const subs = active.filter((a) => a.parent_id === general.id)
+  if (subs.length === 0) return null
+
+  if (localStorage.getItem(GENERAL_REPAIR_KEY) === general.id) return null
+
+  try {
+    await Promise.all(
+      subs.map((s) => updateFocusArea(s.id, { parent_id: null })),
+    )
+    await deleteFocusArea(general.id)
+    localStorage.setItem(GENERAL_REPAIR_KEY, general.id)
+
+    return areas
+      .filter((a) => a.id !== general.id)
+      .map((a) => (a.parent_id === general.id ? { ...a, parent_id: null } : a))
+  } catch (err) {
+    console.error('[focus-areas] Failed to repair General bucket:', err)
+    return null
+  }
+}
+
 export function useFocusAreaStore(userId: string | undefined) {
   const [state, setState] = useState<FocusAreaStoreState>({
     areas: [],
@@ -65,7 +100,9 @@ export function useFocusAreaStore(userId: string | undefined) {
     if (!userId) return
     setState((s) => ({ ...s, loading: true, error: null }))
     try {
-      const areas = await getFocusAreas(userId)
+      let areas = await getFocusAreas(userId)
+      const repaired = await repairGeneralBucket(areas)
+      if (repaired) areas = repaired
       setState({ areas, loading: false, error: null })
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load focus areas'

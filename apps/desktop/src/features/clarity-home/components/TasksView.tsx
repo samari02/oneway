@@ -44,6 +44,8 @@ import { useFocusAreaStore } from '../hooks/useFocusAreaStore'
 import { useCurrentFocus } from '../hooks/useCurrentFocus'
 import { CategoryIcon } from './CategoryIcon'
 import { HierarchyView } from './HierarchyView'
+import { OrganizeModal } from './OrganizeModal'
+import type { BucketContext, SubContext } from '../api/suggestTaskOrganization'
 import {
   CheckIcon,
   PlusIcon,
@@ -66,6 +68,65 @@ const MAX_PLAN_TODAY_PICK = 3
 const LIST_BUCKET_PREFIX = 'list-bucket:'
 const LIST_SUB_PREFIX = 'list-sub:'
 const LIST_TASK_PREFIX = 'list-task:'
+const LIST_COLLAPSE_STORAGE_KEY = 'clarity-tasks-list-collapse'
+
+type ListCollapseState = {
+  buckets: string[]
+  subs: string[]
+}
+
+function loadListCollapseState(): ListCollapseState {
+  try {
+    const raw = localStorage.getItem(LIST_COLLAPSE_STORAGE_KEY)
+    if (!raw) return { buckets: [], subs: [] }
+    const parsed = JSON.parse(raw) as Partial<ListCollapseState>
+    return {
+      buckets: Array.isArray(parsed.buckets) ? parsed.buckets.filter((id) => typeof id === 'string') : [],
+      subs: Array.isArray(parsed.subs) ? parsed.subs.filter((id) => typeof id === 'string') : [],
+    }
+  } catch {
+    return { buckets: [], subs: [] }
+  }
+}
+
+function ListChevronIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M9 6l6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function ListChevronButton({
+  expanded,
+  onToggle,
+  label,
+}: {
+  expanded: boolean
+  onToggle: () => void
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      className={`tasks-view__list-chevron${expanded ? ' tasks-view__list-chevron--expanded' : ''}`}
+      aria-expanded={expanded}
+      aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+      onClick={(e) => {
+        e.stopPropagation()
+        onToggle()
+      }}
+    >
+      <ListChevronIcon />
+    </button>
+  )
+}
 
 type ColumnMeta = {
   id: string
@@ -625,10 +686,14 @@ function ListBucketRow({
   bucket,
   subCount,
   acceptSubDrop,
+  expanded,
+  onToggleExpand,
 }: {
   bucket: { id: string; label: string; emoji?: string | null }
   subCount: number
   acceptSubDrop: boolean
+  expanded: boolean
+  onToggleExpand: () => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `${LIST_BUCKET_PREFIX}${bucket.id}` })
   const showOver = acceptSubDrop && isOver
@@ -636,9 +701,11 @@ function ListBucketRow({
   return (
     <tr
       ref={setNodeRef}
-      className={`tasks-view__list-bucket${isOver ? ' tasks-view__list-bucket--over' : ''}`}
+      className={`tasks-view__list-bucket${!expanded ? ' tasks-view__list-row--collapsed' : ''}${showOver ? ' tasks-view__list-bucket--over' : ''}`}
     >
-      <td className="tasks-view__list-cell tasks-view__list-cell--grip" aria-hidden />
+      <td className="tasks-view__list-cell tasks-view__list-cell--grip">
+        <ListChevronButton expanded={expanded} onToggle={onToggleExpand} label={bucket.label} />
+      </td>
       <td className="tasks-view__list-cell tasks-view__list-bucket-label" colSpan={6}>
         <span className="tasks-view__list-bucket-icon" aria-hidden>
           {bucket.emoji ? (
@@ -660,10 +727,14 @@ function ListSubRow({
   sub,
   taskCount,
   acceptTaskDrop,
+  expanded,
+  onToggleExpand,
 }: {
   sub: { id: string; label: string; color?: string }
   taskCount: number
   acceptTaskDrop: boolean
+  expanded: boolean
+  onToggleExpand: () => void
 }) {
   const {
     attributes,
@@ -690,7 +761,7 @@ function ListSubRow({
     <tr
       ref={setNodeRef}
       style={style}
-      className={`tasks-view__list-sub${showOver ? ' tasks-view__list-sub--over' : ''}${isDragging ? ' tasks-view__list-sub--dragging' : ''}`}
+      className={`tasks-view__list-sub${!expanded ? ' tasks-view__list-row--collapsed' : ''}${showOver ? ' tasks-view__list-sub--over' : ''}${isDragging ? ' tasks-view__list-sub--dragging' : ''}`}
     >
       <td className="tasks-view__list-cell tasks-view__list-cell--grip">
         <button
@@ -704,6 +775,7 @@ function ListSubRow({
         </button>
       </td>
       <td className="tasks-view__list-cell tasks-view__list-sub-label" colSpan={6}>
+        <ListChevronButton expanded={expanded} onToggle={onToggleExpand} label={sub.label} />
         <span
           className="tasks-view__list-sub-dot"
           style={{ '--tasks-cat-color': sub.color ?? '#a78bfa' } as CSSProperties}
@@ -962,6 +1034,7 @@ export function TasksView() {
   const [viewLayout, setViewLayout] = useState<ViewLayout>('hierarchy')
   const [addingTask, setAddingTask] = useState(false)
   const [planTodayOpen, setPlanTodayOpen] = useState(false)
+  const [organizeOpen, setOrganizeOpen] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskBucket, setNewTaskBucket] = useState('')
   const [newTaskCategory, setNewTaskCategory] = useState('')
@@ -974,9 +1047,25 @@ export function TasksView() {
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [activeListDragId, setActiveListDragId] = useState<string | null>(null)
   const [columnItems, setColumnItems] = useState<Record<string, string[]>>({})
+  const [collapsedListBuckets, setCollapsedListBuckets] = useState<Set<string>>(
+    () => new Set(loadListCollapseState().buckets),
+  )
+  const [collapsedListSubs, setCollapsedListSubs] = useState<Set<string>>(
+    () => new Set(loadListCollapseState().subs),
+  )
   const addInputRef = useRef<HTMLInputElement>(null)
 
-  const useFocusAreasMode = activeAreas.length > 0
+  const taskCategoryIds = useMemo(
+    () => new Set(tasks.map((t) => t.category)),
+    [tasks],
+  )
+
+  // Use focus areas for task hierarchy when tasks reference focus area IDs.
+  // Hierarchy (bucket→sub) is optional; flat focus areas work as top-level buckets.
+  const useFocusAreasMode = useMemo(() => {
+    if (activeAreas.length === 0) return false
+    return activeAreas.some((a) => taskCategoryIds.has(a.id))
+  }, [activeAreas, taskCategoryIds])
 
   const buckets = useMemo(() => {
     if (useFocusAreasMode) return getFocusBuckets()
@@ -1098,8 +1187,52 @@ export function TasksView() {
     [useFocusAreasMode, getFocusBucketForSub, getBucketForSub],
   )
 
+  const allOpenTasks = useMemo(() => tasks.filter((t) => t.status === 'open'), [tasks])
+
+  const organizeBuckets = useMemo((): BucketContext[] => {
+    return buckets.map((b) => ({
+      id: b.id,
+      label: b.label,
+      emoji: 'emoji' in b ? (b.emoji as string | null) : null,
+    }))
+  }, [buckets])
+
+  const organizeSubs = useMemo((): SubContext[] => {
+    return allSubs.map((sub) => {
+      const bucket = useFocusAreasMode ? getFocusBucketForSub(sub.id) : getBucketForSub(sub.id)
+      return {
+        id: sub.id,
+        label: sub.label,
+        bucketId: bucket?.id ?? '',
+        bucketLabel: bucket?.label ?? '—',
+      }
+    })
+  }, [allSubs, useFocusAreasMode, getFocusBucketForSub, getBucketForSub])
+
+  const getSubLabel = useCallback(
+    (subId: string) => {
+      const sub = allSubs.find((s) => s.id === subId)
+      return sub?.label ?? subId
+    },
+    [allSubs],
+  )
+
+  const handleOrganizeApply = useCallback(
+    (updates: Array<{ taskId: string; planning?: TaskPlanning; category?: string }>) => {
+      for (const { taskId, planning, category } of updates) {
+        const task = tasks.find((t) => t.id === taskId)
+        if (!task || task.status !== 'open') continue
+        const patch: Partial<Pick<Task, 'planning' | 'category'>> = {}
+        if (planning !== undefined) patch.planning = planning
+        if (category !== undefined) patch.category = category
+        if (Object.keys(patch).length > 0) updateTask(taskId, patch)
+      }
+    },
+    [tasks, updateTask],
+  )
+
   const openTasks = useMemo(() => {
-    const visible = tasks.filter((t) => t.status === 'open')
+    const visible = allOpenTasks
     if (filterCategory === 'all') return visible
     if (filterCategory.startsWith('bucket:')) {
       const bucketId = filterCategory.slice('bucket:'.length)
@@ -1111,7 +1244,7 @@ export function TasksView() {
       return visible.filter((t) => subIds.has(t.category) || t.category === bucketId)
     }
     return visible.filter((t) => t.category === filterCategory)
-  }, [tasks, filterCategory, useFocusAreasMode, getFocusSubsForBucket, getSubsForBucket])
+  }, [allOpenTasks, filterCategory, useFocusAreasMode, getFocusSubsForBucket, getSubsForBucket])
 
   const completedTasks = useMemo(() => {
     const done = tasks.filter((t) => t.status === 'done')
@@ -1178,6 +1311,34 @@ export function TasksView() {
   useEffect(() => {
     if (addingTask) addInputRef.current?.focus()
   }, [addingTask])
+
+  useEffect(() => {
+    localStorage.setItem(
+      LIST_COLLAPSE_STORAGE_KEY,
+      JSON.stringify({
+        buckets: [...collapsedListBuckets],
+        subs: [...collapsedListSubs],
+      }),
+    )
+  }, [collapsedListBuckets, collapsedListSubs])
+
+  const toggleListBucketCollapse = useCallback((bucketId: string) => {
+    setCollapsedListBuckets((prev) => {
+      const next = new Set(prev)
+      if (next.has(bucketId)) next.delete(bucketId)
+      else next.add(bucketId)
+      return next
+    })
+  }, [])
+
+  const toggleListSubCollapse = useCallback((subId: string) => {
+    setCollapsedListSubs((prev) => {
+      const next = new Set(prev)
+      if (next.has(subId)) next.delete(subId)
+      else next.add(subId)
+      return next
+    })
+  }, [])
 
   const getHierarchyMeta = useCallback(
     (task: Task): HierarchyMeta => {
@@ -1590,7 +1751,7 @@ export function TasksView() {
           <div className="tasks-view__header-row">
             <div className="tasks-view__header-intro">
               <h1 className="tasks-view__title">Tasks</h1>
-              <p className="tasks-view__subtitle">Organize everything that matters.</p>
+              <p className="tasks-view__subtitle">Let Clarity handle the chaos.</p>
             </div>
             <div className="tasks-view__header-actions">
               {viewLayout !== 'completed' && (
@@ -1642,54 +1803,66 @@ export function TasksView() {
             </div>
           </div>
 
-          <div className="tasks-view__tabs" role="tablist" aria-label="Task views">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={viewLayout === 'hierarchy'}
-              className={`tasks-view__tab${viewLayout === 'hierarchy' ? ' tasks-view__tab--active' : ''}`}
-              onClick={() => setViewLayout('hierarchy')}
-            >
-              Hierarchy
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={viewLayout === 'list'}
-              className={`tasks-view__tab${viewLayout === 'list' ? ' tasks-view__tab--active' : ''}`}
-              onClick={() => setViewLayout('list')}
-            >
-              List
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={viewLayout === 'board'}
-              className={`tasks-view__tab${viewLayout === 'board' ? ' tasks-view__tab--active' : ''}`}
-              onClick={() => setViewLayout('board')}
-            >
-              Board
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={viewLayout === 'completed'}
-              className={`tasks-view__tab${viewLayout === 'completed' ? ' tasks-view__tab--active' : ''}`}
-              onClick={() => setViewLayout('completed')}
-            >
-              Completed
-              {completedCount > 0 && <span className="tasks-view__tab-count">{completedCount}</span>}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={false}
-              className="tasks-view__tab tasks-view__tab--disabled"
-              disabled
-              title="Coming soon"
-            >
-              Calendar
-            </button>
+          <div className="tasks-view__tabs-row">
+            <div className="tasks-view__tabs" role="tablist" aria-label="Task views">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewLayout === 'hierarchy'}
+                className={`tasks-view__tab${viewLayout === 'hierarchy' ? ' tasks-view__tab--active' : ''}`}
+                onClick={() => setViewLayout('hierarchy')}
+              >
+                Hierarchy
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewLayout === 'list'}
+                className={`tasks-view__tab${viewLayout === 'list' ? ' tasks-view__tab--active' : ''}`}
+                onClick={() => setViewLayout('list')}
+              >
+                List
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewLayout === 'board'}
+                className={`tasks-view__tab${viewLayout === 'board' ? ' tasks-view__tab--active' : ''}`}
+                onClick={() => setViewLayout('board')}
+              >
+                Board
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewLayout === 'completed'}
+                className={`tasks-view__tab${viewLayout === 'completed' ? ' tasks-view__tab--active' : ''}`}
+                onClick={() => setViewLayout('completed')}
+              >
+                Completed
+                {completedCount > 0 && <span className="tasks-view__tab-count">{completedCount}</span>}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={false}
+                className="tasks-view__tab tasks-view__tab--disabled"
+                disabled
+                title="Coming soon"
+              >
+                Calendar
+              </button>
+            </div>
+            {viewLayout !== 'completed' && (
+              <button
+                type="button"
+                className="tasks-view__organize-btn"
+                onClick={() => setOrganizeOpen(true)}
+              >
+                <PlusIcon size={14} />
+                Organize
+              </button>
+            )}
           </div>
 
           {viewLayout === 'board' && (
@@ -1947,6 +2120,7 @@ export function TasksView() {
                 <tbody>
                   {listBuckets.map((bucket) => {
                     const subs = getListSubsForBucket(bucket.id)
+                    const bucketExpanded = !collapsedListBuckets.has(bucket.id)
                     return (
                       <Fragment key={`bucket-group-${bucket.id}`}>
                         <ListBucketRow
@@ -1957,44 +2131,51 @@ export function TasksView() {
                           }}
                           subCount={subs.length}
                           acceptSubDrop={listDraggingSub}
+                          expanded={bucketExpanded}
+                          onToggleExpand={() => toggleListBucketCollapse(bucket.id)}
                         />
-                        {subs.map((sub) => {
-                          const tasks = listTasksByCategory.get(sub.id) ?? []
-                          return (
-                            <Fragment key={`sub-group-${sub.id}`}>
-                              <ListSubRow
-                                sub={{
-                                  id: sub.id,
-                                  label: sub.label,
-                                  color: 'color' in sub && sub.color ? String(sub.color) : undefined,
-                                }}
-                                taskCount={tasks.length}
-                                acceptTaskDrop={listDraggingTask}
-                              />
-                              {tasks.map((task) => {
-                                const meta = getHierarchyMeta(task)
-                                return (
-                                  <TaskListRow
-                                    key={task.id}
-                                    task={task}
-                                    categoryOptions={categoryOptions}
-                                    hierarchyMeta={meta}
-                                    onToggle={() => toggleTask(task.id)}
-                                    onSaveTitle={(title) => updateTask(task.id, { title })}
-                                    onDelete={() => removeTask(task.id)}
-                                    onCategoryChange={(catId) => updateTask(task.id, { category: catId })}
-                                    onPlanningChange={(planning) => updateTask(task.id, { planning })}
-                                    onFocus={
-                                      (task.planning ?? 'backlog') === 'today'
-                                        ? () => handleFocusTask(task)
-                                        : undefined
-                                    }
-                                  />
-                                )
-                              })}
-                            </Fragment>
-                          )
-                        })}
+                        {bucketExpanded &&
+                          subs.map((sub) => {
+                            const tasks = listTasksByCategory.get(sub.id) ?? []
+                            const subExpanded = !collapsedListSubs.has(sub.id)
+                            return (
+                              <Fragment key={`sub-group-${sub.id}`}>
+                                <ListSubRow
+                                  sub={{
+                                    id: sub.id,
+                                    label: sub.label,
+                                    color: 'color' in sub && sub.color ? String(sub.color) : undefined,
+                                  }}
+                                  taskCount={tasks.length}
+                                  acceptTaskDrop={listDraggingTask}
+                                  expanded={subExpanded}
+                                  onToggleExpand={() => toggleListSubCollapse(sub.id)}
+                                />
+                                {subExpanded &&
+                                  tasks.map((task) => {
+                                    const meta = getHierarchyMeta(task)
+                                    return (
+                                      <TaskListRow
+                                        key={task.id}
+                                        task={task}
+                                        categoryOptions={categoryOptions}
+                                        hierarchyMeta={meta}
+                                        onToggle={() => toggleTask(task.id)}
+                                        onSaveTitle={(title) => updateTask(task.id, { title })}
+                                        onDelete={() => removeTask(task.id)}
+                                        onCategoryChange={(catId) => updateTask(task.id, { category: catId })}
+                                        onPlanningChange={(planning) => updateTask(task.id, { planning })}
+                                        onFocus={
+                                          (task.planning ?? 'backlog') === 'today'
+                                            ? () => handleFocusTask(task)
+                                            : undefined
+                                        }
+                                      />
+                                    )
+                                  })}
+                              </Fragment>
+                            )
+                          })}
                       </Fragment>
                     )
                   })}
@@ -2034,6 +2215,21 @@ export function TasksView() {
           getHierarchyMeta={getHierarchyMeta}
           onClose={() => setPlanTodayOpen(false)}
           onConfirm={handlePlanTodayConfirm}
+        />
+      )}
+
+      {organizeOpen && (
+        <OrganizeModal
+          openTasks={allOpenTasks}
+          buckets={organizeBuckets}
+          subs={organizeSubs}
+          getBucketForSub={(subId) => {
+            const bucket = useFocusAreasMode ? getFocusBucketForSub(subId) : getBucketForSub(subId)
+            return bucket ? { id: bucket.id, label: bucket.label } : undefined
+          }}
+          getSubLabel={getSubLabel}
+          onApply={handleOrganizeApply}
+          onClose={() => setOrganizeOpen(false)}
         />
       )}
     </div>
