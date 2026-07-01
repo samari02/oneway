@@ -42,7 +42,8 @@
   width: 100%;
   max-width: 100%;
   margin: 0;
-  padding: var(--content-shell-padding);
+  padding-block: var(--content-padding-y);
+  padding-inline: var(--content-padding-x);
   gap: clamp(16px, 2.5vh, 24px);
   overflow-y: auto;
 }
@@ -1207,6 +1208,42 @@
 .tasks-view__drag-handle--list {
   width: 22px;
   height: 22px;
+}
+
+.tasks-view__list-chevron {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(244, 244, 248, 0.28);
+  cursor: pointer;
+  transition:
+    transform 0.2s var(--tasks-ease),
+    color 0.15s ease,
+    background 0.15s ease;
+  vertical-align: middle;
+}
+
+.tasks-view__list-chevron:hover {
+  color: rgba(244, 244, 248, 0.55);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tasks-view__list-chevron--expanded {
+  transform: rotate(90deg);
+}
+
+.tasks-view__list-sub-label .tasks-view__list-chevron {
+  margin-right: 4px;
+}
+
+.tasks-view__list-row--collapsed .tasks-view__list-bucket-name,
+.tasks-view__list-row--collapsed .tasks-view__list-sub-name {
+  color: rgba(244, 244, 248, 0.55);
 }
 
 .tasks-view__list-bucket {

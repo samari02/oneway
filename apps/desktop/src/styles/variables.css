@@ -59,9 +59,10 @@
   /* Page content insets — single source of truth for horizontal gutters app-wide.
      Change --content-padding-x to tighten or widen left/right margins everywhere at once.
      Consumed directly by Settings, Stats, Boundaries, etc., and via --content-shell-padding on view shells. */
-  --content-padding-x: 24px;
-  --content-padding-y: 24px;
-  --content-shell-padding: clamp(20px, 3vh, 36px) var(--content-padding-x) clamp(24px, 4vh, 40px);
+  --content-padding-x: clamp(20px, 2.5vw, 32px);
+  --content-padding-y: clamp(20px, 3vh, 36px);
+  /* Prefer padding-inline/block with --content-padding-* directly on view shells. */
+  --content-shell-padding: var(--content-padding-y) var(--content-padding-x);
   
   /* Border Radius */
   --radius-sm: 8px;

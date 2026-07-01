@@ -52,7 +52,8 @@
   width: 100%;
   max-width: min(680px, 100%);
   margin: 0 auto;
-  padding: var(--content-shell-padding);
+  padding-block: var(--content-padding-y);
+  padding-inline: var(--content-padding-x);
   gap: clamp(20px, 3vh, 32px);
   overflow-y: auto;
 }
@@ -2238,7 +2239,8 @@
   width: 100%;
   max-width: 100%;
   margin: 0;
-  padding: var(--content-shell-padding);
+  padding-block: var(--content-padding-y);
+  padding-inline: var(--content-padding-x);
   gap: clamp(20px, 3vh, 28px);
   overflow-y: auto;
 }
