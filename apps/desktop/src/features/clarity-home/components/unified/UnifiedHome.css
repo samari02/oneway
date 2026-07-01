@@ -2236,8 +2236,8 @@
   flex: 1;
   min-height: 0;
   width: 100%;
-  max-width: min(1200px, 100%);
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   padding: var(--content-shell-padding);
   gap: clamp(20px, 3vh, 28px);
   overflow-y: auto;
@@ -2474,7 +2474,7 @@
 
 /* Empty states */
 .progress-view__empty {
-  padding: 32px 20px;
+  padding: 32px 0;
   text-align: center;
   border: 1px dashed rgba(255, 255, 255, 0.08);
   border-radius: 16px;

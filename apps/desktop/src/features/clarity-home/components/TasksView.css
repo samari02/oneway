@@ -40,8 +40,8 @@
   flex: 1;
   min-height: 0;
   width: 100%;
-  max-width: min(1200px, 100%);
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   padding: var(--content-shell-padding);
   gap: clamp(16px, 2.5vh, 24px);
   overflow-y: auto;
@@ -53,8 +53,8 @@
   gap: 16px;
 }
 
+/* Hierarchy scrolls inside columns; shell stays full-width like other tabs */
 .tasks-view__shell--hierarchy {
-  max-width: min(1400px, 100%);
   overflow: hidden;
 }
 
@@ -473,7 +473,7 @@
 }
 
 .tasks-view__empty {
-  padding: 32px var(--content-padding-x);
+  padding: 32px 0;
   text-align: center;
 }
 
