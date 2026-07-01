@@ -53,6 +53,44 @@
   gap: 16px;
 }
 
+.tasks-view__shell--hierarchy {
+  max-width: min(1400px, 100%);
+  overflow: hidden;
+}
+
+.tasks-view__header-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tasks-view__subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--tasks-muted);
+  line-height: 1.4;
+}
+
+.tasks-view__filter--header {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .tasks-view__filter--header {
+    display: flex;
+  }
+}
+
+.tasks-view__tab--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tasks-view__tab--disabled:hover {
+  color: var(--tasks-muted);
+  background: transparent;
+}
+
 .tasks-view__header-row {
   display: flex;
   align-items: center;

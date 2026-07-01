@@ -34,7 +34,6 @@ import type { Task, TaskPlanning } from '@oneway/shared'
 import { useAuth } from '@/features/auth'
 import {
   PLANNING_COLUMNS,
-  groupTasksByCategory,
   groupTasksByPlanning,
   useTaskStore,
 } from '../hooks/useTaskStore'
@@ -42,33 +41,23 @@ import { useCategoryStore } from '../hooks/useCategoryStore'
 import { useFocusAreaStore } from '../hooks/useFocusAreaStore'
 import { useCurrentFocus } from '../hooks/useCurrentFocus'
 import { CategoryIcon } from './CategoryIcon'
+import { HierarchyView } from './HierarchyView'
+import {
+  CheckIcon,
+  PlusIcon,
+  TrashIcon,
+  GripIcon,
+  FocusIcon,
+  PLANNING_LABELS,
+  PLANNING_COLORS,
+  PLANNING_CYCLE,
+  CATEGORY_COLORS,
+} from './tasksViewShared'
 import './TasksView.css'
 
-type ViewMode = 'plan' | 'projects' | 'completed'
-type LayoutMode = 'board' | 'list'
+type ViewLayout = 'hierarchy' | 'list' | 'board' | 'completed'
 type SortMode = 'manual' | 'alphabetical' | 'created_at'
 type TodayLoadLevel = 'light' | 'neutral' | 'overloaded'
-
-const PLANNING_LABELS: Record<TaskPlanning, string> = {
-  today: 'Today',
-  next: 'Next',
-  later: 'Later',
-  backlog: 'Backlog',
-}
-
-const PLANNING_COLORS: Record<TaskPlanning, string> = {
-  today: '#22c55e',
-  next: '#3b82f6',
-  later: '#94a3b8',
-  backlog: '#64748b',
-}
-
-const PLANNING_CYCLE: TaskPlanning[] = ['today', 'next', 'later', 'backlog']
-
-const CATEGORY_COLORS = [
-  '#7c3aed', '#f97316', '#22c55e', '#3b82f6',
-  '#ec4899', '#eab308', '#06b6d4', '#f43f5e',
-]
 
 const MAX_PLAN_TODAY_PICK = 3
 
@@ -90,57 +79,6 @@ type HierarchyMeta = {
 
 type CategoryOption = { id: string; label: string; bucketId?: string | null }
 
-function CheckIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  )
-}
-
-function PlusIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  )
-}
-
-function TrashIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M4 7h16M9 7V5h6v2M10 11v6M14 11v6M6 7l1 12h10l1-12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function GripIcon() {
-  return (
-    <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor" aria-hidden>
-      <circle cx="2.5" cy="2" r="1.2" />
-      <circle cx="7.5" cy="2" r="1.2" />
-      <circle cx="2.5" cy="7" r="1.2" />
-      <circle cx="7.5" cy="7" r="1.2" />
-      <circle cx="2.5" cy="12" r="1.2" />
-      <circle cx="7.5" cy="12" r="1.2" />
-    </svg>
-  )
-}
-
-function FocusIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 function sortTasksList(tasks: Task[], sortBy: SortMode): Task[] {
   if (sortBy === 'manual') return tasks
   const copy = [...tasks]
@@ -148,11 +86,6 @@ function sortTasksList(tasks: Task[], sortBy: SortMode): Task[] {
     return copy.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
   }
   return copy.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-}
-
-function nextPlanning(current: TaskPlanning): TaskPlanning {
-  const index = PLANNING_CYCLE.indexOf(current)
-  return PLANNING_CYCLE[(index + 1) % PLANNING_CYCLE.length]
 }
 
 function findContainerId(
@@ -445,7 +378,7 @@ function PlanTodayModal({
   const [selected, setSelected] = useState<string[]>([])
 
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', onKeyDown)
@@ -893,25 +826,21 @@ export function TasksView() {
   } = useFocusAreaStore(user?.id)
   const { selectTask, startTimer } = useCurrentFocus()
 
-  const [viewMode, setViewMode] = useState<ViewMode>('plan')
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>('board')
+  const [viewLayout, setViewLayout] = useState<ViewLayout>('hierarchy')
   const [addingTask, setAddingTask] = useState(false)
-  const [addingCategory, setAddingCategory] = useState(false)
-  const [addingCategoryMode, setAddingCategoryMode] = useState<'bucket' | 'sub'>('sub')
   const [planTodayOpen, setPlanTodayOpen] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskBucket, setNewTaskBucket] = useState('')
   const [newTaskCategory, setNewTaskCategory] = useState('')
   const [newTaskPlanning, setNewTaskPlanning] = useState<TaskPlanning>('backlog')
-  const [newCategoryName, setNewCategoryName] = useState('')
-  const [newCategoryEmoji, setNewCategoryEmoji] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('all')
-  const [activeBucketId, setActiveBucketId] = useState<string>('')
+  const [selectedBucketId, setSelectedBucketId] = useState<string>('')
+  const [selectedSubId, setSelectedSubId] = useState<string>('')
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<SortMode>('manual')
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [columnItems, setColumnItems] = useState<Record<string, string[]>>({})
   const addInputRef = useRef<HTMLInputElement>(null)
-  const addCategoryInputRef = useRef<HTMLInputElement>(null)
 
   const useFocusAreasMode = activeAreas.length > 0
 
@@ -927,19 +856,36 @@ export function TasksView() {
 
   useEffect(() => {
     if (buckets.length === 0) {
-      setActiveBucketId('')
+      setSelectedBucketId('')
+      setSelectedSubId('')
       return
     }
-    if (!activeBucketId || !buckets.some((b) => b.id === activeBucketId)) {
-      setActiveBucketId(buckets[0].id)
+    if (!selectedBucketId || !buckets.some((b) => b.id === selectedBucketId)) {
+      setSelectedBucketId(buckets[0].id)
     }
-  }, [buckets, activeBucketId])
+  }, [buckets, selectedBucketId])
 
-  const activeBucketSubs = useMemo(() => {
-    if (!activeBucketId) return []
-    if (useFocusAreasMode) return getFocusSubsForBucket(activeBucketId)
-    return getSubsForBucket(activeBucketId)
-  }, [useFocusAreasMode, activeBucketId, getFocusSubsForBucket, getSubsForBucket, activeAreas, categories])
+  const selectedBucketSubs = useMemo(() => {
+    if (!selectedBucketId) return []
+    if (useFocusAreasMode) return getFocusSubsForBucket(selectedBucketId)
+    return getSubsForBucket(selectedBucketId)
+  }, [useFocusAreasMode, selectedBucketId, getFocusSubsForBucket, getSubsForBucket, activeAreas, categories])
+
+  useEffect(() => {
+    if (selectedBucketSubs.length === 0) {
+      setSelectedSubId('')
+      return
+    }
+    if (!selectedSubId || !selectedBucketSubs.some((s) => s.id === selectedSubId)) {
+      setSelectedSubId(selectedBucketSubs[0].id)
+    }
+  }, [selectedBucketSubs, selectedSubId])
+
+  useEffect(() => {
+    if (!selectedTaskId) return
+    const task = tasks.find((t) => t.id === selectedTaskId)
+    if (!task || task.status !== 'open') setSelectedTaskId(null)
+  }, [tasks, selectedTaskId])
 
   const newTaskSubOptions = useMemo(() => {
     if (!newTaskBucket) return allSubs
@@ -951,16 +897,6 @@ export function TasksView() {
     () => categories.filter((c) => c?.id).sort((a, b) => a.order - b.order),
     [categories],
   )
-
-  const projectColumns = useMemo((): ColumnMeta[] => {
-    if (viewMode !== 'projects') return []
-    return activeBucketSubs.map((sub) => ({
-      id: sub.id,
-      label: sub.label,
-      color: ('color' in sub && sub.color) ? (sub.color as string) : '#a78bfa',
-      emoji: 'emoji' in sub ? (sub.emoji as string | null) : null,
-    }))
-  }, [viewMode, activeBucketSubs])
 
   const planColumns = useMemo(
     (): ColumnMeta[] =>
@@ -986,9 +922,47 @@ export function TasksView() {
 
   const defaultBucket = buckets[0]?.id ?? ''
   const defaultSub =
-    (activeBucketId ? activeBucketSubs[0]?.id : allSubs[0]?.id) ??
+    (selectedBucketId ? selectedBucketSubs[0]?.id : allSubs[0]?.id) ??
     allSubs[0]?.id ??
     ''
+
+  const hierarchyBuckets = useMemo(
+    () =>
+      buckets.map((bucket) => ({
+        id: bucket.id,
+        label: bucket.label,
+        emoji: 'emoji' in bucket ? (bucket.emoji as string | null) : null,
+        color: 'color' in bucket && bucket.color ? String(bucket.color) : undefined,
+      })),
+    [buckets],
+  )
+
+  const getHierarchySubs = useCallback(
+    (bucketId: string) => {
+      const subs = useFocusAreasMode ? getFocusSubsForBucket(bucketId) : getSubsForBucket(bucketId)
+      return subs.map((sub) => ({
+        id: sub.id,
+        label: sub.label,
+        emoji: 'emoji' in sub ? (sub.emoji as string | null) : null,
+        color: 'color' in sub && sub.color ? String(sub.color) : undefined,
+      }))
+    },
+    [useFocusAreasMode, getFocusSubsForBucket, getSubsForBucket],
+  )
+
+  const getHierarchyBucketForSub = useCallback(
+    (subId: string) => {
+      const bucket = useFocusAreasMode ? getFocusBucketForSub(subId) : getBucketForSub(subId)
+      if (!bucket) return undefined
+      return {
+        id: bucket.id,
+        label: bucket.label,
+        emoji: 'emoji' in bucket ? (bucket.emoji as string | null) : null,
+        color: 'color' in bucket && bucket.color ? String(bucket.color) : undefined,
+      }
+    },
+    [useFocusAreasMode, getFocusBucketForSub, getBucketForSub],
+  )
 
   const openTasks = useMemo(() => {
     const visible = tasks.filter((t) => t.status === 'open')
@@ -1055,26 +1029,12 @@ export function TasksView() {
   const tasksById = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks])
 
   const derivedColumnItems = useMemo(() => {
-    if (viewMode === 'completed') return {}
+    if (viewLayout !== 'board') return {}
 
     const sorted = sortTasksList(openTasks, sortBy)
-    if (viewMode === 'plan') {
-      const grouped = groupTasksByPlanning(sorted)
-      return Object.fromEntries(PLANNING_COLUMNS.map((key) => [key, grouped[key].map((t) => t.id)]))
-    }
-
-    const subIds = new Set(projectColumns.map((c) => c.id))
-    const bucketLegacyIds = new Set([activeBucketId].filter(Boolean))
-    const projectTasks = sorted.filter(
-      (t) => subIds.has(t.category) || bucketLegacyIds.has(t.category),
-    )
-
-    const grouped = groupTasksByCategory(
-      projectTasks,
-      projectColumns.map((c) => c.id),
-    )
-    return Object.fromEntries(projectColumns.map((col) => [col.id, (grouped[col.id] ?? []).map((t) => t.id)]))
-  }, [viewMode, openTasks, sortBy, projectColumns, activeBucketId])
+    const grouped = groupTasksByPlanning(sorted)
+    return Object.fromEntries(PLANNING_COLUMNS.map((key) => [key, grouped[key].map((t) => t.id)]))
+  }, [viewLayout, openTasks, sortBy])
 
   useEffect(() => {
     if (activeDragId) return
@@ -1084,10 +1044,6 @@ export function TasksView() {
   useEffect(() => {
     if (addingTask) addInputRef.current?.focus()
   }, [addingTask])
-
-  useEffect(() => {
-    if (addingCategory) addCategoryInputRef.current?.focus()
-  }, [addingCategory])
 
   const getHierarchyMeta = useCallback(
     (task: Task): HierarchyMeta => {
@@ -1261,10 +1217,8 @@ export function TasksView() {
         }
       }
 
-      if (viewMode === 'plan') {
+      if (viewLayout === 'board') {
         applyColumnOrders('planning', nextItems)
-      } else if (viewMode === 'projects') {
-        applyColumnOrders('category', nextItems)
       }
 
       return nextItems
@@ -1272,10 +1226,9 @@ export function TasksView() {
   }
 
   const openAddTask = () => {
-    setAddingCategory(false)
     const bucket = filterCategory.startsWith('bucket:')
       ? filterCategory.slice('bucket:'.length)
-      : activeBucketId || defaultBucket
+      : selectedBucketId || defaultBucket
     setNewTaskBucket(bucket)
     const subs = bucket
       ? (useFocusAreasMode ? getFocusSubsForBucket(bucket) : getSubsForBucket(bucket))
@@ -1283,16 +1236,10 @@ export function TasksView() {
     const sub =
       filterCategory !== 'all' && !filterCategory.startsWith('bucket:')
         ? filterCategory
-        : (subs[0]?.id ?? defaultSub)
+        : (viewLayout === 'hierarchy' && selectedSubId ? selectedSubId : (subs[0]?.id ?? defaultSub))
     setNewTaskCategory(sub)
     setNewTaskPlanning('backlog')
     setAddingTask(true)
-  }
-
-  const openAddCategory = (mode: 'bucket' | 'sub' = 'sub') => {
-    setAddingTask(false)
-    setAddingCategoryMode(mode)
-    setAddingCategory(true)
   }
 
   const resetAddTask = () => {
@@ -1303,12 +1250,6 @@ export function TasksView() {
     setAddingTask(false)
   }
 
-  const resetAddCategory = () => {
-    setNewCategoryName('')
-    setNewCategoryEmoji('')
-    setAddingCategory(false)
-  }
-
   const handleAddTask = () => {
     const title = newTaskTitle.trim()
     if (!title || !newTaskCategory) return
@@ -1317,13 +1258,9 @@ export function TasksView() {
   }
 
   const handleQuickAdd = (columnId: string, title: string) => {
-    if (viewMode === 'plan') {
-      const subId = defaultSub || newTaskCategory
-      if (!subId) return
-      addTask(title, subId, 'manual', columnId as TaskPlanning)
-    } else {
-      addTask(title, columnId, 'manual', 'backlog')
-    }
+    const subId = defaultSub || newTaskCategory
+    if (!subId) return
+    addTask(title, subId, 'manual', columnId as TaskPlanning)
   }
 
   const handlePlanTodayConfirm = (ids: string[]) => {
@@ -1331,32 +1268,6 @@ export function TasksView() {
       updateTask(id, { planning: 'today' })
     }
     setPlanTodayOpen(false)
-  }
-
-  const handleAddCategory = async () => {
-    const name = newCategoryName.trim()
-    if (!name) return
-    const colorIndex =
-      (addingCategoryMode === 'bucket' ? buckets.length : activeBucketSubs.length) %
-      CATEGORY_COLORS.length
-    const color = CATEGORY_COLORS[colorIndex]
-
-    if (useFocusAreasMode) {
-      if (addingCategoryMode === 'bucket') {
-        const area = await addFocusBucket(name, newCategoryEmoji || undefined, color)
-        if (area) setActiveBucketId(area.id)
-      } else if (activeBucketId) {
-        const area = await addFocusSub(activeBucketId, name, newCategoryEmoji || undefined, color)
-        if (area) setNewTaskCategory(area.id)
-      }
-    } else if (addingCategoryMode === 'bucket') {
-      const cat = addBucket(name, newCategoryEmoji || '📁', color)
-      setActiveBucketId(cat.id)
-    } else if (activeBucketId) {
-      const cat = addSub(activeBucketId, name, newCategoryEmoji || '📁', color)
-      setNewTaskCategory(cat.id)
-    }
-    resetAddCategory()
   }
 
   const handleAddTaskKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -1367,18 +1278,43 @@ export function TasksView() {
     if (e.key === 'Escape') resetAddTask()
   }
 
-  const handleAddCategoryKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      void handleAddCategory()
+  const handleHierarchyAddBucket = async (name: string) => {
+    const colorIndex = buckets.length % CATEGORY_COLORS.length
+    const color = CATEGORY_COLORS[colorIndex]
+    if (useFocusAreasMode) {
+      const area = await addFocusBucket(name, undefined, color)
+      if (area) setSelectedBucketId(area.id)
+    } else {
+      const cat = addBucket(name, '📁', color)
+      setSelectedBucketId(cat.id)
     }
-    if (e.key === 'Escape') resetAddCategory()
   }
 
-  const handleCyclePlanning = (id: string) => {
-    const task = tasksById.get(id)
-    if (!task) return
-    updateTask(id, { planning: nextPlanning(task.planning ?? 'backlog') })
+  const handleHierarchyAddSub = async (bucketId: string, name: string) => {
+    const subs = useFocusAreasMode ? getFocusSubsForBucket(bucketId) : getSubsForBucket(bucketId)
+    const colorIndex = subs.length % CATEGORY_COLORS.length
+    const color = CATEGORY_COLORS[colorIndex]
+    if (useFocusAreasMode) {
+      const area = await addFocusSub(bucketId, name, undefined, color)
+      if (area) setSelectedSubId(area.id)
+    } else {
+      const cat = addSub(bucketId, name, '📁', color)
+      setSelectedSubId(cat.id)
+    }
+  }
+
+  const handleHierarchyAddTask = (title: string, subId: string) => {
+    addTask(title, subId, 'manual', 'backlog')
+  }
+
+  const handleSelectBucket = (bucketId: string) => {
+    setSelectedBucketId(bucketId)
+    setSelectedTaskId(null)
+  }
+
+  const handleSelectSub = (subId: string) => {
+    setSelectedSubId(subId)
+    setSelectedTaskId(null)
   }
 
   const openCount = tasks.filter((t) => t.status === 'open').length
@@ -1387,8 +1323,7 @@ export function TasksView() {
   const todayLoadLevel = getTodayLoadLevel(todayOpenCount)
 
   const activeDragTask = activeDragId ? tasksById.get(activeDragId) : undefined
-  const columns = viewMode === 'plan' ? planColumns : projectColumns
-  const showBoard = layoutMode === 'board' || viewMode !== 'plan'
+  const columns = planColumns
 
   const listTasks = useMemo(
     () => sortTasksList(openTasks, sortBy),
@@ -1399,32 +1334,54 @@ export function TasksView() {
     <div className="tasks-view">
       <div className="tasks-view__bg" aria-hidden />
 
-      <div className="tasks-view__shell">
+      <div className={`tasks-view__shell${viewLayout === 'hierarchy' ? ' tasks-view__shell--hierarchy' : ''}`}>
         <header className="tasks-view__header">
           <div className="tasks-view__header-row">
-            <h1 className="tasks-view__title">Tasks</h1>
+            <div className="tasks-view__header-intro">
+              <h1 className="tasks-view__title">Tasks</h1>
+              <p className="tasks-view__subtitle">Organize everything that matters.</p>
+            </div>
             <div className="tasks-view__header-actions">
-              {viewMode !== 'completed' && (
+              {viewLayout !== 'completed' && (
                 <>
-                  {viewMode === 'projects' && (
-                    <button
-                      type="button"
-                      className="tasks-view__add-btn tasks-view__add-btn--secondary"
-                      onClick={() => openAddCategory('sub')}
-                      disabled={!activeBucketId}
+                  <label className="tasks-view__filter tasks-view__filter--header">
+                    <span className="tasks-view__filter-label">Filter</span>
+                    <select
+                      className="tasks-view__filter-select"
+                      value={filterCategory}
+                      onChange={(e) => setFilterCategory(e.target.value)}
+                      aria-label="Filter by bucket or sub-category"
                     >
-                      <PlusIcon />
-                      Add sub
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="tasks-view__add-btn tasks-view__add-btn--secondary"
-                    onClick={() => openAddCategory('bucket')}
-                  >
-                    <PlusIcon />
-                    Add bucket
-                  </button>
+                      <option value="all">All</option>
+                      {buckets.map((bucket) => (
+                        <optgroup key={bucket.id} label={bucket.label}>
+                          <option value={`bucket:${bucket.id}`}>{bucket.label} (all subs)</option>
+                          {(useFocusAreasMode
+                            ? getFocusSubsForBucket(bucket.id)
+                            : getSubsForBucket(bucket.id)
+                          ).map((sub) => (
+                            <option key={sub.id} value={sub.id}>
+                              {sub.label}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="tasks-view__filter tasks-view__filter--header">
+                    <span className="tasks-view__filter-label">Sort</span>
+                    <select
+                      className="tasks-view__filter-select"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as SortMode)}
+                      aria-label="Sort tasks"
+                    >
+                      <option value="manual">Manual (drag order)</option>
+                      <option value="created_at">Newest first</option>
+                      <option value="alphabetical">Alphabetical</option>
+                    </select>
+                  </label>
                 </>
               )}
               <button type="button" className="tasks-view__add-btn" onClick={openAddTask}>
@@ -1438,52 +1395,53 @@ export function TasksView() {
             <button
               type="button"
               role="tab"
-              aria-selected={viewMode === 'plan'}
-              className={`tasks-view__tab${viewMode === 'plan' ? ' tasks-view__tab--active' : ''}`}
-              onClick={() => setViewMode('plan')}
+              aria-selected={viewLayout === 'hierarchy'}
+              className={`tasks-view__tab${viewLayout === 'hierarchy' ? ' tasks-view__tab--active' : ''}`}
+              onClick={() => setViewLayout('hierarchy')}
             >
-              Plan
+              Hierarchy
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={viewMode === 'projects'}
-              className={`tasks-view__tab${viewMode === 'projects' ? ' tasks-view__tab--active' : ''}`}
-              onClick={() => setViewMode('projects')}
+              aria-selected={viewLayout === 'list'}
+              className={`tasks-view__tab${viewLayout === 'list' ? ' tasks-view__tab--active' : ''}`}
+              onClick={() => setViewLayout('list')}
             >
-              Projects
+              List
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={viewMode === 'completed'}
-              className={`tasks-view__tab${viewMode === 'completed' ? ' tasks-view__tab--active' : ''}`}
-              onClick={() => setViewMode('completed')}
+              aria-selected={viewLayout === 'board'}
+              className={`tasks-view__tab${viewLayout === 'board' ? ' tasks-view__tab--active' : ''}`}
+              onClick={() => setViewLayout('board')}
+            >
+              Board
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewLayout === 'completed'}
+              className={`tasks-view__tab${viewLayout === 'completed' ? ' tasks-view__tab--active' : ''}`}
+              onClick={() => setViewLayout('completed')}
             >
               Completed
               {completedCount > 0 && <span className="tasks-view__tab-count">{completedCount}</span>}
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={false}
+              className="tasks-view__tab tasks-view__tab--disabled"
+              disabled
+              title="Coming soon"
+            >
+              Calendar
+            </button>
           </div>
 
-          {viewMode === 'projects' && buckets.length > 0 && (
-            <div className="tasks-view__bucket-tabs" role="tablist" aria-label="Project buckets">
-              {buckets.map((bucket) => (
-                <button
-                  key={bucket.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeBucketId === bucket.id}
-                  className={`tasks-view__bucket-tab${activeBucketId === bucket.id ? ' tasks-view__bucket-tab--active' : ''}`}
-                  onClick={() => setActiveBucketId(bucket.id)}
-                >
-                  {'emoji' in bucket && bucket.emoji ? `${bucket.emoji} ` : ''}
-                  {bucket.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {viewMode === 'plan' && (
+          {viewLayout === 'board' && (
             <div className="tasks-view__summary" aria-label="Task summary">
               <span className="tasks-view__summary-item tasks-view__summary-item--today">
                 Today: {planningCounts.today}
@@ -1502,106 +1460,7 @@ export function TasksView() {
               </span>
             </div>
           )}
-
-          {viewMode !== 'completed' && (
-            <div className="tasks-view__toolbar">
-              {viewMode === 'plan' && (
-                <div className="tasks-view__layout-toggle" role="group" aria-label="Layout">
-                  <button
-                    type="button"
-                    className={`tasks-view__layout-btn${layoutMode === 'board' ? ' tasks-view__layout-btn--active' : ''}`}
-                    onClick={() => setLayoutMode('board')}
-                  >
-                    Board
-                  </button>
-                  <button
-                    type="button"
-                    className={`tasks-view__layout-btn${layoutMode === 'list' ? ' tasks-view__layout-btn--active' : ''}`}
-                    onClick={() => setLayoutMode('list')}
-                  >
-                    List
-                  </button>
-                </div>
-              )}
-
-              <label className="tasks-view__filter">
-                <span className="tasks-view__filter-label">Filter</span>
-                <select
-                  className="tasks-view__filter-select"
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  aria-label="Filter by bucket or sub-category"
-                >
-                  <option value="all">All</option>
-                  {buckets.map((bucket) => (
-                    <optgroup key={bucket.id} label={bucket.label}>
-                      <option value={`bucket:${bucket.id}`}>{bucket.label} (all subs)</option>
-                      {(useFocusAreasMode
-                        ? getFocusSubsForBucket(bucket.id)
-                        : getSubsForBucket(bucket.id)
-                      ).map((sub) => (
-                        <option key={sub.id} value={sub.id}>
-                          {sub.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </label>
-
-              <label className="tasks-view__filter">
-                <span className="tasks-view__filter-label">Sort</span>
-                <select
-                  className="tasks-view__filter-select"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortMode)}
-                  aria-label="Sort tasks"
-                >
-                  <option value="manual">Manual (drag order)</option>
-                  <option value="created_at">Newest first</option>
-                  <option value="alphabetical">Alphabetical</option>
-                </select>
-              </label>
-            </div>
-          )}
         </header>
-
-        {addingCategory && (
-          <div className="tasks-view__add-form">
-            <div className="tasks-view__add-form-row">
-              <input
-                type="text"
-                className="tasks-view__add-input tasks-view__add-input--emoji"
-                placeholder="📁"
-                value={newCategoryEmoji}
-                onChange={(e) => setNewCategoryEmoji(e.target.value)}
-                maxLength={2}
-                aria-label="Category emoji"
-              />
-              <input
-                ref={addCategoryInputRef}
-                type="text"
-                className="tasks-view__add-input"
-                placeholder={addingCategoryMode === 'bucket' ? 'Bucket name' : 'Sub-category name'}
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                onKeyDown={handleAddCategoryKeyDown}
-                aria-label={addingCategoryMode === 'bucket' ? 'New bucket name' : 'New sub-category name'}
-              />
-              <button
-                type="button"
-                className="tasks-view__add-submit"
-                onClick={() => void handleAddCategory()}
-                disabled={!newCategoryName.trim()}
-              >
-                Add
-              </button>
-              <button type="button" className="tasks-view__add-cancel" onClick={resetAddCategory}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
 
         {addingTask && (
           <div className="tasks-view__add-form">
@@ -1701,30 +1560,40 @@ export function TasksView() {
           </div>
         )}
 
-        {!loading && !error && viewMode === 'completed' && completedTasks.length === 0 && (
+        {!loading && !error && viewLayout === 'completed' && completedTasks.length === 0 && (
           <div className="tasks-view__empty">
             <p className="tasks-view__empty-text">No completed tasks yet.</p>
           </div>
         )}
 
-        {!loading && !error && viewMode !== 'completed' && openCount === 0 && (
+        {!loading && !error && viewLayout === 'hierarchy' && (
+          <HierarchyView
+            buckets={hierarchyBuckets}
+            getSubsForBucket={getHierarchySubs}
+            tasks={tasks}
+            getBucketForSub={getHierarchyBucketForSub}
+            selectedBucketId={selectedBucketId}
+            selectedSubId={selectedSubId}
+            selectedTaskId={selectedTaskId}
+            onSelectBucket={handleSelectBucket}
+            onSelectSub={handleSelectSub}
+            onSelectTask={setSelectedTaskId}
+            onAddBucket={handleHierarchyAddBucket}
+            onAddSub={handleHierarchyAddSub}
+            onAddTask={handleHierarchyAddTask}
+            onToggleTask={toggleTask}
+            onUpdateTask={(id, updates) => updateTask(id, updates)}
+            onDeleteTask={removeTask}
+          />
+        )}
+
+        {!loading && !error && viewLayout === 'board' && openCount === 0 && (
           <div className="tasks-view__empty">
             <p className="tasks-view__empty-text">No open tasks yet. Add one to get started.</p>
           </div>
         )}
 
-        {!loading && !error && viewMode === 'projects' && activeBucketId && activeBucketSubs.length === 0 && (
-          <div className="tasks-view__empty">
-            <p className="tasks-view__empty-text">
-              No sub-categories in this bucket yet. Create one to organize tasks.
-            </p>
-            <button type="button" className="tasks-view__plan-btn" onClick={() => openAddCategory('sub')}>
-              Add sub-category →
-            </button>
-          </div>
-        )}
-
-        {!loading && !error && viewMode !== 'completed' && openCount > 0 && showBoard && !(viewMode === 'projects' && activeBucketSubs.length === 0) && (
+        {!loading && !error && viewLayout === 'board' && openCount > 0 && (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCorners}
@@ -1743,24 +1612,23 @@ export function TasksView() {
                     column={column}
                     taskIds={taskIds}
                     tasksById={tasksById}
-                    isPlanningColumn={viewMode === 'plan'}
+                    isPlanningColumn
                     todayLoadLevel={isToday ? todayLoadLevel : undefined}
-                    todayProgress={isToday && viewMode === 'plan' ? todayProgress : undefined}
+                    todayProgress={isToday ? todayProgress : undefined}
                     emptyAction={
-                      isToday && viewMode === 'plan'
+                      isToday
                         ? { label: 'Plan tasks →', onClick: () => setPlanTodayOpen(true) }
                         : undefined
                     }
-                    showPlanningDot={viewMode === 'plan'}
-                    showFocusOnToday={viewMode === 'plan'}
-                    showHierarchyBadge={viewMode === 'plan'}
+                    showPlanningDot
+                    showFocusOnToday
+                    showHierarchyBadge
                     categoryOptions={categoryOptions}
                     getHierarchyMeta={getHierarchyMeta}
                     onToggle={toggleTask}
                     onSaveTitle={(id, title) => updateTask(id, { title })}
                     onDelete={removeTask}
                     onCategoryChange={(id, catId) => updateTask(id, { category: catId })}
-                    onCyclePlanning={viewMode === 'projects' ? handleCyclePlanning : undefined}
                     onFocus={handleFocusTask}
                     onQuickAdd={(title) => handleQuickAdd(column.id, title)}
                   />
@@ -1796,7 +1664,13 @@ export function TasksView() {
           </DndContext>
         )}
 
-        {!loading && !error && viewMode === 'plan' && layoutMode === 'list' && openCount > 0 && (
+        {!loading && !error && viewLayout === 'list' && openCount === 0 && (
+          <div className="tasks-view__empty">
+            <p className="tasks-view__empty-text">No open tasks yet. Add one to get started.</p>
+          </div>
+        )}
+
+        {!loading && !error && viewLayout === 'list' && openCount > 0 && (
           <div className="tasks-view__list-wrap">
             <table className="tasks-view__list">
               <thead>
@@ -1836,7 +1710,7 @@ export function TasksView() {
           </div>
         )}
 
-        {!loading && !error && viewMode === 'completed' && completedTasks.length > 0 && (
+        {!loading && !error && viewLayout === 'completed' && completedTasks.length > 0 && (
           <ul className="tasks-view__completed-list">
             {sortTasksList(completedTasks, sortBy === 'manual' ? 'created_at' : sortBy).map((task) => {
               const meta = getHierarchyMeta(task)

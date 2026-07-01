@@ -141,6 +141,7 @@ function buildTaskUpdates(task: Task) {
     category: task.category,
     status: task.status,
     completed_at: task.completedAt ?? null,
+    raw_input: task.rawInput ?? null,
     planning: task.planning ?? 'backlog',
     sort_order: task.sort_order ?? 0,
   }
@@ -218,7 +219,7 @@ export function useTaskStore(userId: string | undefined) {
   const updateTask = useCallback(
     (
       id: string,
-      updates: Partial<Pick<Task, 'title' | 'category' | 'status' | 'planning' | 'sort_order'>>,
+      updates: Partial<Pick<Task, 'title' | 'category' | 'status' | 'planning' | 'sort_order' | 'rawInput'>>,
     ) => {
       if (!userId) return
 
