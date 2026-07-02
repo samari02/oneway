@@ -68,11 +68,15 @@ function generateId(): string {
   return crypto.randomUUID()
 }
 
-function compareTasks(a: Task, b: Task): number {
+export function compareTasksByOrder(a: Task, b: Task): number {
   const orderA = a.sort_order ?? 0
   const orderB = b.sort_order ?? 0
   if (orderA !== orderB) return orderA - orderB
   return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+}
+
+function compareTasks(a: Task, b: Task): number {
+  return compareTasksByOrder(a, b)
 }
 
 export function groupTasksByPlanning(tasks: Task[]): Record<TaskPlanning, Task[]> {

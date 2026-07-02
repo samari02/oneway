@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { TaskPlanning } from '@oneway/shared'
 
@@ -60,6 +60,27 @@ export function GripIcon() {
   )
 }
 
+export function SortAlphaIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M6 4h6M9 4v16M7 18h4"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M15 8h5M17.5 8v10M16 16h3"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 export function CloseIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -103,22 +124,30 @@ export function formatDate(iso: string | undefined): string {
   })
 }
 
-export function InlineEditableLabel({
-  value,
-  onSave,
-  className,
-  inputClassName,
-  ariaLabel,
-}: {
-  value: string
-  onSave: (next: string) => void
-  className?: string
-  inputClassName?: string
-  ariaLabel: string
-}) {
+export type InlineEditableLabelHandle = {
+  startEditing: () => void
+}
+
+export const InlineEditableLabel = forwardRef<
+  InlineEditableLabelHandle,
+  {
+    value: string
+    onSave: (next: string) => void
+    className?: string
+    inputClassName?: string
+    ariaLabel: string
+  }
+>(function InlineEditableLabel(
+  { value, onSave, className, inputClassName, ariaLabel },
+  ref,
+) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useImperativeHandle(ref, () => ({
+    startEditing: () => setEditing(true),
+  }), [])
 
   useEffect(() => {
     if (!editing) setDraft(value)
@@ -172,4 +201,4 @@ export function InlineEditableLabel({
       {value}
     </button>
   )
-}
+})

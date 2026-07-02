@@ -79,6 +79,40 @@
   color: #f4f4f8;
 }
 
+.hierarchy-view__col-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hierarchy-view__sort-btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(244, 244, 248, 0.45);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.hierarchy-view__sort-btn:hover {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.3);
+  color: rgba(244, 244, 248, 0.85);
+}
+
+.hierarchy-view__item .hierarchy-view__sort-btn {
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  margin-right: 4px;
+}
+
 .hierarchy-view__list {
   margin: 0;
   padding: 0 8px;
