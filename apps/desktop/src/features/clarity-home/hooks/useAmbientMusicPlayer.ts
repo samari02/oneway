@@ -29,8 +29,15 @@ const DEFAULT_TRACK: AmbientTrack = {
 const listeners = new Set<() => void>()
 
 const WINDOW_AUDIO_KEY = '__clarityAmbientAudioElement'
+const WINDOW_GESTURE_ABORT_KEY = '__clarityGestureAbort'
+const AUDIO_HANDLERS_KEY = '__clarityAudioHandlers'
 
-type WindowWithAmbient = Window & { [WINDOW_AUDIO_KEY]?: HTMLAudioElement }
+type AudioHandlers = { play: () => void; pause: () => void; ended: () => void }
+
+type WindowWithAmbient = Window & {
+  [WINDOW_AUDIO_KEY]?: HTMLAudioElement
+  [WINDOW_GESTURE_ABORT_KEY]?: AbortController
+}
 
 function getWindowAudio(): HTMLAudioElement | null {
   if (typeof window === 'undefined') return null
@@ -43,6 +50,7 @@ function setWindowAudio(element: HTMLAudioElement) {
 }
 
 let audio: HTMLAudioElement | null = getWindowAudio()
+let audioListenersAttached = false
 let gestureListenersAttached = false
 let enabledRef = false
 let enabledConsumerCount = 0
@@ -129,6 +137,38 @@ function getServerSnapshot(): PlayerState {
   return createInitialState()
 }
 
+function attachAudioListeners(element: HTMLAudioElement) {
+  const old = (element as unknown as Record<string, unknown>)[AUDIO_HANDLERS_KEY] as AudioHandlers | undefined
+  if (old) {
+    element.removeEventListener('play', old.play)
+    element.removeEventListener('pause', old.pause)
+    element.removeEventListener('ended', old.ended)
+  }
+
+  const handlers: AudioHandlers = {
+    play: () => {
+      if (state.isPlaying) return
+      state = { ...state, isPlaying: true }
+      emitChange()
+    },
+    pause: () => {
+      if (!state.isPlaying) return
+      state = { ...state, isPlaying: false }
+      emitChange()
+    },
+    ended: () => {
+      if (state.loop) return
+      state = { ...state, isPlaying: false }
+      emitChange()
+    },
+  }
+
+  element.addEventListener('play', handlers.play)
+  element.addEventListener('pause', handlers.pause)
+  element.addEventListener('ended', handlers.ended)
+  ;(element as unknown as Record<string, unknown>)[AUDIO_HANDLERS_KEY] = handlers
+}
+
 function getAudio(): HTMLAudioElement {
   if (!audio) {
     audio = getWindowAudio()
@@ -138,24 +178,11 @@ function getAudio(): HTMLAudioElement {
     audio = new Audio()
     audio.preload = 'auto'
     setWindowAudio(audio)
+  }
 
-    audio.addEventListener('play', () => {
-      if (state.isPlaying) return
-      state = { ...state, isPlaying: true }
-      emitChange()
-    })
-
-    audio.addEventListener('pause', () => {
-      if (!state.isPlaying) return
-      state = { ...state, isPlaying: false }
-      emitChange()
-    })
-
-    audio.addEventListener('ended', () => {
-      if (state.loop) return
-      state = { ...state, isPlaying: false }
-      emitChange()
-    })
+  if (!audioListenersAttached) {
+    attachAudioListeners(audio)
+    audioListenersAttached = true
   }
 
   return audio
@@ -192,7 +219,7 @@ function syncAudioSource() {
     element.pause()
     element.src = track.src
     element.load()
-    if (wasPlaying && enabledRef) {
+    if (wasPlaying && enabledRef && !userPaused) {
       void element.play().catch(() => {})
     }
   }
@@ -204,7 +231,7 @@ type TryPlayOptions = {
 }
 
 async function tryPlay({ requireEnabled = false }: TryPlayOptions = {}) {
-  if (userPaused) return
+  if (userPaused || loadUserPaused()) return
   if (requireEnabled && !enabledRef) return
 
   syncAudioSource()
@@ -224,12 +251,18 @@ function attachGestureRetry() {
   if (gestureListenersAttached) return
   gestureListenersAttached = true
 
+  const prev = (window as WindowWithAmbient)[WINDOW_GESTURE_ABORT_KEY]
+  if (prev) prev.abort()
+
+  const abort = new AbortController()
+  ;(window as WindowWithAmbient)[WINDOW_GESTURE_ABORT_KEY] = abort
+
   const onInteraction = () => {
     void tryPlay({ requireEnabled: true })
   }
 
-  document.addEventListener('pointerdown', onInteraction)
-  document.addEventListener('keydown', onInteraction)
+  document.addEventListener('pointerdown', onInteraction, { signal: abort.signal })
+  document.addEventListener('keydown', onInteraction, { signal: abort.signal })
 }
 
 function pausePlayback() {
