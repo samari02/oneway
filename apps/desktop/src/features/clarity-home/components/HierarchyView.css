@@ -106,13 +106,6 @@
   color: rgba(244, 244, 248, 0.85);
 }
 
-.hierarchy-view__item .hierarchy-view__sort-btn {
-  width: 22px;
-  height: 22px;
-  margin-left: auto;
-  margin-right: 4px;
-}
-
 .hierarchy-view__list {
   margin: 0;
   padding: 0 8px;
@@ -288,6 +281,10 @@
 }
 
 .hierarchy-view__sub-row--dragging {
+  pointer-events: none;
+}
+
+.hierarchy-view__bucket-row--dragging {
   pointer-events: none;
 }
 

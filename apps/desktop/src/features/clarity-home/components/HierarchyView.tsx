@@ -5,7 +5,6 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCorners,
-  useDraggable,
   useDroppable,
   useSensor,
   useSensors,
@@ -67,8 +66,11 @@ type HierarchyViewProps = {
   onMoveTaskToSub: (taskId: string, subId: string) => void
   onMoveTaskToBucket: (taskId: string, bucketId: string) => void
   onReorderTasksInCategory: (taskId: string, categoryId: string, orderedIds: string[]) => void
+  onReorderBuckets: (orderedIds: string[]) => void
+  onReorderSubsInBucket: (bucketId: string, orderedIds: string[]) => void
   onSortCategoryAlphabetically: (categoryId: string) => void
-  onSortBucketAlphabetically: (bucketId: string) => void
+  onSortBucketsAlphabetically: () => void
+  onSortSubsAlphabetically: (bucketId: string) => void
   onRenameBucket: (bucketId: string, label: string) => void
   onRenameSub: (subId: string, label: string) => void
   onDeleteBucket: (bucketId: string) => void
@@ -122,7 +124,6 @@ function HierarchyBucketItem({
   onSelect,
   onRename,
   onDelete,
-  onSortAlphabetically,
   openContextMenu,
 }: {
   bucket: HierarchyItem
@@ -133,12 +134,31 @@ function HierarchyBucketItem({
   onSelect: () => void
   onRename: (label: string) => void
   onDelete: () => void
-  onSortAlphabetically: () => void
   openContextMenu: ReturnType<typeof useTasksContextMenu>['openMenu']
 }) {
   const labelRef = useRef<InlineEditableLabelHandle>(null)
-  const { setNodeRef, isOver } = useDroppable({ id: `${HIER_BUCKET_PREFIX}${bucket.id}` })
-  const showOver = (acceptSubDrop || acceptTaskDrop) && isOver
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `${HIER_BUCKET_PREFIX}${bucket.id}` })
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `${HIER_BUCKET_PREFIX}${bucket.id}` })
+
+  const setNodeRef = (node: HTMLLIElement | null) => {
+    setSortRef(node)
+    setDropRef(node)
+  }
+
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition: isDragging ? undefined : transition,
+    opacity: isDragging ? 0.35 : 1,
+  }
+
+  const showOver = (acceptSubDrop || acceptTaskDrop) && isOver && !isDragging
 
   const handleContextMenu = (event: MouseEvent) => {
     openContextMenu(event, [
@@ -148,37 +168,53 @@ function HierarchyBucketItem({
   }
 
   return (
-    <li ref={setNodeRef}>
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`hierarchy-view__bucket-row${isDragging ? ' hierarchy-view__bucket-row--dragging' : ''}`}
+    >
       <div
-        role="button"
-        tabIndex={0}
-        className={`hierarchy-view__item${selected ? ' hierarchy-view__item--selected' : ''}${showOver ? ' hierarchy-view__item--over' : ''}`}
-        onClick={onSelect}
+        className={`hierarchy-view__item hierarchy-view__item--sub${selected ? ' hierarchy-view__item--selected' : ''}${showOver ? ' hierarchy-view__item--over' : ''}`}
         onContextMenu={handleContextMenu}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            onSelect()
-          }
-        }}
       >
-        <span className="hierarchy-view__item-icon" aria-hidden>
-          {bucket.emoji ? (
-            <span className="hierarchy-view__item-emoji">{bucket.emoji}</span>
-          ) : (
-            <CategoryIcon categoryId={bucket.id} size={16} />
-          )}
-        </span>
-        <InlineEditableLabel
-          ref={labelRef}
-          value={bucket.label}
-          onSave={onRename}
-          className="hierarchy-view__item-label hierarchy-view__item-label--editable"
-          inputClassName="hierarchy-view__item-input"
-          ariaLabel={`Edit bucket name "${bucket.label}"`}
-        />
-        <CategorySortButton label={bucket.label} onClick={onSortAlphabetically} />
-        <span className="hierarchy-view__item-count">{count}</span>
+        <button
+          type="button"
+          className="hierarchy-view__item-grip"
+          aria-label={`Drag bucket ${bucket.label}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripIcon />
+        </button>
+        <div
+          role="button"
+          tabIndex={0}
+          className="hierarchy-view__item-body"
+          onClick={onSelect}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onSelect()
+            }
+          }}
+        >
+          <span className="hierarchy-view__item-icon" aria-hidden>
+            {bucket.emoji ? (
+              <span className="hierarchy-view__item-emoji">{bucket.emoji}</span>
+            ) : (
+              <CategoryIcon categoryId={bucket.id} size={16} />
+            )}
+          </span>
+          <InlineEditableLabel
+            ref={labelRef}
+            value={bucket.label}
+            onSave={onRename}
+            className="hierarchy-view__item-label hierarchy-view__item-label--editable"
+            inputClassName="hierarchy-view__item-input"
+            ariaLabel={`Edit bucket name "${bucket.label}"`}
+          />
+          <span className="hierarchy-view__item-count">{count}</span>
+        </div>
       </div>
     </li>
   )
@@ -192,7 +228,6 @@ function HierarchySubItem({
   onSelect,
   onRename,
   onDelete,
-  onSortAlphabetically,
   openContextMenu,
 }: {
   sub: HierarchyItem
@@ -202,30 +237,31 @@ function HierarchySubItem({
   onSelect: () => void
   onRename: (label: string) => void
   onDelete: () => void
-  onSortAlphabetically: () => void
   openContextMenu: ReturnType<typeof useTasksContextMenu>['openMenu']
 }) {
   const labelRef = useRef<InlineEditableLabelHandle>(null)
   const {
     attributes,
     listeners,
-    setNodeRef: setDragRef,
+    setNodeRef: setSortRef,
     transform,
+    transition,
     isDragging,
-  } = useDraggable({ id: `${HIER_SUB_PREFIX}${sub.id}` })
+  } = useSortable({ id: `${HIER_SUB_PREFIX}${sub.id}` })
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `${HIER_SUB_PREFIX}${sub.id}` })
 
   const setNodeRef = (node: HTMLLIElement | null) => {
-    setDragRef(node)
+    setSortRef(node)
     setDropRef(node)
   }
 
   const style: CSSProperties = {
-    transform: transform ? CSS.Translate.toString(transform) : undefined,
+    transform: CSS.Transform.toString(transform),
+    transition: isDragging ? undefined : transition,
     opacity: isDragging ? 0.35 : 1,
   }
 
-  const showOver = acceptTaskDrop && isOver
+  const showOver = acceptTaskDrop && isOver && !isDragging
 
   const handleContextMenu = (event: MouseEvent) => {
     openContextMenu(event, [
@@ -278,7 +314,6 @@ function HierarchySubItem({
             inputClassName="hierarchy-view__item-input"
             ariaLabel={`Edit sub-bucket name "${sub.label}"`}
           />
-          <CategorySortButton label={sub.label} onClick={onSortAlphabetically} />
           <span className="hierarchy-view__item-count">{count}</span>
         </div>
       </div>
@@ -517,8 +552,11 @@ export function HierarchyView({
   onMoveTaskToSub,
   onMoveTaskToBucket,
   onReorderTasksInCategory,
+  onReorderBuckets,
+  onReorderSubsInBucket,
   onSortCategoryAlphabetically,
-  onSortBucketAlphabetically,
+  onSortBucketsAlphabetically,
+  onSortSubsAlphabetically,
   onRenameBucket,
   onRenameSub,
   onDeleteBucket,
@@ -542,6 +580,16 @@ export function HierarchyView({
       .filter((t) => t.category === selectedSubId)
       .sort(compareTasksByOrder)
   }, [openTasks, selectedSubId])
+
+  const bucketSortableIds = useMemo(
+    () => buckets.map((bucket) => `${HIER_BUCKET_PREFIX}${bucket.id}`),
+    [buckets],
+  )
+
+  const subSortableIds = useMemo(
+    () => subs.map((sub) => `${HIER_SUB_PREFIX}${sub.id}`),
+    [subs],
+  )
 
   const subTaskSortableIds = useMemo(
     () => subTasks.map((task) => `${HIER_TASK_PREFIX}${task.id}`),
@@ -567,6 +615,10 @@ export function HierarchyView({
 
   const activeDragLabel = (() => {
     if (!activeDragId) return null
+    if (activeDragId.startsWith(HIER_BUCKET_PREFIX)) {
+      const bucketId = activeDragId.slice(HIER_BUCKET_PREFIX.length)
+      return buckets.find((b) => b.id === bucketId)?.label ?? 'Bucket'
+    }
     if (activeDragId.startsWith(HIER_SUB_PREFIX)) {
       const subId = activeDragId.slice(HIER_SUB_PREFIX.length)
       const sub =
@@ -596,6 +648,32 @@ export function HierarchyView({
 
     const activeId = String(active.id)
     const overId = String(over.id)
+    if (activeId === overId) return
+
+    if (activeId.startsWith(HIER_BUCKET_PREFIX) && overId.startsWith(HIER_BUCKET_PREFIX)) {
+      const activeBucketId = activeId.slice(HIER_BUCKET_PREFIX.length)
+      const overBucketId = overId.slice(HIER_BUCKET_PREFIX.length)
+      const oldIndex = buckets.findIndex((bucket) => bucket.id === activeBucketId)
+      const newIndex = buckets.findIndex((bucket) => bucket.id === overBucketId)
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+      onReorderBuckets(arrayMove(buckets, oldIndex, newIndex).map((bucket) => bucket.id))
+      return
+    }
+
+    if (activeId.startsWith(HIER_SUB_PREFIX) && overId.startsWith(HIER_SUB_PREFIX)) {
+      const activeSubId = activeId.slice(HIER_SUB_PREFIX.length)
+      const overSubId = overId.slice(HIER_SUB_PREFIX.length)
+      const oldIndex = subs.findIndex((sub) => sub.id === activeSubId)
+      const newIndex = subs.findIndex((sub) => sub.id === overSubId)
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex || !selectedBucketId) return
+
+      onReorderSubsInBucket(
+        selectedBucketId,
+        arrayMove(subs, oldIndex, newIndex).map((sub) => sub.id),
+      )
+      return
+    }
 
     if (activeId.startsWith(HIER_SUB_PREFIX) && overId.startsWith(HIER_BUCKET_PREFIX)) {
       const subId = activeId.slice(HIER_SUB_PREFIX.length)
@@ -650,24 +728,31 @@ export function HierarchyView({
           <section className="hierarchy-view__col" aria-label="Buckets">
             <header className="hierarchy-view__col-header">
               <span className="hierarchy-view__col-title">Buckets</span>
-            </header>
-            <ul className="hierarchy-view__list">
-              {buckets.map((bucket) => (
-                <HierarchyBucketItem
-                  key={bucket.id}
-                  bucket={bucket}
-                  count={countTasksForBucket(openTasks, bucket.id, getSubsForBucket)}
-                  selected={bucket.id === selectedBucketId}
-                  acceptSubDrop={draggingSub}
-                  acceptTaskDrop={draggingTask}
-                  onSelect={() => onSelectBucket(bucket.id)}
-                  onRename={(label) => onRenameBucket(bucket.id, label)}
-                  onDelete={() => onDeleteBucket(bucket.id)}
-                  onSortAlphabetically={() => onSortBucketAlphabetically(bucket.id)}
-                  openContextMenu={openMenu}
+              {buckets.length > 1 && (
+                <CategorySortButton
+                  label="buckets"
+                  onClick={onSortBucketsAlphabetically}
                 />
-              ))}
-            </ul>
+              )}
+            </header>
+            <SortableContext items={bucketSortableIds} strategy={verticalListSortingStrategy}>
+              <ul className="hierarchy-view__list">
+                {buckets.map((bucket) => (
+                  <HierarchyBucketItem
+                    key={bucket.id}
+                    bucket={bucket}
+                    count={countTasksForBucket(openTasks, bucket.id, getSubsForBucket)}
+                    selected={bucket.id === selectedBucketId}
+                    acceptSubDrop={draggingSub}
+                    acceptTaskDrop={draggingTask}
+                    onSelect={() => onSelectBucket(bucket.id)}
+                    onRename={(label) => onRenameBucket(bucket.id, label)}
+                    onDelete={() => onDeleteBucket(bucket.id)}
+                    openContextMenu={openMenu}
+                  />
+                ))}
+              </ul>
+            </SortableContext>
             <InlineAdd
               placeholder="New bucket"
               onSubmit={(name) => void onAddBucket(name)}
@@ -686,10 +771,10 @@ export function HierarchyView({
               </span>
               {selectedBucketId && (
                 <div className="hierarchy-view__col-header-actions">
-                  {selectedSubId && (
+                  {subs.length > 1 && (
                     <CategorySortButton
-                      label={selectedSub?.label ?? 'tasks'}
-                      onClick={() => onSortCategoryAlphabetically(selectedSubId)}
+                      label="sub-buckets"
+                      onClick={() => onSortSubsAlphabetically(selectedBucketId)}
                     />
                   )}
                   <SubBucketAddButton
@@ -709,22 +794,23 @@ export function HierarchyView({
                 />
               </div>
             ) : (
-              <ul className="hierarchy-view__list">
-                {subs.map((sub) => (
-                  <HierarchySubItem
-                    key={sub.id}
-                    sub={sub}
-                    count={countTasksForSub(openTasks, sub.id)}
-                    selected={sub.id === selectedSubId}
-                    acceptTaskDrop={draggingTask}
-                    onSelect={() => onSelectSub(sub.id)}
-                    onRename={(label) => onRenameSub(sub.id, label)}
-                    onDelete={() => onDeleteSub(sub.id)}
-                    onSortAlphabetically={() => onSortCategoryAlphabetically(sub.id)}
-                    openContextMenu={openMenu}
-                  />
-                ))}
-              </ul>
+              <SortableContext items={subSortableIds} strategy={verticalListSortingStrategy}>
+                <ul className="hierarchy-view__list">
+                  {subs.map((sub) => (
+                    <HierarchySubItem
+                      key={sub.id}
+                      sub={sub}
+                      count={countTasksForSub(openTasks, sub.id)}
+                      selected={sub.id === selectedSubId}
+                      acceptTaskDrop={draggingTask}
+                      onSelect={() => onSelectSub(sub.id)}
+                      onRename={(label) => onRenameSub(sub.id, label)}
+                      onDelete={() => onDeleteSub(sub.id)}
+                      openContextMenu={openMenu}
+                    />
+                  ))}
+                </ul>
+              </SortableContext>
             )}
           </section>
 
@@ -737,7 +823,7 @@ export function HierarchyView({
                   <span className="hierarchy-view__col-context"> · {selectedSub.label}</span>
                 )}
               </span>
-              {selectedSubId && (
+              {selectedSubId && subTasks.length > 1 && (
                 <CategorySortButton
                   label={selectedSub?.label ?? 'tasks'}
                   onClick={() => onSortCategoryAlphabetically(selectedSubId)}

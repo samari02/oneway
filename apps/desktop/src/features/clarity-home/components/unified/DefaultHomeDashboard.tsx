@@ -2,7 +2,7 @@ import { useMemo, useState, useRef, useCallback, useEffect, type CSSProperties }
 import type { DailyPlan, FocusArea } from '@oneway/shared'
 import { useTaskStore } from '../../hooks/useTaskStore'
 import type { Task } from '@oneway/shared'
-import { useCategoryStore } from '../../hooks/useCategoryStore'
+import { useCategoryStore, resolveTaskDisplayBucket } from '../../hooks/useCategoryStore'
 import { CategoryIcon } from '../CategoryIcon'
 import { HomeCharacter } from './HomeCharacter'
 import { MonkContextPrompt } from './MonkContextPrompt'
@@ -332,8 +332,6 @@ export function DefaultHomeDashboard({
     }, 700)
   }, [triggerMonkNod])
 
-  const useFocusAreasMode = focusAreas && focusAreas.length > 0
-
   const toggleCategory = (catId: string) => {
     setExpandedCategories((prev) => {
       const next = new Set(prev)
@@ -354,52 +352,43 @@ export function DefaultHomeDashboard({
         return aTime - bTime
       })
 
-    const grouped = new Map<string, Task[]>()
-    for (const t of openOnly) {
-      const list = grouped.get(t.category) ?? []
-      list.push(t)
-      grouped.set(t.category, list)
+    const bucketGroups = new Map<
+      string,
+      { id: string; label: string; color: string; order: number; tasks: Task[] }
+    >()
+
+    for (const task of openOnly) {
+      const bucket =
+        resolveTaskDisplayBucket(categories, task.category, focusAreas) ?? {
+          id: 'other',
+          label: 'Other',
+          color: '#a78bfa',
+          order: 999,
+        }
+      const existing = bucketGroups.get(bucket.id)
+      if (existing) {
+        existing.tasks.push(task)
+      } else {
+        bucketGroups.set(bucket.id, { ...bucket, tasks: [task] })
+      }
     }
 
-    let openTaskCategories: TaskCategoryDisplay[]
-
-    if (useFocusAreasMode) {
-      const areaMap = new Map(focusAreas.map((a) => [a.id, a]))
-      openTaskCategories = Array.from(grouped.entries())
-        .map(([areaId, areaTasks]) => {
-          const area = areaMap.get(areaId)
-          return {
-            id: areaId,
-            label: area?.label ?? areaId.charAt(0).toUpperCase() + areaId.slice(1),
-            count: areaTasks.length,
-            color: area?.color ?? '#a78bfa',
-            tasks: areaTasks,
-          }
-        })
-        .sort((a, b) => {
-          const orderMap = new Map(focusAreas.map((fa) => [fa.id, fa.display_order]))
-          return (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99)
-        })
-    } else {
-      openTaskCategories = Array.from(grouped.entries())
-        .map(([catId, catTasks]) => {
-          const cat = categories.find((c) => c.id === catId)
-          return {
-            id: catId,
-            label: cat?.label ?? catId.charAt(0).toUpperCase() + catId.slice(1),
-            count: catTasks.length,
-            color: cat?.color ?? '#a78bfa',
-            tasks: catTasks,
-          }
-        })
-        .sort((a, b) => {
-          const orderMap = new Map(categories.map((c, i) => [c.id, i]))
-          return (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99)
-        })
-    }
+    const openTaskCategories: TaskCategoryDisplay[] = Array.from(bucketGroups.values())
+      .map(({ id, label, color, tasks: bucketTasks }) => ({
+        id,
+        label,
+        count: bucketTasks.length,
+        color,
+        tasks: bucketTasks,
+      }))
+      .sort((a, b) => {
+        const orderA = bucketGroups.get(a.id)?.order ?? 99
+        const orderB = bucketGroups.get(b.id)?.order ?? 99
+        return orderA - orderB
+      })
 
     return { openTaskCategories, completedTasks: doneOnly }
-  }, [tasks, categories, useFocusAreasMode, focusAreas])
+  }, [tasks, categories, focusAreas])
 
   const hasAnyTasks = openTaskCategories.length > 0 || completedTasks.length > 0
 

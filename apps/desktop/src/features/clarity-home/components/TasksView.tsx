@@ -15,7 +15,6 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCorners,
-  useDraggable,
   useDroppable,
   useSensor,
   useSensors,
@@ -41,7 +40,7 @@ import {
   groupTasksByPlanning,
   useTaskStore,
 } from '../hooks/useTaskStore'
-import { useCategoryStore } from '../hooks/useCategoryStore'
+import { DEFAULT_SUB_LABEL, findDefaultSubForBucket, resolveTaskDisplayBucket, useCategoryStore } from '../hooks/useCategoryStore'
 import { useFocusAreaStore } from '../hooks/useFocusAreaStore'
 import { useCurrentFocus } from '../hooks/useCurrentFocus'
 import { CategoryIcon } from './CategoryIcon'
@@ -54,7 +53,6 @@ import {
   TrashIcon,
   GripIcon,
   FocusIcon,
-  SortAlphaIcon,
   InlineEditableLabel,
   type InlineEditableLabelHandle,
   PLANNING_LABELS,
@@ -157,28 +155,6 @@ function sortTasksWithinCategory(tasks: Task[], sortBy: SortMode): Task[] {
   return sortTasksList(tasks, sortBy)
 }
 
-function ListSortButton({
-  label,
-  onClick,
-}: {
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      className="tasks-view__list-sort-btn"
-      aria-label={`Sort ${label} alphabetically`}
-      title={`Sort ${label} A–Z`}
-      onClick={(e) => {
-        e.stopPropagation()
-        onClick()
-      }}
-    >
-      <SortAlphaIcon />
-    </button>
-  )
-}
 function sortTasksList(tasks: Task[], sortBy: SortMode): Task[] {
   if (sortBy === 'manual') return tasks
   const copy = [...tasks]
@@ -736,7 +712,6 @@ function ListBucketRow({
   onToggleExpand,
   onRename,
   onDelete,
-  onSortAlphabetically,
   openContextMenu,
 }: {
   bucket: { id: string; label: string; emoji?: string | null }
@@ -747,12 +722,31 @@ function ListBucketRow({
   onToggleExpand: () => void
   onRename: (label: string) => void
   onDelete: () => void
-  onSortAlphabetically: () => void
   openContextMenu: ReturnType<typeof useTasksContextMenu>['openMenu']
 }) {
   const labelRef = useRef<InlineEditableLabelHandle>(null)
-  const { setNodeRef, isOver } = useDroppable({ id: `${LIST_BUCKET_PREFIX}${bucket.id}` })
-  const showOver = (acceptSubDrop || acceptTaskDrop) && isOver
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `${LIST_BUCKET_PREFIX}${bucket.id}` })
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `${LIST_BUCKET_PREFIX}${bucket.id}` })
+
+  const setNodeRef = (node: HTMLTableRowElement | null) => {
+    setSortRef(node)
+    setDropRef(node)
+  }
+
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition: isDragging ? undefined : transition,
+    opacity: isDragging ? 0.35 : 1,
+  }
+
+  const showOver = (acceptSubDrop || acceptTaskDrop) && isOver && !isDragging
 
   const handleContextMenu = (event: MouseEvent) => {
     openContextMenu(event, [
@@ -764,13 +758,23 @@ function ListBucketRow({
   return (
     <tr
       ref={setNodeRef}
-      className={`tasks-view__list-bucket${!expanded ? ' tasks-view__list-row--collapsed' : ''}${showOver ? ' tasks-view__list-bucket--over' : ''}`}
+      style={style}
+      className={`tasks-view__list-bucket${!expanded ? ' tasks-view__list-row--collapsed' : ''}${showOver ? ' tasks-view__list-bucket--over' : ''}${isDragging ? ' tasks-view__list-bucket--dragging' : ''}`}
       onContextMenu={handleContextMenu}
     >
       <td className="tasks-view__list-cell tasks-view__list-cell--grip">
-        <ListChevronButton expanded={expanded} onToggle={onToggleExpand} label={bucket.label} />
+        <button
+          type="button"
+          className="tasks-view__drag-handle tasks-view__drag-handle--list"
+          aria-label={`Drag bucket ${bucket.label}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripIcon />
+        </button>
       </td>
       <td className="tasks-view__list-cell tasks-view__list-bucket-label" colSpan={6}>
+        <ListChevronButton expanded={expanded} onToggle={onToggleExpand} label={bucket.label} />
         <span className="tasks-view__list-bucket-icon" aria-hidden>
           {bucket.emoji ? (
             <span className="tasks-view__list-bucket-emoji">{bucket.emoji}</span>
@@ -789,7 +793,6 @@ function ListBucketRow({
         <span className="tasks-view__list-bucket-meta">
           {subCount} sub{subCount === 1 ? '' : 's'}
         </span>
-        <ListSortButton label={bucket.label} onClick={onSortAlphabetically} />
       </td>
     </tr>
   )
@@ -803,7 +806,6 @@ function ListSubRow({
   onToggleExpand,
   onRename,
   onDelete,
-  onSortAlphabetically,
   openContextMenu,
 }: {
   sub: { id: string; label: string; color?: string }
@@ -813,30 +815,31 @@ function ListSubRow({
   onToggleExpand: () => void
   onRename: (label: string) => void
   onDelete: () => void
-  onSortAlphabetically: () => void
   openContextMenu: ReturnType<typeof useTasksContextMenu>['openMenu']
 }) {
   const labelRef = useRef<InlineEditableLabelHandle>(null)
   const {
     attributes,
     listeners,
-    setNodeRef: setDragRef,
+    setNodeRef: setSortRef,
     transform,
+    transition,
     isDragging,
-  } = useDraggable({ id: `${LIST_SUB_PREFIX}${sub.id}` })
+  } = useSortable({ id: `${LIST_SUB_PREFIX}${sub.id}` })
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `${LIST_SUB_PREFIX}${sub.id}` })
 
   const setNodeRef = (node: HTMLTableRowElement | null) => {
-    setDragRef(node)
+    setSortRef(node)
     setDropRef(node)
   }
 
   const style: CSSProperties = {
-    transform: transform ? CSS.Translate.toString(transform) : undefined,
+    transform: CSS.Transform.toString(transform),
+    transition: isDragging ? undefined : transition,
     opacity: isDragging ? 0.35 : 1,
   }
 
-  const showOver = acceptTaskDrop && isOver
+  const showOver = acceptTaskDrop && isOver && !isDragging
 
   const handleContextMenu = (event: MouseEvent) => {
     openContextMenu(event, [
@@ -881,7 +884,6 @@ function ListSubRow({
         <span className="tasks-view__list-sub-meta">
           {taskCount} task{taskCount === 1 ? '' : 's'}
         </span>
-        <ListSortButton label={sub.label} onClick={onSortAlphabetically} />
       </td>
     </tr>
   )
@@ -1524,12 +1526,14 @@ export function TasksView() {
 
       const sub = validCategories.find((c) => c.id === task.category)
       if (!sub) {
+        const bucket = resolveTaskDisplayBucket(categories, task.category, activeAreas)
+        const fallbackLabel = bucket?.label ?? 'Not assigned'
         return {
-          label: task.category,
-          color: '#a78bfa',
-          bucketLabel: task.category,
+          label: fallbackLabel,
+          color: bucket?.color ?? '#a78bfa',
+          bucketLabel: fallbackLabel,
           subLabel: '—',
-          badge: task.category,
+          badge: fallbackLabel,
         }
       }
       if (sub.parentId === null) {
@@ -1550,7 +1554,7 @@ export function TasksView() {
         badge: `${bucket?.label ?? '—'} · ${sub.label}`,
       }
     },
-    [useFocusAreasMode, activeAreas, validCategories, getFocusBucketForSub, getBucketForSub],
+    [useFocusAreasMode, activeAreas, validCategories, categories, getFocusBucketForSub, getBucketForSub],
   )
 
   const handleFocusTask = useCallback(
@@ -1784,32 +1788,143 @@ export function TasksView() {
     [tasksById, updateTask],
   )
 
-  const resolveTaskCategoryForBucket = useCallback(
-    (bucketId: string, taskCategory: string): string => {
-      if (taskCategory === bucketId) return taskCategory
-      const currentBucket = useFocusAreasMode
-        ? getFocusBucketForSub(taskCategory)
-        : getBucketForSub(taskCategory)
-      if (currentBucket?.id === bucketId) return taskCategory
+  const ensureDefaultSubForBucket = useCallback(
+    async (bucketId: string): Promise<string> => {
+      const subs = useFocusAreasMode ? getFocusSubsForBucket(bucketId) : getSubsForBucket(bucketId)
+      const existing = findDefaultSubForBucket<{ id: string; label: string }>(subs)
+      if (existing) return existing.id
 
+      const colorIndex = subs.length % CATEGORY_COLORS.length
+      const color = CATEGORY_COLORS[colorIndex]
+      if (useFocusAreasMode) {
+        const area = await addFocusSub(bucketId, DEFAULT_SUB_LABEL, undefined, color)
+        return area?.id ?? bucketId
+      }
+      return addSub(bucketId, DEFAULT_SUB_LABEL, '📁', color).id
+    },
+    [
+      useFocusAreasMode,
+      getFocusSubsForBucket,
+      getSubsForBucket,
+      addFocusSub,
+      addSub,
+    ],
+  )
+
+  const resolveTaskCategoryForBucket = useCallback(
+    async (bucketId: string, taskCategory: string): Promise<string> => {
       const subs = useFocusAreasMode
         ? getFocusSubsForBucket(bucketId)
         : getSubsForBucket(bucketId)
-      return subs.length > 0 ? subs[0].id : bucketId
+
+      if (taskCategory !== bucketId) {
+        const currentBucket = useFocusAreasMode
+          ? getFocusBucketForSub(taskCategory)
+          : getBucketForSub(taskCategory)
+        if (currentBucket?.id === bucketId) return taskCategory
+      }
+
+      if (subs.length === 0 || taskCategory === bucketId) {
+        return ensureDefaultSubForBucket(bucketId)
+      }
+
+      return subs[0].id
     },
-    [useFocusAreasMode, getFocusBucketForSub, getBucketForSub, getFocusSubsForBucket, getSubsForBucket],
+    [
+      useFocusAreasMode,
+      getFocusBucketForSub,
+      getBucketForSub,
+      getFocusSubsForBucket,
+      getSubsForBucket,
+      ensureDefaultSubForBucket,
+    ],
   )
 
   const handleMoveTaskToBucket = useCallback(
-    (taskId: string, bucketId: string) => {
+    async (taskId: string, bucketId: string) => {
       const task = tasksById.get(taskId)
       if (!task) return
-      const categoryId = resolveTaskCategoryForBucket(bucketId, task.category)
+      const categoryId = await resolveTaskCategoryForBucket(bucketId, task.category)
       if (task.category === categoryId) return
       updateTask(taskId, { category: categoryId })
+      if (selectedBucketId === bucketId) {
+        setSelectedSubId(categoryId)
+      }
     },
-    [tasksById, resolveTaskCategoryForBucket, updateTask],
+    [tasksById, resolveTaskCategoryForBucket, updateTask, selectedBucketId],
   )
+
+  const orphanBucketCategoryTasks = useMemo(
+    () => allOpenTasks.filter((task) => buckets.some((bucket) => bucket.id === task.category)),
+    [allOpenTasks, buckets],
+  )
+
+  useEffect(() => {
+    if (orphanBucketCategoryTasks.length === 0) return
+
+    let cancelled = false
+    void (async () => {
+      const tasksByBucket = new Map<string, typeof orphanBucketCategoryTasks>()
+      for (const task of orphanBucketCategoryTasks) {
+        const bucketTasks = tasksByBucket.get(task.category) ?? []
+        bucketTasks.push(task)
+        tasksByBucket.set(task.category, bucketTasks)
+      }
+
+      for (const [bucketId, bucketTasks] of tasksByBucket) {
+        const defaultSubId = await ensureDefaultSubForBucket(bucketId)
+        if (cancelled) return
+        for (const task of bucketTasks) {
+          if (task.category !== defaultSubId) {
+            updateTask(task.id, { category: defaultSubId })
+          }
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [orphanBucketCategoryTasks, ensureDefaultSubForBucket, updateTask])
+
+  const orphanUnknownCategoryTasks = useMemo(
+    () =>
+      allOpenTasks.filter((task) => {
+        if (categories.some((c) => c.id === task.category)) return false
+        if (buckets.some((bucket) => bucket.id === task.category)) return false
+        return true
+      }),
+    [allOpenTasks, categories, buckets],
+  )
+
+  useEffect(() => {
+    if (orphanUnknownCategoryTasks.length === 0 || buckets.length === 0) return
+
+    let cancelled = false
+    void (async () => {
+      const tasksByBucket = new Map<string, typeof orphanUnknownCategoryTasks>()
+      for (const task of orphanUnknownCategoryTasks) {
+        const seedBucketId = buckets[0].id
+        const bucketTasks = tasksByBucket.get(seedBucketId) ?? []
+        bucketTasks.push(task)
+        tasksByBucket.set(seedBucketId, bucketTasks)
+      }
+
+      for (const [bucketId, bucketTasks] of tasksByBucket) {
+        const defaultSubId = await ensureDefaultSubForBucket(bucketId)
+        if (cancelled) return
+        for (const task of bucketTasks) {
+          if (task.category !== defaultSubId) {
+            updateTask(task.id, { category: defaultSubId })
+          }
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [orphanUnknownCategoryTasks, buckets, ensureDefaultSubForBucket, updateTask])
 
   const handleRenameBucket = useCallback(
     (bucketId: string, label: string) => {
@@ -1874,31 +1989,31 @@ export function TasksView() {
     [openTasks, applyColumnOrders],
   )
 
-  const sortBucketTasksAlphabetically = useCallback(
-    (bucketId: string) => {
-      const subs = useFocusAreasMode ? getFocusSubsForBucket(bucketId) : getSubsForBucket(bucketId)
-      const columns: Record<string, string[]> = {}
-
-      for (const sub of subs) {
-        const categoryTasks = openTasks.filter((task) => task.category === sub.id)
-        if (categoryTasks.length === 0) continue
-        columns[sub.id] = [...categoryTasks]
-          .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
-          .map((task) => task.id)
+  const applySiblingOrder = useCallback(
+    (orderedIds: string[]) => {
+      for (const [index, id] of orderedIds.entries()) {
+        if (useFocusAreasMode) {
+          void editArea(id, { display_order: index })
+        } else {
+          updateCategory(id, { order: index })
+        }
       }
-
-      const bucketTasks = openTasks.filter((task) => task.category === bucketId)
-      if (bucketTasks.length > 0) {
-        columns[bucketId] = [...bucketTasks]
-          .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
-          .map((task) => task.id)
-      }
-
-      if (Object.keys(columns).length === 0) return
-      applyColumnOrders('category', columns)
-      setSortBy('manual')
     },
-    [openTasks, useFocusAreasMode, getFocusSubsForBucket, getSubsForBucket, applyColumnOrders],
+    [useFocusAreasMode, editArea, updateCategory],
+  )
+
+  const handleReorderBuckets = useCallback(
+    (orderedIds: string[]) => {
+      applySiblingOrder(orderedIds)
+    },
+    [applySiblingOrder],
+  )
+
+  const handleReorderSubsInBucket = useCallback(
+    (_bucketId: string, orderedIds: string[]) => {
+      applySiblingOrder(orderedIds)
+    },
+    [applySiblingOrder],
   )
 
   const handleReorderTasksInCategory = useCallback(
@@ -1916,11 +2031,45 @@ export function TasksView() {
     [sortCategoryTasksAlphabetically],
   )
 
-  const handleSortBucketAlphabetically = useCallback(
+  const handleSortBucketsAlphabetically = useCallback(() => {
+    if (useFocusAreasMode) {
+      const bucketList = getFocusBuckets()
+      if (bucketList.length < 2) return
+      const sorted = [...bucketList].sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+      )
+      applySiblingOrder(sorted.map((bucket) => bucket.id))
+      return
+    }
+
+    const bucketList = getBuckets()
+    if (bucketList.length < 2) return
+    const sorted = [...bucketList].sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+    )
+    applySiblingOrder(sorted.map((bucket) => bucket.id))
+  }, [useFocusAreasMode, getFocusBuckets, getBuckets, applySiblingOrder])
+
+  const handleSortSubsAlphabetically = useCallback(
     (bucketId: string) => {
-      sortBucketTasksAlphabetically(bucketId)
+      if (useFocusAreasMode) {
+        const subs = getFocusSubsForBucket(bucketId)
+        if (subs.length < 2) return
+        const sorted = [...subs].sort((a, b) =>
+          a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+        )
+        applySiblingOrder(sorted.map((sub) => sub.id))
+        return
+      }
+
+      const subs = getSubsForBucket(bucketId)
+      if (subs.length < 2) return
+      const sorted = [...subs].sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+      )
+      applySiblingOrder(sorted.map((sub) => sub.id))
     },
-    [sortBucketTasksAlphabetically],
+    [useFocusAreasMode, getFocusSubsForBucket, getSubsForBucket, applySiblingOrder],
   )
 
   const openCount = tasks.filter((t) => t.status === 'open').length
@@ -1975,6 +2124,21 @@ export function TasksView() {
     [useFocusAreasMode, getFocusSubsForBucket, getSubsForBucket, filterCategory],
   )
 
+  const getSubIdsForBucket = useCallback(
+    (bucketId: string): string[] => {
+      if (useFocusAreasMode) {
+        return getFocusSubsForBucket(bucketId).map((sub) => sub.id)
+      }
+      return getSubsForBucket(bucketId).map((sub) => sub.id)
+    },
+    [useFocusAreasMode, getFocusSubsForBucket, getSubsForBucket],
+  )
+
+  const listBucketSortableIds = useMemo(
+    () => listBuckets.map((bucket) => `${LIST_BUCKET_PREFIX}${bucket.id}`),
+    [listBuckets],
+  )
+
   const handleListDragStart = (event: DragStartEvent) => {
     if (sortBy !== 'manual') setSortBy('manual')
     setActiveListDragId(String(event.active.id))
@@ -1991,6 +2155,39 @@ export function TasksView() {
 
     const activeId = String(active.id)
     const overId = String(over.id)
+    if (activeId === overId) return
+
+    if (activeId.startsWith(LIST_BUCKET_PREFIX) && overId.startsWith(LIST_BUCKET_PREFIX)) {
+      const activeBucketId = activeId.slice(LIST_BUCKET_PREFIX.length)
+      const overBucketId = overId.slice(LIST_BUCKET_PREFIX.length)
+      if (activeBucketId === overBucketId) return
+
+      const bucketIds = buckets.map((bucket) => bucket.id)
+      const oldIndex = bucketIds.findIndex((id) => id === activeBucketId)
+      const newIndex = bucketIds.findIndex((id) => id === overBucketId)
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+      handleReorderBuckets(arrayMove(bucketIds, oldIndex, newIndex))
+      return
+    }
+
+    if (activeId.startsWith(LIST_SUB_PREFIX) && overId.startsWith(LIST_SUB_PREFIX)) {
+      const activeSubId = activeId.slice(LIST_SUB_PREFIX.length)
+      const overSubId = overId.slice(LIST_SUB_PREFIX.length)
+      if (activeSubId === overSubId) return
+
+      const activeBucket = useFocusAreasMode ? getFocusBucketForSub(activeSubId) : getBucketForSub(activeSubId)
+      const overBucket = useFocusAreasMode ? getFocusBucketForSub(overSubId) : getBucketForSub(overSubId)
+      if (!activeBucket || !overBucket || activeBucket.id !== overBucket.id) return
+
+      const subIds = getSubIdsForBucket(activeBucket.id)
+      const oldIndex = subIds.findIndex((id) => id === activeSubId)
+      const newIndex = subIds.findIndex((id) => id === overSubId)
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+      handleReorderSubsInBucket(activeBucket.id, arrayMove(subIds, oldIndex, newIndex))
+      return
+    }
 
     if (activeId.startsWith(LIST_SUB_PREFIX) && overId.startsWith(LIST_BUCKET_PREFIX)) {
       const subId = activeId.slice(LIST_SUB_PREFIX.length)
@@ -2027,7 +2224,7 @@ export function TasksView() {
     if (activeId.startsWith(LIST_TASK_PREFIX) && overId.startsWith(LIST_BUCKET_PREFIX)) {
       const taskId = activeId.slice(LIST_TASK_PREFIX.length)
       const bucketId = overId.slice(LIST_BUCKET_PREFIX.length)
-      handleMoveTaskToBucket(taskId, bucketId)
+      void handleMoveTaskToBucket(taskId, bucketId)
       return
     }
 
@@ -2042,6 +2239,10 @@ export function TasksView() {
 
   const activeListDragLabel = useMemo(() => {
     if (!activeListDragId) return null
+    if (activeListDragId.startsWith(LIST_BUCKET_PREFIX)) {
+      const bucketId = activeListDragId.slice(LIST_BUCKET_PREFIX.length)
+      return listBuckets.find((bucket) => bucket.id === bucketId)?.label ?? 'Bucket'
+    }
     if (activeListDragId.startsWith(LIST_SUB_PREFIX)) {
       const subId = activeListDragId.slice(LIST_SUB_PREFIX.length)
       return allSubs.find((sub) => sub.id === subId)?.label ?? 'Sub-bucket'
@@ -2051,7 +2252,7 @@ export function TasksView() {
       return tasksById.get(taskId)?.title ?? 'Task'
     }
     return null
-  }, [activeListDragId, allSubs, tasksById])
+  }, [activeListDragId, listBuckets, allSubs, tasksById])
 
   const listDraggingSub = activeListDragId?.startsWith(LIST_SUB_PREFIX) ?? false
   const listDraggingTask = activeListDragId?.startsWith(LIST_TASK_PREFIX) ?? false
@@ -2326,8 +2527,11 @@ export function TasksView() {
             onMoveTaskToSub={handleHierarchyMoveTaskToSub}
             onMoveTaskToBucket={handleMoveTaskToBucket}
             onReorderTasksInCategory={handleReorderTasksInCategory}
+            onReorderBuckets={handleReorderBuckets}
+            onReorderSubsInBucket={handleReorderSubsInBucket}
             onSortCategoryAlphabetically={handleSortCategoryAlphabetically}
-            onSortBucketAlphabetically={handleSortBucketAlphabetically}
+            onSortBucketsAlphabetically={handleSortBucketsAlphabetically}
+            onSortSubsAlphabetically={handleSortSubsAlphabetically}
             onRenameBucket={handleRenameBucket}
             onRenameSub={handleRenameSub}
             onDeleteBucket={handleDeleteBucket}
@@ -2440,85 +2644,89 @@ export function TasksView() {
                     <th className="tasks-view__list-head tasks-view__list-head--actions" scope="col">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {listBuckets.map((bucket) => {
-                    const subs = getListSubsForBucket(bucket.id)
-                    const bucketExpanded = !collapsedListBuckets.has(bucket.id)
-                    return (
-                      <Fragment key={`bucket-group-${bucket.id}`}>
-                        <ListBucketRow
-                          bucket={{
-                            id: bucket.id,
-                            label: bucket.label,
-                            emoji: 'emoji' in bucket ? (bucket.emoji as string | null) : null,
-                          }}
-                          subCount={subs.length}
-                          acceptSubDrop={listDraggingSub}
-                          acceptTaskDrop={listDraggingTask}
-                          expanded={bucketExpanded}
-                          onToggleExpand={() => toggleListBucketCollapse(bucket.id)}
-                          onRename={(label) => handleRenameBucket(bucket.id, label)}
-                          onDelete={() => handleDeleteBucket(bucket.id)}
-                          onSortAlphabetically={() => handleSortBucketAlphabetically(bucket.id)}
-                          openContextMenu={openContextMenu}
-                        />
-                        {bucketExpanded &&
-                          subs.map((sub) => {
-                            const tasks = listTasksByCategory.get(sub.id) ?? []
-                            const subExpanded = !collapsedListSubs.has(sub.id)
-                            return (
-                              <Fragment key={`sub-group-${sub.id}`}>
-                                <ListSubRow
-                                  sub={{
-                                    id: sub.id,
-                                    label: sub.label,
-                                    color: 'color' in sub && sub.color ? String(sub.color) : undefined,
-                                  }}
-                                  taskCount={tasks.length}
-                                  acceptTaskDrop={listDraggingTask}
-                                  expanded={subExpanded}
-                                  onToggleExpand={() => toggleListSubCollapse(sub.id)}
-                                  onRename={(label) => handleRenameSub(sub.id, label)}
-                                  onDelete={() => handleDeleteSub(sub.id)}
-                                  onSortAlphabetically={() => handleSortCategoryAlphabetically(sub.id)}
-                                  openContextMenu={openContextMenu}
-                                />
-                                {subExpanded && (
-                                  <SortableContext
-                                    items={tasks.map((task) => `${LIST_TASK_PREFIX}${task.id}`)}
-                                    strategy={verticalListSortingStrategy}
-                                  >
-                                    {tasks.map((task) => {
-                                      const meta = getHierarchyMeta(task)
-                                      return (
-                                        <TaskListRow
-                                          key={task.id}
-                                          task={task}
-                                          categoryOptions={categoryOptions}
-                                          hierarchyMeta={meta}
-                                          onToggle={() => toggleTask(task.id)}
-                                          onSaveTitle={(title) => updateTask(task.id, { title })}
-                                          onDelete={() => removeTask(task.id)}
-                                          onCategoryChange={(catId) => updateTask(task.id, { category: catId })}
-                                          onPlanningChange={(planning) => updateTask(task.id, { planning })}
-                                          onFocus={
-                                            (task.planning ?? 'backlog') === 'today'
-                                              ? () => handleFocusTask(task)
-                                              : undefined
-                                          }
-                                          openContextMenu={openContextMenu}
-                                        />
-                                      )
-                                    })}
-                                  </SortableContext>
-                                )}
-                              </Fragment>
-                            )
-                          })}
-                      </Fragment>
-                    )
-                  })}
-                </tbody>
+                <SortableContext items={listBucketSortableIds} strategy={verticalListSortingStrategy}>
+                  <tbody>
+                    {listBuckets.map((bucket) => {
+                      const subs = getListSubsForBucket(bucket.id)
+                      const bucketExpanded = !collapsedListBuckets.has(bucket.id)
+                      const subSortableIds = subs.map((sub) => `${LIST_SUB_PREFIX}${sub.id}`)
+                      return (
+                        <Fragment key={`bucket-group-${bucket.id}`}>
+                          <ListBucketRow
+                            bucket={{
+                              id: bucket.id,
+                              label: bucket.label,
+                              emoji: 'emoji' in bucket ? (bucket.emoji as string | null) : null,
+                            }}
+                            subCount={subs.length}
+                            acceptSubDrop={listDraggingSub}
+                            acceptTaskDrop={listDraggingTask}
+                            expanded={bucketExpanded}
+                            onToggleExpand={() => toggleListBucketCollapse(bucket.id)}
+                            onRename={(label) => handleRenameBucket(bucket.id, label)}
+                            onDelete={() => handleDeleteBucket(bucket.id)}
+                            openContextMenu={openContextMenu}
+                          />
+                          {bucketExpanded && (
+                            <SortableContext items={subSortableIds} strategy={verticalListSortingStrategy}>
+                              {subs.map((sub) => {
+                                const tasks = listTasksByCategory.get(sub.id) ?? []
+                                const subExpanded = !collapsedListSubs.has(sub.id)
+                                return (
+                                  <Fragment key={`sub-group-${sub.id}`}>
+                                    <ListSubRow
+                                      sub={{
+                                        id: sub.id,
+                                        label: sub.label,
+                                        color: 'color' in sub && sub.color ? String(sub.color) : undefined,
+                                      }}
+                                      taskCount={tasks.length}
+                                      acceptTaskDrop={listDraggingTask}
+                                      expanded={subExpanded}
+                                      onToggleExpand={() => toggleListSubCollapse(sub.id)}
+                                      onRename={(label) => handleRenameSub(sub.id, label)}
+                                      onDelete={() => handleDeleteSub(sub.id)}
+                                      openContextMenu={openContextMenu}
+                                    />
+                                    {subExpanded && (
+                                      <SortableContext
+                                        items={tasks.map((task) => `${LIST_TASK_PREFIX}${task.id}`)}
+                                        strategy={verticalListSortingStrategy}
+                                      >
+                                        {tasks.map((task) => {
+                                          const meta = getHierarchyMeta(task)
+                                          return (
+                                            <TaskListRow
+                                              key={task.id}
+                                              task={task}
+                                              categoryOptions={categoryOptions}
+                                              hierarchyMeta={meta}
+                                              onToggle={() => toggleTask(task.id)}
+                                              onSaveTitle={(title) => updateTask(task.id, { title })}
+                                              onDelete={() => removeTask(task.id)}
+                                              onCategoryChange={(catId) => updateTask(task.id, { category: catId })}
+                                              onPlanningChange={(planning) => updateTask(task.id, { planning })}
+                                              onFocus={
+                                                (task.planning ?? 'backlog') === 'today'
+                                                  ? () => handleFocusTask(task)
+                                                  : undefined
+                                              }
+                                              openContextMenu={openContextMenu}
+                                            />
+                                          )
+                                        })}
+                                      </SortableContext>
+                                    )}
+                                  </Fragment>
+                                )
+                              })}
+                            </SortableContext>
+                          )}
+                        </Fragment>
+                      )
+                    })}
+                  </tbody>
+                </SortableContext>
               </table>
             </div>
 

@@ -1362,6 +1362,10 @@
   opacity: 0.35;
 }
 
+.tasks-view__list-bucket--dragging {
+  opacity: 0.35;
+}
+
 .tasks-view__list-sub-label {
   padding-top: 6px;
   padding-bottom: 6px;
