@@ -17,6 +17,7 @@ type PlayerState = {
 }
 
 const STORAGE_KEY = 'clarity-ambient-music-v1'
+const PAUSED_STORAGE_KEY = 'clarity-ambient-paused'
 
 const DEFAULT_TRACK: AmbientTrack = {
   id: 'default-morning',
@@ -27,9 +28,48 @@ const DEFAULT_TRACK: AmbientTrack = {
 
 const listeners = new Set<() => void>()
 
-let audio: HTMLAudioElement | null = null
+const WINDOW_AUDIO_KEY = '__clarityAmbientAudioElement'
+
+type WindowWithAmbient = Window & { [WINDOW_AUDIO_KEY]?: HTMLAudioElement }
+
+function getWindowAudio(): HTMLAudioElement | null {
+  if (typeof window === 'undefined') return null
+  return (window as WindowWithAmbient)[WINDOW_AUDIO_KEY] ?? null
+}
+
+function setWindowAudio(element: HTMLAudioElement) {
+  if (typeof window === 'undefined') return
+  ;(window as WindowWithAmbient)[WINDOW_AUDIO_KEY] = element
+}
+
+let audio: HTMLAudioElement | null = getWindowAudio()
 let gestureListenersAttached = false
 let enabledRef = false
+let enabledConsumerCount = 0
+
+function loadUserPaused(): boolean {
+  try {
+    return localStorage.getItem(PAUSED_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function setUserPaused(paused: boolean) {
+  userPaused = paused
+  try {
+    if (paused) {
+      localStorage.setItem(PAUSED_STORAGE_KEY, 'true')
+    } else {
+      localStorage.removeItem(PAUSED_STORAGE_KEY)
+    }
+  } catch {
+    // ignore storage errors
+  }
+}
+
+/** True when the user explicitly paused via play/pause controls. */
+let userPaused = loadUserPaused()
 
 function emitChange() {
   listeners.forEach((listener) => listener())
@@ -91,8 +131,13 @@ function getServerSnapshot(): PlayerState {
 
 function getAudio(): HTMLAudioElement {
   if (!audio) {
+    audio = getWindowAudio()
+  }
+
+  if (!audio) {
     audio = new Audio()
     audio.preload = 'auto'
+    setWindowAudio(audio)
 
     audio.addEventListener('play', () => {
       if (state.isPlaying) return
@@ -159,6 +204,7 @@ type TryPlayOptions = {
 }
 
 async function tryPlay({ requireEnabled = false }: TryPlayOptions = {}) {
+  if (userPaused) return
   if (requireEnabled && !enabledRef) return
 
   syncAudioSource()
@@ -191,10 +237,18 @@ function pausePlayback() {
 }
 
 function setEnabled(enabled: boolean) {
-  enabledRef = enabled
   if (enabled) {
+    enabledConsumerCount += 1
+    enabledRef = true
     attachGestureRetry()
     void tryPlay({ requireEnabled: true })
+    return
+  }
+
+  enabledConsumerCount = Math.max(0, enabledConsumerCount - 1)
+  enabledRef = enabledConsumerCount > 0
+  if (enabledConsumerCount === 0) {
+    pausePlayback()
   }
 }
 
@@ -238,8 +292,10 @@ function togglePlay() {
   const element = getAudio()
 
   if (element.paused) {
+    setUserPaused(false)
     void tryPlay()
   } else {
+    setUserPaused(true)
     element.pause()
   }
 }
@@ -277,7 +333,8 @@ export function useAmbientMusicPlayer({ enabled = true }: UseAmbientMusicPlayerO
   const currentTrack = snapshot.tracks.find((track) => track.id === snapshot.currentTrackId) ?? DEFAULT_TRACK
 
   useEffect(() => {
-    setEnabled(enabled)
+    if (!enabled) return
+    setEnabled(true)
     return () => setEnabled(false)
   }, [enabled])
 
@@ -296,10 +353,12 @@ export function useAmbientMusicPlayer({ enabled = true }: UseAmbientMusicPlayerO
   }, [])
 
   const play = useCallback(() => {
+    setUserPaused(false)
     void tryPlay()
   }, []) // manual play — not gated by enabledRef
 
   const pause = useCallback(() => {
+    setUserPaused(true)
     pausePlayback()
   }, [])
 

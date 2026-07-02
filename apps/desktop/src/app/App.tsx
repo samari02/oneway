@@ -9,6 +9,7 @@ import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
 import { BoundariesView, ProtectionAlert, useExtensionStatus } from '@/features/boundaries'
 import { ClarityHomeView, ProgressView, TasksView } from '@/features/clarity-home'
+import { GlobalAmbientMusicBar } from '@/features/clarity-home/components/GlobalAmbientMusicBar'
 import { ClarityHomeErrorBoundary } from '@/features/clarity-home/components/ClarityHomeErrorBoundary'
 import { Mascot, type MascotMood } from '@/features/mascot'
 import { MONK_MINIATURE_SRC } from '@/features/clarity-home/companion-avatars'
@@ -517,6 +518,8 @@ function Dashboard() {
             {renderView()}
           </div>
         </main>
+
+        <GlobalAmbientMusicBar />
       </div>
     </div>
   )
