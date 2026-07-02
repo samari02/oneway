@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { TaskPlanning } from '@oneway/shared'
 
@@ -100,4 +101,75 @@ export function formatDate(iso: string | undefined): string {
     day: 'numeric',
     year: 'numeric',
   })
+}
+
+export function InlineEditableLabel({
+  value,
+  onSave,
+  className,
+  inputClassName,
+  ariaLabel,
+}: {
+  value: string
+  onSave: (next: string) => void
+  className?: string
+  inputClassName?: string
+  ariaLabel: string
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!editing) setDraft(value)
+  }, [value, editing])
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus()
+  }, [editing])
+
+  const commitEdit = () => {
+    const next = draft.trim()
+    if (!next) {
+      setDraft(value)
+      setEditing(false)
+      return
+    }
+    if (next !== value) onSave(next)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        className={inputClassName}
+        value={draft}
+        aria-label={ariaLabel}
+        onChange={(e) => setDraft(e.target.value)}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commitEdit()
+          if (e.key === 'Escape') {
+            setDraft(value)
+            setEditing(false)
+          }
+        }}
+        onBlur={commitEdit}
+      />
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      className={className}
+      onClick={(e) => {
+        e.stopPropagation()
+        setEditing(true)
+      }}
+    >
+      {value}
+    </button>
+  )
 }

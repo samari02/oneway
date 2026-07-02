@@ -1,105 +1,277 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
-import type { Task, TaskPlanning } from '@oneway/shared'
-import { hasApiKey } from '@/lib/openai'
-import { OPENAI_KEY_SETTINGS_HINT } from '../hooks/useSpeechRecognition'
 import {
-  suggestTaskOrganization,
-  type TaskOrganizeContext,
-  type TaskOrgSuggestion,
-  type BucketContext,
-  type SubContext,
-} from '../api/suggestTaskOrganization'
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react'
+import type { Task, TaskPlanning } from '@oneway/shared'
+import { useAuth } from '@/features/auth'
+import { hasApiKey } from '@/lib/openai'
+import { getUserContext } from '../api/userContext'
+import {
+  findDuplicateCandidates,
+  scanOrganizeChat,
+  sendOrganizeChatMessage,
+  type OrganizeChatTurn,
+  type OrganizeScanPayload,
+  type OrganizeSuggestion,
+  type RecentlyCompletedTask,
+} from '../api/organizeChat'
+import type { BucketContext, SubContext, TaskOrganizeContext } from '../api/suggestTaskOrganization'
+import { OPENAI_KEY_SETTINGS_HINT } from '../hooks/useSpeechRecognition'
+import { HomeCharacter } from './unified/HomeCharacter'
 import { CloseIcon, PLANNING_LABELS } from './tasksViewShared'
 import './OrganizeModal.css'
 
+const SESSION_KEY = 'clarity-organize-session'
+const CLARITY_AVATAR_SIZE = 40
+
+export type OrganizeApplyAction =
+  | { type: 'move'; taskId: string; planning?: TaskPlanning; category?: string }
+  | { type: 'merge'; keepTaskId: string; mergeTaskIds: string[]; title?: string }
+  | { type: 'archive'; taskId: string }
+
 type OrganizeModalProps = {
   openTasks: Task[]
+  recentlyCompleted: RecentlyCompletedTask[]
   buckets: BucketContext[]
   subs: SubContext[]
   getBucketForSub: (subId: string) => { id: string; label: string } | undefined
   getSubLabel: (subId: string) => string
-  onApply: (updates: Array<{ taskId: string; planning?: TaskPlanning; category?: string }>) => void
+  onApply: (actions: OrganizeApplyAction[]) => void
   onClose: () => void
 }
 
-type Phase = 'input' | 'loading' | 'preview'
-
 type EnrichedSuggestion = {
-  taskId: string
-  taskTitle: string
+  id: string
   checked: boolean
-  currentPlanning: TaskPlanning
-  currentCategoryId: string
-  currentCategoryLabel: string
-  currentBucketLabel: string
-  effectivePlanning?: TaskPlanning
-  effectiveCategoryId?: string
-  reason?: string
+  applied: boolean
+} & OrganizeSuggestion
+
+type ChatMessage = {
+  id: string
+  role: 'clarity' | 'user'
+  text: string
+  timestamp: number
+  suggestions?: EnrichedSuggestion[]
 }
 
-function planningPriority(planning: TaskPlanning): string {
-  switch (planning) {
-    case 'today':
-      return 'High'
-    case 'next':
-      return 'Medium'
-    case 'later':
-      return 'Low'
-    default:
-      return 'Backlog'
+type LoadingPhase = 'scan' | 'followup' | null
+
+type PersistedSession = {
+  messages: ChatMessage[]
+  savedAt: number
+}
+
+function loadSession(): PersistedSession | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as PersistedSession
+    if (!Array.isArray(parsed.messages)) return null
+    return parsed
+  } catch {
+    return null
   }
 }
 
-function SparkleIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" />
-      <path d="M5 19l1 3 1-3 3-1-3-1-1-3-1 3-3 1 3 1 1 3z" />
-    </svg>
-  )
+function saveSession(messages: ChatMessage[]): void {
+  try {
+    const session: PersistedSession = { messages, savedAt: Date.now() }
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  } catch {
+    // sessionStorage may be unavailable
+  }
+}
+
+function clearSession(): void {
+  try {
+    sessionStorage.removeItem(SESSION_KEY)
+  } catch {
+    // ignore
+  }
 }
 
 function enrichSuggestions(
-  raw: TaskOrgSuggestion[],
+  raw: OrganizeSuggestion[],
   openTasks: Task[],
-  getBucketForSub: OrganizeModalProps['getBucketForSub'],
-  getSubLabel: OrganizeModalProps['getSubLabel'],
 ): EnrichedSuggestion[] {
   const taskById = new Map(openTasks.map((t) => [t.id, t]))
   const result: EnrichedSuggestion[] = []
 
   for (const s of raw) {
-    const task = taskById.get(s.taskId)
-    if (!task || task.status !== 'open') continue
+    const id = crypto.randomUUID()
 
-    const currentPlanning = task.planning ?? 'backlog'
-    const bucket = getBucketForSub(task.category)
-    const effectivePlanning = s.suggestedPlanning ?? currentPlanning
-    const effectiveCategoryId = s.suggestedCategoryId ?? task.category
-
-    const planningChange = effectivePlanning !== currentPlanning
-    const categoryChange = effectiveCategoryId !== task.category
-    if (!planningChange && !categoryChange) continue
-
-    result.push({
-      taskId: s.taskId,
-      taskTitle: task.title,
-      checked: true,
-      currentPlanning,
-      currentCategoryId: task.category,
-      currentCategoryLabel: getSubLabel(task.category),
-      currentBucketLabel: bucket?.label ?? '—',
-      effectivePlanning,
-      effectiveCategoryId,
-      reason: s.reason,
-    })
+    if (s.type === 'move') {
+      const task = taskById.get(s.taskId)
+      if (!task) continue
+      result.push({ ...s, id, checked: true, applied: false })
+    } else if (s.type === 'merge') {
+      const keep = taskById.get(s.keepTaskId)
+      if (!keep) continue
+      const rawMergeIds =
+        s.mergeTaskIds ??
+        ('mergeTaskId' in s && typeof s.mergeTaskId === 'string' ? [s.mergeTaskId] : [])
+      const validMergeIds = rawMergeIds.filter((id) => {
+        const merge = taskById.get(id)
+        return !!merge && id !== s.keepTaskId
+      })
+      if (validMergeIds.length === 0) continue
+      result.push({ ...s, mergeTaskIds: validMergeIds, id, checked: true, applied: false })
+    } else if (s.type === 'archive') {
+      const task = taskById.get(s.taskId)
+      if (!task) continue
+      result.push({ ...s, id, checked: true, applied: false })
+    }
   }
 
   return result
 }
 
+function suggestionLabel(
+  s: EnrichedSuggestion,
+  openTasks: Task[],
+  getSubLabel: (subId: string) => string,
+): string {
+  const taskById = new Map(openTasks.map((t) => [t.id, t]))
+
+  if (s.type === 'move') {
+    const task = taskById.get(s.taskId)
+    if (!task) return 'Move task'
+    const parts: string[] = [`Move "${task.title}"`]
+    const currentPlanning = task.planning ?? 'backlog'
+    if (s.suggestedPlanning && s.suggestedPlanning !== currentPlanning) {
+      parts.push(`→ ${PLANNING_LABELS[s.suggestedPlanning]}`)
+    }
+    if (s.suggestedCategoryId && s.suggestedCategoryId !== task.category) {
+      parts.push(`→ ${getSubLabel(s.suggestedCategoryId)}`)
+    }
+    return parts.join(' ')
+  }
+
+  if (s.type === 'merge') {
+    const keep = taskById.get(s.keepTaskId)
+    const count = s.mergeTaskIds.length
+    const title = s.suggestedTitle ?? keep?.title ?? 'task'
+    if (count === 1) {
+      const merge = taskById.get(s.mergeTaskIds[0])
+      return `Merge "${merge?.title ?? 'duplicate'}" into "${title}" (archive duplicate)`
+    }
+    return `Archive ${count} duplicate${count === 1 ? '' : 's'}, keep "${title}"`
+  }
+
+  if (s.type === 'archive') {
+    const task = taskById.get(s.taskId)
+    return `Archive "${task?.title ?? 'task'}"`
+  }
+
+  return 'Suggestion'
+}
+
+function suggestionTypeBadge(type: EnrichedSuggestion['type']): string {
+  switch (type) {
+    case 'move':
+      return 'MOVE'
+    case 'merge':
+      return 'MERGE'
+    case 'archive':
+      return 'ARCHIVE'
+  }
+}
+
+function loadingMessage(phase: LoadingPhase): string {
+  if (phase === 'scan') return 'Looking at your tasks…'
+  if (phase === 'followup') return 'Organizing…'
+  return 'Thinking…'
+}
+
+function SendIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function renderMessageText(text: string) {
+  return text.split('\n').map((line, i, lines) => {
+    const boldParts = line.split(/(\*\*[^*]+\*\*)/)
+    return (
+      <span key={i}>
+        {boldParts.map((part, j) =>
+          part.startsWith('**') && part.endsWith('**') ? (
+            <strong key={j}>{part.slice(2, -2)}</strong>
+          ) : (
+            <span key={j}>{part}</span>
+          ),
+        )}
+        {i < lines.length - 1 && <br />}
+      </span>
+    )
+  })
+}
+
+function SuggestionCard({
+  suggestions,
+  openTasks,
+  getSubLabel,
+  onToggle,
+}: {
+  suggestions: EnrichedSuggestion[]
+  openTasks: Task[]
+  getSubLabel: (subId: string) => string
+  onToggle: (id: string) => void
+}) {
+  const pending = suggestions.filter((s) => !s.applied)
+  if (pending.length === 0) return null
+
+  return (
+    <div className="organize-modal__suggestion-card">
+      <div className="organize-modal__suggestion-card-header">
+        <span className="organize-modal__preview-badge">Suggestions</span>
+      </div>
+      <ul className="organize-modal__suggestions">
+        {pending.map((s) => (
+          <li
+            key={s.id}
+            className={`organize-modal__suggestion${s.checked ? '' : ' organize-modal__suggestion--unchecked'}`}
+          >
+            <input
+              type="checkbox"
+              className="organize-modal__checkbox"
+              checked={s.checked}
+              onChange={() => onToggle(s.id)}
+              aria-label={suggestionLabel(s, openTasks, getSubLabel)}
+            />
+            <div className="organize-modal__suggestion-body">
+              <div className="organize-modal__suggestion-meta">
+                <span className={`organize-modal__type-badge organize-modal__type-badge--${s.type}`}>
+                  {suggestionTypeBadge(s.type)}
+                </span>
+                <span className="organize-modal__suggestion-title">
+                  {suggestionLabel(s, openTasks, getSubLabel)}
+                </span>
+              </div>
+              {s.reason && <p className="organize-modal__reason">{s.reason}</p>}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export function OrganizeModal({
   openTasks,
+  recentlyCompleted,
   buckets,
   subs,
   getBucketForSub,
@@ -107,12 +279,16 @@ export function OrganizeModal({
   onApply,
   onClose,
 }: OrganizeModalProps) {
-  const [phase, setPhase] = useState<Phase>('input')
-  const [userMessage, setUserMessage] = useState('')
+  const { user } = useAuth()
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadSession()?.messages ?? [])
+  const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>(null)
   const [error, setError] = useState<string | null>(null)
-  const [reviewMode, setReviewMode] = useState(false)
-  const [suggestions, setSuggestions] = useState<EnrichedSuggestion[]>([])
-  const [appliedCount, setAppliedCount] = useState<number | null>(null)
+  const [userContextText, setUserContextText] = useState<string | undefined>()
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const scanStartedRef = useRef(false)
 
   const taskContext = useMemo((): TaskOrganizeContext[] => {
     return openTasks.map((t) => {
@@ -128,40 +304,94 @@ export function OrganizeModal({
     })
   }, [openTasks, getBucketForSub, getSubLabel])
 
+  const duplicateCandidates = useMemo(
+    () => findDuplicateCandidates(taskContext),
+    [taskContext],
+  )
+
+  const scanPayload = useMemo(
+    (): OrganizeScanPayload => ({
+      openTasks: taskContext,
+      buckets,
+      subs,
+      duplicateCandidates,
+      recentlyCompleted,
+      userContext: userContextText,
+    }),
+    [taskContext, buckets, subs, duplicateCandidates, recentlyCompleted, userContextText],
+  )
+
+  const chatHistory = useMemo((): OrganizeChatTurn[] => {
+    return messages.map((m) => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.text,
+    }))
+  }, [messages])
+
+  const pendingSuggestions = useMemo(() => {
+    return messages.flatMap((m) => m.suggestions?.filter((s) => !s.applied && s.checked) ?? [])
+  }, [messages])
+
+  const allPendingSuggestions = useMemo(() => {
+    return messages.flatMap((m) => m.suggestions?.filter((s) => !s.applied) ?? [])
+  }, [messages])
+
+  const checkedCount = pendingSuggestions.length
+
+  useEffect(() => {
+    if (!user?.id) return
+    void getUserContext(user.id)
+      .then((ctx) => {
+        if (ctx?.context_text) setUserContextText(ctx.context_text)
+      })
+      .catch(() => {
+        // user context is optional
+      })
+  }, [user?.id])
+
+  useEffect(() => {
+    saveSession(messages)
+  }, [messages])
+
   useEffect(() => {
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape' && phase !== 'loading') onClose()
+      if (event.key === 'Escape' && !isLoading) onClose()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onClose, phase])
+  }, [onClose, isLoading])
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, EnrichedSuggestion[]>()
-
-    for (const s of suggestions) {
-      const subId = s.effectiveCategoryId ?? s.currentCategoryId
-      const bucket = getBucketForSub(subId)
-      const subLabel = getSubLabel(subId)
-      const key = `${bucket?.label ?? '—'} · ${subLabel}`
-      const list = map.get(key) ?? []
-      list.push(s)
-      map.set(key, list)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) {
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight
+      })
     }
+  }, [messages, isLoading])
 
-    return Array.from(map.entries()).map(([label, items]) => ({
-      label,
-      color: '#8b5cf6',
-      items,
-    }))
-  }, [suggestions, getBucketForSub, getSubLabel])
+  const appendClarityMessage = useCallback(
+    (text: string, rawSuggestions?: OrganizeSuggestion[]) => {
+      const suggestions = rawSuggestions?.length
+        ? enrichSuggestions(rawSuggestions, openTasks)
+        : undefined
 
-  const checkedCount = suggestions.filter((s) => s.checked).length
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: 'clarity',
+          text,
+          timestamp: Date.now(),
+          suggestions,
+        },
+      ])
+    },
+    [openTasks],
+  )
 
-  const handleGenerate = useCallback(async () => {
+  const runScan = useCallback(async () => {
     setError(null)
-    setAppliedCount(null)
-    setReviewMode(false)
 
     if (!hasApiKey()) {
       setError(OPENAI_KEY_SETTINGS_HINT)
@@ -169,85 +399,184 @@ export function OrganizeModal({
     }
 
     if (openTasks.length === 0) {
-      setError('No open tasks to organize. Add some tasks first.')
+      setMessages([
+        {
+          id: crypto.randomUUID(),
+          role: 'clarity',
+          text: "You don't have any open tasks yet. Add some tasks first, then I can help you organize them.",
+          timestamp: Date.now(),
+        },
+      ])
       return
     }
 
-    setPhase('loading')
-
+    setIsLoading(true)
+    setLoadingPhase('scan')
     try {
-      const raw = await suggestTaskOrganization(
-        taskContext,
-        buckets,
-        subs,
-        openTasks,
-        userMessage || undefined,
-      )
-
-      const enriched = enrichSuggestions(raw, openTasks, getBucketForSub, getSubLabel)
-
-      if (enriched.length === 0) {
-        setError('Clarity thinks your tasks are already well organized — no changes suggested.')
-        setPhase('input')
-        return
-      }
-
-      setSuggestions(enriched)
-      setPhase('preview')
+      const result = await scanOrganizeChat(scanPayload, openTasks)
+      appendClarityMessage(result.message, result.suggestions)
     } catch (err) {
       if (err instanceof Error && err.message === 'NO_API_KEY') {
         setError(OPENAI_KEY_SETTINGS_HINT)
       } else {
         setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
       }
-      setPhase('input')
+    } finally {
+      setIsLoading(false)
+      setLoadingPhase(null)
     }
-  }, [taskContext, buckets, subs, openTasks, userMessage, getBucketForSub, getSubLabel])
+  }, [scanPayload, openTasks, appendClarityMessage])
 
-  const toggleSuggestion = (taskId: string) => {
-    setSuggestions((prev) =>
-      prev.map((s) => (s.taskId === taskId ? { ...s, checked: !s.checked } : s)),
+  useEffect(() => {
+    if (scanStartedRef.current) return
+    scanStartedRef.current = true
+
+    const saved = loadSession()
+    if (saved && saved.messages.length > 0) {
+      setMessages(saved.messages)
+      return
+    }
+
+    void runScan()
+  }, [runScan])
+
+  const toggleSuggestion = useCallback((messageId: string, suggestionId: string) => {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId || !m.suggestions) return m
+        return {
+          ...m,
+          suggestions: m.suggestions.map((s) =>
+            s.id === suggestionId ? { ...s, checked: !s.checked } : s,
+          ),
+        }
+      }),
     )
-  }
+  }, [])
 
-  const toggleAll = (checked: boolean) => {
-    setSuggestions((prev) => prev.map((s) => ({ ...s, checked })))
-  }
+  const handleSend = useCallback(async () => {
+    const text = input.trim()
+    if (!text || isLoading) return
 
-  const updateSuggestion = (
-    taskId: string,
-    updates: Partial<Pick<EnrichedSuggestion, 'effectivePlanning' | 'effectiveCategoryId'>>,
-  ) => {
-    setSuggestions((prev) =>
-      prev.map((s) => (s.taskId === taskId ? { ...s, ...updates } : s)),
+    if (!hasApiKey()) {
+      setError(OPENAI_KEY_SETTINGS_HINT)
+      return
+    }
+
+    setError(null)
+    setInput('')
+    setMessages((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), role: 'user', text, timestamp: Date.now() },
+    ])
+
+    setIsLoading(true)
+    setLoadingPhase('followup')
+    try {
+      const result = await sendOrganizeChatMessage(
+        scanPayload,
+        [...chatHistory, { role: 'user', content: text }],
+        text,
+        openTasks,
+      )
+      appendClarityMessage(result.message, result.suggestions)
+    } catch (err) {
+      if (err instanceof Error && err.message === 'NO_API_KEY') {
+        setError(OPENAI_KEY_SETTINGS_HINT)
+      } else {
+        setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      }
+    } finally {
+      setIsLoading(false)
+      setLoadingPhase(null)
+      inputRef.current?.focus()
+    }
+  }, [input, isLoading, scanPayload, chatHistory, openTasks, appendClarityMessage])
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        void handleSend()
+      }
+    },
+    [handleSend],
+  )
+
+  const handleApply = useCallback(() => {
+    const toApply = messages.flatMap((m) => m.suggestions?.filter((s) => s.checked && !s.applied) ?? [])
+    if (toApply.length === 0) return
+
+    const actions: OrganizeApplyAction[] = []
+
+    for (const s of toApply) {
+      if (s.type === 'move') {
+        const task = openTasks.find((t) => t.id === s.taskId)
+        if (!task || task.status !== 'open') continue
+        const action: OrganizeApplyAction = { type: 'move', taskId: s.taskId }
+        const currentPlanning = task.planning ?? 'backlog'
+        if (s.suggestedPlanning && s.suggestedPlanning !== currentPlanning) {
+          action.planning = s.suggestedPlanning
+        }
+        if (s.suggestedCategoryId && s.suggestedCategoryId !== task.category) {
+          action.category = s.suggestedCategoryId
+        }
+        if (action.planning || action.category) actions.push(action)
+      } else if (s.type === 'merge') {
+        actions.push({
+          type: 'merge',
+          keepTaskId: s.keepTaskId,
+          mergeTaskIds: s.mergeTaskIds,
+          title: s.suggestedTitle,
+        })
+      } else if (s.type === 'archive') {
+        actions.push({ type: 'archive', taskId: s.taskId })
+      }
+    }
+
+    if (actions.length === 0) return
+
+    onApply(actions)
+
+    const appliedIds = new Set(toApply.map((s) => s.id))
+    setMessages((prev) =>
+      prev.map((m) => ({
+        ...m,
+        suggestions: m.suggestions?.map((s) =>
+          appliedIds.has(s.id) ? { ...s, applied: true, checked: false } : s,
+        ),
+      })),
     )
-  }
 
-  const handleApply = () => {
-    const toApply = suggestions.filter((s) => {
-      if (!s.checked) return false
-      const planningChange = s.effectivePlanning !== s.currentPlanning
-      const categoryChange = s.effectiveCategoryId !== s.currentCategoryId
-      return planningChange || categoryChange
-    })
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: 'clarity',
+        text: `Applied ${actions.length} change${actions.length === 1 ? '' : 's'}. Want to keep going or adjust anything else?`,
+        timestamp: Date.now(),
+      },
+    ])
+  }, [messages, openTasks, onApply])
 
-    const updates = toApply.map((s) => ({
-      taskId: s.taskId,
-      ...(s.effectivePlanning !== s.currentPlanning ? { planning: s.effectivePlanning } : {}),
-      ...(s.effectiveCategoryId !== s.currentCategoryId
-        ? { category: s.effectiveCategoryId }
-        : {}),
-    }))
+  const handleClose = useCallback(() => {
+    saveSession(messages)
+    onClose()
+  }, [messages, onClose])
 
-    onApply(updates)
-    setAppliedCount(updates.length)
-    setTimeout(onClose, 1200)
-  }
+  const handleStartFresh = useCallback(() => {
+    clearSession()
+    setMessages([])
+    scanStartedRef.current = false
+    setError(null)
+    scanStartedRef.current = true
+    void runScan()
+  }, [runScan])
 
   return (
-    <div className="organize-modal__backdrop" role="presentation" onClick={onClose}>
+    <div className="organize-modal__backdrop" role="presentation" onClick={handleClose}>
       <div
-        className="organize-modal"
+        className="organize-modal organize-modal--chat"
         role="dialog"
         aria-labelledby="organize-modal-title"
         onClick={(e) => e.stopPropagation()}
@@ -259,220 +588,116 @@ export function OrganizeModal({
             </h2>
             <p className="organize-modal__subtitle">Let Clarity handle the chaos.</p>
           </div>
-          <button
-            type="button"
-            className="organize-modal__close"
-            onClick={onClose}
-            aria-label="Close"
-            disabled={phase === 'loading'}
-          >
-            <CloseIcon />
-          </button>
+          <div className="organize-modal__header-actions">
+            <button
+              type="button"
+              className="organize-modal__btn organize-modal__btn--ghost organize-modal__btn--sm"
+              onClick={handleStartFresh}
+              disabled={isLoading}
+            >
+              Rescan
+            </button>
+            <button
+              type="button"
+              className="organize-modal__close"
+              onClick={handleClose}
+              aria-label="Close"
+              disabled={isLoading}
+            >
+              <CloseIcon />
+            </button>
+          </div>
         </header>
 
-        <div className="organize-modal__body">
-          {appliedCount !== null && (
-            <p className="organize-modal__success">Applied {appliedCount} change{appliedCount === 1 ? '' : 's'}.</p>
-          )}
+        <div className="organize-modal__chat-thread" ref={scrollRef}>
+          <p className="organize-modal__disclaimer organize-modal__disclaimer--inline">
+            You&apos;re in control. Review before applying.
+          </p>
 
-          {phase === 'input' && (
-            <section className="organize-modal__section" aria-labelledby="organize-capture-label">
-              <h3 id="organize-capture-label" className="organize-modal__section-label">
-                Capture anything
-              </h3>
-              <div className="organize-modal__input-wrap">
-                <textarea
-                  className="organize-modal__input"
-                  placeholder="What's on your mind? (optional — e.g. &quot;focus on work this week&quot; or &quot;clear my Today column&quot;)"
-                  value={userMessage}
-                  onChange={(e) => setUserMessage(e.target.value)}
-                  rows={3}
-                  aria-label="Optional guidance for Clarity"
-                />
-                <p className="organize-modal__context-note">
-                  Clarity will analyze {openTasks.length} open task{openTasks.length === 1 ? '' : 's'} automatically.
-                </p>
-                <button
-                  type="button"
-                  className="organize-modal__generate-btn"
-                  onClick={() => void handleGenerate()}
-                  disabled={openTasks.length === 0}
-                >
-                  <SparkleIcon />
-                  Get suggestions
-                </button>
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`organize-modal__bubble organize-modal__bubble--${msg.role}`}
+            >
+              {msg.role === 'clarity' && (
+                <div className="organize-modal__bubble-avatar">
+                  <HomeCharacter size={CLARITY_AVATAR_SIZE} compact />
+                </div>
+              )}
+              <div className="organize-modal__bubble-content">
+                <div className="organize-modal__bubble-text">{renderMessageText(msg.text)}</div>
+                {msg.suggestions && msg.suggestions.length > 0 && (
+                  <SuggestionCard
+                    suggestions={msg.suggestions}
+                    openTasks={openTasks}
+                    getSubLabel={getSubLabel}
+                    onToggle={(suggestionId) => toggleSuggestion(msg.id, suggestionId)}
+                  />
+                )}
               </div>
-            </section>
-          )}
+            </div>
+          ))}
 
-          {phase === 'loading' && (
-            <div className="organize-modal__loading" aria-live="polite">
-              <div className="organize-modal__spinner" aria-hidden />
-              <span>Clarity is reviewing your tasks…</span>
+          {isLoading && (
+            <div className="organize-modal__bubble organize-modal__bubble--clarity">
+              <div className="organize-modal__bubble-avatar">
+                <HomeCharacter size={CLARITY_AVATAR_SIZE} compact />
+              </div>
+              <div className="organize-modal__bubble-content">
+                <div className="organize-modal__typing" aria-live="polite">
+                  <span className="organize-modal__typing-label">
+                    {loadingMessage(loadingPhase)}
+                  </span>
+                  <span className="organize-modal__typing-dots" aria-hidden>
+                    <span className="organize-modal__typing-dot" />
+                    <span className="organize-modal__typing-dot" />
+                    <span className="organize-modal__typing-dot" />
+                  </span>
+                </div>
+              </div>
             </div>
           )}
 
           {error && <p className="organize-modal__error" role="alert">{error}</p>}
-
-          {phase === 'preview' && (
-            <section className="organize-modal__section" aria-labelledby="organize-suggestions-label">
-              <div className="organize-modal__preview-header">
-                <h3 id="organize-suggestions-label" className="organize-modal__section-label">
-                  AI organize suggestions
-                </h3>
-                <span className="organize-modal__preview-badge">Preview</span>
-              </div>
-              <p className="organize-modal__disclaimer">
-                You&apos;re in control. Review before applying.
-              </p>
-
-              {suggestions.length === 0 ? (
-                <p className="organize-modal__empty">No suggestions to show.</p>
-              ) : (
-                <div className="organize-modal__groups">
-                  {grouped.map(({ label, color, items }) => (
-                    <div key={label} className="organize-modal__group">
-                      <div className="organize-modal__group-header">
-                        <span
-                          className="organize-modal__group-dot"
-                          style={{ '--organize-cat-color': color } as CSSProperties}
-                          aria-hidden
-                        />
-                        <span className="organize-modal__group-label">{label}</span>
-                        <span className="organize-modal__group-count">{items.length}</span>
-                      </div>
-                      <ul className="organize-modal__suggestions">
-                        {items.map((s) => {
-                          const effectivePlanning = s.effectivePlanning ?? s.currentPlanning
-                          return (
-                            <li
-                              key={s.taskId}
-                              className={`organize-modal__suggestion${s.checked ? '' : ' organize-modal__suggestion--unchecked'}`}
-                            >
-                              <input
-                                type="checkbox"
-                                className="organize-modal__checkbox"
-                                checked={s.checked}
-                                onChange={() => toggleSuggestion(s.taskId)}
-                                aria-label={`Apply suggestion for ${s.taskTitle}`}
-                              />
-                              <div className="organize-modal__suggestion-body">
-                                <span className="organize-modal__suggestion-title">{s.taskTitle}</span>
-                                {reviewMode ? (
-                                  <div className="organize-modal__suggestion-change">
-                                    <select
-                                      className="organize-modal__edit-select"
-                                      value={effectivePlanning}
-                                      onChange={(e) =>
-                                        updateSuggestion(s.taskId, {
-                                          effectivePlanning: e.target.value as TaskPlanning,
-                                        })
-                                      }
-                                      aria-label={`Planning for ${s.taskTitle}`}
-                                    >
-                                      {(Object.keys(PLANNING_LABELS) as TaskPlanning[]).map((p) => (
-                                        <option key={p} value={p}>
-                                          {PLANNING_LABELS[p]}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    <select
-                                      className="organize-modal__edit-select"
-                                      value={s.effectiveCategoryId ?? s.currentCategoryId}
-                                      onChange={(e) =>
-                                        updateSuggestion(s.taskId, {
-                                          effectiveCategoryId: e.target.value,
-                                        })
-                                      }
-                                      aria-label={`Category for ${s.taskTitle}`}
-                                    >
-                                      {subs.map((sub) => (
-                                        <option key={sub.id} value={sub.id}>
-                                          {sub.bucketLabel} → {sub.label}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                ) : (
-                                  <div className="organize-modal__suggestion-change">
-                                    <span>{PLANNING_LABELS[s.currentPlanning]}</span>
-                                    <span className="organize-modal__arrow" aria-hidden>→</span>
-                                    {s.effectivePlanning && s.effectivePlanning !== s.currentPlanning && (
-                                      <span
-                                        className={`organize-modal__plan-badge organize-modal__plan-badge--${s.effectivePlanning}`}
-                                      >
-                                        {PLANNING_LABELS[s.effectivePlanning]}
-                                      </span>
-                                    )}
-                                    {s.effectiveCategoryId &&
-                                      s.effectiveCategoryId !== s.currentCategoryId && (
-                                        <>
-                                          <span className="organize-modal__arrow" aria-hidden>·</span>
-                                          <span>{getSubLabel(s.effectiveCategoryId)}</span>
-                                        </>
-                                      )}
-                                    <span className="organize-modal__priority">
-                                      {planningPriority(effectivePlanning)}
-                                    </span>
-                                  </div>
-                                )}
-                                {s.reason && !reviewMode && (
-                                  <p className="organize-modal__reason">{s.reason}</p>
-                                )}
-                              </div>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
         </div>
 
-        <footer className="organize-modal__footer">
-          {phase === 'preview' && suggestions.length > 0 && (
-            <label className="organize-modal__select-all">
-              <input
-                type="checkbox"
-                checked={checkedCount === suggestions.length}
-                ref={(el) => {
-                  if (el) el.indeterminate = checkedCount > 0 && checkedCount < suggestions.length
-                }}
-                onChange={(e) => toggleAll(e.target.checked)}
-              />
-              Select all
-            </label>
-          )}
-
-          {phase === 'preview' ? (
-            <>
-              <button type="button" className="organize-modal__btn organize-modal__btn--ghost" onClick={onClose}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="organize-modal__btn organize-modal__btn--ghost"
-                onClick={() => setReviewMode((v) => !v)}
-              >
-                {reviewMode ? 'Done editing' : 'Review & edit'}
-              </button>
+        <footer className="organize-modal__footer organize-modal__footer--chat">
+          {allPendingSuggestions.length > 0 && (
+            <div className="organize-modal__apply-bar">
               <button
                 type="button"
                 className="organize-modal__btn organize-modal__btn--primary"
                 onClick={handleApply}
-                disabled={checkedCount === 0 || appliedCount !== null}
+                disabled={checkedCount === 0 || isLoading}
               >
-                Apply suggestions ({checkedCount})
+                Apply {checkedCount} selected
               </button>
-            </>
-          ) : phase === 'input' ? (
-            <button type="button" className="organize-modal__btn organize-modal__btn--ghost" onClick={onClose}>
-              Cancel
+              <span className="organize-modal__apply-hint">or keep talking below</span>
+            </div>
+          )}
+
+          <div className="organize-modal__input-row">
+            <textarea
+              ref={inputRef}
+              className="organize-modal__chat-input"
+              placeholder="Ask Clarity or answer a question…"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              rows={1}
+              disabled={isLoading}
+              aria-label="Message to Clarity"
+            />
+            <button
+              type="button"
+              className="organize-modal__send-btn"
+              onClick={() => void handleSend()}
+              disabled={!input.trim() || isLoading}
+              aria-label="Send message"
+            >
+              <SendIcon />
             </button>
-          ) : null}
+          </div>
         </footer>
       </div>
     </div>

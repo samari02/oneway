@@ -44,7 +44,7 @@ import { useFocusAreaStore } from '../hooks/useFocusAreaStore'
 import { useCurrentFocus } from '../hooks/useCurrentFocus'
 import { CategoryIcon } from './CategoryIcon'
 import { HierarchyView } from './HierarchyView'
-import { OrganizeModal } from './OrganizeModal'
+import { OrganizeModal, type OrganizeApplyAction } from './OrganizeModal'
 import type { BucketContext, SubContext } from '../api/suggestTaskOrganization'
 import {
   CheckIcon,
@@ -52,6 +52,7 @@ import {
   TrashIcon,
   GripIcon,
   FocusIcon,
+  InlineEditableLabel,
   PLANNING_LABELS,
   PLANNING_COLORS,
   PLANNING_CYCLE,
@@ -688,12 +689,14 @@ function ListBucketRow({
   acceptSubDrop,
   expanded,
   onToggleExpand,
+  onRename,
 }: {
   bucket: { id: string; label: string; emoji?: string | null }
   subCount: number
   acceptSubDrop: boolean
   expanded: boolean
   onToggleExpand: () => void
+  onRename: (label: string) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `${LIST_BUCKET_PREFIX}${bucket.id}` })
   const showOver = acceptSubDrop && isOver
@@ -714,7 +717,13 @@ function ListBucketRow({
             <CategoryIcon categoryId={bucket.id} size={14} />
           )}
         </span>
-        <span className="tasks-view__list-bucket-name">{bucket.label}</span>
+        <InlineEditableLabel
+          value={bucket.label}
+          onSave={onRename}
+          className="tasks-view__list-bucket-name tasks-view__list-bucket-name--editable"
+          inputClassName="tasks-view__task-input tasks-view__list-bucket-input"
+          ariaLabel={`Edit bucket name "${bucket.label}"`}
+        />
         <span className="tasks-view__list-bucket-meta">
           {subCount} sub{subCount === 1 ? '' : 's'}
         </span>
@@ -729,12 +738,14 @@ function ListSubRow({
   acceptTaskDrop,
   expanded,
   onToggleExpand,
+  onRename,
 }: {
   sub: { id: string; label: string; color?: string }
   taskCount: number
   acceptTaskDrop: boolean
   expanded: boolean
   onToggleExpand: () => void
+  onRename: (label: string) => void
 }) {
   const {
     attributes,
@@ -781,7 +792,13 @@ function ListSubRow({
           style={{ '--tasks-cat-color': sub.color ?? '#a78bfa' } as CSSProperties}
           aria-hidden
         />
-        <span className="tasks-view__list-sub-name">{sub.label}</span>
+        <InlineEditableLabel
+          value={sub.label}
+          onSave={onRename}
+          className="tasks-view__list-sub-name tasks-view__list-sub-name--editable"
+          inputClassName="tasks-view__task-input tasks-view__list-sub-input"
+          ariaLabel={`Edit sub-bucket name "${sub.label}"`}
+        />
         <span className="tasks-view__list-sub-meta">
           {taskCount} task{taskCount === 1 ? '' : 's'}
         </span>
@@ -1217,15 +1234,43 @@ export function TasksView() {
     [allSubs],
   )
 
+  const recentlyCompletedForOrganize = useMemo(() => {
+    return tasks
+      .filter((t) => t.status === 'done' && isWithinLastDays(t.completedAt, 7))
+      .map((t) => ({
+        id: t.id,
+        title: t.title,
+        categoryLabel: getSubLabel(t.category),
+        completedAt: t.completedAt,
+      }))
+  }, [tasks, getSubLabel])
+
   const handleOrganizeApply = useCallback(
-    (updates: Array<{ taskId: string; planning?: TaskPlanning; category?: string }>) => {
-      for (const { taskId, planning, category } of updates) {
-        const task = tasks.find((t) => t.id === taskId)
-        if (!task || task.status !== 'open') continue
-        const patch: Partial<Pick<Task, 'planning' | 'category'>> = {}
-        if (planning !== undefined) patch.planning = planning
-        if (category !== undefined) patch.category = category
-        if (Object.keys(patch).length > 0) updateTask(taskId, patch)
+    (actions: OrganizeApplyAction[]) => {
+      for (const action of actions) {
+        if (action.type === 'move') {
+          const task = tasks.find((t) => t.id === action.taskId)
+          if (!task || task.status !== 'open') continue
+          const patch: Partial<Pick<Task, 'planning' | 'category'>> = {}
+          if (action.planning !== undefined) patch.planning = action.planning
+          if (action.category !== undefined) patch.category = action.category
+          if (Object.keys(patch).length > 0) updateTask(action.taskId, patch)
+        } else if (action.type === 'merge') {
+          const keep = tasks.find((t) => t.id === action.keepTaskId)
+          if (!keep || keep.status !== 'open') continue
+          if (action.title && action.title !== keep.title) {
+            updateTask(action.keepTaskId, { title: action.title })
+          }
+          for (const mergeId of action.mergeTaskIds) {
+            const merge = tasks.find((t) => t.id === mergeId)
+            if (!merge || merge.status !== 'open' || mergeId === action.keepTaskId) continue
+            updateTask(mergeId, { status: 'archived' })
+          }
+        } else if (action.type === 'archive') {
+          const task = tasks.find((t) => t.id === action.taskId)
+          if (!task || task.status !== 'open') continue
+          updateTask(action.taskId, { status: 'archived' })
+        }
       }
     },
     [tasks, updateTask],
@@ -1634,6 +1679,28 @@ export function TasksView() {
     [tasksById, updateTask],
   )
 
+  const handleRenameBucket = useCallback(
+    (bucketId: string, label: string) => {
+      if (useFocusAreasMode) {
+        void editArea(bucketId, { label })
+      } else {
+        updateCategory(bucketId, { label })
+      }
+    },
+    [useFocusAreasMode, editArea, updateCategory],
+  )
+
+  const handleRenameSub = useCallback(
+    (subId: string, label: string) => {
+      if (useFocusAreasMode) {
+        void editArea(subId, { label })
+      } else {
+        updateCategory(subId, { label })
+      }
+    },
+    [useFocusAreasMode, editArea, updateCategory],
+  )
+
   const openCount = tasks.filter((t) => t.status === 'open').length
   const completedCount = tasks.filter((t) => t.status === 'done').length
   const todayOpenCount = planningCounts.today
@@ -2010,6 +2077,8 @@ export function TasksView() {
             onDeleteTask={removeTask}
             onMoveSubToBucket={handleHierarchyMoveSubToBucket}
             onMoveTaskToSub={handleHierarchyMoveTaskToSub}
+            onRenameBucket={handleRenameBucket}
+            onRenameSub={handleRenameSub}
           />
         )}
 
@@ -2133,6 +2202,7 @@ export function TasksView() {
                           acceptSubDrop={listDraggingSub}
                           expanded={bucketExpanded}
                           onToggleExpand={() => toggleListBucketCollapse(bucket.id)}
+                          onRename={(label) => handleRenameBucket(bucket.id, label)}
                         />
                         {bucketExpanded &&
                           subs.map((sub) => {
@@ -2150,6 +2220,7 @@ export function TasksView() {
                                   acceptTaskDrop={listDraggingTask}
                                   expanded={subExpanded}
                                   onToggleExpand={() => toggleListSubCollapse(sub.id)}
+                                  onRename={(label) => handleRenameSub(sub.id, label)}
                                 />
                                 {subExpanded &&
                                   tasks.map((task) => {
@@ -2221,6 +2292,7 @@ export function TasksView() {
       {organizeOpen && (
         <OrganizeModal
           openTasks={allOpenTasks}
+          recentlyCompleted={recentlyCompletedForOrganize}
           buckets={organizeBuckets}
           subs={organizeSubs}
           getBucketForSub={(subId) => {

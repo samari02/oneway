@@ -23,6 +23,7 @@ import {
   GripIcon,
   PlusIcon,
   PLANNING_LABELS,
+  InlineEditableLabel,
   type HierarchyItem,
   planningStyle,
 } from './tasksViewShared'
@@ -51,6 +52,8 @@ type HierarchyViewProps = {
   onDeleteTask: (taskId: string) => void
   onMoveSubToBucket: (subId: string, bucketId: string) => void
   onMoveTaskToSub: (taskId: string, subId: string) => void
+  onRenameBucket: (bucketId: string, label: string) => void
+  onRenameSub: (subId: string, label: string) => void
 }
 
 function countTasksForBucket(
@@ -72,22 +75,31 @@ function HierarchyBucketItem({
   selected,
   acceptSubDrop,
   onSelect,
+  onRename,
 }: {
   bucket: HierarchyItem
   count: number
   selected: boolean
   acceptSubDrop: boolean
   onSelect: () => void
+  onRename: (label: string) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `${HIER_BUCKET_PREFIX}${bucket.id}` })
   const showOver = acceptSubDrop && isOver
 
   return (
     <li ref={setNodeRef}>
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         className={`hierarchy-view__item${selected ? ' hierarchy-view__item--selected' : ''}${showOver ? ' hierarchy-view__item--over' : ''}`}
         onClick={onSelect}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onSelect()
+          }
+        }}
       >
         <span className="hierarchy-view__item-icon" aria-hidden>
           {bucket.emoji ? (
@@ -96,9 +108,15 @@ function HierarchyBucketItem({
             <CategoryIcon categoryId={bucket.id} size={16} />
           )}
         </span>
-        <span className="hierarchy-view__item-label">{bucket.label}</span>
+        <InlineEditableLabel
+          value={bucket.label}
+          onSave={onRename}
+          className="hierarchy-view__item-label hierarchy-view__item-label--editable"
+          inputClassName="hierarchy-view__item-input"
+          ariaLabel={`Edit bucket name "${bucket.label}"`}
+        />
         <span className="hierarchy-view__item-count">{count}</span>
-      </button>
+      </div>
     </li>
   )
 }
@@ -109,12 +127,14 @@ function HierarchySubItem({
   selected,
   acceptTaskDrop,
   onSelect,
+  onRename,
 }: {
   sub: HierarchyItem
   count: number
   selected: boolean
   acceptTaskDrop: boolean
   onSelect: () => void
+  onRename: (label: string) => void
 }) {
   const {
     attributes,
@@ -155,15 +175,32 @@ function HierarchySubItem({
         >
           <GripIcon />
         </button>
-        <button type="button" className="hierarchy-view__item-body" onClick={onSelect}>
+        <div
+          role="button"
+          tabIndex={0}
+          className="hierarchy-view__item-body"
+          onClick={onSelect}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onSelect()
+            }
+          }}
+        >
           <span
             className="hierarchy-view__item-dot"
             style={{ '--tasks-cat-color': sub.color ?? '#a78bfa' } as CSSProperties}
             aria-hidden
           />
-          <span className="hierarchy-view__item-label">{sub.label}</span>
+          <InlineEditableLabel
+            value={sub.label}
+            onSave={onRename}
+            className="hierarchy-view__item-label hierarchy-view__item-label--editable"
+            inputClassName="hierarchy-view__item-input"
+            ariaLabel={`Edit sub-bucket name "${sub.label}"`}
+          />
           <span className="hierarchy-view__item-count">{count}</span>
-        </button>
+        </div>
       </div>
     </li>
   )
@@ -385,6 +422,8 @@ export function HierarchyView({
   onDeleteTask,
   onMoveSubToBucket,
   onMoveTaskToSub,
+  onRenameBucket,
+  onRenameSub,
 }: HierarchyViewProps) {
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
 
@@ -488,6 +527,7 @@ export function HierarchyView({
                   selected={bucket.id === selectedBucketId}
                   acceptSubDrop={draggingSub}
                   onSelect={() => onSelectBucket(bucket.id)}
+                  onRename={(label) => onRenameBucket(bucket.id, label)}
                 />
               ))}
             </ul>
@@ -533,6 +573,7 @@ export function HierarchyView({
                     selected={sub.id === selectedSubId}
                     acceptTaskDrop={draggingTask}
                     onSelect={() => onSelectSub(sub.id)}
+                    onRename={(label) => onRenameSub(sub.id, label)}
                   />
                 ))}
               </ul>

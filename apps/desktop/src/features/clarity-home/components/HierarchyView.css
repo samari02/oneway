@@ -149,7 +149,42 @@
   white-space: nowrap;
 }
 
+.hierarchy-view__item-label--editable {
+  flex: 0 1 auto;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: text;
+}
+
+.hierarchy-view__item-input {
+  flex: 0 1 auto;
+  width: min(240px, 100%);
+  min-width: 0;
+  padding: 2px 6px;
+  margin: -2px 0;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.hierarchy-view__item-input:focus {
+  outline: none;
+}
+
 .hierarchy-view__item-count {
+  margin-left: auto;
   flex-shrink: 0;
   min-width: 20px;
   padding: 2px 7px;
