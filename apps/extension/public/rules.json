@@ -7,14 +7,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.com/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -25,14 +32,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.fr/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -43,14 +57,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.co.uk/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -61,14 +82,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.de/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -79,14 +107,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.es/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -97,14 +132,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.it/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -115,14 +157,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.ca/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -133,14 +182,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.com.au/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -151,14 +207,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.ch/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -169,14 +232,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.be/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -187,14 +257,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.nl/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -205,14 +282,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.pt/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -223,14 +307,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.com.br/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -241,14 +332,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.com.mx/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -259,14 +357,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.co.in/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -277,14 +382,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.co.jp/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -295,14 +407,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.co.kr/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -313,14 +432,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.ru/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -331,14 +457,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.pl/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -349,14 +482,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safe", "value": "active" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safe",
+                "value": "active"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||google.at/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -367,14 +507,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "adlt", "value": "strict" }]
+            "addOrReplaceParams": [
+              {
+                "key": "adlt",
+                "value": "strict"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||bing.com/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -385,14 +532,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "adlt", "value": "strict" }]
+            "addOrReplaceParams": [
+              {
+                "key": "adlt",
+                "value": "strict"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||bing.com/images/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -403,14 +557,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "adlt", "value": "strict" }]
+            "addOrReplaceParams": [
+              {
+                "key": "adlt",
+                "value": "strict"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||bing.com/videos/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -421,14 +582,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "kp", "value": "1" }]
+            "addOrReplaceParams": [
+              {
+                "key": "kp",
+                "value": "1"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||duckduckgo.com/*q=*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -439,14 +607,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "vm", "value": "r" }]
+            "addOrReplaceParams": [
+              {
+                "key": "vm",
+                "value": "r"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||search.yahoo.com/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -457,14 +632,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "vm", "value": "r" }]
+            "addOrReplaceParams": [
+              {
+                "key": "vm",
+                "value": "r"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||fr.search.yahoo.com/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -475,14 +657,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "vm", "value": "r" }]
+            "addOrReplaceParams": [
+              {
+                "key": "vm",
+                "value": "r"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||images.search.yahoo.com/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -493,14 +682,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safeSearch", "value": "strict" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safeSearch",
+                "value": "strict"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||ecosia.org/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -511,14 +707,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safesearch", "value": "2" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safesearch",
+                "value": "2"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||qwant.com/*q=*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -529,14 +732,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safesearch", "value": "strict" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safesearch",
+                "value": "strict"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||search.brave.com/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -547,14 +757,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safesearch", "value": "strict" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safesearch",
+                "value": "strict"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||search.brave.com/images*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -565,14 +782,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "safesearch", "value": "strict" }]
+            "addOrReplaceParams": [
+              {
+                "key": "safesearch",
+                "value": "strict"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||search.brave.com/videos*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -583,14 +807,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "family", "value": "yes" }]
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||yandex.com/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -601,14 +832,21 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "family", "value": "yes" }]
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||yandex.ru/search*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -619,14 +857,4245 @@
       "redirect": {
         "transform": {
           "queryTransform": {
-            "addOrReplaceParams": [{ "key": "family", "value": "yes" }]
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
           }
         }
       }
     },
     "condition": {
       "urlFilter": "||yandex.com/images*",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1000,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "pornhub.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1001,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "xvideos.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1002,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "xnxx.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1003,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "xhamster.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1004,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "redtube.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1005,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "youporn.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1006,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "tube8.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1007,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "spankbang.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1008,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "beeg.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1009,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "brazzers.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1010,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "bangbros.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1011,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "realitykings.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1012,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "naughtyamerica.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1013,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "mofos.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1014,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "babes.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1015,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "twistys.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1016,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "digitalplayground.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1017,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "wicked.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1018,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "evilangel.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1019,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "onlyfans.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1020,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fansly.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1021,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "manyvids.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1022,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "chaturbate.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1023,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "stripchat.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1024,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "livejasmin.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1025,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "cam4.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1026,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "bongacams.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1027,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "myfreecams.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1028,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "camsoda.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1029,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "flirt4free.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1030,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "streamate.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1031,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "imlive.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1032,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "jerkmate.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1033,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "porn555.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1034,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "hentaihaven.xxx"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1035,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "hanime.tv"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1036,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "nhentai.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1037,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "hitomi.la"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1038,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "e-hentai.org"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1039,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "exhentai.org"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1040,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "gelbooru.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1041,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "danbooru.donmai.us"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1042,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "rule34.xxx"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1043,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "rule34.paheal.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1044,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "chan.sankakucomplex.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1045,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "sankakucomplex.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1046,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fakku.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1047,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "tsumino.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1048,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1049,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "javlibrary.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1050,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "javmost.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1051,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "missav.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1052,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "supjav.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1053,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "thisav.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1054,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "caribbeancom.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1055,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "1pondo.tv"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1056,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "heyzo.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1057,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "tokyo-hot.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1058,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "r18.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1059,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "mgstage.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1060,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "dmm.co.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1061,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "porntrex.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1062,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "eporner.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1063,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "tnaflix.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1064,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "drtuber.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1065,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "txxx.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1066,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "hclips.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1067,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "pornpics.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1068,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "sex.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1069,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fuq.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1070,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "4tube.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1071,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fapvid.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1072,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "porn.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1073,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "pornone.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1074,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "thumbzilla.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1075,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "motherless.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1076,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "xhamsterlive.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1077,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "pornhd.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1078,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "youjizz.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1079,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "sunporno.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1080,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "porndig.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1081,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "xtube.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1082,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "heavy-r.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1083,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "efukt.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1084,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "clips4sale.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1085,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "ixxx.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1086,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "porntube.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1087,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "alohatube.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1088,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "empflix.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1089,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "voyeurhit.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1090,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fux.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1091,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "perfectgirls.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1092,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "vporn.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1093,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "ashemaletube.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1094,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "pornhits.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1095,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "anyporn.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1096,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fapster.xxx"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1097,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "extremetube.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1098,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "eroprofile.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1099,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "nudevista.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1100,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "xbabe.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1101,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "porngo.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1102,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "freeones.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1103,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "3movs.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1104,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "palimas.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1105,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "javbangers.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1106,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "javhd.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1107,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "javfinder.la"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1108,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "avgle.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1109,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "tokyomotion.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1110,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "njav.tv"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1111,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "javguru.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1112,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "jable.tv"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1113,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "javdoe.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1114,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "pacopacomama.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1115,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "10musume.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1116,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "muramura.tv"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1117,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "h4610.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1118,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "c0930.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1119,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "duga.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1120,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "sokmil.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1121,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "erox.plus"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1122,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "aventertainments.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1123,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "dlsite.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1124,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "melonbooks.co.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1125,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "toranoana.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1126,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "pixiv.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1127,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "iwara.tv"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11000,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "pornhub.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11001,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "xvideos.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11002,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "xnxx.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11003,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "xhamster.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11004,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "redtube.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11005,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "youporn.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11006,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "tube8.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11007,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "spankbang.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11008,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "beeg.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11009,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "brazzers.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11010,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "bangbros.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11011,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "realitykings.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11012,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "naughtyamerica.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11013,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "mofos.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11014,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "babes.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11015,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "twistys.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11016,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "digitalplayground.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11017,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "wicked.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11018,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "evilangel.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11019,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "onlyfans.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11020,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fansly.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11021,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "manyvids.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11022,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "chaturbate.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11023,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "stripchat.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11024,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "livejasmin.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11025,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "cam4.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11026,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "bongacams.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11027,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "myfreecams.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11028,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "camsoda.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11029,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "flirt4free.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11030,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "streamate.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11031,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "imlive.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11032,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "jerkmate.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11033,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "porn555.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11034,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "hentaihaven.xxx"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11035,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "hanime.tv"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11036,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "nhentai.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11037,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "hitomi.la"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11038,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "e-hentai.org"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11039,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "exhentai.org"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11040,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "gelbooru.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11041,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "danbooru.donmai.us"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11042,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "rule34.xxx"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11043,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "rule34.paheal.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11044,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "chan.sankakucomplex.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11045,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "sankakucomplex.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11046,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fakku.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11047,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "tsumino.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11048,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11049,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "javlibrary.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11050,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "javmost.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11051,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "missav.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11052,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "supjav.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11053,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "thisav.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11054,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "caribbeancom.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11055,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "1pondo.tv"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11056,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "heyzo.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11057,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "tokyo-hot.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11058,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "r18.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11059,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "mgstage.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11060,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "dmm.co.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11061,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "porntrex.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11062,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "eporner.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11063,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "tnaflix.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11064,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "drtuber.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11065,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "txxx.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11066,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "hclips.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11067,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "pornpics.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11068,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "sex.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11069,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fuq.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11070,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "4tube.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11071,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fapvid.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11072,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "porn.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11073,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "pornone.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11074,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "thumbzilla.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11075,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "motherless.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11076,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "xhamsterlive.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11077,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "pornhd.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11078,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "youjizz.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11079,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "sunporno.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11080,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "porndig.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11081,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "xtube.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11082,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "heavy-r.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11083,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "efukt.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11084,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "clips4sale.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11085,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "ixxx.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11086,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "porntube.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11087,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "alohatube.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11088,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "empflix.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11089,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "voyeurhit.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11090,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fux.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11091,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "perfectgirls.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11092,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "vporn.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11093,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "ashemaletube.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11094,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "pornhits.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11095,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "anyporn.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11096,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fapster.xxx"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11097,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "extremetube.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11098,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "eroprofile.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11099,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "nudevista.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11100,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "xbabe.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11101,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "porngo.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11102,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "freeones.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11103,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "3movs.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11104,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "palimas.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11105,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "javbangers.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11106,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "javhd.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11107,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "javfinder.la"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11108,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "avgle.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11109,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "tokyomotion.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11110,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "njav.tv"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11111,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "javguru.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11112,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "jable.tv"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11113,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "javdoe.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11114,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "pacopacomama.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11115,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "10musume.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11116,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "muramura.tv"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11117,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "h4610.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11118,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "c0930.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11119,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "duga.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11120,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "sokmil.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11121,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "erox.plus"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11122,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "aventertainments.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11123,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "dlsite.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11124,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "melonbooks.co.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11125,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "toranoana.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11126,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "pixiv.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11127,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "iwara.tv"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
     }
   }
 ]

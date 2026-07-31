@@ -24,6 +24,22 @@ export const BLOCKING_PRESETS: { id: string; label: string; values: string[] }[]
     label: 'Shopping',
     values: ['amazon.com', 'aliexpress.com', 'ebay.com'],
   },
+  {
+    id: 'adult',
+    label: 'Adult Content',
+    values: [
+      'pornhub.com', 'xvideos.com', 'xnxx.com', 'xhamster.com',
+      'redtube.com', 'youporn.com', 'onlyfans.com', 'fansly.com',
+      'chaturbate.com', 'stripchat.com', 'livejasmin.com',
+      'brazzers.com', 'bangbros.com', 'realitykings.com',
+      'nhentai.net', 'e-hentai.org', 'hanime.tv', 'hentaihaven.xxx',
+      'rule34.xxx', 'gelbooru.com', 'fakku.net',
+      'missav.com', 'javlibrary.com', 'caribbeancom.com',
+      '1pondo.tv', 'heyzo.com', 'tokyo-hot.com', 'r18.com', 'mgstage.com',
+      'cam4.com', 'bongacams.com', 'myfreecams.com', 'jerkmate.com',
+      'motherless.com', 'spankbang.com', 'beeg.com',
+    ],
+  },
 ]
 
 function formatSyncedAt(d: Date | null): string {

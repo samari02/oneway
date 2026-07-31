@@ -424,17 +424,18 @@ async function handlePageAnalysisResult(data, sender) {
     const blockThreshold = heightened?.active ? 35 : 70;
     const warnThreshold = heightened?.active ? 15 : 30;
     // Determine action
-    // IMPORTANT: Require 2+ signals to block to reduce false positives
-    // A single signal (e.g., just media ratio or just one keyword in URL) should only warn
+    // Require 2+ signals to block to reduce false positives,
+    // UNLESS an adult-specific strong signal is present (domain heuristic, adult keyword in title)
     let action = 'allow';
     const signalCount = result.reasons.length;
+    const hasStrongAdultSignal = result.reasons.some(r => r.includes('Adult keyword in domain') || r.includes('Explicit keyword in title'));
     if (result.isExplicit) {
         // Meta tag "adult" is a strong enough signal alone
         action = 'block';
         log(`🛑 [ContentAnalysis] BLOCKING ${domain} — Explicit meta tag detected`);
     }
-    else if (result.score >= blockThreshold && signalCount >= 2) {
-        // Multiple signals + high score = block
+    else if (result.score >= blockThreshold && (signalCount >= 2 || hasStrongAdultSignal)) {
+        // Multiple signals + high score = block, OR a single strong adult signal is enough
         action = 'block';
         log(`🛑 [ContentAnalysis] BLOCKING ${domain} — Score: ${result.score}, Signals: ${signalCount}, Reasons: ${result.reasons.join(', ')}`);
         // Redirect to block screen
@@ -452,8 +453,8 @@ async function handlePageAnalysisResult(data, sender) {
         // Update daily stats
         await incrementContentBlockStat();
     }
-    else if (result.score >= blockThreshold && signalCount === 1) {
-        // High score but only one signal = warn (could be false positive)
+    else if (result.score >= blockThreshold && signalCount === 1 && !hasStrongAdultSignal) {
+        // High score but only one weak signal = warn (could be false positive)
         action = 'warn';
         log(`⚠️ [ContentAnalysis] WARNING (single signal) for ${domain} — Score: ${result.score}, Reason: ${result.reasons[0]}`);
     }

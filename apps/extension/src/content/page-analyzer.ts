@@ -14,14 +14,41 @@ import type { ContentAnalysisResult } from '../shared/types'
 // ============================================================================
 
 const EXPLICIT_KEYWORDS = [
-  // Instant block
+  // English — instant block
   'porn', 'porno', 'xxx', 'hentai', 'pornhub', 'xvideos', 'xhamster',
   'redtube', 'youporn', 'brazzers', 'onlyfans', 'chaturbate',
-  // High suspicion
+  // English — high suspicion
   'nsfw', 'nude', 'naked', 'sex video', 'adult video', 'erotic',
-  'camgirl', 'livecam', 'webcam sex', 'stripchat',
-  // Medium
-  'boobs', 'tits', 'ass', 'pussy', 'dick', 'cock', 'milf', 'teen porn'
+  'camgirl', 'camboy', 'livecam', 'webcam sex', 'stripchat',
+  'escort', 'stripper', 'fansly',
+  // English — medium
+  'boobs', 'tits', 'ass', 'pussy', 'dick', 'cock', 'milf', 'teen porn',
+  'dilf', 'threesome', 'gangbang', 'anal', 'blowjob', 'handjob',
+  'creampie', 'facial', 'cumshot', 'deepthroat', 'bondage', 'bdsm',
+  'fetish', 'dominatrix', 'mistress', 'submissive', 'cuckold',
+  'swinger', 'orgy', 'voyeur', 'exhibitionist', 'pegging',
+
+  // French
+  'érotique', 'pornographie', 'sexe', 'nudité', 'porno',
+  'seins', 'bite', 'chatte', 'salope', 'putain', 'baise', 'baiser',
+  'jouir', 'orgasme', 'sodomie', 'fellation', 'cunnilingus', 'sextoy',
+  'webcam adulte', 'libertinage', 'libertin', 'échangisme', 'masturbation',
+
+  // Japanese
+  'ポルノ', 'アダルト', 'エロ', 'エッチ', 'セックス', '無修正',
+  'オナニー', '巨乳', '美乳', '痴女', '熟女', '素人',
+  'ロリ', 'フェラ', 'パイズリ', '中出し', '顔射', '潮吹き',
+  '乱交', '痴漢', 'レイプ', '近親相姦', '人妻', '不倫',
+  '緊縛', '調教', '風俗', 'ソープランド', 'デリヘル', 'ヘルス',
+  'キャバクラ', 'おっぱい', 'まんこ', 'ちんこ', '裏ビデオ',
+  '無料動画', 'アダルトビデオ', '同人', '18禁',
+  'R18', 'R-18', 'FANZA', 'ecchi',
+] as const
+
+const DOMAIN_ADULT_PATTERNS = [
+  'porn', 'xxx', 'sex', 'hentai', 'adult', 'erotic', 'nude',
+  'nsfw', 'fetish', 'camgirl', 'escort', 'fap', 'jav', 'xnxx',
+  'エロ', 'アダルト', '風俗',
 ] as const
 
 const SAFE_CONTEXT_INDICATORS = [
@@ -97,6 +124,13 @@ export function analyzePage(): ContentAnalysisResult {
     }
   }
   
+  // 1b. Check if domain name itself contains adult keywords
+  const domainResult = analyzeDomainName(domain)
+  score += domainResult.score
+  if (domainResult.score > 0) {
+    reasons.push(...domainResult.reasons)
+  }
+
   // 2. Check meta tags (highest priority)
   const metaResult = analyzeMetaTags()
   score += metaResult.score
@@ -172,6 +206,25 @@ export function analyzePage(): ContentAnalysisResult {
     hasSafeContext,
     analysisTimeMs
   }
+}
+
+/**
+ * Analyze domain name for adult keywords (e.g. "porn" in hostname → high score)
+ */
+function analyzeDomainName(domain: string): { score: number; reasons: string[] } {
+  const domainLower = domain.toLowerCase()
+  let score = 0
+  const reasons: string[] = []
+
+  for (const pattern of DOMAIN_ADULT_PATTERNS) {
+    if (domainLower.includes(pattern.toLowerCase())) {
+      score = 80
+      reasons.push(`Adult keyword in domain: "${pattern}" found in ${domain}`)
+      break
+    }
+  }
+
+  return { score, reasons }
 }
 
 /**

@@ -52,5 +52,18 @@
         "path": "rules.json"
       }
     ]
-  }
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "block-screen.html",
+        "block-screen.css",
+        "block-screen.js",
+        "icons/*",
+        "companion-avatars/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

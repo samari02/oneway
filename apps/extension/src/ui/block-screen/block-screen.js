@@ -15,7 +15,8 @@ function extractDomain(url) {
         return url;
     }
 }
-const domain = extractDomain(blockedUrl);
+// DNR redirects may not pass the original URL — fall back to a clear label
+const domain = extractDomain(blockedUrl) || (params.get('type') === 'content' ? 'Blocked site' : 'this site');
 document.getElementById('blocked-domain').textContent = domain;
 document.getElementById('reason').textContent = reason;
 chrome.runtime.sendMessage({ type: 'GET_STATUS' }, (response) => {
