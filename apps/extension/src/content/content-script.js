@@ -1411,6 +1411,13 @@ if (shouldInject()) {
 // Analyzes page content for explicit material
 // ============================================================================
 import { analyzePage, isSPALikely } from './page-analyzer';
+import { initGoogleImagesHide } from './google-images-hide';
+// ============================================================================
+// GOOGLE IMAGES — hide related / "See more" endless-browse UI
+// ============================================================================
+if (shouldInject()) {
+    initGoogleImagesHide();
+}
 const ANALYSIS_DELAY_MS = 500; // Wait for initial render
 const SPA_RECHECK_DELAY_MS = 1500; // Recheck for SPAs
 let hasAnalyzed = false;

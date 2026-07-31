@@ -48,7 +48,12 @@ const EXPLICIT_KEYWORDS = [
 const DOMAIN_ADULT_PATTERNS = [
   'porn', 'xxx', 'sex', 'hentai', 'adult', 'erotic', 'nude',
   'nsfw', 'fetish', 'camgirl', 'escort', 'fap', 'jav', 'xnxx',
-  'エロ', 'アダルト', '風俗',
+  // JP / Asia adult long-tail (keep specific to limit false positives)
+  'fanza', 'missav', 'javdb', 'javbus', 'avgle', 'njav', 'jable',
+  'netflav', 'hpjav', '7mmtv', 'xcity', 'erovideo', 'fc2ppv',
+  'sokmil', 'dxlive', 'chatpia', 'sukebei', 'tokyohot', 'tokyo-hot',
+  '1pondo', 'caribbeancom', 'pacopaco', 'heyzo', 'mgstage',
+  'エロ', 'アダルト', '風俗', 'エロ動画', '無修正',
 ] as const
 
 const SAFE_CONTEXT_INDICATORS = [
