@@ -44,6 +44,8 @@ export const BLOCKING_PRESETS: { id: string; label: string; values: string[] }[]
       'missav.com', 'missav.ws', 'javlibrary.com', 'javdb.com', 'javbus.com',
       'javgg.net', 'njav.tv', 'jable.tv', 'avgle.com', 'netflav.com',
       '123av.com', 'av01.tv', '7mmtv.sx', 'hpjav.tv', 'supjav.com',
+      'njavtv.com', 'tktube.com', 'eroterest.net', 'av-wiki.net',
+      'oppai.tv', 'kawaii-girl.jp',
       'caribbeancom.com', '1pondo.tv', 'heyzo.com', 'tokyo-hot.com',
       'r18.com', 'mgstage.com', 'dmm.co.jp', 'fanza.tv', 'fc2.com',
       'fc2ppvdb.com', 'prestige-av.com', 'sod.co.jp', 's1s1s1.com',

@@ -10235,6 +10235,114 @@
     }
   },
   {
+    "id": 1520,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "eroterest.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1521,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "tktube.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1522,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "av-wiki.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1523,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "oppai.tv"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1524,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "kawaii-girl.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1525,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "njavtv.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
     "id": 11000,
     "priority": 2,
     "action": {
@@ -18028,6 +18136,96 @@
     "condition": {
       "requestDomains": [
         "ftvmilfs.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11520,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "eroterest.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11521,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "tktube.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11522,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "av-wiki.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11523,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "oppai.tv"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11524,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "kawaii-girl.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 11525,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "njavtv.com"
       ],
       "resourceTypes": [
         "sub_frame"

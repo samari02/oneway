@@ -53,6 +53,8 @@ const DOMAIN_ADULT_PATTERNS = [
   'netflav', 'hpjav', '7mmtv', 'xcity', 'erovideo', 'fc2ppv',
   'sokmil', 'dxlive', 'chatpia', 'sukebei', 'tokyohot', 'tokyo-hot',
   '1pondo', 'caribbeancom', 'pacopaco', 'heyzo', 'mgstage',
+  'eroterest',
+
   'エロ', 'アダルト', '風俗', 'エロ動画', '無修正',
 ] as const
 
