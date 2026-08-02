@@ -2,7 +2,7 @@
 
 **Last update:** 2026-08-02
 
-Independent, toggleable **Clarity extension module** that helps keep the Chrome workspace clean when too many tabs accumulate during the day — without becoming a second product or a generic OneTab clone.
+Independent, toggleable **Clarity extension module** — workspace board with selectable grouping, Chrome group apply, and park hygiene.
 
 ## Related docs
 
@@ -70,12 +70,14 @@ At any moment **t**, the user has too many tabs open. The tab bar is polluted; f
 - [x] Threshold constant documented (`WINDOW_TAB_THRESHOLD`); badge deferred (Focus heightened owns action badge)
 - [x] Visible undo for last park batch (toast + Undo button)
 
-### Phase 2 — Native groups + quiet tidy
+### Phase 2 — Board + Chrome groups (in progress)
 
-- [ ] Propose / apply Chrome tab groups (Active / Today / Idle or domain-heavy)
-- [ ] Collapse idle groups by default
-- [ ] Optional quiet tidy for very stale (2–3 days) with undo
-- [ ] Pin / allowlist domains that must never auto-park
+- [x] Board UI with **Group by**: Time / Theme / Site / Window
+- [x] **Apply as Chrome groups** (Time / Theme / Site; Window is view-only)
+- [x] Clarity-prefixed groups (`Clarity · …`); Clear Clarity groups
+- [x] Time: Active open · Today collapsed · Idle collapsed
+- [ ] Optional quiet tidy / notifications without opening manager
+- [ ] Editable theme domain allowlists in UI
 
 ### Phase 3 — Clarity coupling (optional)
 

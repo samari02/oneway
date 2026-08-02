@@ -32,7 +32,7 @@ Manual domain lists (v0) remain useful for inspection; they are not the primary 
 | Propose groups | Named stacks to Apply | Impressive but fragile if semantic |
 | Always-on dashboard | Score + suggestion feed + timeline | Right **philosophy**; combine with lanes |
 
-**Preferred blend:** philosophy of **always-on** + structure of **recency lanes**, with **Chrome groups** for in-place organize and **park** for true abandonment.
+**Preferred blend:** board UI with selectable **Group by** (Time / Theme / Site / Window) + **Apply as Chrome groups**. Time mode collapses Today + Idle. Theme starts as domain rules (not LLM).
 
 ---
 

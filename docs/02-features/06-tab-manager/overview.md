@@ -34,18 +34,14 @@ interface ParkedTab {
 
 ---
 
-## UI (v0 → Phase 1)
+## UI (board + group-by)
 
-- Lavender / Calm-inspired full page (not the mint Focus popup palette — intentional module identity)
-- Hero: open count for current scope + status line (other windows, idle, duplicates, parked)
-- Scope chips: **This window** (default) | **All windows**
-- **Recency lanes:** Active (&lt;1h) / Today (1–6h) / Idle (6h+) via `lastAccessed`
-  - Future Chrome groups: Active open · Today collapsed · Idle collapsed (“fermé”)
-- Nudge + primary action: **Park idle (N)**
-- Also: Close duplicates (count) · Park all except current · Restore parked · Undo last park
-- Setting: auto-close exact duplicates when opening the manager (default on)
-- Popup: idle CTA when current window has idle tabs
-- Parked list: restore one / discard / restore all
+- **Group by** pills: Time · Theme · Site · Window
+- Board columns (chips: title + age, no URL wall)
+- Primary: **Apply as Chrome groups** (+ Clear Clarity groups)
+- Secondary: Park idle · Close duplicates · Restore / Undo
+- Scope: This window (default) | All windows
+- Parked list under “More actions”
 
 ---
 

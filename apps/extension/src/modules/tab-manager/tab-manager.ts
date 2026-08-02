@@ -1,18 +1,27 @@
 /**
- * Clarity Tab Manager — workspace hygiene UI
+ * Clarity Workspace — board + group-by + park hygiene
  */
 
-import { formatAge, laneForLastAccessed, RecencyLane, urlKey } from './buckets'
+import { formatAge, laneForLastAccessed } from './buckets'
+import { applyColumnsAsChromeGroups, clearClarityGroups } from './chrome-groups'
+import {
+  buildColumns,
+  GroupByMode,
+  GROUP_BY_LABELS,
+  hostnameOf,
+} from './grouping'
 import { countDuplicateClosures, pickDuplicateTabIds, refreshTabManagerBadge } from './hygiene'
 import {
   addParkedTabs,
   clearUndoParkBatch,
   getAutoCloseDuplicates,
+  getGroupByMode,
   getModuleEnabled,
   getParkedTabs,
   getUndoParkBatch,
   ParkedTab,
   setAutoCloseDuplicates,
+  setGroupByMode,
   setModuleEnabled,
   setParkedTabs,
   setUndoParkBatch,
@@ -26,17 +35,23 @@ interface TabRow {
   active: boolean
   pinned: boolean
   windowId: number
-  groupId: number
-  groupTitle?: string
-  groupCollapsed?: boolean
   lastAccessed?: number
-  lane: RecencyLane
 }
 
 type WindowScope = 'current' | 'all'
 
+const GROUP_HINTS: Record<GroupByMode, string> = {
+  time: 'Time uses last touch (1h active · 1–6h today · 6h+ idle)',
+  theme: 'Theme uses simple domain rules (Work / Personal / Reading / Other)',
+  site: 'Site groups top domains; Other sites collapsed',
+  window: 'Window is for browsing — switch to Time/Theme/Site to apply Chrome groups',
+}
+
+const CHIP_PREVIEW = 5
+
 let enabled = true
 let scope: WindowScope = 'current'
+let groupBy: GroupByMode = 'time'
 let currentWindowId: number | null = null
 let allTabs: TabRow[] = []
 let parkedTabs: ParkedTab[] = []
@@ -56,17 +71,15 @@ const els = {
   search: document.getElementById('search') as HTMLInputElement,
   openCount: document.getElementById('open-count')!,
   statusLine: document.getElementById('status-line')!,
-  listActive: document.getElementById('list-active')!,
-  listToday: document.getElementById('list-today')!,
-  listIdle: document.getElementById('list-idle')!,
-  metaActive: document.getElementById('meta-active')!,
-  metaToday: document.getElementById('meta-today')!,
-  metaIdle: document.getElementById('meta-idle')!,
+  board: document.getElementById('board')!,
+  groupHint: document.getElementById('groupby-hint')!,
   parkedMeta: document.getElementById('parked-meta')!,
   parkedList: document.getElementById('parked-list')!,
   parkOthers: document.getElementById('btn-park-others') as HTMLButtonElement,
   parkIdle: document.getElementById('btn-park-idle') as HTMLButtonElement,
   parkIdleMain: document.getElementById('btn-park-idle-main') as HTMLButtonElement,
+  applyGroups: document.getElementById('btn-apply-groups') as HTMLButtonElement,
+  clearGroups: document.getElementById('btn-clear-groups') as HTMLButtonElement,
   closeDupes: document.getElementById('btn-close-dupes') as HTMLButtonElement,
   restore: document.getElementById('btn-restore') as HTMLButtonElement,
   undo: document.getElementById('btn-undo') as HTMLButtonElement,
@@ -87,23 +100,11 @@ function showToast(message: string, withUndo = false): void {
   if (toastTimer) clearTimeout(toastTimer)
   toastTimer = setTimeout(() => {
     els.toast.classList.remove('is-visible')
-  }, withUndo ? 8000 : 2400)
+  }, withUndo ? 8000 : 2600)
 }
 
 function isManagerTab(tab: { url?: string }): boolean {
   return Boolean(tab.url?.includes('tab-manager.html'))
-}
-
-function hostnameOf(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '') || 'Other'
-  } catch {
-    return 'Other'
-  }
-}
-
-function faviconFallback(host: string): string {
-  return host.slice(0, 1).toUpperCase() || '?'
 }
 
 function matchesQuery(title: string, url: string): boolean {
@@ -117,50 +118,42 @@ function scopedTabs(): TabRow[] {
   return allTabs.filter((t) => t.windowId === currentWindowId)
 }
 
-function idleParkable(tabs: TabRow[]): TabRow[] {
-  return tabs.filter(
-    (t) =>
-      t.lane === 'idle' &&
-      !t.pinned &&
-      t.url &&
-      !t.url.startsWith('chrome://') &&
-      !t.url.startsWith('chrome-extension://')
-  )
+function filteredTabs(): TabRow[] {
+  return scopedTabs().filter((t) => matchesQuery(t.title, t.url))
 }
 
-async function loadGroupMeta(
-  tabs: chrome.tabs.Tab[]
-): Promise<Map<number, { title: string; collapsed: boolean }>> {
-  const map = new Map<number, { title: string; collapsed: boolean }>()
-  const ids = [
-    ...new Set(
-      tabs
-        .map((t) => t.groupId)
-        .filter((id): id is number => typeof id === 'number' && id !== chrome.tabGroups.TAB_GROUP_ID_NONE)
-    ),
-  ]
+function idleParkable(tabs: TabRow[]): TabRow[] {
+  const now = Date.now()
+  return tabs.filter((t) => {
+    if (t.pinned || !t.url) return false
+    if (t.url.startsWith('chrome://') || t.url.startsWith('chrome-extension://')) return false
+    return laneForLastAccessed(t.lastAccessed, now) === 'idle'
+  })
+}
 
-  await Promise.all(
-    ids.map(async (id) => {
-      try {
-        const group = await chrome.tabGroups.get(id)
-        map.set(id, {
-          title: group.title?.trim() || 'Group',
-          collapsed: Boolean(group.collapsed),
-        })
-      } catch {
-        map.set(id, { title: 'Group', collapsed: false })
-      }
-    })
-  )
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
 
-  return map
+function escapeAttr(value: string): string {
+  return escapeHtml(value).replace(/'/g, '&#39;')
+}
+
+function faviconHtml(url: string | undefined, host: string): string {
+  if (url) return `<img class="tm__group-favicon" src="${escapeAttr(url)}" alt="" />`
+  const letter = host.slice(0, 1).toUpperCase() || '?'
+  return `<div class="tm__group-favicon tm__group-favicon--fallback">${escapeHtml(letter)}</div>`
 }
 
 async function loadState(): Promise<void> {
   enabled = await getModuleEnabled()
   parkedTabs = await getParkedTabs()
   autoDupes = await getAutoCloseDuplicates()
+  groupBy = await getGroupByMode()
   hasUndo = Boolean(await getUndoParkBatch())
   els.autoDupes.checked = autoDupes
 
@@ -169,31 +162,20 @@ async function loadState(): Promise<void> {
     chrome.tabs.query({}),
   ])
   currentWindowId = currentWin.id ?? null
-  const groupMeta = await loadGroupMeta(tabs)
-  const now = Date.now()
 
   allTabs = tabs
     .filter((t): t is chrome.tabs.Tab & { id: number } => typeof t.id === 'number')
     .filter((t) => !isManagerTab(t))
-    .map((t) => {
-      const groupId = t.groupId ?? chrome.tabGroups.TAB_GROUP_ID_NONE
-      const meta = groupId === chrome.tabGroups.TAB_GROUP_ID_NONE ? undefined : groupMeta.get(groupId)
-      const lastAccessed = t.lastAccessed
-      return {
-        id: t.id,
-        title: t.title || 'Untitled',
-        url: t.url || '',
-        favIconUrl: t.favIconUrl,
-        active: Boolean(t.active),
-        pinned: Boolean(t.pinned),
-        windowId: t.windowId,
-        groupId,
-        groupTitle: meta?.title,
-        groupCollapsed: meta?.collapsed,
-        lastAccessed,
-        lane: laneForLastAccessed(lastAccessed, now),
-      }
-    })
+    .map((t) => ({
+      id: t.id,
+      title: t.title || 'Untitled',
+      url: t.url || '',
+      favIconUrl: t.favIconUrl,
+      active: Boolean(t.active),
+      pinned: Boolean(t.pinned),
+      windowId: t.windowId,
+      lastAccessed: t.lastAccessed,
+    }))
     .sort((a, b) => (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0))
 
   if (!booted && autoDupes) {
@@ -220,111 +202,56 @@ function setEnabledUi(next: boolean): void {
   els.body.classList.toggle('is-hidden', !next)
 }
 
-function renderFavicon(url: string | undefined, host: string): string {
-  if (url) {
-    return `<img class="tm__group-favicon" src="${escapeAttr(url)}" alt="" />`
-  }
-  return `<div class="tm__group-favicon tm__group-favicon--fallback">${escapeHtml(faviconFallback(host))}</div>`
+function syncGroupByUi(): void {
+  document.querySelectorAll('.tm__groupby-btn').forEach((btn) => {
+    const el = btn as HTMLElement
+    el.classList.toggle('is-active', el.dataset.groupby === groupBy)
+  })
+  els.groupHint.textContent = GROUP_HINTS[groupBy]
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
+function renderBoard(tabs: TabRow[]): void {
+  const columns = buildColumns(groupBy, tabs, { currentWindowId })
+  const byId = new Map(tabs.map((t) => [t.id, t]))
 
-function escapeAttr(value: string): string {
-  return escapeHtml(value).replace(/'/g, '&#39;')
-}
+  els.board.innerHTML = columns
+    .map((col) => {
+      const previewIds = col.tabIds.slice(0, CHIP_PREVIEW)
+      const extra = col.tabIds.length - previewIds.length
+      const chips = previewIds
+        .map((id) => {
+          const tab = byId.get(id)
+          if (!tab) return ''
+          const host = hostnameOf(tab.url)
+          return `
+            <button class="tm__tabchip" type="button" data-action="activate" data-tab-id="${tab.id}">
+              ${faviconHtml(tab.favIconUrl, host)}
+              <span class="tm__tabchip-title">${escapeHtml(tab.title)}</span>
+              <span class="tm__tabchip-age">${escapeHtml(formatAge(tab.lastAccessed))}</span>
+            </button>
+          `
+        })
+        .join('')
 
-function renderTabRows(tabs: TabRow[]): string {
-  if (tabs.length === 0) {
-    return `<div class="tm__empty">None in this lane.</div>`
-  }
+      const empty =
+        col.tabIds.length === 0
+          ? `<div class="tm__empty">Empty</div>`
+          : `${chips}${extra > 0 ? `<div class="tm__more-count">+${extra} more</div>` : ''}`
 
-  return tabs
-    .map((tab) => {
-      const host = hostnameOf(tab.url)
-      const groupTag =
-        tab.groupTitle != null
-          ? `<span class="tm__group-tag">${escapeHtml(tab.groupTitle)}${tab.groupCollapsed ? ' · collapsed' : ''}</span>`
-          : ''
-      const age = `<span class="tm__age">${escapeHtml(formatAge(tab.lastAccessed))}</span>`
       return `
-        <div class="tm__tab" data-tab-id="${tab.id}">
-          ${renderFavicon(tab.favIconUrl, host)}
-          <button class="tm__tab-main" type="button" data-action="activate" data-tab-id="${tab.id}">
-            <div class="tm__tab-title">${escapeHtml(tab.title)}${tab.active ? ' · current' : ''}${tab.pinned ? ' · pinned' : ''}${groupTag}${age}</div>
-            <div class="tm__tab-url">${escapeHtml(tab.url)}</div>
-          </button>
-          <button class="tm__icon-btn" type="button" data-action="park" data-tab-id="${tab.id}" title="Park" aria-label="Park tab">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-          </button>
-          <button class="tm__icon-btn tm__icon-btn--danger" type="button" data-action="close" data-tab-id="${tab.id}" title="Close" aria-label="Close tab">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-          </button>
-        </div>
+        <section class="tm__col${col.collapsed ? ' tm__col--collapsed-hint' : ''}" data-col-id="${escapeAttr(col.id)}">
+          <div class="tm__col-head">
+            <div>
+              <div class="tm__col-title">${escapeHtml(col.title)}</div>
+              ${col.subtitle ? `<div class="tm__col-sub">${escapeHtml(col.subtitle)}</div>` : ''}
+            </div>
+            <span class="tm__col-badge">${col.tabIds.length}</span>
+          </div>
+          <div class="tm__chip-row">${empty}</div>
+        </section>
       `
     })
     .join('')
-}
-
-function render(): void {
-  setEnabledUi(enabled)
-
-  els.scopeCurrent.classList.toggle('is-active', scope === 'current')
-  els.scopeAll.classList.toggle('is-active', scope === 'all')
-
-  const openTabs = scopedTabs().filter((t) => matchesQuery(t.title, t.url))
-  const active = openTabs.filter((t) => t.lane === 'active')
-  const today = openTabs.filter((t) => t.lane === 'today')
-  const idle = openTabs.filter((t) => t.lane === 'idle')
-  const parkableIdle = idleParkable(openTabs)
-  const dupeCount = countDuplicateClosures(openTabs)
-  const parkedFiltered = parkedTabs.filter((t) => matchesQuery(t.title, t.url))
-
-  const otherWindows =
-    currentWindowId == null
-      ? 0
-      : allTabs.filter((t) => t.windowId !== currentWindowId).length
-
-  els.openCount.innerHTML = `${openTabs.length}<span>${scope === 'current' ? 'this window' : 'open'}</span>`
-
-  const statusParts: string[] = []
-  if (scope === 'current' && otherWindows > 0) statusParts.push(`${otherWindows} in other windows`)
-  if (parkableIdle.length > 0) statusParts.push(`${parkableIdle.length} idle`)
-  if (dupeCount > 0) statusParts.push(`${dupeCount} duplicate${dupeCount === 1 ? '' : 's'}`)
-  if (parkedTabs.length > 0) statusParts.push(`${parkedTabs.length} parked`)
-  els.statusLine.textContent =
-    statusParts.length > 0 ? statusParts.join(' · ') : 'Sorted by last touch. Park idle to clear noise.'
-
-  els.metaActive.textContent = String(active.length)
-  els.metaToday.textContent = String(today.length)
-  els.metaIdle.textContent = String(idle.length)
-  els.parkedMeta.textContent = String(parkedFiltered.length)
-
-  const showNudge = parkableIdle.length > 0
-  els.idleNudge.hidden = !showNudge
-  els.idleNudgeText.textContent = `${parkableIdle.length} idle tab${parkableIdle.length === 1 ? '' : 's'} (6h+) — park them?`
-  els.parkIdle.textContent = `Park idle (${parkableIdle.length})`
-  els.parkIdleMain.textContent =
-    parkableIdle.length > 0 ? `Park idle (${parkableIdle.length})` : 'Park idle'
-  els.parkIdleMain.disabled = parkableIdle.length === 0
-  els.parkIdle.disabled = parkableIdle.length === 0
-
-  els.closeDupes.textContent =
-    dupeCount > 0 ? `Close duplicates (${dupeCount})` : 'Close duplicates'
-  els.closeDupes.disabled = dupeCount === 0
-  els.restore.disabled = parkedTabs.length === 0
-  els.parkOthers.disabled = openTabs.length < 2
-  els.undo.hidden = !hasUndo
-
-  els.listActive.innerHTML = renderTabRows(active)
-  els.listToday.innerHTML = renderTabRows(today)
-  els.listIdle.innerHTML = renderTabRows(idle)
-  renderParked(parkedFiltered)
 }
 
 function renderParked(tabs: ParkedTab[]): void {
@@ -332,13 +259,12 @@ function renderParked(tabs: ParkedTab[]): void {
     els.parkedList.innerHTML = `<div class="tm__empty">Nothing parked yet.</div>`
     return
   }
-
   els.parkedList.innerHTML = tabs
     .map((tab, index) => {
       const host = hostnameOf(tab.url)
       return `
         <div class="tm__tab" data-parked-index="${index}">
-          ${renderFavicon(tab.favIconUrl, host)}
+          ${faviconHtml(tab.favIconUrl, host)}
           <button class="tm__tab-main" type="button" data-action="restore-one" data-parked-index="${index}">
             <div class="tm__tab-title">${escapeHtml(tab.title)}</div>
             <div class="tm__tab-url">${escapeHtml(tab.url)}</div>
@@ -352,30 +278,78 @@ function renderParked(tabs: ParkedTab[]): void {
     .join('')
 }
 
+function render(): void {
+  setEnabledUi(enabled)
+  syncGroupByUi()
+
+  els.scopeCurrent.classList.toggle('is-active', scope === 'current')
+  els.scopeAll.classList.toggle('is-active', scope === 'all')
+
+  const tabs = filteredTabs()
+  const parkableIdle = idleParkable(tabs)
+  const dupeCount = countDuplicateClosures(tabs)
+  const parkedFiltered = parkedTabs.filter((t) => matchesQuery(t.title, t.url))
+  const otherWindows =
+    currentWindowId == null
+      ? 0
+      : allTabs.filter((t) => t.windowId !== currentWindowId).length
+
+  els.openCount.innerHTML = `${tabs.length}<span>${scope === 'current' ? 'this window' : 'open'}</span>`
+
+  const parts: string[] = []
+  if (scope === 'current' && otherWindows > 0) parts.push(`${otherWindows} in other windows`)
+  parts.push(`Group by ${GROUP_BY_LABELS[groupBy]}`)
+  if (parkedTabs.length > 0) parts.push(`${parkedTabs.length} parked`)
+  els.statusLine.textContent = parts.join(' · ')
+
+  els.idleNudge.hidden = parkableIdle.length === 0
+  els.idleNudgeText.textContent = `${parkableIdle.length} idle (6h+) — park them?`
+  const idleLabel = parkableIdle.length > 0 ? `Park idle (${parkableIdle.length})` : 'Park idle'
+  els.parkIdle.textContent = idleLabel
+  els.parkIdleMain.textContent = idleLabel
+  els.parkIdle.disabled = parkableIdle.length === 0
+  els.parkIdleMain.disabled = parkableIdle.length === 0
+
+  els.closeDupes.textContent =
+    dupeCount > 0 ? `Close duplicates (${dupeCount})` : 'Close duplicates'
+  els.closeDupes.disabled = dupeCount === 0
+  els.restore.disabled = parkedTabs.length === 0
+  els.parkOthers.disabled = tabs.length < 2
+  els.undo.hidden = !hasUndo
+
+  const canApply = groupBy !== 'window'
+  els.applyGroups.disabled = !canApply || tabs.length === 0
+  els.applyGroups.title = canApply
+    ? 'Create Clarity Chrome groups from this board'
+    : 'Switch to Time, Theme, or Site to apply groups'
+
+  renderBoard(tabs)
+  els.parkedMeta.textContent = String(parkedFiltered.length)
+  renderParked(parkedFiltered)
+}
+
 async function parkTabs(tabs: TabRow[]): Promise<void> {
   const parkable = tabs.filter((t) => t.url && !t.pinned && !t.url.startsWith('chrome://'))
   if (parkable.length === 0) {
     showToast('Nothing to park')
     return
   }
-
   const payload: ParkedTab[] = parkable.map((t) => ({
     title: t.title,
     url: t.url,
     favIconUrl: t.favIconUrl,
     parkedAt: Date.now(),
   }))
-
   await addParkedTabs(payload)
   await setUndoParkBatch(payload)
   hasUndo = true
   await chrome.tabs.remove(parkable.map((t) => t.id))
-  showToast(`Parked ${parkable.length} tab${parkable.length === 1 ? '' : 's'}`, true)
+  showToast(`Parked ${parkable.length}`, true)
   await loadState()
 }
 
 async function closeDuplicates(opts?: { silent?: boolean }): Promise<number> {
-  const tabs = scopedTabs().filter((t) => matchesQuery(t.title, t.url))
+  const tabs = filteredTabs()
   const toClose = pickDuplicateTabIds(tabs)
   if (toClose.length === 0) {
     if (!opts?.silent) showToast('No duplicates')
@@ -395,32 +369,19 @@ async function undoLastPark(): Promise<void> {
     showToast('Nothing to undo')
     return
   }
-
   const parked = await getParkedTabs()
-  const undoUrls = new Set(batch.tabs.map((t) => urlKey(t.url)))
-  const remaining = parked.filter((t) => !undoUrls.has(urlKey(t.url)))
-  // Prefer exact batch identity: remove one matching entry per undo tab from the front of parked
   let next = [...parked]
   for (const item of batch.tabs) {
-    const idx = next.findIndex(
-      (t) => t.url === item.url && t.parkedAt === item.parkedAt
-    )
+    const idx = next.findIndex((t) => t.url === item.url && t.parkedAt === item.parkedAt)
     if (idx >= 0) next.splice(idx, 1)
-    else {
-      const byUrl = next.findIndex((t) => urlKey(t.url) === urlKey(item.url))
-      if (byUrl >= 0) next.splice(byUrl, 1)
-    }
   }
-  if (next.length === parked.length) next = remaining
-
   await setParkedTabs(next)
   await clearUndoParkBatch()
   hasUndo = false
-
   for (const tab of batch.tabs) {
     await chrome.tabs.create({ url: tab.url, active: false })
   }
-  showToast(`Restored ${batch.tabs.length} parked tab${batch.tabs.length === 1 ? '' : 's'}`)
+  showToast(`Restored ${batch.tabs.length}`)
   await loadState()
 }
 
@@ -437,65 +398,107 @@ async function restoreAll(): Promise<void> {
   await loadState()
 }
 
-async function restoreOne(index: number): Promise<void> {
-  const tab = parkedTabs[index]
-  if (!tab) return
-  const next = parkedTabs.filter((_, i) => i !== index)
-  await setParkedTabs(next)
-  await chrome.tabs.create({ url: tab.url, active: true })
-  showToast('Restored tab')
+async function applyGroups(): Promise<void> {
+  if (groupBy === 'window') {
+    showToast('Pick Time, Theme, or Site to apply groups')
+    return
+  }
+  const tabs = filteredTabs()
+  const columns = buildColumns(groupBy, tabs, { currentWindowId })
+  const windowIds =
+    scope === 'all'
+      ? [...new Set(tabs.map((t) => t.windowId))]
+      : currentWindowId != null
+        ? [currentWindowId]
+        : []
+
+  els.applyGroups.disabled = true
+  try {
+    const result = await applyColumnsAsChromeGroups(groupBy, columns, tabs, windowIds)
+    if (result.created === 0) {
+      showToast('No groupable tabs')
+    } else {
+      showToast(`Applied ${result.created} Chrome group${result.created === 1 ? '' : 's'} (${GROUP_BY_LABELS[groupBy]})`)
+    }
+    await loadState()
+  } catch (err) {
+    console.error('[Tab Manager] apply groups failed', err)
+    showToast('Could not apply groups')
+    els.applyGroups.disabled = false
+  }
+}
+
+async function clearGroups(): Promise<void> {
+  const tabs = filteredTabs()
+  const windowIds =
+    scope === 'all'
+      ? [...new Set(tabs.map((t) => t.windowId))]
+      : currentWindowId != null
+        ? [currentWindowId]
+        : []
+  await clearClarityGroups(windowIds)
+  showToast('Cleared Clarity groups')
   await loadState()
-}
-
-async function discardParked(index: number): Promise<void> {
-  const next = parkedTabs.filter((_, i) => i !== index)
-  await setParkedTabs(next)
-  parkedTabs = next
-  render()
-}
-
-async function onToggle(next: boolean): Promise<void> {
-  await setModuleEnabled(next)
-  enabled = next
-  render()
-  void refreshTabManagerBadge(currentWindowId ?? undefined)
-  showToast(next ? 'Tab Manager on' : 'Tab Manager off')
-}
-
-function setScope(next: WindowScope): void {
-  scope = next
-  render()
 }
 
 function wireEvents(): void {
   els.toggle.addEventListener('click', () => {
-    void onToggle(!(els.toggle.getAttribute('aria-checked') === 'true'))
+    void (async () => {
+      const next = !(els.toggle.getAttribute('aria-checked') === 'true')
+      await setModuleEnabled(next)
+      enabled = next
+      render()
+      showToast(next ? 'Tab Manager on' : 'Tab Manager off')
+    })()
   })
-  els.enable.addEventListener('click', () => void onToggle(true))
+  els.enable.addEventListener('click', () => {
+    void (async () => {
+      await setModuleEnabled(true)
+      enabled = true
+      render()
+    })()
+  })
   els.close.addEventListener('click', () => window.close())
   els.search.addEventListener('input', () => {
     query = els.search.value.trim()
     render()
   })
 
-  els.scopeCurrent.addEventListener('click', () => setScope('current'))
-  els.scopeAll.addEventListener('click', () => setScope('all'))
-
-  const parkIdle = () => void parkTabs(idleParkable(scopedTabs()))
-  els.parkIdle.addEventListener('click', parkIdle)
-  els.parkIdleMain.addEventListener('click', parkIdle)
-
-  els.parkOthers.addEventListener('click', async () => {
-    const [current] = await chrome.tabs.query({ active: true, currentWindow: true })
-    const keepId = current?.id
-    const others = scopedTabs().filter((t) => t.id !== keepId)
-    await parkTabs(others)
+  els.scopeCurrent.addEventListener('click', () => {
+    scope = 'current'
+    render()
+  })
+  els.scopeAll.addEventListener('click', () => {
+    scope = 'all'
+    render()
   })
 
+  document.querySelectorAll('.tm__groupby-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = (btn as HTMLElement).dataset.groupby as GroupByMode
+      void (async () => {
+        groupBy = mode
+        await setGroupByMode(mode)
+        render()
+      })()
+    })
+  })
+
+  const parkIdle = () => void parkTabs(idleParkable(filteredTabs()))
+  els.parkIdle.addEventListener('click', parkIdle)
+  els.parkIdleMain.addEventListener('click', parkIdle)
+  els.applyGroups.addEventListener('click', () => void applyGroups())
+  els.clearGroups.addEventListener('click', () => void clearGroups())
   els.closeDupes.addEventListener('click', () => void closeDuplicates())
   els.restore.addEventListener('click', () => void restoreAll())
   els.undo.addEventListener('click', () => void undoLastPark())
   els.toastUndo.addEventListener('click', () => void undoLastPark())
+
+  els.parkOthers.addEventListener('click', async () => {
+    const [current] = await chrome.tabs.query({ active: true, currentWindow: true })
+    const keepId = current?.id
+    await parkTabs(filteredTabs().filter((t) => t.id !== keepId))
+  })
 
   els.autoDupes.addEventListener('change', async () => {
     autoDupes = els.autoDupes.checked
@@ -503,50 +506,41 @@ function wireEvents(): void {
     showToast(autoDupes ? 'Auto-close duplicates on' : 'Auto-close duplicates off')
   })
 
-  const onOpenListClick = async (event: Event) => {
-    const target = (event.target as HTMLElement).closest('[data-action]') as HTMLElement | null
+  els.board.addEventListener('click', async (event) => {
+    const target = (event.target as HTMLElement).closest('[data-action="activate"]') as HTMLElement | null
     if (!target) return
-    const action = target.dataset.action
     const id = Number(target.dataset.tabId)
-    if (!id) return
-    const openTabs = scopedTabs()
-
-    if (action === 'activate') {
-      const tab = openTabs.find((t) => t.id === id)
-      if (!tab) return
-      await chrome.tabs.update(id, { active: true })
-      await chrome.windows.update(tab.windowId, { focused: true })
-      return
-    }
-    if (action === 'close') {
-      await chrome.tabs.remove(id)
-      await loadState()
-      return
-    }
-    if (action === 'park') {
-      const tab = openTabs.find((t) => t.id === id)
-      if (tab) await parkTabs([tab])
-    }
-  }
-
-  els.listActive.addEventListener('click', (e) => void onOpenListClick(e))
-  els.listToday.addEventListener('click', (e) => void onOpenListClick(e))
-  els.listIdle.addEventListener('click', (e) => void onOpenListClick(e))
+    const tab = allTabs.find((t) => t.id === id)
+    if (!tab) return
+    await chrome.tabs.update(id, { active: true })
+    await chrome.windows.update(tab.windowId, { focused: true })
+  })
 
   els.parkedList.addEventListener('click', async (event) => {
     const target = (event.target as HTMLElement).closest('[data-action]') as HTMLElement | null
     if (!target) return
     const index = Number(target.dataset.parkedIndex)
     if (Number.isNaN(index)) return
-    if (target.dataset.action === 'restore-one') await restoreOne(index)
-    else if (target.dataset.action === 'discard-parked') await discardParked(index)
+    if (target.dataset.action === 'restore-one') {
+      const tab = parkedTabs[index]
+      if (!tab) return
+      const next = parkedTabs.filter((_, i) => i !== index)
+      await setParkedTabs(next)
+      await chrome.tabs.create({ url: tab.url, active: true })
+      await loadState()
+    } else if (target.dataset.action === 'discard-parked') {
+      const next = parkedTabs.filter((_, i) => i !== index)
+      await setParkedTabs(next)
+      parkedTabs = next
+      render()
+    }
   })
 
   chrome.tabs.onCreated.addListener(() => void loadState())
   chrome.tabs.onRemoved.addListener(() => void loadState())
   chrome.tabs.onActivated.addListener(() => void loadState())
-  chrome.tabs.onUpdated.addListener((_tabId, changeInfo) => {
-    if (changeInfo.status === 'complete' || changeInfo.title || changeInfo.url || changeInfo.groupId != null) {
+  chrome.tabs.onUpdated.addListener((_id, info) => {
+    if (info.status === 'complete' || info.title || info.url || info.groupId != null) {
       void loadState()
     }
   })

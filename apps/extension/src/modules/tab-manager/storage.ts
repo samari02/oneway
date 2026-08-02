@@ -6,6 +6,8 @@ export const TAB_MANAGER_ENABLED_KEY = 'tabManager.enabled'
 export const TAB_MANAGER_PARKED_KEY = 'tabManager.parked'
 export const TAB_MANAGER_UNDO_KEY = 'tabManager.undoPark'
 export const TAB_MANAGER_AUTO_DUPES_KEY = 'tabManager.autoCloseDuplicates'
+export const TAB_MANAGER_GROUP_BY_KEY = 'tabManager.groupBy'
+
 
 export interface ParkedTab {
   title: string
@@ -70,4 +72,17 @@ export async function getAutoCloseDuplicates(): Promise<boolean> {
 
 export async function setAutoCloseDuplicates(enabled: boolean): Promise<void> {
   await chrome.storage.local.set({ [TAB_MANAGER_AUTO_DUPES_KEY]: enabled })
+}
+
+export type StoredGroupBy = 'time' | 'theme' | 'site' | 'window'
+
+export async function getGroupByMode(): Promise<StoredGroupBy> {
+  const result = await chrome.storage.local.get(TAB_MANAGER_GROUP_BY_KEY)
+  const value = result[TAB_MANAGER_GROUP_BY_KEY]
+  if (value === 'theme' || value === 'site' || value === 'window' || value === 'time') return value
+  return 'time'
+}
+
+export async function setGroupByMode(mode: StoredGroupBy): Promise<void> {
+  await chrome.storage.local.set({ [TAB_MANAGER_GROUP_BY_KEY]: mode })
 }
