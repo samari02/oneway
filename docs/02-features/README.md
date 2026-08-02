@@ -11,7 +11,7 @@ Product specs are grouped into **numbered domains** (rough order: product orient
 | Folder | Theme | Main content |
 |--------|--------|----------------|
 | **[01-orientation-objectifs](./01-orientation-objectifs/)** | North Star & habits | `north-star.md`, `habits-boundaries.md` |
-| **[02-blocage](./02-blocage/)** | Blocking & protection (extension) | `overview`, `intelligent-blocking`, [`blocking-flow-interactive.html`](./02-blocage/blocking-flow-interactive.html) (viz · boucle auto-améliorante), `adult_blocklist_sync_v1`, `self_improving_blocking_loop_v1`, `boundaries_blocking_rules_ux_*`, `custom_blocking_rules_implementation_*`, `custom_blocking_sync_architecture_*` (desktop ↔ extension), `content-analysis`, `implementation` |
+| **[02-blocage](./02-blocage/)** | Blocking & protection (extension) | `overview`, `intelligent-blocking`, [`blocking-flow-interactive.html`](./02-blocage/blocking-flow-interactive.html) (viz · boucle auto-améliorante), `adult_blocklist_sync_v1`, `public_adult_lists_import_v1`, `self_improving_blocking_loop_v1`, `boundaries_blocking_rules_ux_*`, `custom_blocking_rules_implementation_*`, `custom_blocking_sync_architecture_*` (desktop ↔ extension), `content-analysis`, `implementation` |
 | **[03-blocking-list-lock](./03-blocking-list-lock/)** | Block-list password / friction lock | `README`, `spec`, `unlock-modes` |
 | **[03-insights-et-donnees](./03-insights-et-donnees/)** | Measurement & classification | `site-classification`, `screen-time`, `delete_site_browsing_data_*`, `classification/overview` |
 | **[04-companion-ia](./04-companion-ia/)** | Aoi & AI companion | `ai-companion.md` (desktop app), [aoi-widget/](./04-companion-ia/aoi-widget/) (browser) |

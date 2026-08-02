@@ -5,7 +5,7 @@
 > **Viz interactive :** [blocking-flow-interactive.html](./blocking-flow-interactive.html) — couches, simulation d’URL, post-mortem missav, roadmap (boucle Observe → candidats → promote → éval → deploy).
 >
 > **Adult system list (v1 sync) :** [adult_blocklist_sync_v1.md](./adult_blocklist_sync_v1.md) — seed + `~/.clarity` + `GET_CONFIG` + offline eval.
->
+> **Public NSFW complement :** [public_adult_lists_import_v1.md](./public_adult_lists_import_v1.md) — oisd / StevenBlack import (capped, additive).
 > **Self-improving loop (v1) :** [self_improving_blocking_loop_v1.md](./self_improving_blocking_loop_v1.md) — observe → candidate → promote → eval → deploy.
 
 ---

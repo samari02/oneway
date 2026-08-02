@@ -58,3 +58,16 @@ pnpm --filter @clarity/extension eval:adult-blocking
 ```
 
 Hard-negative FPs fail the eval (`exit 1`). Structural HTML fixtures live in `fixtures/structural-blocking-corpus.json`.
+
+## Public NSFW lists (complement)
+
+Additive import of oisd NSFW Small + StevenBlack porn-only (capped; never replaces JP curated seed):
+
+```bash
+pnpm --filter @clarity/extension import:public-adult-lists
+# optional: --dry-run | --cap 1000
+pnpm --filter @clarity/extension generate:adult-blocklist
+pnpm --filter @clarity/extension eval:adult-blocking
+```
+
+Details + cap rationale: [`docs/02-features/02-blocage/public_adult_lists_import_v1.md`](../../../../docs/02-features/02-blocage/public_adult_lists_import_v1.md).

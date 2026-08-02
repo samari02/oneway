@@ -72,6 +72,10 @@ pnpm --filter @clarity/extension generate:adult-blocklist
 # Offline precision/recall eval
 pnpm --filter @clarity/extension eval:adult-blocking
 
+# Optional: refresh public NSFW complement (oisd / StevenBlack porn) — never replaces JP seed
+pnpm --filter @clarity/extension import:public-adult-lists
+# then generate + eval again (see public_adult_lists_import_v1.md)
+
 # Seed ~/.clarity only if missing (use --force to overwrite)
 pnpm --filter @clarity/extension install:adult-blocklist
 ```

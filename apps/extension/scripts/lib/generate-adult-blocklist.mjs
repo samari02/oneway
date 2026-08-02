@@ -18,6 +18,7 @@ const RULES_PATH = path.join(PUBLIC, 'rules.json')
 const BLOCKLIST_PATH = path.join(PUBLIC, 'adult-blocklist.json')
 const CORPUS_PATH = path.join(EXT_ROOT, 'scripts/eval/fixtures/adult-blocking-corpus.json')
 const PROMOTED_PATH = path.join(__dirname, 'promoted-adult-domains.json')
+const IMPORTED_PUBLIC_PATH = path.join(__dirname, 'imported-public-adult-domains.json')
 
 const BLOCK_REDIRECT =
   '/block-screen.html?reason=Adult%20content%20is%20blocked&type=content'
@@ -813,15 +814,40 @@ function main() {
     }
   }
 
-  const domains = uniqSorted([...adultFromRules, ...EXPANSION_DOMAINS, ...promoted])
+  // Public NSFW lists complement (oisd / StevenBlack porn) — additive; empty never wipes curated seed
+  let importedPublic = []
+  if (fs.existsSync(IMPORTED_PUBLIC_PATH)) {
+    try {
+      const importedDoc = JSON.parse(fs.readFileSync(IMPORTED_PUBLIC_PATH, 'utf8'))
+      importedPublic = Array.isArray(importedDoc.domains)
+        ? importedDoc.domains
+        : Array.isArray(importedDoc)
+          ? importedDoc
+          : []
+    } catch (e) {
+      console.warn('Could not read imported-public-adult-domains.json:', e.message)
+    }
+  }
+
+  const domains = uniqSorted([
+    ...adultFromRules,
+    ...EXPANSION_DOMAINS,
+    ...promoted,
+    ...importedPublic,
+  ])
 
   const blocklist = {
     version: 1,
     updatedAt: new Date().toISOString().slice(0, 10),
     source: 'clarity-system',
     description:
-      'System adult domain list. Merged into static DNR at build; synced to extension via ~/.clarity/adult-blocklist.json + GET_CONFIG (additive).',
+      'System adult domain list (JP curated seed ∪ promoted ∪ public NSFW complement). Merged into static DNR at build; synced via ~/.clarity/adult-blocklist.json + GET_CONFIG (additive).',
     domains,
+    sources: {
+      curatedExpansion: true,
+      promoted: promoted.length,
+      importedPublic: importedPublic.length,
+    },
     hostnameSubstrings: HOSTNAME_SUBSTRINGS,
     policySensitive: POLICY_SENSITIVE,
   }
@@ -830,18 +856,36 @@ function main() {
   console.log(`Wrote ${domains.length} domains → ${path.relative(EXT_ROOT, BLOCKLIST_PATH)}`)
 
   // Merge missing expansion domains into rules.json
-  let nextMainId = 1526
-  let nextSubId = 11526
-  const maxMain = Math.max(
-    ...rules.filter((r) => r.condition?.requestDomains && r.action?.type === 'redirect').map((r) => r.id),
-    1525
-  )
-  const maxSub = Math.max(
-    ...rules.filter((r) => r.condition?.requestDomains && r.action?.type === 'block').map((r) => r.id),
-    11525
-  )
-  nextMainId = maxMain + 1
-  nextSubId = maxSub + 1
+  // Reserve 12000–12999 for regex families; keep new exact-domain IDs outside that band.
+  const REGEX_ID_MIN = 12000
+  const REGEX_ID_MAX = 12999
+  const usedIds = new Set(rules.map((r) => r.id))
+
+  const allocId = (preferFrom) => {
+    let id = preferFrom
+    while (
+      usedIds.has(id) ||
+      (id >= REGEX_ID_MIN && id <= REGEX_ID_MAX)
+    ) {
+      id++
+    }
+    usedIds.add(id)
+    return id
+  }
+
+  const redirectIds = rules
+    .filter((r) => r.condition?.requestDomains && r.action?.type === 'redirect')
+    .map((r) => r.id)
+    .filter((id) => id < REGEX_ID_MIN)
+  const blockIds = rules
+    .filter((r) => r.condition?.requestDomains && r.action?.type === 'block')
+    .map((r) => r.id)
+    .filter((id) => id < REGEX_ID_MIN || id > REGEX_ID_MAX)
+
+  let nextMainId = Math.max(1525, ...redirectIds, 0) + 1
+  // Prefer 20000+ for block companions so we never collide with regex 12xxx
+  let nextSubId = Math.max(20000, ...blockIds.filter((id) => id >= 20000), 0) + 1
+  if (nextSubId <= REGEX_ID_MAX) nextSubId = REGEX_ID_MAX + 1
 
   const toAdd = domains.filter((d) => !existing.has(d))
   // Skip www.* if apex already present (optional); still add if neither present
@@ -856,7 +900,11 @@ function main() {
       if (existing.has(apex) || domains.includes(apex)) continue
     }
     if (existing.has(d)) continue
-    const pair = makeDnrPair(d, nextMainId++, nextSubId++)
+    const mainId = allocId(nextMainId)
+    nextMainId = mainId + 1
+    const subId = allocId(nextSubId)
+    nextSubId = subId + 1
+    const pair = makeDnrPair(d, mainId, subId)
     newRules.push(...pair)
     existing.add(d)
     added.push(d)
@@ -864,7 +912,7 @@ function main() {
 
   if (newRules.length) {
     // Insert before regex rules (ids 12000+)
-    const regexIdx = rules.findIndex((r) => r.id >= 12000)
+    const regexIdx = rules.findIndex((r) => r.id >= REGEX_ID_MIN && r.condition?.regexFilter)
     if (regexIdx >= 0) {
       rules.splice(regexIdx, 0, ...newRules)
     } else {
@@ -880,7 +928,8 @@ function main() {
   // Also enrich regex family 12002 with xcolle|pcolle|digiket|fc2live if missing
   for (const r of rules) {
     if (![12002, 12003].includes(r.id)) continue
-    let re = r.condition.regexFilter
+    let re = r.condition?.regexFilter
+    if (typeof re !== 'string') continue
     for (const token of ['xcolle', 'pcolle', 'digiket', 'fc2live', 'nyahentai']) {
       if (!re.includes(token)) {
         re = re.replace(

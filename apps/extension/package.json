@@ -11,6 +11,7 @@
     "type-check": "tsc --noEmit",
     "eval:adult-blocking": "node scripts/eval/run-adult-blocking-eval.mjs",
     "generate:adult-blocklist": "node scripts/lib/generate-adult-blocklist.mjs",
+    "import:public-adult-lists": "node scripts/lib/import-public-adult-lists.mjs",
     "install:adult-blocklist": "node scripts/lib/install-adult-blocklist-to-clarity-dir.mjs",
     "promote:adult-candidates": "node scripts/lib/promote-adult-candidates.mjs"
   },
