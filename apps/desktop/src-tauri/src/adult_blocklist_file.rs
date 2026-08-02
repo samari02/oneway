@@ -28,8 +28,52 @@ pub fn adult_blocklist_path() -> PathBuf {
     clarity_dir().join("adult-blocklist.json")
 }
 
+fn domains_from_value(v: &Value) -> Vec<String> {
+    let raw_list: Vec<String> = match v {
+        Value::Array(arr) => arr
+            .iter()
+            .filter_map(|item| item.as_str().map(|s| s.to_string()))
+            .collect(),
+        Value::Object(map) => map
+            .get("domains")
+            .and_then(|d| d.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|item| item.as_str().map(|s| s.to_string()))
+                    .collect()
+            })
+            .unwrap_or_default(),
+        _ => Vec::new(),
+    };
+    let mut out: Vec<String> = raw_list
+        .iter()
+        .filter_map(|d| normalize_domain(d))
+        .collect();
+    out.sort();
+    out.dedup();
+    out
+}
+
 /// Write a full adult-blocklist JSON document (object or array) to disk.
+///
+/// Safety: refuses an empty domain payload when an existing non-empty file is
+/// present, so a bad invoke cannot wipe the on-disk sync list. (Extension also
+/// treats empty `adultDomains` as a no-op merge.)
 pub fn write_adult_blocklist_json(payload: Value) -> Result<(), String> {
+    let incoming = domains_from_value(&payload);
+    if incoming.is_empty() {
+        let existing = domains_from_disk();
+        if !existing.is_empty() {
+            return Err(
+                "refusing to write empty adult blocklist over existing non-empty file".into(),
+            );
+        }
+        return Err(
+            "refusing to write adult blocklist with zero domains (empty never wipes protection)"
+                .into(),
+        );
+    }
+
     let path = adult_blocklist_path();
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -38,7 +82,8 @@ pub fn write_adult_blocklist_json(payload: Value) -> Result<(), String> {
     let n = pretty.len();
     fs::write(&path, pretty).map_err(|e| e.to_string())?;
     eprintln!(
-        "[AdultBlocklist] Wrote {} bytes to {}",
+        "[AdultBlocklist] Wrote {} domains ({} bytes) to {}",
+        incoming.len(),
         n,
         path.display()
     );
@@ -80,34 +125,14 @@ pub fn domains_from_disk() -> Vec<String> {
         return Vec::new();
     };
 
-    let raw_list: Vec<String> = match v {
-        Value::Array(arr) => arr
-            .into_iter()
-            .filter_map(|item| item.as_str().map(|s| s.to_string()))
-            .collect(),
-        Value::Object(map) => map
-            .get("domains")
-            .and_then(|d| d.as_array())
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|item| item.as_str().map(|s| s.to_string()))
-                    .collect()
-            })
-            .unwrap_or_default(),
+    match &v {
+        Value::Array(_) | Value::Object(_) => domains_from_value(&v),
         _ => {
             eprintln!(
                 "[AdultBlocklist] Expected object or array in {}",
                 path.display()
             );
-            return Vec::new();
+            Vec::new()
         }
-    };
-
-    let mut out: Vec<String> = raw_list
-        .iter()
-        .filter_map(|d| normalize_domain(d))
-        .collect();
-    out.sort();
-    out.dedup();
-    out
+    }
 }

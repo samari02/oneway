@@ -55,6 +55,14 @@ A bare JSON array of domain strings is also accepted on disk.
 
 Fantia, ci-en, booth, Fanbox (and similar mixed SFW/NSFW marketplaces) are **not** hard-seeded. Prefer eval fixtures + Layer 3 content analysis.
 
+## LIVE desktop ↔ extension (v1 wired)
+
+Native host on `GET_CONFIG` reads `~/.clarity/adult-blocklist.json` and returns
+`adultDomains` in `CONFIG_UPDATE`. Tauri `write_adult_blocklist_to_disk` refuses
+empty domain payloads when a non-empty file already exists (extension empty-merge
+is still a no-op). Observe path: `ADULT_CANDIDATE` → `~/.clarity/adult-blocklist-candidates.json`
+(see [self_improving_blocking_loop_v1.md](./self_improving_blocking_loop_v1.md)).
+
 ## Maintainer commands
 
 ```bash
@@ -64,9 +72,8 @@ pnpm --filter @clarity/extension generate:adult-blocklist
 # Offline precision/recall eval
 pnpm --filter @clarity/extension eval:adult-blocking
 
-# Seed local desktop file for native sync testing
-mkdir -p ~/.clarity
-cp apps/extension/public/adult-blocklist.json ~/.clarity/adult-blocklist.json
+# Seed ~/.clarity only if missing (use --force to overwrite)
+pnpm --filter @clarity/extension install:adult-blocklist
 ```
 
 Desktop can also write the file via Tauri:
@@ -78,7 +85,7 @@ Desktop can also write the file via Tauri:
 1. `pnpm --filter @clarity/extension build`
 2. Chrome → `chrome://extensions` → reload Clarity
 3. Confirm `dist/adult-blocklist.json` and `dist/rules.json` are present
-4. Optional: copy list to `~/.clarity/`, rebuild desktop/native host, confirm `GET_CONFIG` returns `adultDomains`
+4. Optional: `pnpm --filter @clarity/extension install:adult-blocklist`, rebuild desktop/native host, confirm `GET_CONFIG` returns `adultDomains`
 5. Navigate to a seed host (e.g. `https://xcolle.jp/`) → block screen
 
 ## Future (not v1)

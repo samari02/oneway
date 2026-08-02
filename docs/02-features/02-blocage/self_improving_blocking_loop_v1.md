@@ -98,8 +98,17 @@ pnpm --filter @clarity/extension generate:adult-blocklist
 pnpm --filter @clarity/extension eval:adult-blocking
 pnpm --filter @clarity/extension build
 # Chrome → chrome://extensions → Reload Clarity
-# Optional: cp public/adult-blocklist.json ~/.clarity/
+# Optional: pnpm --filter @clarity/extension install:adult-blocklist
 ```
+
+## LIVE status (desktop native host)
+
+Wired in practice:
+
+1. `GET_CONFIG` → `CONFIG_UPDATE.adultDomains` from `~/.clarity/adult-blocklist.json`
+2. `ADULT_CANDIDATE` → upsert into `~/.clarity/adult-blocklist-candidates.json` (capped)
+3. `write_adult_blocklist_to_disk` Tauri command (refuses empty overwrite of non-empty)
+4. Seed helper: `pnpm --filter @clarity/extension install:adult-blocklist` (if-missing)
 
 ## Files
 
@@ -111,5 +120,7 @@ pnpm --filter @clarity/extension build
 | `scripts/lib/promote-adult-candidates.mjs` | Promote |
 | `scripts/lib/promoted-adult-domains.json` | Durable promotions |
 | `scripts/lib/generate-adult-blocklist.mjs` | Seed + DNR + corpus |
+| `scripts/lib/install-adult-blocklist-to-clarity-dir.mjs` | Seed `~/.clarity` if missing |
 | `scripts/eval/run-adult-blocking-eval.mjs` | Gate |
+| `desktop …/adult_blocklist_file.rs` | Native GET_CONFIG domains |
 | `desktop …/adult_candidates_file.rs` | Native candidate disk |
