@@ -39,6 +39,10 @@ Index and layout: **[02-features/README.md](./02-features/README.md)**.
 - **[05-plateforme-desktop-extension/](./02-features/05-plateforme-desktop-extension/)** — Desktop ↔ extension bridge
   - [clarity-connectivity/](./02-features/05-plateforme-desktop-extension/clarity-connectivity/) — Auth, heartbeats, native host
     - [clarity_desktop_extension_connectivity_2026-03-28.md](./02-features/05-plateforme-desktop-extension/clarity-connectivity/clarity_desktop_extension_connectivity_2026-03-28.md)
+- **[06-tab-manager/](./02-features/06-tab-manager/)** — Tab / workspace hygiene (toggleable extension module)
+  - [README.md](./02-features/06-tab-manager/README.md) — goals, park vs groups, phases
+  - [overview.md](./02-features/06-tab-manager/overview.md) — shipped v0 architecture
+  - [tab_manager_workspace_hygiene_2026-08-02.md](./02-features/06-tab-manager/tab_manager_workspace_hygiene_2026-08-02.md) — always-on direction & open ideas
 
 ### [03-architecture/](./03-architecture/) — How it is built
 - [overview.md](./03-architecture/overview.md) — System overview

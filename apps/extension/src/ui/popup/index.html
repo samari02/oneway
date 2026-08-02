@@ -124,6 +124,37 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
+    .popup__tabs-nudge {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .popup__tabs-nudge-text {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .btn-tabs-nudge {
+      flex-shrink: 0;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 999px;
+      background: white;
+      color: #5f4fd6;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
     .popup__history {
       background: rgba(255, 255, 255, 0.15);
       border: 2px dashed rgba(255, 255, 255, 0.3);
@@ -551,6 +582,12 @@
       <button class="btn-sync" id="btn-sync">Sync to Cloud</button>
     </div>
     
+    <!-- Tab Manager idle nudge -->
+    <div class="popup__tabs-nudge" id="tabs-nudge" style="display: none;">
+      <div class="popup__tabs-nudge-text" id="tabs-nudge-text">Idle tabs ready to park</div>
+      <button class="btn-tabs-nudge" id="btn-tabs-nudge" type="button">Park idle</button>
+    </div>
+
     <div class="popup__actions">
       <button class="btn-tabs" id="btn-tab-manager" type="button">Manage Tabs</button>
       <button class="btn-primary" id="btn-toggle">End Focus Mode</button>

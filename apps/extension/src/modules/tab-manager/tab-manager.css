@@ -276,12 +276,98 @@ input {
   vertical-align: middle;
 }
 
+.tm__nudge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(123, 108, 246, 0.16), rgba(110, 200, 245, 0.18));
+  border-radius: var(--tm-radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.tm__nudge[hidden] {
+  display: none;
+}
+
+.tm__nudge-text {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--tm-purple-deep);
+}
+
+.tm__setting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 2px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tm-muted);
+  cursor: pointer;
+}
+
+.tm__setting input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--tm-purple);
+}
+
 .tm__section {
   background: var(--tm-card);
   border-radius: var(--tm-radius);
   box-shadow: var(--tm-shadow);
   padding: 8px;
   margin-bottom: 16px;
+}
+
+.tm__section--idle {
+  border: 1px solid rgba(123, 108, 246, 0.18);
+}
+
+.tm__age {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--tm-purple-soft);
+  margin-left: 6px;
+}
+
+.tm__toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--tm-text);
+  color: white;
+  padding: 10px 12px 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tm__toast.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.tm__toast button {
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: white;
+  font: inherit;
+  font-weight: 800;
+  padding: 6px 12px;
+  cursor: pointer;
 }
 
 .tm__section-head {
@@ -452,28 +538,6 @@ input {
 
 .tm__body.is-hidden {
   display: none;
-}
-
-.tm__toast {
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%) translateY(20px);
-  background: var(--tm-text);
-  color: white;
-  padding: 12px 18px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  z-index: 20;
-}
-
-.tm__toast.is-visible {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
 }
 
 @media (max-width: 560px) {

@@ -274,6 +274,44 @@ document.getElementById('btn-tab-manager')?.addEventListener('click', () => {
   window.close()
 })
 
+// Idle hygiene CTA — open manager focused on parking (manager handles park idle)
+void (async () => {
+  const nudge = document.getElementById('tabs-nudge') as HTMLElement | null
+  const nudgeText = document.getElementById('tabs-nudge-text')
+  const nudgeBtn = document.getElementById('btn-tabs-nudge')
+  if (!nudge || !nudgeText || !nudgeBtn) return
+
+  try {
+    const enabled = (await chrome.storage.local.get('tabManager.enabled'))['tabManager.enabled'] !== false
+    if (!enabled) return
+
+    const IDLE_MS = 6 * 60 * 60 * 1000
+    const win = await chrome.windows.getCurrent()
+    const tabs = await chrome.tabs.query({ windowId: win.id })
+    const now = Date.now()
+    const idle = tabs.filter((t) => {
+      if (!t.id || t.pinned || t.url?.includes('tab-manager.html')) return false
+      if (!t.url || t.url.startsWith('chrome://') || t.url.startsWith('chrome-extension://')) return false
+      const last = t.lastAccessed
+      if (last == null) return true
+      return now - last > IDLE_MS
+    })
+
+    if (idle.length === 0) return
+
+    nudge.style.display = 'flex'
+    nudgeText.textContent = `${idle.length} idle tab${idle.length === 1 ? '' : 's'} (6h+) in this window`
+    nudgeBtn.textContent = `Review`
+    nudgeBtn.addEventListener('click', () => {
+      const url = chrome.runtime.getURL('tab-manager.html')
+      chrome.tabs.create({ url })
+      window.close()
+    })
+  } catch (err) {
+    console.log('[Clarity Popup] Tab hygiene nudge skipped', err)
+  }
+})()
+
 // Check sync status and show sync section
 chrome.runtime.sendMessage({ type: 'GET_SYNC_STATUS' }, (status) => {
   console.log('[Clarity Popup] Sync status:', status)

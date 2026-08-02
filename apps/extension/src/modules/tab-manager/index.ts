@@ -2,3 +2,5 @@
  * Tab Manager — independent Clarity extension module
  */
 export * from './storage'
+export * from './buckets'
+export * from './hygiene'

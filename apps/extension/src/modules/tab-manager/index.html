@@ -19,7 +19,7 @@
       </button>
       <div class="tm__titles">
         <div class="tm__eyebrow">Clarity</div>
-        <h1 class="tm__title">Tab Manager</h1>
+        <h1 class="tm__title">Workspace</h1>
       </div>
       <div class="tm__toggle">
         <span class="tm__toggle-label" id="toggle-label">On</span>
@@ -31,13 +31,13 @@
 
     <div class="tm__disabled" id="disabled-state">
       <h2>Module off</h2>
-      <p>Turn Tab Manager on to park noise and clean up open tabs.</p>
+      <p>Turn Tab Manager on to park noise and keep your workspace clean.</p>
       <button class="tm__chip tm__chip--primary" id="btn-enable" type="button">Enable module</button>
     </div>
 
     <div class="tm__body" id="main-body">
       <section class="tm__hero">
-        <div class="tm__count" id="open-count">0<span>open</span></div>
+        <div class="tm__count" id="open-count">0<span>this window</span></div>
         <p class="tm__subtitle" id="status-line">Park the noise. Keep what you need.</p>
         <div class="tm__scope" role="tablist" aria-label="Window scope">
           <button class="tm__scope-btn is-active" id="scope-current" type="button" data-scope="current">This window</button>
@@ -48,22 +48,50 @@
             <circle cx="11" cy="11" r="7" />
             <path d="M20 20l-3.5-3.5" />
           </svg>
-          <input id="search" type="search" placeholder="Search tabs…" autocomplete="off" />
+          <input id="search" type="search" placeholder="Search by title or URL…" autocomplete="off" />
         </label>
       </section>
 
-      <div class="tm__actions">
-        <button class="tm__chip tm__chip--primary" id="btn-park-others" type="button">Park all except current</button>
-        <button class="tm__chip" id="btn-close-dupes" type="button">Close duplicates</button>
-        <button class="tm__chip" id="btn-restore" type="button">Restore parked</button>
+      <div class="tm__nudge" id="idle-nudge" hidden>
+        <div class="tm__nudge-text" id="idle-nudge-text">Idle tabs ready to park</div>
+        <button class="tm__chip tm__chip--primary" id="btn-park-idle" type="button">Park idle</button>
       </div>
 
-      <section class="tm__section" id="open-section">
+      <div class="tm__actions">
+        <button class="tm__chip tm__chip--primary" id="btn-park-idle-main" type="button">Park idle</button>
+        <button class="tm__chip" id="btn-close-dupes" type="button">Close duplicates</button>
+        <button class="tm__chip" id="btn-park-others" type="button">Park all except current</button>
+        <button class="tm__chip" id="btn-restore" type="button">Restore parked</button>
+        <button class="tm__chip" id="btn-undo" type="button" hidden>Undo last park</button>
+      </div>
+
+      <label class="tm__setting">
+        <input type="checkbox" id="auto-dupes" checked />
+        <span>Auto-close exact duplicates when opening this page</span>
+      </label>
+
+      <section class="tm__section" data-lane="active">
         <div class="tm__section-head">
-          <h2 class="tm__section-title">Open tabs</h2>
-          <span class="tm__section-meta" id="open-meta">0</span>
+          <h2 class="tm__section-title">Active · last 1h</h2>
+          <span class="tm__section-meta" id="meta-active">0</span>
         </div>
-        <div id="open-list"></div>
+        <div id="list-active"></div>
+      </section>
+
+      <section class="tm__section" data-lane="today">
+        <div class="tm__section-head">
+          <h2 class="tm__section-title">Today · 1–6h</h2>
+          <span class="tm__section-meta" id="meta-today">0</span>
+        </div>
+        <div id="list-today"></div>
+      </section>
+
+      <section class="tm__section tm__section--idle" data-lane="idle">
+        <div class="tm__section-head">
+          <h2 class="tm__section-title">Idle · 6h+</h2>
+          <span class="tm__section-meta" id="meta-idle">0</span>
+        </div>
+        <div id="list-idle"></div>
       </section>
 
       <section class="tm__section" id="parked-section">
@@ -76,7 +104,10 @@
     </div>
   </main>
 
-  <div class="tm__toast" id="toast" role="status"></div>
+  <div class="tm__toast" id="toast" role="status">
+    <span id="toast-text"></span>
+    <button type="button" id="toast-undo" hidden>Undo</button>
+  </div>
   <script type="module" src="tab-manager.js"></script>
 </body>
 </html>
