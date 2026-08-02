@@ -83,6 +83,37 @@
   transition: all var(--transition-fast);
 }
 
+.app-titlebar__music {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-titlebar__music:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  transform: scale(1.08);
+}
+
+.app-titlebar__music:active {
+  transform: scale(0.96);
+}
+
+.app-titlebar__music--open,
+.app-titlebar__music--playing {
+  color: var(--color-mint-dark, #5bb5a0);
+  border-color: rgba(91, 181, 160, 0.35);
+  background: rgba(91, 181, 160, 0.12);
+}
+
 .app-titlebar__theme-toggle:hover {
   background: var(--bg-hover);
   color: var(--text-primary);

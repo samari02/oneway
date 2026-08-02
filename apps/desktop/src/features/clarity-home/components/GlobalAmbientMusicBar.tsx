@@ -18,7 +18,7 @@ export function GlobalAmbientMusicBar({ showPlayer = true }: GlobalAmbientMusicB
     toggle,
   } = useAmbientMusicPlayer({ enabled: false })
 
-  // Hook stays mounted for audio sync even when the morning flow renders its own player.
+  // Keep hook mounted so playback continues when the panel is hidden.
   if (!showPlayer) return null
 
   return (

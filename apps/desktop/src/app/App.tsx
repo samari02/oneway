@@ -10,6 +10,7 @@ import { SettingsView } from '@/features/settings'
 import { BoundariesView, ProtectionAlert, useExtensionStatus } from '@/features/boundaries'
 import { ClarityHomeView, ProgressView, TasksView } from '@/features/clarity-home'
 import { GlobalAmbientMusicBar } from '@/features/clarity-home/components/GlobalAmbientMusicBar'
+import { useAmbientMusicPlayer } from '@/features/clarity-home/hooks/useAmbientMusicPlayer'
 import { ClarityHomeErrorBoundary } from '@/features/clarity-home/components/ClarityHomeErrorBoundary'
 import { Mascot, type MascotMood } from '@/features/mascot'
 import { MONK_MINIATURE_SRC } from '@/features/clarity-home/companion-avatars'
@@ -386,6 +387,8 @@ function Dashboard() {
   const { status: extensionStatus } = useExtensionStatus()
   const [currentView, setCurrentView] = useState<ViewType>('clarity-home')
   const [sidebarPinned, setSidebarPinned] = useState(false)
+  const [focusSoundsOpen, setFocusSoundsOpen] = useState(false)
+  const { isPlaying: focusSoundsPlaying } = useAmbientMusicPlayer({ enabled: false })
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('clarity-theme')
     // Default to dark unless the user explicitly chose light
@@ -470,6 +473,20 @@ function Dashboard() {
         <div className="app-titlebar__spacer" />
         <span className="app-titlebar__title">Clarity</span>
         <div className="app-titlebar__actions">
+          <button
+            type="button"
+            className={`app-titlebar__music${focusSoundsOpen ? ' app-titlebar__music--open' : ''}${focusSoundsPlaying ? ' app-titlebar__music--playing' : ''}`}
+            onClick={() => setFocusSoundsOpen((open) => !open)}
+            title={focusSoundsOpen ? 'Hide focus sounds' : 'Focus sounds'}
+            aria-label={focusSoundsOpen ? 'Hide focus sounds' : 'Open focus sounds'}
+            aria-pressed={focusSoundsOpen}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
+            </svg>
+          </button>
           <button 
             className="app-titlebar__theme-toggle"
             onClick={() => setIsDarkMode(!isDarkMode)}
@@ -519,7 +536,7 @@ function Dashboard() {
           </div>
         </main>
 
-        <GlobalAmbientMusicBar />
+        <GlobalAmbientMusicBar showPlayer={focusSoundsOpen} />
       </div>
     </div>
   )
