@@ -9,6 +9,12 @@ type ApiKeySaveState = 'idle' | 'saving' | 'saved' | 'error'
 import { SiteClassificationModal, type SiteCategory } from '@/features/stats/components/SiteClassificationModal'
 import { useAoiPreferences } from '@/features/settings/hooks/useAoiPreferences'
 import { useHostsBlocking } from '@/features/settings/hooks/useHostsBlocking'
+import {
+  useDisableFrictionPrefs,
+  DISABLE_FRICTION_OPTIONS,
+  type DisableFrictionSecs,
+} from '@/features/settings/hooks/useDisableFrictionPrefs'
+import { DisableFrictionModal } from '@/features/settings/components/DisableFrictionModal'
 import { DeleteSiteDomainPicker } from '@/features/settings/components/DeleteSiteDomainPicker'
 import { useFocusAreaStore } from '@/features/clarity-home/hooks/useFocusAreaStore'
 import { FocusAreaManager } from '@/features/clarity-home/components/FocusAreaManager'
@@ -49,6 +55,8 @@ export function SettingsView({ onNavigateToView }: SettingsViewProps) {
     disable: disableHostsBlocking,
     refresh: refreshHostsBlocking,
   } = useHostsBlocking()
+  const { durationSecs: frictionSecs, setDurationSecs: setFrictionSecs } = useDisableFrictionPrefs()
+  const [hostsDisableOpen, setHostsDisableOpen] = useState(false)
   const {
     activeAreas,
     archivedAreas,
@@ -272,17 +280,39 @@ export function SettingsView({ onNavigateToView }: SettingsViewProps) {
               <input
                 type="checkbox"
                 checked={Boolean(hostsStatus?.enabled)}
-                disabled={hostsBusy || hostsStatus?.supported === false}
+                disabled={hostsBusy || hostsStatus?.supported === false || hostsDisableOpen}
                 onChange={(e) => {
                   if (e.target.checked) {
                     void enableHostsBlocking()
                   } else {
-                    void disableHostsBlocking()
+                    // Keep checkbox visually on until friction completes
+                    e.preventDefault()
+                    setHostsDisableOpen(true)
                   }
                 }}
               />
               <span className="settings-item__label">Enable system adult block</span>
             </label>
+
+            <div className="settings-item settings-item--vertical">
+              <span className="settings-item__label">Disable wait (autodiscipline)</span>
+              <select
+                className="settings-api-key__input"
+                style={{ maxWidth: 160 }}
+                value={frictionSecs}
+                disabled={hostsBusy}
+                onChange={(e) => setFrictionSecs(Number(e.target.value) as DisableFrictionSecs)}
+              >
+                {DISABLE_FRICTION_OPTIONS.map((secs) => (
+                  <option key={secs} value={secs}>
+                    {secs} seconds
+                  </option>
+                ))}
+              </select>
+              <p className="settings-section__hint" style={{ margin: 0 }}>
+                Turning protection off requires this wait, then typing DISABLE. Enabling stays instant.
+              </p>
+            </div>
 
             <div className="settings-item">
               <div className="settings-item__info">
@@ -335,11 +365,26 @@ export function SettingsView({ onNavigateToView }: SettingsViewProps) {
             <p className="settings-section__hint">
               {hostsStatus?.note ||
                 'Chrome Secure DNS (DoH) can bypass /etc/hosts. Prefer OS DNS or disable Secure DNS for full coverage.'}
-              {' '}
-              Disable friction (PIN/delay) is not in this v1 — coming later.
             </p>
           </>
         )}
+
+        <DisableFrictionModal
+          open={hostsDisableOpen}
+          title="Turn off system adult block?"
+          description="Hosts blocking protects apps beyond Chrome. Wait through the cooldown, then type DISABLE to confirm. macOS may still ask for an admin password."
+          durationSecs={frictionSecs}
+          busy={hostsBusy}
+          onCancel={() => setHostsDisableOpen(false)}
+          onConfirm={async () => {
+            try {
+              await disableHostsBlocking()
+              setHostsDisableOpen(false)
+            } catch {
+              // Error surfaced via hostsError; keep modal open so user can retry or cancel
+            }
+          }}
+        />
       </section>
 
       {/* Strictness Section (Coming Soon) */}

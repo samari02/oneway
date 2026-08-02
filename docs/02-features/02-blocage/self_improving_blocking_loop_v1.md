@@ -33,7 +33,7 @@ Structural signals use grown blocklist (self-reinforcing link graph)
 | 1 | Structural signals (adult links ≥K, ad networks, age-gate/RTA) | In `page-analyzer.ts` |
 | 2 | Syncable list that can grow | Seed + `~/.clarity` + candidates file |
 | 3 | Eval as the gate | `eval:adult-blocking` (+ structural HTML corpus) |
-| 4 | Friction / DNS (S3) | Hosts v1 shipped (macOS); disable friction later |
+| 4 | Friction / DNS (S3) | Hosts v1 + disable-friction v1 (cooldown + DISABLE) |
 | 5 | Keyword languages capped EN/FR/JP (+ light CN) | CN light set only |
 
 ## A. Observe → candidates
@@ -92,7 +92,11 @@ Small high-signal Chinese terms in `page-analyzer` EXPLICIT_KEYWORDS (CJK substr
 `~/.clarity/adult-blocklist.json`. See [`hosts_adult_blocking_v1.md`](./hosts_adult_blocking_v1.md).
 Additive to the extension; DoH caveat applies.
 
-**Still later:** PIN/delay friction on disable; Windows/Linux; local DNS proxy.
+**Disable friction v1 (shipped):** cooldown (15/30/60s, default 30) + type `DISABLE`
+before turning off hosts or pausing extension protection. See
+[`disable_friction_v1.md`](./disable_friction_v1.md).
+
+**Still later:** password vault / friend unlock; Windows/Linux; local DNS proxy.
 Not a substitute for a healthy Observe → promote → eval loop.
 
 ## Maintainer / reload

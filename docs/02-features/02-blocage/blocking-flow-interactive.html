@@ -1536,7 +1536,7 @@
           </li>
           <li>
             <span class="prio-num">4</span>
-            <span><strong>DNS / friction anti-désactivation</strong> — hosts macOS v1 livré ; friction PIN plus tard (S3).</span>
+            <span><strong>DNS / friction anti-désactivation</strong> — hosts macOS + disable-friction v1 (délai + DISABLE) ; vault PIN plus tard.</span>
           </li>
           <li>
             <span class="prio-num">5</span>
@@ -1619,15 +1619,17 @@
               <div>
                 <div class="road-title-row">
                   <div class="road-title">DNS / friction anti-désactivation</div>
-                  <span class="status-pill done">hosts v1 macOS</span>
+                  <span class="status-pill done">hosts + friction v1</span>
                 </div>
-                <div class="road-blurb">Filet machine via /etc/hosts — friction PIN encore à venir</div>
+                <div class="road-blurb">Hosts macOS + délai/DISABLE — vault PIN encore à venir</div>
                 <div class="road-detail">
                   L’extension ne voit pas tout : autre navigateur, mode invité, disable.
                   <strong>Hosts desktop v1</strong> (section managée dans /etc/hosts depuis
                   adult-blocklist.json) est le filet machine — <strong>complément</strong>,
-                  pas un remplacement. Caveat DoH (Chrome Secure DNS). Friction de
-                  désactivation (PIN/délai) reste un chapitre suivant.
+                  pas un remplacement. Caveat DoH (Chrome Secure DNS).
+                  <strong>Disable-friction v1</strong> : cooldown 15/30/60s + taper DISABLE
+                  avant de couper hosts ou de pauser l’extension (voir
+                  <code>disable_friction_v1.md</code>). Vault mot de passe reste un chapitre suivant.
                 </div>
               </div>
               <span class="chev" aria-hidden="true">›</span>

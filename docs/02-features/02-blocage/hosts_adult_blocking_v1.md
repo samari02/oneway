@@ -41,7 +41,7 @@ Backups: `~/.clarity/hosts-backup-YYYYMMDD-HHMMSS.txt` (keeps last 5)
 - Only the marker-delimited section is added/removed; unrelated hosts entries are preserved
 - Refuses enable/refresh when the on-disk adult list is empty (never apply an empty wipe)
 - Refuses writing a completely empty `/etc/hosts`
-- Disable friction (PIN / delay) is **out of scope for v1** (stub only)
+- Disable friction v1: cooldown + type `DISABLE` before hosts disable (see [`disable_friction_v1.md`](./disable_friction_v1.md))
 
 ## Tauri commands
 
@@ -86,6 +86,6 @@ Admin password is required; not fully exercisable in CI sandboxes.
 ## Out of scope (later)
 
 - Windows / Linux parity
-- PIN / delay friction on disable
+- Password vault / longer cooldowns (beyond disable-friction v1)
 - Local DNS proxy / pf rules
 - Replacing the extension

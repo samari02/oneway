@@ -65,24 +65,166 @@ function updateHeightenedTimer(expiresAt, timerEl) {
     const seconds = Math.floor((remaining % 60000) / 1000);
     timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
+// ============================================================================
+// PROTECTION TOGGLE + DISABLE FRICTION
+// ============================================================================
+const DISABLE_CONFIRM_PHRASE = 'DISABLE';
+const FRICTION_OPTIONS = [15, 30, 60];
+let protectionIsActive = false;
+let frictionTimerId = null;
+let frictionRemaining = 0;
+let frictionDuration = 30;
+let frictionOpen = false;
+function $(id) {
+    return document.getElementById(id);
+}
+function clearFrictionTimer() {
+    if (frictionTimerId != null) {
+        clearTimeout(frictionTimerId);
+        frictionTimerId = null;
+    }
+}
+function updateFrictionUi() {
+    const timerEl = $('friction-timer');
+    const barEl = $('friction-progress-bar');
+    const phraseEl = document.getElementById('friction-phrase');
+    const confirmBtn = document.getElementById('btn-friction-confirm');
+    const waitDone = frictionRemaining <= 0;
+    if (waitDone) {
+        timerEl.textContent = `Ready — type ${DISABLE_CONFIRM_PHRASE}`;
+    }
+    else {
+        timerEl.textContent = `Wait ${frictionRemaining}s before you can confirm`;
+    }
+    const elapsed = Math.max(0, frictionDuration - frictionRemaining);
+    barEl.style.width = `${(elapsed / Math.max(1, frictionDuration)) * 100}%`;
+    phraseEl.disabled = !waitDone;
+    if (!waitDone) {
+        phraseEl.value = '';
+    }
+    const phraseOk = phraseEl.value.trim().toUpperCase() === DISABLE_CONFIRM_PHRASE;
+    confirmBtn.disabled = !(waitDone && phraseOk);
+}
+function tickFriction() {
+    if (!frictionOpen)
+        return;
+    if (frictionRemaining <= 0) {
+        clearFrictionTimer();
+        updateFrictionUi();
+        return;
+    }
+    frictionTimerId = setTimeout(() => {
+        frictionRemaining = Math.max(0, frictionRemaining - 1);
+        updateFrictionUi();
+        tickFriction();
+    }, 1000);
+}
+function openFriction(durationSecs) {
+    frictionOpen = true;
+    frictionDuration = durationSecs;
+    frictionRemaining = durationSecs;
+    $('friction-section').classList.add('active');
+    const durationSelect = document.getElementById('friction-duration');
+    durationSelect.value = String(durationSecs);
+    const phraseEl = document.getElementById('friction-phrase');
+    phraseEl.value = '';
+    clearFrictionTimer();
+    updateFrictionUi();
+    tickFriction();
+}
+function closeFriction() {
+    frictionOpen = false;
+    clearFrictionTimer();
+    $('friction-section').classList.remove('active');
+    const phraseEl = document.getElementById('friction-phrase');
+    phraseEl.value = '';
+}
+function applyStatusToUi(response) {
+    protectionIsActive = Boolean(response.isActive);
+    const modeEl = $('mode');
+    const activeEl = $('active-until');
+    const blocksEl = $('blocks-today');
+    const toggleBtn = document.getElementById('btn-toggle');
+    const modeIcon = protectionIsActive ? '🟢' : '⚪️';
+    const modeName = response.mode.charAt(0).toUpperCase() + response.mode.slice(1);
+    modeEl.textContent = `${modeIcon} ${modeName} Mode`;
+    activeEl.textContent = protectionIsActive ? 'Active' : 'Paused';
+    blocksEl.textContent = response.blocksToday.toString();
+    toggleBtn.textContent = protectionIsActive ? 'Pause Mode' : 'Resume Mode';
+    toggleBtn.disabled = frictionOpen;
+}
+function setActive(isActive) {
+    chrome.runtime.sendMessage({ type: 'SET_IS_ACTIVE', data: { isActive } }, (response) => {
+        if (response) {
+            closeFriction();
+            applyStatusToUi(response);
+        }
+        else {
+            window.location.reload();
+        }
+    });
+}
 // Get status from background
 chrome.runtime.sendMessage({ type: 'GET_STATUS' }, (response) => {
-    if (response) {
-        const modeEl = document.getElementById('mode');
-        const activeEl = document.getElementById('active-until');
-        const blocksEl = document.getElementById('blocks-today');
-        const toggleBtn = document.getElementById('btn-toggle');
-        // Update mode display
-        const modeIcon = response.isActive ? '🟢' : '⚪️';
-        const modeName = response.mode.charAt(0).toUpperCase() + response.mode.slice(1);
-        modeEl.textContent = `${modeIcon} ${modeName} Mode`;
-        // Update active status
-        activeEl.textContent = response.isActive ? 'Active' : 'Paused';
-        // Update blocks count
-        blocksEl.textContent = response.blocksToday.toString();
-        // Update toggle button
-        toggleBtn.textContent = response.isActive ? 'Pause Mode' : 'Resume Mode';
+    if (response)
+        applyStatusToUi(response);
+});
+chrome.runtime.sendMessage({ type: 'GET_DISABLE_FRICTION_SECS' }, (res) => {
+    if (res?.secs && FRICTION_OPTIONS.includes(res.secs)) {
+        frictionDuration = res.secs;
+        const durationSelect = document.getElementById('friction-duration');
+        if (durationSelect)
+            durationSelect.value = String(res.secs);
     }
+});
+document.getElementById('friction-phrase')?.addEventListener('input', () => {
+    if (frictionOpen)
+        updateFrictionUi();
+});
+document.getElementById('friction-duration')?.addEventListener('change', (e) => {
+    const secs = Number(e.target.value);
+    if (!FRICTION_OPTIONS.includes(secs))
+        return;
+    chrome.runtime.sendMessage({ type: 'SET_DISABLE_FRICTION_SECS', data: { secs } });
+    if (frictionOpen) {
+        openFriction(secs);
+    }
+    else {
+        frictionDuration = secs;
+    }
+});
+document.getElementById('btn-friction-cancel')?.addEventListener('click', () => {
+    closeFriction();
+    const toggleBtn = document.getElementById('btn-toggle');
+    toggleBtn.disabled = false;
+});
+document.getElementById('btn-friction-confirm')?.addEventListener('click', () => {
+    const phraseEl = document.getElementById('friction-phrase');
+    if (frictionRemaining > 0)
+        return;
+    if (phraseEl.value.trim().toUpperCase() !== DISABLE_CONFIRM_PHRASE)
+        return;
+    setActive(false);
+});
+// Toggle button — pause requires friction; resume is instant
+document.getElementById('btn-toggle').addEventListener('click', () => {
+    if (frictionOpen)
+        return;
+    if (!protectionIsActive) {
+        setActive(true);
+        return;
+    }
+    chrome.runtime.sendMessage({ type: 'GET_DISABLE_FRICTION_SECS' }, (res) => {
+        const secs = res?.secs && FRICTION_OPTIONS.includes(res.secs) ? res.secs : frictionDuration;
+        openFriction(secs);
+        const toggleBtn = document.getElementById('btn-toggle');
+        toggleBtn.disabled = true;
+    });
+});
+// Settings button
+document.getElementById('btn-settings').addEventListener('click', () => {
+    // TODO: Open settings page in main app
+    alert('Settings coming soon!');
 });
 // Check history permission status
 chrome.runtime.sendMessage({ type: 'GET_COLLECTION_STATUS' }, (status) => {
@@ -211,18 +353,6 @@ document.getElementById('btn-reimport')?.addEventListener('click', async () => {
             btn.disabled = false;
         }
     });
-});
-// Toggle button
-document.getElementById('btn-toggle').addEventListener('click', () => {
-    chrome.runtime.sendMessage({ type: 'TOGGLE_MODE' }, () => {
-        // Refresh UI
-        window.location.reload();
-    });
-});
-// Settings button
-document.getElementById('btn-settings').addEventListener('click', () => {
-    // TODO: Open settings page in main app
-    alert('Settings coming soon!');
 });
 // Tab Manager module (independent; on/off toggle lives on the manager page)
 document.getElementById('btn-tab-manager')?.addEventListener('click', () => {

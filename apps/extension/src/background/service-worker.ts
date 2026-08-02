@@ -3,7 +3,7 @@
  * Main logic for the extension
  */
 
-import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL, isOwnExtensionUrl } from '../shared/constants'
+import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL, isOwnExtensionUrl, DEFAULT_DISABLE_FRICTION_SECS, DISABLE_FRICTION_OPTIONS } from '../shared/constants'
 import { extractDomain, matchesPattern, log, urlMatchesAdultDomainList } from '../shared/utils'
 import type { BlockRule, StorageData, NavigationEvent, BlockEvent, ProtectionStatus } from '../shared/types'
 import {
@@ -490,7 +490,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     getProtectionStatus().then(sendResponse)
     return true
   }
-  
+
+  // Pause / resume protection (popup). Friction for pause lives in the popup UI.
+  if (message.type === 'TOGGLE_MODE') {
+    toggleIsActive().then(sendResponse)
+    return true
+  }
+
+  if (message.type === 'SET_IS_ACTIVE') {
+    setIsActive(Boolean(message.data?.isActive)).then(sendResponse)
+    return true
+  }
+
+  if (message.type === 'GET_DISABLE_FRICTION_SECS') {
+    getDisableFrictionSecs().then(sendResponse)
+    return true
+  }
+
+  if (message.type === 'SET_DISABLE_FRICTION_SECS') {
+    setDisableFrictionSecs(message.data?.secs).then(sendResponse)
+    return true
+  }
+
   // Aoi widget status for content script
   if (message.type === 'GET_AOI_STATUS') {
     getAoiStatus(sender.tab?.url).then(sendResponse)
@@ -690,6 +711,35 @@ async function getStatus() {
     strictness: storage.strictness || 'guided',
     blocksToday
   }
+}
+
+async function setIsActive(isActive: boolean) {
+  await chrome.storage.local.set({ [STORAGE_KEYS.IS_ACTIVE]: isActive })
+  log('isActive set to', isActive)
+  return getStatus()
+}
+
+async function toggleIsActive() {
+  const { isActive } = await getStatus()
+  return setIsActive(!isActive)
+}
+
+async function getDisableFrictionSecs(): Promise<{ secs: number }> {
+  const raw = await chrome.storage.local.get(STORAGE_KEYS.DISABLE_FRICTION_SECS)
+  const n = Number(raw[STORAGE_KEYS.DISABLE_FRICTION_SECS])
+  const secs = (DISABLE_FRICTION_OPTIONS as readonly number[]).includes(n)
+    ? n
+    : DEFAULT_DISABLE_FRICTION_SECS
+  return { secs }
+}
+
+async function setDisableFrictionSecs(secs: unknown): Promise<{ secs: number }> {
+  const n = Number(secs)
+  const next = (DISABLE_FRICTION_OPTIONS as readonly number[]).includes(n)
+    ? n
+    : DEFAULT_DISABLE_FRICTION_SECS
+  await chrome.storage.local.set({ [STORAGE_KEYS.DISABLE_FRICTION_SECS]: next })
+  return { secs: next }
 }
 
 /**

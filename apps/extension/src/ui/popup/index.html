@@ -453,6 +453,132 @@
     .popup__heightened-stat-label {
       opacity: 0.8;
     }
+
+    /* Disable-friction (pause protection) */
+    .popup__friction {
+      display: none;
+      background: rgba(15, 23, 42, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .popup__friction.active {
+      display: block;
+    }
+
+    .popup__friction-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .popup__friction-desc {
+      font-size: 11px;
+      opacity: 0.9;
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+
+    .popup__friction-timer {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(239, 68, 68, 0.28);
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 8px;
+    }
+
+    .popup__friction-progress {
+      height: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .popup__friction-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: white;
+      border-radius: 999px;
+      transition: width 0.25s linear;
+    }
+
+    .popup__friction-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 11px;
+    }
+
+    .popup__friction-select {
+      flex: 1;
+      padding: 6px 8px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .popup__friction-select option {
+      color: #333;
+      background: white;
+    }
+
+    .popup__friction-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #1f2937;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+    }
+
+    .popup__friction-input:disabled {
+      opacity: 0.55;
+    }
+
+    .popup__friction-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .popup__friction-actions button {
+      flex: 1;
+      padding: 10px;
+      font-size: 12px;
+    }
+
+    .btn-friction-cancel {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .btn-friction-confirm {
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+    }
+
+    .btn-friction-confirm:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
   </style>
 </head>
 <body>
@@ -511,6 +637,40 @@
           <span class="popup__heightened-stat-value" id="activations-count">0</span>
           <span class="popup__heightened-stat-label">Activations</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Disable friction (pause protection) -->
+    <div class="popup__friction" id="friction-section">
+      <div class="popup__friction-title">Pause protection?</div>
+      <div class="popup__friction-desc">
+        Wait through the cooldown, then type DISABLE. Resume stays instant.
+      </div>
+      <div class="popup__friction-timer" id="friction-timer">Wait…</div>
+      <div class="popup__friction-progress" id="friction-progress">
+        <div class="popup__friction-progress-bar" id="friction-progress-bar"></div>
+      </div>
+      <div class="popup__friction-row">
+        <span>Wait</span>
+        <select class="popup__friction-select" id="friction-duration">
+          <option value="15">15 seconds</option>
+          <option value="30" selected>30 seconds</option>
+          <option value="60">60 seconds</option>
+        </select>
+      </div>
+      <input
+        class="popup__friction-input"
+        id="friction-phrase"
+        type="text"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+        placeholder="Type DISABLE"
+        disabled
+      />
+      <div class="popup__friction-actions">
+        <button type="button" class="btn-friction-cancel" id="btn-friction-cancel">Keep active</button>
+        <button type="button" class="btn-friction-confirm" id="btn-friction-confirm" disabled>Pause</button>
       </div>
     </div>
 

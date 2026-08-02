@@ -61,6 +61,7 @@ export function useHostsBlocking(): UseHostsBlockingResult {
     } catch (e) {
       setError(invokeErrorMessage(e))
       await fetchStatus()
+      throw e
     } finally {
       setBusy(false)
     }

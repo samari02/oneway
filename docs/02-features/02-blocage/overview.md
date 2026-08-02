@@ -7,6 +7,7 @@
 > **Adult system list (v1 sync) :** [adult_blocklist_sync_v1.md](./adult_blocklist_sync_v1.md) — seed + `~/.clarity` + `GET_CONFIG` + offline eval.
 > **Public NSFW complement :** [public_adult_lists_import_v1.md](./public_adult_lists_import_v1.md) — oisd / StevenBlack import (capped, additive).
 > **Self-improving loop (v1) :** [self_improving_blocking_loop_v1.md](./self_improving_blocking_loop_v1.md) — observe → candidate → promote → eval → deploy.
+> **Disable friction (v1) :** [disable_friction_v1.md](./disable_friction_v1.md) — cooldown + type DISABLE before turning hosts / extension protection off.
 
 ---
 
@@ -425,11 +426,12 @@ Protection au niveau OS, complémentaire à l’extension Chrome (pas un remplac
 - Backup avant écriture ; refus d’appliquer une liste vide
 - Settings → **System adult block** (enable / disable / refresh)
 - Doc : [`hosts_adult_blocking_v1.md`](./hosts_adult_blocking_v1.md)
+- Disable friction v1 : cooldown + `DISABLE` — [`disable_friction_v1.md`](./disable_friction_v1.md)
 
 **Caveat DoH** : Chrome Secure DNS peut contourner `/etc/hosts` — garder l’extension ; désactiver Secure DNS ou utiliser le DNS OS pour une couverture hosts complète.
 
 **Plus tard** :
-- Friction PIN/délai à la désactivation
+- Vault mot de passe / cooldowns longs (au-delà de disable-friction v1)
 - Parité Windows/Linux
 - DNS proxy / Pi-hole / NextDNS (Option B)
 

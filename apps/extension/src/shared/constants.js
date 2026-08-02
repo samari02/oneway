@@ -122,8 +122,14 @@ export const STORAGE_KEYS = {
     ADULT_BLOCKLIST_DOMAINS: 'adultBlocklistDomains',
     ADULT_BLOCKLIST_VERSION: 'adultBlocklistVersion',
     /** Observed adult domains from content/structural blocks (capped candidate list) */
-    ADULT_BLOCK_CANDIDATES: 'adultBlockCandidates'
+    ADULT_BLOCK_CANDIDATES: 'adultBlockCandidates',
+    /** Cooldown seconds before pause / disable (autodiscipline) */
+    DISABLE_FRICTION_SECS: 'disableFrictionSecs',
 };
+/** Confirm phrase for pause / disable friction (extension + desktop) */
+export const DISABLE_CONFIRM_PHRASE = 'DISABLE';
+export const DISABLE_FRICTION_OPTIONS = [15, 30, 60];
+export const DEFAULT_DISABLE_FRICTION_SECS = 30;
 /**
  * Block screen URL
  */
