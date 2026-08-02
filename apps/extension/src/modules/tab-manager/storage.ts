@@ -74,12 +74,20 @@ export async function setAutoCloseDuplicates(enabled: boolean): Promise<void> {
   await chrome.storage.local.set({ [TAB_MANAGER_AUTO_DUPES_KEY]: enabled })
 }
 
-export type StoredGroupBy = 'time' | 'theme' | 'site' | 'window'
+export type StoredGroupBy = 'time' | 'theme' | 'site' | 'window' | 'custom'
 
 export async function getGroupByMode(): Promise<StoredGroupBy> {
   const result = await chrome.storage.local.get(TAB_MANAGER_GROUP_BY_KEY)
   const value = result[TAB_MANAGER_GROUP_BY_KEY]
-  if (value === 'theme' || value === 'site' || value === 'window' || value === 'time') return value
+  if (
+    value === 'theme' ||
+    value === 'site' ||
+    value === 'window' ||
+    value === 'time' ||
+    value === 'custom'
+  ) {
+    return value
+  }
   return 'time'
 }
 

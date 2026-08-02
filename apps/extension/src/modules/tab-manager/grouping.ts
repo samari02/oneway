@@ -4,7 +4,7 @@
 
 import { laneForLastAccessed, RecencyLane } from './buckets'
 
-export type GroupByMode = 'time' | 'theme' | 'site' | 'window'
+export type GroupByMode = 'time' | 'theme' | 'site' | 'window' | 'custom'
 
 export type TabGroupColor =
   | 'grey'
@@ -21,10 +21,10 @@ export interface GroupColumn {
   id: string
   title: string
   subtitle?: string
-  /** Chrome group collapsed when applying */
   collapsed: boolean
   color: TabGroupColor
   tabIds: number[]
+  editable?: boolean
 }
 
 export interface TabLike {
@@ -36,6 +36,14 @@ export interface TabLike {
   windowId: number
   lastAccessed?: number
   active?: boolean
+}
+
+export interface UserGroupLike {
+  id: string
+  title: string
+  color: TabGroupColor
+  collapsed: boolean
+  hosts: string[]
 }
 
 const WORK_HOSTS = [
@@ -60,6 +68,7 @@ export const GROUP_BY_LABELS: Record<GroupByMode, string> = {
   theme: 'Theme',
   site: 'Site',
   window: 'Window',
+  custom: 'Custom',
 }
 
 const CLARITY_GROUP_PREFIX = 'Clarity · '
@@ -108,13 +117,65 @@ const SITE_COLORS: TabGroupColor[] = [
   'blue', 'purple', 'cyan', 'orange', 'pink', 'green', 'yellow', 'grey',
 ]
 
+function buildCustomColumns(tabs: TabLike[], userGroups: UserGroupLike[]): GroupColumn[] {
+  const assigned = new Set<number>()
+  const columns: GroupColumn[] = userGroups.map((g) => {
+    const tabIds = tabs
+      .filter((t) => {
+        const host = hostnameOf(t.url)
+        return g.hosts.some(
+          (h) =>
+            host === h ||
+            host.endsWith(`.${h}`) ||
+            host.toLowerCase() === h.toLowerCase()
+        )
+      })
+      .map((t) => {
+        assigned.add(t.id)
+        return t.id
+      })
+    return {
+      id: g.id,
+      title: g.title,
+      subtitle: `${g.hosts.length} domains · editable`,
+      collapsed: g.collapsed,
+      color: g.color,
+      tabIds,
+      editable: true,
+    }
+  })
+
+  const ungrouped = tabs.filter((t) => !assigned.has(t.id)).map((t) => t.id)
+  columns.push({
+    id: 'ungrouped',
+    title: 'Ungrouped',
+    subtitle: 'drop here to forget domain',
+    collapsed: true,
+    color: 'grey',
+    tabIds: ungrouped,
+    editable: false,
+  })
+  return columns
+}
+
 export function buildColumns(
   mode: GroupByMode,
   tabs: TabLike[],
-  opts: { currentWindowId: number | null; now?: number; maxSiteGroups?: number }
+  opts: {
+    currentWindowId: number | null
+    now?: number
+    maxSiteGroups?: number
+    userGroups?: UserGroupLike[]
+  }
 ): GroupColumn[] {
   const now = opts.now ?? Date.now()
   const maxSite = opts.maxSiteGroups ?? 6
+
+  if (mode === 'custom' || (mode === 'theme' && opts.userGroups && opts.userGroups.length > 0)) {
+    if (mode === 'custom' || mode === 'theme') {
+      return buildCustomColumns(tabs, opts.userGroups ?? [])
+    }
+  }
 
   if (mode === 'time') {
     const lanes: RecencyLane[] = ['active', 'today', 'idle']
@@ -182,7 +243,6 @@ export function buildColumns(
     return columns
   }
 
-  // window
   const byWindow = new Map<number, number[]>()
   for (const tab of tabs) {
     const list = byWindow.get(tab.windowId) ?? []

@@ -36,12 +36,11 @@ interface ParkedTab {
 
 ## UI (board + group-by)
 
-- **Group by** pills: Time · Theme · Site · Window
-- Board columns (chips: title + age, no URL wall)
+- **Group by** pills: Time · Custom · Theme · Site · Window
+- Board columns (chips: title + age)
+- **Custom / Theme editable:** drag tab → remember domain; New group; rename / delete
 - Primary: **Apply as Chrome groups** (+ Clear Clarity groups)
 - Secondary: Park idle · Close duplicates · Restore / Undo
-- Scope: This window (default) | All windows
-- Parked list under “More actions”
 
 ---
 

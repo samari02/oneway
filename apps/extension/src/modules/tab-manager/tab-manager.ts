@@ -1,5 +1,5 @@
 /**
- * Clarity Workspace — board + group-by + park hygiene
+ * Clarity Workspace — board + group-by + editable custom groups + park
  */
 
 import { formatAge, laneForLastAccessed } from './buckets'
@@ -26,6 +26,14 @@ import {
   setParkedTabs,
   setUndoParkBatch,
 } from './storage'
+import {
+  assignHostToGroup,
+  createUserGroup,
+  deleteUserGroup,
+  getUserGroups,
+  renameUserGroup,
+  UserGroup,
+} from './user-groups'
 
 interface TabRow {
   id: number
@@ -42,12 +50,13 @@ type WindowScope = 'current' | 'all'
 
 const GROUP_HINTS: Record<GroupByMode, string> = {
   time: 'Time uses last touch (1h active · 1–6h today · 6h+ idle)',
-  theme: 'Theme uses simple domain rules (Work / Personal / Reading / Other)',
+  theme: 'Theme uses your saved domain rules (same as Custom)',
   site: 'Site groups top domains; Other sites collapsed',
-  window: 'Window is for browsing — switch to Time/Theme/Site to apply Chrome groups',
+  window: 'Window is for browsing — switch mode to apply Chrome groups',
+  custom: 'Drag tabs between columns to teach domains · rename / new / delete',
 }
 
-const CHIP_PREVIEW = 5
+const CHIP_PREVIEW = 6
 
 let enabled = true
 let scope: WindowScope = 'current'
@@ -55,6 +64,7 @@ let groupBy: GroupByMode = 'time'
 let currentWindowId: number | null = null
 let allTabs: TabRow[] = []
 let parkedTabs: ParkedTab[] = []
+let userGroups: UserGroup[] = []
 let hasUndo = false
 let autoDupes = true
 let query = ''
@@ -79,6 +89,7 @@ const els = {
   parkIdle: document.getElementById('btn-park-idle') as HTMLButtonElement,
   parkIdleMain: document.getElementById('btn-park-idle-main') as HTMLButtonElement,
   applyGroups: document.getElementById('btn-apply-groups') as HTMLButtonElement,
+  newGroup: document.getElementById('btn-new-group') as HTMLButtonElement,
   clearGroups: document.getElementById('btn-clear-groups') as HTMLButtonElement,
   closeDupes: document.getElementById('btn-close-dupes') as HTMLButtonElement,
   restore: document.getElementById('btn-restore') as HTMLButtonElement,
@@ -91,6 +102,10 @@ const els = {
   toast: document.getElementById('toast')!,
   toastText: document.getElementById('toast-text')!,
   toastUndo: document.getElementById('toast-undo') as HTMLButtonElement,
+}
+
+function isEditableMode(): boolean {
+  return groupBy === 'custom' || groupBy === 'theme'
 }
 
 function showToast(message: string, withUndo = false): void {
@@ -154,6 +169,7 @@ async function loadState(): Promise<void> {
   parkedTabs = await getParkedTabs()
   autoDupes = await getAutoCloseDuplicates()
   groupBy = await getGroupByMode()
+  userGroups = await getUserGroups()
   hasUndo = Boolean(await getUndoParkBatch())
   els.autoDupes.checked = autoDupes
 
@@ -208,50 +224,67 @@ function syncGroupByUi(): void {
     el.classList.toggle('is-active', el.dataset.groupby === groupBy)
   })
   els.groupHint.textContent = GROUP_HINTS[groupBy]
+  els.newGroup.hidden = !isEditableMode()
 }
 
 function renderBoard(tabs: TabRow[]): void {
-  const columns = buildColumns(groupBy, tabs, { currentWindowId })
+  const columns = buildColumns(groupBy, tabs, { currentWindowId, userGroups })
   const byId = new Map(tabs.map((t) => [t.id, t]))
+  const editable = isEditableMode()
 
-  els.board.innerHTML = columns
-    .map((col) => {
-      const previewIds = col.tabIds.slice(0, CHIP_PREVIEW)
-      const extra = col.tabIds.length - previewIds.length
-      const chips = previewIds
-        .map((id) => {
-          const tab = byId.get(id)
-          if (!tab) return ''
-          const host = hostnameOf(tab.url)
-          return `
-            <button class="tm__tabchip" type="button" data-action="activate" data-tab-id="${tab.id}">
-              ${faviconHtml(tab.favIconUrl, host)}
-              <span class="tm__tabchip-title">${escapeHtml(tab.title)}</span>
-              <span class="tm__tabchip-age">${escapeHtml(formatAge(tab.lastAccessed))}</span>
-            </button>
-          `
-        })
-        .join('')
+  const hint = editable
+    ? `<p class="tm__edit-hint">Drag a tab onto a group to remember its domain. Rename / Delete on columns · New group above.</p>`
+    : ''
 
-      const empty =
-        col.tabIds.length === 0
-          ? `<div class="tm__empty">Empty</div>`
-          : `${chips}${extra > 0 ? `<div class="tm__more-count">+${extra} more</div>` : ''}`
+  els.board.innerHTML =
+    hint +
+    columns
+      .map((col) => {
+        const previewIds = col.tabIds.slice(0, CHIP_PREVIEW)
+        const extra = col.tabIds.length - previewIds.length
+        const chips = previewIds
+          .map((id) => {
+            const tab = byId.get(id)
+            if (!tab) return ''
+            const host = hostnameOf(tab.url)
+            const drag = editable ? `draggable="true" data-host="${escapeAttr(host)}"` : ''
+            return `
+              <button class="tm__tabchip" type="button" data-action="activate" data-tab-id="${tab.id}" ${drag}>
+                ${faviconHtml(tab.favIconUrl, host)}
+                <span class="tm__tabchip-title">${escapeHtml(tab.title)}</span>
+                <span class="tm__tabchip-age">${escapeHtml(formatAge(tab.lastAccessed))}</span>
+              </button>
+            `
+          })
+          .join('')
 
-      return `
-        <section class="tm__col${col.collapsed ? ' tm__col--collapsed-hint' : ''}" data-col-id="${escapeAttr(col.id)}">
-          <div class="tm__col-head">
-            <div>
-              <div class="tm__col-title">${escapeHtml(col.title)}</div>
-              ${col.subtitle ? `<div class="tm__col-sub">${escapeHtml(col.subtitle)}</div>` : ''}
+        const empty =
+          col.tabIds.length === 0
+            ? `<div class="tm__empty">${editable ? 'Drop tabs here' : 'Empty'}</div>`
+            : `${chips}${extra > 0 ? `<div class="tm__more-count">+${extra} more</div>` : ''}`
+
+        const actions =
+          editable && col.editable
+            ? `<div class="tm__col-actions">
+                <button type="button" class="tm__col-btn" data-action="rename-group" data-col-id="${escapeAttr(col.id)}" title="Rename">R</button>
+                <button type="button" class="tm__col-btn" data-action="delete-group" data-col-id="${escapeAttr(col.id)}" title="Delete">X</button>
+              </div>`
+            : `<span class="tm__col-badge">${col.tabIds.length}</span>`
+
+        return `
+          <section class="tm__col${col.collapsed ? ' tm__col--collapsed-hint' : ''}" data-col-id="${escapeAttr(col.id)}" data-drop-col="1">
+            <div class="tm__col-head">
+              <div>
+                <div class="tm__col-title">${escapeHtml(col.title)}</div>
+                ${col.subtitle ? `<div class="tm__col-sub">${escapeHtml(col.subtitle)}</div>` : ''}
+              </div>
+              ${actions}
             </div>
-            <span class="tm__col-badge">${col.tabIds.length}</span>
-          </div>
-          <div class="tm__chip-row">${empty}</div>
-        </section>
-      `
-    })
-    .join('')
+            <div class="tm__chip-row">${empty}</div>
+          </section>
+        `
+      })
+      .join('')
 }
 
 function renderParked(tabs: ParkedTab[]): void {
@@ -321,7 +354,7 @@ function render(): void {
   els.applyGroups.disabled = !canApply || tabs.length === 0
   els.applyGroups.title = canApply
     ? 'Create Clarity Chrome groups from this board'
-    : 'Switch to Time, Theme, or Site to apply groups'
+    : 'Switch mode to apply groups'
 
   renderBoard(tabs)
   els.parkedMeta.textContent = String(parkedFiltered.length)
@@ -400,11 +433,11 @@ async function restoreAll(): Promise<void> {
 
 async function applyGroups(): Promise<void> {
   if (groupBy === 'window') {
-    showToast('Pick Time, Theme, or Site to apply groups')
+    showToast('Pick Time, Custom, Theme, or Site')
     return
   }
   const tabs = filteredTabs()
-  const columns = buildColumns(groupBy, tabs, { currentWindowId })
+  const columns = buildColumns(groupBy, tabs, { currentWindowId, userGroups })
   const windowIds =
     scope === 'all'
       ? [...new Set(tabs.map((t) => t.windowId))]
@@ -415,11 +448,8 @@ async function applyGroups(): Promise<void> {
   els.applyGroups.disabled = true
   try {
     const result = await applyColumnsAsChromeGroups(groupBy, columns, tabs, windowIds)
-    if (result.created === 0) {
-      showToast('No groupable tabs')
-    } else {
-      showToast(`Applied ${result.created} Chrome group${result.created === 1 ? '' : 's'} (${GROUP_BY_LABELS[groupBy]})`)
-    }
+    if (result.created === 0) showToast('No groupable tabs')
+    else showToast(`Applied ${result.created} Chrome group${result.created === 1 ? '' : 's'}`)
     await loadState()
   } catch (err) {
     console.error('[Tab Manager] apply groups failed', err)
@@ -439,6 +469,53 @@ async function clearGroups(): Promise<void> {
   await clearClarityGroups(windowIds)
   showToast('Cleared Clarity groups')
   await loadState()
+}
+
+async function onDropHost(host: string, colId: string): Promise<void> {
+  if (!isEditableMode()) return
+  const target = colId === 'ungrouped' ? null : colId
+  userGroups = await assignHostToGroup(host, target)
+  const label = target ? userGroups.find((g) => g.id === target)?.title ?? 'group' : 'Ungrouped'
+  showToast(`Remembered ${host} → ${label}`)
+  render()
+}
+
+function wireBoardDnD(): void {
+  els.board.addEventListener('dragstart', (event) => {
+    const chip = (event.target as HTMLElement).closest('.tm__tabchip') as HTMLElement | null
+    if (!chip || !chip.draggable) return
+    const host = chip.dataset.host
+    if (!host || !event.dataTransfer) return
+    event.dataTransfer.setData('text/clarity-host', host)
+    event.dataTransfer.effectAllowed = 'move'
+    chip.classList.add('is-dragging')
+  })
+
+  els.board.addEventListener('dragend', (event) => {
+    const chip = (event.target as HTMLElement).closest('.tm__tabchip')
+    chip?.classList.remove('is-dragging')
+    els.board.querySelectorAll('.tm__col.is-drop-target').forEach((el) => el.classList.remove('is-drop-target'))
+  })
+
+  els.board.addEventListener('dragover', (event) => {
+    if (!isEditableMode()) return
+    const col = (event.target as HTMLElement).closest('[data-drop-col]') as HTMLElement | null
+    if (!col) return
+    event.preventDefault()
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+    els.board.querySelectorAll('.tm__col.is-drop-target').forEach((el) => el.classList.remove('is-drop-target'))
+    col.classList.add('is-drop-target')
+  })
+
+  els.board.addEventListener('drop', (event) => {
+    const col = (event.target as HTMLElement).closest('[data-drop-col]') as HTMLElement | null
+    if (!col || !event.dataTransfer) return
+    event.preventDefault()
+    const host = event.dataTransfer.getData('text/clarity-host')
+    const colId = col.dataset.colId
+    col.classList.remove('is-drop-target')
+    if (host && colId) void onDropHost(host, colId)
+  })
 }
 
 function wireEvents(): void {
@@ -494,6 +571,20 @@ function wireEvents(): void {
   els.undo.addEventListener('click', () => void undoLastPark())
   els.toastUndo.addEventListener('click', () => void undoLastPark())
 
+  els.newGroup.addEventListener('click', () => {
+    const title = prompt('New group name')
+    if (!title?.trim()) return
+    void (async () => {
+      userGroups = await createUserGroup(title)
+      if (groupBy !== 'custom' && groupBy !== 'theme') {
+        groupBy = 'custom'
+        await setGroupByMode('custom')
+      }
+      showToast(`Created "${title.trim()}"`)
+      render()
+    })()
+  })
+
   els.parkOthers.addEventListener('click', async () => {
     const [current] = await chrome.tabs.query({ active: true, currentWindow: true })
     const keepId = current?.id
@@ -507,6 +598,31 @@ function wireEvents(): void {
   })
 
   els.board.addEventListener('click', async (event) => {
+    const renameBtn = (event.target as HTMLElement).closest('[data-action="rename-group"]') as HTMLElement | null
+    if (renameBtn) {
+      const id = renameBtn.dataset.colId
+      if (!id) return
+      const current = userGroups.find((g) => g.id === id)
+      const next = prompt('Rename group', current?.title ?? '')
+      if (!next?.trim()) return
+      userGroups = await renameUserGroup(id, next)
+      showToast('Group renamed')
+      render()
+      return
+    }
+
+    const deleteBtn = (event.target as HTMLElement).closest('[data-action="delete-group"]') as HTMLElement | null
+    if (deleteBtn) {
+      const id = deleteBtn.dataset.colId
+      if (!id) return
+      const current = userGroups.find((g) => g.id === id)
+      if (!confirm(`Delete group "${current?.title ?? id}"? Domains become ungrouped.`)) return
+      userGroups = await deleteUserGroup(id)
+      showToast('Group deleted')
+      render()
+      return
+    }
+
     const target = (event.target as HTMLElement).closest('[data-action="activate"]') as HTMLElement | null
     if (!target) return
     const id = Number(target.dataset.tabId)
@@ -515,6 +631,8 @@ function wireEvents(): void {
     await chrome.tabs.update(id, { active: true })
     await chrome.windows.update(tab.windowId, { focused: true })
   })
+
+  wireBoardDnD()
 
   els.parkedList.addEventListener('click', async (event) => {
     const target = (event.target as HTMLElement).closest('[data-action]') as HTMLElement | null

@@ -70,14 +70,14 @@ At any moment **t**, the user has too many tabs open. The tab bar is polluted; f
 - [x] Threshold constant documented (`WINDOW_TAB_THRESHOLD`); badge deferred (Focus heightened owns action badge)
 - [x] Visible undo for last park batch (toast + Undo button)
 
-### Phase 2 — Board + Chrome groups (in progress)
+### Phase 2 — Board + Chrome groups
 
-- [x] Board UI with **Group by**: Time / Theme / Site / Window
-- [x] **Apply as Chrome groups** (Time / Theme / Site; Window is view-only)
-- [x] Clarity-prefixed groups (`Clarity · …`); Clear Clarity groups
+- [x] Board UI with **Group by**: Time / Custom / Theme / Site / Window
+- [x] **Apply as Chrome groups** (not Window); Clear Clarity groups
 - [x] Time: Active open · Today collapsed · Idle collapsed
+- [x] **Custom groups**: create / rename / delete · drag tab → remember domain
 - [ ] Optional quiet tidy / notifications without opening manager
-- [ ] Editable theme domain allowlists in UI
+- [ ] Cheap agent “Suggest groups” (preview → edit → apply)
 
 ### Phase 3 — Clarity coupling (optional)
 

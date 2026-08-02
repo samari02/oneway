@@ -56,6 +56,7 @@
         <span class="tm__groupby-label">Group by</span>
         <div class="tm__groupby-pills" role="tablist" aria-label="Group by">
           <button type="button" class="tm__groupby-btn is-active" data-groupby="time">Time</button>
+          <button type="button" class="tm__groupby-btn" data-groupby="custom">Custom</button>
           <button type="button" class="tm__groupby-btn" data-groupby="theme">Theme</button>
           <button type="button" class="tm__groupby-btn" data-groupby="site">Site</button>
           <button type="button" class="tm__groupby-btn" data-groupby="window">Window</button>
@@ -65,6 +66,7 @@
 
       <div class="tm__board-actions">
         <button class="tm__chip tm__chip--primary" id="btn-apply-groups" type="button">Apply as Chrome groups</button>
+        <button class="tm__chip" id="btn-new-group" type="button" hidden>New group</button>
         <button class="tm__chip" id="btn-clear-groups" type="button">Clear Clarity groups</button>
         <button class="tm__chip" id="btn-park-idle-main" type="button">Park idle</button>
         <button class="tm__chip" id="btn-close-dupes" type="button">Close duplicates</button>

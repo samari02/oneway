@@ -340,6 +340,51 @@ input {
   border: 1px solid rgba(123, 108, 246, 0.12);
 }
 
+.tm__col.is-drop-target {
+  outline: 2px solid var(--tm-purple);
+  outline-offset: 2px;
+}
+
+.tm__col-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.tm__col-btn {
+  border: none;
+  background: #eef0f8;
+  color: var(--tm-muted);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.tm__col-btn:hover {
+  background: #ebe8ff;
+  color: var(--tm-purple-deep);
+}
+
+.tm__tabchip[draggable='true'] {
+  cursor: grab;
+}
+
+.tm__tabchip.is-dragging {
+  opacity: 0.5;
+}
+
+.tm__edit-hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tm-purple-deep);
+}
+
+
 .tm__col-head {
   display: flex;
   align-items: flex-start;

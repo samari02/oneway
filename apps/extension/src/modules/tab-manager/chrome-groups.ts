@@ -55,6 +55,7 @@ export async function applyColumnsAsChromeGroups(
     const windowTabIds = new Set(tabs.filter((t) => t.windowId === windowId).map((t) => t.id))
 
     for (const col of columns) {
+      if (col.id === 'ungrouped') continue
       const ids = groupableTabIds(
         tabs,
         col.tabIds.filter((id) => windowTabIds.has(id))
