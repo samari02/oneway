@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "updatedAt": "2026-08-02",
+  "description": "Offline structural / self-improve HTML snippets (mirrors page-analyzer link+ad-network heuristics). label=block|allow.",
+  "fixtures": [
+    {
+      "id": "structural_many_adult_links",
+      "label": "block",
+      "category": "structural_adult_links",
+      "notes": "≥3 distinct known adult outbound hosts → strong structural score",
+      "html": "<html><body><a href=\"https://pornhub.com/x\">a</a><a href=\"https://xvideos.com/y\">b</a><a href=\"https://missav.com/z\">c</a><a href=\"https://example.com\">ok</a></body></html>"
+    },
+    {
+      "id": "structural_ad_network_script",
+      "label": "block",
+      "category": "structural_ad_network",
+      "notes": "Adult ad-network + RTA/rating → block-level structural stack",
+      "html": "<html><head><meta name=\"rating\" content=\"adult\"></head><body><script src=\"https://ads.exoclick.com/tag.js\"></script><p>mirror index</p></body></html>"
+    },
+    {
+      "id": "structural_age_gate_rta",
+      "label": "block",
+      "category": "structural_age_gate",
+      "notes": "RTA / adult rating meta",
+      "html": "<html><head><meta name=\"rating\" content=\"adult\"><meta name=\"RATING\" content=\"RTA-5042-1996-1400-1577-RTA\"></head><body>welcome</body></html>"
+    },
+    {
+      "id": "structural_safe_news",
+      "label": "allow",
+      "category": "hard_negative_structural",
+      "notes": "Mainstream news must not trip structural adult-link heuristic",
+      "html": "<html><body><a href=\"https://www.bbc.com/news\">BBC</a><a href=\"https://www.reuters.com/\">Reuters</a><a href=\"https://www.nytimes.com/\">NYT</a><p>World news today</p></body></html>"
+    },
+    {
+      "id": "structural_policy_fantia",
+      "label": "allow",
+      "category": "policy_sensitive_structural",
+      "notes": "Fantia alone is dual-use — structural scorer should not treat host as known adult seed",
+      "html": "<html><body><a href=\"https://fantia.jp/posts/1\">fan</a><p>creator page</p></body></html>"
+    }
+  ]
+}

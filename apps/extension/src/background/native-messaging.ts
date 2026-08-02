@@ -7,6 +7,7 @@
 
 import { log } from '../shared/utils'
 import type { CategorizedVisit, BlockEvent, ProtectionStatus, AoiPreferences } from '../shared/types'
+import { mergeRemoteAdultDomains } from './adult-blocklist'
 
 // Native host identifier (must match the manifest)
 const HOST_NAME = 'com.clarity.app'
@@ -99,12 +100,24 @@ function stopConfigPolling() {
   }
 }
 
+/** Candidate observed via content/structural block — synced for promote loop. */
+export interface AdultCandidatePayload {
+  domain: string
+  hits: number
+  firstSeenAt: number
+  lastSeenAt: number
+  maxScore: number
+  reasons: string[]
+  source: string
+}
+
 // Message types
 export type MessageToDesktop = 
   | { type: 'GET_AUTH_STATUS' }
   | { type: 'GET_CONFIG' }
   | { type: 'NAVIGATION_EVENT'; data: CategorizedVisit }
   | { type: 'BLOCK_EVENT'; data: BlockEvent }
+  | { type: 'ADULT_CANDIDATE'; data: AdultCandidatePayload }
   | { type: 'HISTORY_SYNC'; data: { visits: CategorizedVisit[] } }
   | { type: 'PING' }
   | { type: 'PROTECTION_STATUS'; data: ProtectionStatusPayload }
@@ -140,6 +153,7 @@ export type MessageFromDesktop =
         isActive: boolean
         customRules?: any[]
         customSearchKeywords?: string[]
+        adultDomains?: string[]
       }
     }
   | { type: 'SYNC_REQUEST'; data: { since: number } }
@@ -417,7 +431,8 @@ async function handleAuthStatus(data: { authenticated: boolean; user: { id: stri
 
 /**
  * Handle config update from desktop
- * Does not replace built-in `rules` — only updates custom rules / search keywords from disk.
+ * Does not replace built-in `rules` — only updates custom rules / search keywords /
+ * adult system domains from disk. Adult domains merge additively (empty remote = no-op).
  */
 async function handleConfigUpdate(data: {
   mode: string
@@ -425,14 +440,17 @@ async function handleConfigUpdate(data: {
   isActive: boolean
   customRules?: any[]
   customSearchKeywords?: string[]
+  adultDomains?: string[]
 }) {
   log('Config update from desktop:', data.mode, data.isActive ? 'active' : 'inactive')
 
   const d = data as Record<string, unknown>
   const hasCustomRulesKey = 'customRules' in d || 'custom_rules' in d
   const hasKeywordsKey = 'customSearchKeywords' in d || 'custom_search_keywords' in d
+  const hasAdultKey = 'adultDomains' in d || 'adult_domains' in d
   const rawRules = d.customRules ?? d.custom_rules
   const rawKeywords = d.customSearchKeywords ?? d.custom_search_keywords
+  const rawAdult = d.adultDomains ?? d.adult_domains
 
   const patch: Record<string, unknown> = {
     mode: data.mode,
@@ -444,12 +462,16 @@ async function handleConfigUpdate(data: {
   if (hasKeywordsKey) {
     patch.customSearchKeywords = Array.isArray(rawKeywords) ? rawKeywords : []
   }
-  if (!hasCustomRulesKey && !hasKeywordsKey) {
+  if (!hasCustomRulesKey && !hasKeywordsKey && !hasAdultKey) {
     log(
-      'CONFIG_UPDATE: payload has no customRules/customSearchKeywords — native host may be outdated; ensure GET_CONFIG returns those fields (rebuild host) and ~/.clarity/custom-blocking-rules.json exists.'
+      'CONFIG_UPDATE: payload has no customRules/customSearchKeywords/adultDomains — native host may be outdated; ensure GET_CONFIG returns those fields (rebuild host) and ~/.clarity/*.json files exist.'
     )
   }
   await chrome.storage.local.set(patch)
+
+  if (hasAdultKey) {
+    await mergeRemoteAdultDomains(rawAdult)
+  }
 }
 
 /**
@@ -523,6 +545,23 @@ export function sendBlockEvent(event: BlockEvent) {
     sendToDesktop({
       type: 'BLOCK_EVENT',
       data: event
+    })
+  }
+}
+
+/**
+ * Sync an observed adult-block candidate to desktop (~/.clarity/adult-blocklist-candidates.json).
+ * No-op when native host is disconnected — local chrome.storage still holds the candidate.
+ */
+export function sendAdultCandidate(data: AdultCandidatePayload) {
+  if (isConnected) {
+    sendToDesktop({
+      type: 'ADULT_CANDIDATE',
+      data: {
+        ...data,
+        firstSeenAt: Math.floor(data.firstSeenAt),
+        lastSeenAt: Math.floor(data.lastSeenAt),
+      }
     })
   }
 }

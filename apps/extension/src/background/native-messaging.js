@@ -5,6 +5,7 @@
  * Uses Chrome's Native Messaging API for secure, local communication.
  */
 import { log } from '../shared/utils';
+import { mergeRemoteAdultDomains } from './adult-blocklist';
 // Native host identifier (must match the manifest)
 const HOST_NAME = 'com.clarity.app';
 // Connection state
@@ -320,15 +321,18 @@ async function handleAuthStatus(data) {
 }
 /**
  * Handle config update from desktop
- * Does not replace built-in `rules` — only updates custom rules / search keywords from disk.
+ * Does not replace built-in `rules` — only updates custom rules / search keywords /
+ * adult system domains from disk. Adult domains merge additively (empty remote = no-op).
  */
 async function handleConfigUpdate(data) {
     log('Config update from desktop:', data.mode, data.isActive ? 'active' : 'inactive');
     const d = data;
     const hasCustomRulesKey = 'customRules' in d || 'custom_rules' in d;
     const hasKeywordsKey = 'customSearchKeywords' in d || 'custom_search_keywords' in d;
+    const hasAdultKey = 'adultDomains' in d || 'adult_domains' in d;
     const rawRules = d.customRules ?? d.custom_rules;
     const rawKeywords = d.customSearchKeywords ?? d.custom_search_keywords;
+    const rawAdult = d.adultDomains ?? d.adult_domains;
     const patch = {
         mode: data.mode,
         isActive: data.isActive
@@ -339,10 +343,13 @@ async function handleConfigUpdate(data) {
     if (hasKeywordsKey) {
         patch.customSearchKeywords = Array.isArray(rawKeywords) ? rawKeywords : [];
     }
-    if (!hasCustomRulesKey && !hasKeywordsKey) {
-        log('CONFIG_UPDATE: payload has no customRules/customSearchKeywords — native host may be outdated; ensure GET_CONFIG returns those fields (rebuild host) and ~/.clarity/custom-blocking-rules.json exists.');
+    if (!hasCustomRulesKey && !hasKeywordsKey && !hasAdultKey) {
+        log('CONFIG_UPDATE: payload has no customRules/customSearchKeywords/adultDomains — native host may be outdated; ensure GET_CONFIG returns those fields (rebuild host) and ~/.clarity/*.json files exist.');
     }
     await chrome.storage.local.set(patch);
+    if (hasAdultKey) {
+        await mergeRemoteAdultDomains(rawAdult);
+    }
 }
 /**
  * Handle Aoi preferences from desktop
@@ -405,6 +412,22 @@ export function sendBlockEvent(event) {
         sendToDesktop({
             type: 'BLOCK_EVENT',
             data: event
+        });
+    }
+}
+/**
+ * Sync an observed adult-block candidate to desktop (~/.clarity/adult-blocklist-candidates.json).
+ * No-op when native host is disconnected — local chrome.storage still holds the candidate.
+ */
+export function sendAdultCandidate(data) {
+    if (isConnected) {
+        sendToDesktop({
+            type: 'ADULT_CANDIDATE',
+            data: {
+                ...data,
+                firstSeenAt: Math.floor(data.firstSeenAt),
+                lastSeenAt: Math.floor(data.lastSeenAt),
+            }
         });
     }
 }

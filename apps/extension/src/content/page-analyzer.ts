@@ -43,6 +43,10 @@ const EXPLICIT_KEYWORDS = [
   'キャバクラ', 'おっぱい', 'まんこ', 'ちんこ', '裏ビデオ',
   '無料動画', 'アダルトビデオ', '同人', '18禁',
   'R18', 'R-18', 'FANZA', 'ecchi',
+
+  // Chinese (light, high-signal only — CJK substring match)
+  '色情', '成人视频', '成人網站', '成人网站', '黄色网站', '黄色網站',
+  '黄片', '色情片', '裸体', '性愛', '性爱', '成人內容', '成人内容',
 ] as const
 
 const DOMAIN_ADULT_PATTERNS = [
@@ -53,7 +57,7 @@ const DOMAIN_ADULT_PATTERNS = [
   'netflav', 'hpjav', '7mmtv', 'xcity', 'erovideo', 'fc2ppv',
   'sokmil', 'dxlive', 'chatpia', 'sukebei', 'tokyohot', 'tokyo-hot',
   '1pondo', 'caribbeancom', 'pacopaco', 'heyzo', 'mgstage',
-  'eroterest',
+  'eroterest', 'xcolle', 'pcolle', 'digiket', 'nyahentai', 'fc2live',
 
   'エロ', 'アダルト', '風俗', 'エロ動画', '無修正',
 ] as const
@@ -67,6 +71,8 @@ const KNOWN_ADULT_DOMAINS = [
   'jable.tv', 'netflav.com', 'hpjav.tv', 'supjav.com',
   'fanza.co.jp', 'tokyomotion.net',
   'spankbang.com', 'hqporner.com', 'rule34.xxx',
+  'xcolle.jp', 'pcolle.jp', 'digiket.com', 'fc2ppv.com', 'fc2live.com',
+  'dxlive.com', 'chatpia.jp', 'dmm.co.jp',
 ] as const
 
 /** Curated adult ad / affiliate network hosts */
@@ -76,49 +82,13 @@ const ADULT_AD_NETWORKS = [
   'plugrush.com', 'clickadu.com', 'adcash.com', 'hilltopads.com',
 ] as const
 
-const SAFE_CONTEXT_INDICATORS = [
-  'wikipedia', 'education', 'educational', 'medical', 'health',
-  'research', 'documentary', 'news', 'article', 'study', 'academic',
-  'cancer', 'disease', 'anatomy', 'biology', 'history', 'science',
-  'museum', 'encyclopedia', 'dictionary', 'reference'
-] as const
+/** Distinct known-adult outbound link hosts required for a strong structural hit */
+const ADULT_LINK_DOMAIN_THRESHOLD = 3
 
-const SAFE_DOMAINS = [
-  'wikipedia.org', 'webmd.com', 'mayoclinic.org', 'healthline.com',
-  'nih.gov', 'cdc.gov', 'britannica.com', 'khanacademy.org',
-  'google.com', 'youtube.com', 'github.com', 'stackoverflow.com'
-] as const
-
-const WHITELISTED_DOMAINS = [
-  // Search engines (handled by Layer 2)
-  'google.com', 'bing.com', 'duckduckgo.com', 'yahoo.com',
-  'ecosia.org', 'qwant.com', 'startpage.com',
-  // Social (may have explicit content but handled separately)
-  'twitter.com', 'x.com', 'facebook.com', 'instagram.com',
-  'reddit.com', 'tiktok.com', 'linkedin.com',
-  // Work tools
-  'github.com', 'gitlab.com', 'stackoverflow.com', 'notion.so',
-  'slack.com', 'discord.com', 'figma.com', 'linear.app',
-  'trello.com', 'asana.com', 'jira.atlassian.com',
-  // Email
-  'gmail.com', 'mail.google.com', 'outlook.com', 'outlook.live.com',
-  // Shopping (legitimate)
-  'amazon.com', 'amazon.co.jp', 'amazon.fr', 'amazon.de',
-  'ebay.com', 'etsy.com', 'aliexpress.com',
-  // Banking / Finance (often have minimal text, lots of UI elements)
-  'paypal.com', 'stripe.com', 'wise.com',
-  // Japanese banks & services
-  'smbc.co.jp', 'mufg.jp', 'mizuhobank.co.jp', 'rakuten-bank.co.jp',
-  'japannetbank.co.jp', 'aeonbank.co.jp', 'sbigroup.co.jp',
-  // Health & supplements (legitimate)
-  'iherb.com', 'jp.iherb.com',
-  // Video (handled elsewhere)
-  'youtube.com', 'netflix.com', 'twitch.tv', 'vimeo.com',
-  // News
-  'nytimes.com', 'bbc.com', 'cnn.com', 'reuters.com',
-  // Cloud services
-  'dropbox.com', 'drive.google.com', 'onedrive.live.com'
-] as const
+export interface AnalyzePageOptions {
+  /** Extra adult domains from system blocklist seed/sync (self-reinforcing). */
+  knownAdultDomains?: string[]
+}
 
 // ============================================================================
 // ANALYSIS FUNCTIONS
@@ -127,8 +97,9 @@ const WHITELISTED_DOMAINS = [
 /**
  * Main analysis function — analyzes the current page
  */
-export function analyzePage(): ContentAnalysisResult {
+export function analyzePage(options: AnalyzePageOptions = {}): ContentAnalysisResult {
   const startTime = performance.now()
+  const knownAdultSet = buildKnownAdultSet(options.knownAdultDomains)
   
   let score = 0
   const reasons: string[] = []
@@ -211,8 +182,8 @@ export function analyzePage(): ContentAnalysisResult {
     reasons.push(linkResult.reason)
   }
 
-  // 8. Known adult domain links (language-independent)
-  const adultLinkResult = analyzeAdultDomainLinks()
+  // 8. Known adult / blocklist domain links (language-independent, self-reinforcing)
+  const adultLinkResult = analyzeAdultDomainLinks(knownAdultSet)
   score += adultLinkResult.score
   if (adultLinkResult.score > 0) {
     reasons.push(adultLinkResult.reason)
@@ -247,6 +218,50 @@ export function analyzePage(): ContentAnalysisResult {
   }
 }
 
+const SAFE_CONTEXT_INDICATORS = [
+  'wikipedia', 'education', 'educational', 'medical', 'health',
+  'research', 'documentary', 'news', 'article', 'study', 'academic',
+  'cancer', 'disease', 'anatomy', 'biology', 'history', 'science',
+  'museum', 'encyclopedia', 'dictionary', 'reference'
+] as const
+
+const SAFE_DOMAINS = [
+  'wikipedia.org', 'webmd.com', 'mayoclinic.org', 'healthline.com',
+  'nih.gov', 'cdc.gov', 'britannica.com', 'khanacademy.org',
+  'google.com', 'youtube.com', 'github.com', 'stackoverflow.com'
+] as const
+
+const WHITELISTED_DOMAINS = [
+  // Search engines (handled by Layer 2)
+  'google.com', 'bing.com', 'duckduckgo.com', 'yahoo.com',
+  'ecosia.org', 'qwant.com', 'startpage.com',
+  // Social (may have explicit content but handled separately)
+  'twitter.com', 'x.com', 'facebook.com', 'instagram.com',
+  'reddit.com', 'tiktok.com', 'linkedin.com',
+  // Work tools
+  'github.com', 'gitlab.com', 'stackoverflow.com', 'notion.so',
+  'slack.com', 'discord.com', 'figma.com', 'linear.app',
+  'trello.com', 'asana.com', 'jira.atlassian.com',
+  // Email
+  'gmail.com', 'mail.google.com', 'outlook.com', 'outlook.live.com',
+  // Shopping (legitimate)
+  'amazon.com', 'amazon.co.jp', 'amazon.fr', 'amazon.de',
+  'ebay.com', 'etsy.com', 'aliexpress.com',
+  // Banking / Finance (often have minimal text, lots of UI elements)
+  'paypal.com', 'stripe.com', 'wise.com',
+  // Japanese banks & services
+  'smbc.co.jp', 'mufg.jp', 'mizuhobank.co.jp', 'rakuten-bank.co.jp',
+  'japannetbank.co.jp', 'aeonbank.co.jp', 'sbigroup.co.jp',
+  // Health & supplements (legitimate)
+  'iherb.com', 'jp.iherb.com',
+  // Video (handled elsewhere)
+  'youtube.com', 'netflix.com', 'twitch.tv', 'vimeo.com',
+  // News
+  'nytimes.com', 'bbc.com', 'cnn.com', 'reuters.com',
+  // Cloud services
+  'dropbox.com', 'drive.google.com', 'onedrive.live.com'
+] as const
+
 /**
  * Analyze domain name for adult keywords (e.g. "porn" in hostname → high score)
  */
@@ -255,8 +270,19 @@ function analyzeDomainName(domain: string): { score: number; reasons: string[] }
   let score = 0
   const reasons: string[] = []
 
+  // Ultra-generic Latin tokens only match as a DNS label (or hyphenated label),
+  // not as a substring of hosts like "ashasexualhealth.org" / "sussex.com".
+  const GENERIC_HOST_TOKENS = new Set(['sex', 'adult', 'nude', 'ass'])
+
   for (const pattern of DOMAIN_ADULT_PATTERNS) {
-    if (domainLower.includes(pattern.toLowerCase())) {
+    const pat = pattern.toLowerCase()
+    let hit = false
+    if (GENERIC_HOST_TOKENS.has(pat)) {
+      hit = domainLower.split('.').some((lab) => lab === pat || lab.split('-').includes(pat))
+    } else {
+      hit = domainLower.includes(pat)
+    }
+    if (hit) {
       score = 80
       reasons.push(`Adult keyword in domain: "${pattern}" found in ${domain}`)
       break
@@ -559,27 +585,55 @@ function hostFromHref(href: string): string | null {
   }
 }
 
-function hostMatchesKnownAdult(host: string): boolean {
-  return KNOWN_ADULT_DOMAINS.some(d => host === d || host.endsWith('.' + d))
+function buildKnownAdultSet(extra?: string[]): Set<string> {
+  const set = new Set<string>()
+  for (const d of KNOWN_ADULT_DOMAINS) set.add(d.toLowerCase())
+  if (extra) {
+    for (const raw of extra) {
+      if (typeof raw !== 'string') continue
+      const d = raw.trim().toLowerCase().replace(/^www\./, '')
+      if (d.includes('.')) set.add(d)
+    }
+  }
+  return set
+}
+
+function hostMatchesAdultSet(host: string, known: Set<string>): boolean {
+  if (known.has(host)) return true
+  for (const d of known) {
+    if (host === d || host.endsWith('.' + d)) return true
+  }
+  return false
 }
 
 /**
- * Count outbound links to known adult registrable domains (language-independent signal)
+ * Count outbound links to known adult / system-blocklist domains.
+ * Self-reinforcing: as the blocklist grows, link-graph detection strengthens.
+ * ≥K distinct adult domains → strong score (language-independent).
  */
-function analyzeAdultDomainLinks(): { score: number; reason: string } {
+function analyzeAdultDomainLinks(known: Set<string>): { score: number; reason: string } {
   const links = Array.from(document.querySelectorAll('a[href]')).slice(0, 150)
+  const distinctAdult = new Set<string>()
   let adultLinkCount = 0
   const samples: string[] = []
 
   for (const link of links) {
     const host = hostFromHref(link.getAttribute('href') || '')
     if (!host) continue
-    if (hostMatchesKnownAdult(host)) {
+    if (hostMatchesAdultSet(host, known)) {
       adultLinkCount++
+      distinctAdult.add(host)
       if (samples.length < 3) samples.push(host)
     }
   }
 
+  // Strong structural: ≥K distinct adult/blocklist domains linked
+  if (distinctAdult.size >= ADULT_LINK_DOMAIN_THRESHOLD) {
+    return {
+      score: 75,
+      reason: `Links to ≥${ADULT_LINK_DOMAIN_THRESHOLD} adult blocklist domains (${distinctAdult.size}): ${samples.join(', ')}`
+    }
+  }
   if (adultLinkCount >= 5) {
     return {
       score: 40,

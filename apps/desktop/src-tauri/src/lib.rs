@@ -2,6 +2,8 @@ mod browsing_data;
 mod blocking_lock;
 mod native_host;
 mod custom_rules_file;
+mod adult_blocklist_file;
+mod adult_candidates_file;
 mod app_data;
 mod app_monitor;
 mod supabase_sync;
@@ -272,6 +274,12 @@ fn write_custom_rules_to_disk(rules: serde_json::Value) -> Result<(), String> {
     custom_rules_file::write_rules_json(rules)
 }
 
+/// Persist system adult domain blocklist for native host GET_CONFIG → extension.
+#[tauri::command]
+fn write_adult_blocklist_to_disk(payload: serde_json::Value) -> Result<(), String> {
+    adult_blocklist_file::write_adult_blocklist_json(payload)
+}
+
 // --- Blocking list lock (local password + timed unlock) ---
 
 #[tauri::command]
@@ -355,6 +363,7 @@ pub fn run() {
             get_aoi_preferences,
             save_aoi_preferences,
             write_custom_rules_to_disk,
+            write_adult_blocklist_to_disk,
             blocking_lock_get_status,
             blocking_lock_set_password,
             blocking_lock_verify_unlock,

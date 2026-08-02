@@ -52,3 +52,28 @@ export function log(...args) {
     // Always log in development (chrome extension doesn't have process.env)
     console.log(`[Clarity ${new Date().toISOString()}]`, ...args);
 }
+/**
+ * Check if hostname matches a listed adult domain (exact or subdomain).
+ */
+export function matchesAdultDomain(hostname, listedDomain) {
+    const host = hostname.toLowerCase().replace(/^www\./, '');
+    const listed = listedDomain.toLowerCase().replace(/^www\./, '');
+    if (!listed)
+        return false;
+    return host === listed || host.endsWith('.' + listed);
+}
+/**
+ * True if URL host matches any domain in the adult system list.
+ */
+export function urlMatchesAdultDomainList(url, domains) {
+    if (!domains.length)
+        return false;
+    let host;
+    try {
+        host = new URL(url).hostname;
+    }
+    catch {
+        host = extractDomain(url);
+    }
+    return domains.some((d) => matchesAdultDomain(host, d));
+}

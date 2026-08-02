@@ -7,8 +7,11 @@
     "dev": "vite build --watch --mode development",
     "build": "tsc && vite build && npm run build:content && npm run copy-files",
     "build:content": "esbuild src/content/content-script.ts --bundle --outfile=dist/content-script.js --format=iife --target=chrome100",
-    "copy-files": "cp manifest.json dist/ && cp public/rules.json dist/ && cp src/ui/block-screen/index.html dist/block-screen.html && cp src/ui/block-screen/block-screen.css dist/ && cp src/ui/popup/index.html dist/popup.html && cp src/modules/tab-manager/index.html dist/tab-manager.html && cp src/modules/tab-manager/tab-manager.css dist/tab-manager.css && mkdir -p dist/icons dist/companion-avatars && (cp public/icons/*.png dist/icons/ 2>/dev/null || true) && cp public/companion-avatars/monk_miniature.png dist/companion-avatars/ && (cp public/companion-avatars/*.png dist/companion-avatars/ 2>/dev/null || true)",
-    "type-check": "tsc --noEmit"
+    "copy-files": "cp manifest.json dist/ && cp public/rules.json dist/ && cp public/adult-blocklist.json dist/ && cp src/ui/block-screen/index.html dist/block-screen.html && cp src/ui/block-screen/block-screen.css dist/ && cp src/ui/popup/index.html dist/popup.html && cp src/modules/tab-manager/index.html dist/tab-manager.html && cp src/modules/tab-manager/tab-manager.css dist/tab-manager.css && mkdir -p dist/icons dist/companion-avatars && (cp public/icons/*.png dist/icons/ 2>/dev/null || true) && cp public/companion-avatars/monk_miniature.png dist/companion-avatars/ && (cp public/companion-avatars/*.png dist/companion-avatars/ 2>/dev/null || true)",
+    "type-check": "tsc --noEmit",
+    "eval:adult-blocking": "node scripts/eval/run-adult-blocking-eval.mjs",
+    "generate:adult-blocklist": "node scripts/lib/generate-adult-blocklist.mjs",
+    "promote:adult-candidates": "node scripts/lib/promote-adult-candidates.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",

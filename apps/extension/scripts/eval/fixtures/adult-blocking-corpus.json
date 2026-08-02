@@ -1,0 +1,1953 @@
+{
+  "version": 1,
+  "updatedAt": "2026-08-02",
+  "description": "Offline adult-blocking eval corpus. label=block|allow. Runner scores DNR + adult-blocklist + hostname heuristics (no Chrome).",
+  "fixtures": [
+    {
+      "url": "https://xcolle.jp/",
+      "label": "block",
+      "category": "doujin_market",
+      "notes": "JP doujin adult marketplace"
+    },
+    {
+      "url": "https://www.xcolle.jp/item/123",
+      "label": "block",
+      "category": "doujin_market",
+      "notes": "JP doujin adult marketplace"
+    },
+    {
+      "url": "https://pcolle.jp/",
+      "label": "block",
+      "category": "doujin_market",
+      "notes": "JP doujin adult marketplace"
+    },
+    {
+      "url": "https://www.pcolle.jp/",
+      "label": "block",
+      "category": "doujin_market",
+      "notes": "JP doujin adult marketplace"
+    },
+    {
+      "url": "https://digiket.com/",
+      "label": "block",
+      "category": "doujin_market",
+      "notes": "JP doujin adult marketplace"
+    },
+    {
+      "url": "https://fc2.com/",
+      "label": "block",
+      "category": "fc2_ecosystem"
+    },
+    {
+      "url": "https://video.fc2.com/",
+      "label": "block",
+      "category": "fc2_ecosystem"
+    },
+    {
+      "url": "https://adult.contents.fc2.com/",
+      "label": "block",
+      "category": "fc2_ecosystem"
+    },
+    {
+      "url": "https://fc2ppv.com/",
+      "label": "block",
+      "category": "fc2_ecosystem"
+    },
+    {
+      "url": "https://fc2ppv.tv/",
+      "label": "block",
+      "category": "fc2_ecosystem"
+    },
+    {
+      "url": "https://fc2ppvdb.com/",
+      "label": "block",
+      "category": "fc2_ecosystem"
+    },
+    {
+      "url": "https://live.fc2.com/",
+      "label": "block",
+      "category": "fc2_ecosystem"
+    },
+    {
+      "url": "https://fc2live.com/",
+      "label": "block",
+      "category": "fc2_ecosystem"
+    },
+    {
+      "url": "https://fc2blog.us/",
+      "label": "block",
+      "category": "fc2_ecosystem"
+    },
+    {
+      "url": "https://missav.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://missav.ws/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://missav123.jp/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://missav123.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://missav456.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://javdb.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://javbus.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://jable.tv/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://netflav.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://hpjav.tv/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://njav.tv/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://avgle.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://supjav.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://7mmtv.tv/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://thisav.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://javlibrary.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://jav.guru/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://seejav.tv/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://uncensoredjav.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://123av.com/",
+      "label": "block",
+      "category": "jav_aggregator"
+    },
+    {
+      "url": "https://fanza.co.jp/",
+      "label": "block",
+      "category": "fanza_dmm"
+    },
+    {
+      "url": "https://www.fanza.co.jp/",
+      "label": "block",
+      "category": "fanza_dmm"
+    },
+    {
+      "url": "https://dmm.co.jp/",
+      "label": "block",
+      "category": "fanza_dmm"
+    },
+    {
+      "url": "https://adult.dmm.co.jp/",
+      "label": "block",
+      "category": "fanza_dmm"
+    },
+    {
+      "url": "https://video.dmm.co.jp/",
+      "label": "block",
+      "category": "fanza_dmm"
+    },
+    {
+      "url": "https://www.dmm.co.jp/digital/videoa/",
+      "label": "block",
+      "category": "fanza_dmm"
+    },
+    {
+      "url": "https://1pondo.tv/",
+      "label": "block",
+      "category": "jp_studio"
+    },
+    {
+      "url": "https://caribbeancom.com/",
+      "label": "block",
+      "category": "jp_studio"
+    },
+    {
+      "url": "https://heyzo.com/",
+      "label": "block",
+      "category": "jp_studio"
+    },
+    {
+      "url": "https://tokyo-hot.com/",
+      "label": "block",
+      "category": "jp_studio"
+    },
+    {
+      "url": "https://mgstage.com/",
+      "label": "block",
+      "category": "jp_studio"
+    },
+    {
+      "url": "https://pacopacomama.com/",
+      "label": "block",
+      "category": "jp_studio"
+    },
+    {
+      "url": "https://sokmil.com/",
+      "label": "block",
+      "category": "jp_studio"
+    },
+    {
+      "url": "https://xcity.jp/",
+      "label": "block",
+      "category": "jp_studio"
+    },
+    {
+      "url": "https://erovideo.jp/",
+      "label": "block",
+      "category": "jp_studio"
+    },
+    {
+      "url": "https://eroterest.net/",
+      "label": "block",
+      "category": "jp_studio"
+    },
+    {
+      "url": "https://dxlive.com/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://chatpia.jp/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://gocam.jp/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://madamlive.tv/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://angel-live.jp/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://chaturbate.com/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://stripchat.com/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://stripchat.global/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://bongacams.com/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://cam4.com/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://myfreecams.com/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://livejasmin.com/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://camsoda.com/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://xhamsterlive.com/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://xliveweb.com/",
+      "label": "block",
+      "category": "livecam"
+    },
+    {
+      "url": "https://pornhub.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://www.pornhub.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://xvideos.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://xvideos2.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://xnxx.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://xhamster.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://spankbang.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://redtube.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://youporn.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://eporner.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://hqporner.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://beeg.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://onlyfans.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://fansly.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://brazzers.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://nhentai.net/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://e-hentai.org/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://exhentai.org/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://hitomi.la/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://rule34.xxx/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://sukebei.nyaa.si/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://daftsex.com/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://iwank.tv/",
+      "label": "block",
+      "category": "tube_global"
+    },
+    {
+      "url": "https://141jav.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://141ppv.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://3javdaily.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://91jav.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://9hentai.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://9hentai.to/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://adult.fc2.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://angel-live.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://animeidhentai.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://asmhentai.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://bazooka-av.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://bejav.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://bestjavporn.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://blog.fc2.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://bongacams.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://book.dmm.co.jp/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://cams.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://camsoda.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://camster.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://camwhores.tv/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://camwhores.video/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://camwhoresbay.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://camwhoreshd.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://content.fc2.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://dic.fc2.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://dmm.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://doujin-eromanga.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://doujinantena.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://doujinantena.top/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://doujins.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://dxlive.jp/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://ero-advertising.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://erodoujinshi.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://erogazop.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://erogazou-porn.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://eromanga-cafe.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://eromanga-suren.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://erome.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://eroprofile.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://eroticax.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://erox.plus/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://fanza.tv/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://fc2id.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://fc2live.jp/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://fc2ppv.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://fc2ppv.org/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://fc2ppv.site/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://fc2ppvdb.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://fc2ppvdb.org/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://fc2web.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentai-foundry.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentai-image.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentai.tv/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentai2read.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentai4.xxx/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaicity.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaicloud.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaienvy.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaiera.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaifox.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaigasm.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaihand.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaihaven.su/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaihaven.tv/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaihaven.xxx/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaihere.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaiheroes.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaimama.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaimama.io/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentainexus.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaipros.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentairox.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaistream.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hentaistream.tv/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://hpjav.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://imhentai.aaa/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://imhentai.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://imhentai.xxx/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://imlive.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://islive.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://islive.nl/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://jav321.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javbangers.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javble.tv/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javbus.org/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javbus.vip/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javcl.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javdb365.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javdoe.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javdoe.to/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javdoe.tv/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javfinder.la/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javfinder.me/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javfinder.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javfox.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javfree.me/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javfree.sh/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javfull.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javfull.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javgg.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javgg.tv/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javguru.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javguru.mobi/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javguru.to/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhard.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhard.org/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhd.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhd.org/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhd.pro/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhd.today/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhd.vip/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhdporn.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhihi.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhihi.me/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhive.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhub.me/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javhub.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javland.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javland.to/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javleak.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javlibrary.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javmenu.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javmix.tv/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javmobile.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javmost.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javmost.sx/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javpop.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javqd.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javseen.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javseen.tv/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javstore.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javtrailers.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://javwide.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://jewel-live.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://jpjav.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://kirakira-av.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://kissjav.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://kissjav.li/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://livejasmin.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://madonna-av.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://milky-live.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://million-av.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://missav.ai/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://missav.app/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://missav.live/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://missav.one/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://missavtv.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://muchohentai.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://myfreecams.net/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://myhentaicomics.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://myhentaigallery.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://nhentai.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://nhentai.to/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://nhentai.xxx/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://njav.to/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://njavtv.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://nyahentai.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://nyahentai.re/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://ooojav.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://pay.fc2.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://pornjav.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://prestige-av.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://prestigeav.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://r18jav.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://ranking.fc2.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://saymoviefc2.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://secure.id.fc2.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://seejav.me/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://sexjav.tv/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://simply-hentai.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://supjav.me/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://video2.fc2.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://vjav.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://watchjavonline.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://xhamstercams.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://xlovecam.com/",
+      "label": "block",
+      "category": "expansion_seed"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Human_sexuality",
+      "label": "allow",
+      "category": "hard_negative_wikipedia",
+      "notes": "Sex education encyclopedia"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Sexual_intercourse",
+      "label": "allow",
+      "category": "hard_negative_wikipedia"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Reproductive_health",
+      "label": "allow",
+      "category": "hard_negative_wikipedia"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Sex_education",
+      "label": "allow",
+      "category": "hard_negative_wikipedia"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Safe_sex",
+      "label": "allow",
+      "category": "hard_negative_wikipedia"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Sexually_transmitted_infection",
+      "label": "allow",
+      "category": "hard_negative_medical"
+    },
+    {
+      "url": "https://ja.wikipedia.org/wiki/%E6%80%A7",
+      "label": "allow",
+      "category": "hard_negative_wikipedia",
+      "notes": "JP Wikipedia sexuality"
+    },
+    {
+      "url": "https://ja.wikipedia.org/wiki/%E6%80%A7%E6%95%99%E8%82%B2",
+      "label": "allow",
+      "category": "hard_negative_wikipedia"
+    },
+    {
+      "url": "https://www.plannedparenthood.org/",
+      "label": "allow",
+      "category": "hard_negative_sex_ed"
+    },
+    {
+      "url": "https://www.plannedparenthood.org/learn/sex-pleasure",
+      "label": "allow",
+      "category": "hard_negative_sex_ed"
+    },
+    {
+      "url": "https://www.scarleteen.com/",
+      "label": "allow",
+      "category": "hard_negative_sex_ed"
+    },
+    {
+      "url": "https://www.bedsider.org/",
+      "label": "allow",
+      "category": "hard_negative_sex_ed",
+      "notes": "Birth control education — avoid hostnames containing bare \"sex\""
+    },
+    {
+      "url": "https://www.cdc.gov/sexualhealth/",
+      "label": "allow",
+      "category": "hard_negative_medical"
+    },
+    {
+      "url": "https://www.cdc.gov/sti/",
+      "label": "allow",
+      "category": "hard_negative_medical"
+    },
+    {
+      "url": "https://www.nhs.uk/live-well/sexual-health/",
+      "label": "allow",
+      "category": "hard_negative_medical"
+    },
+    {
+      "url": "https://www.mayoclinic.org/diseases-conditions/sexually-transmitted-diseases-stds/symptoms-causes/syc-20351240",
+      "label": "allow",
+      "category": "hard_negative_medical"
+    },
+    {
+      "url": "https://www.webmd.com/sex/default.htm",
+      "label": "allow",
+      "category": "hard_negative_medical"
+    },
+    {
+      "url": "https://www.healthline.com/health/healthy-sex",
+      "label": "allow",
+      "category": "hard_negative_medical"
+    },
+    {
+      "url": "https://www.nih.gov/",
+      "label": "allow",
+      "category": "hard_negative_medical"
+    },
+    {
+      "url": "https://medlineplus.gov/sexualhealthissues.html",
+      "label": "allow",
+      "category": "hard_negative_medical"
+    },
+    {
+      "url": "https://www.who.int/health-topics/sexual-health",
+      "label": "allow",
+      "category": "hard_negative_medical"
+    },
+    {
+      "url": "https://www.metmuseum.org/",
+      "label": "allow",
+      "category": "hard_negative_art_museum"
+    },
+    {
+      "url": "https://www.metmuseum.org/art/collection",
+      "label": "allow",
+      "category": "hard_negative_art_museum"
+    },
+    {
+      "url": "https://www.louvre.fr/en",
+      "label": "allow",
+      "category": "hard_negative_art_museum"
+    },
+    {
+      "url": "https://www.moma.org/",
+      "label": "allow",
+      "category": "hard_negative_art_museum"
+    },
+    {
+      "url": "https://www.tate.org.uk/",
+      "label": "allow",
+      "category": "hard_negative_art_museum"
+    },
+    {
+      "url": "https://www.britishmuseum.org/",
+      "label": "allow",
+      "category": "hard_negative_art_museum"
+    },
+    {
+      "url": "https://www.nga.gov/",
+      "label": "allow",
+      "category": "hard_negative_art_museum"
+    },
+    {
+      "url": "https://www.rijksmuseum.nl/en",
+      "label": "allow",
+      "category": "hard_negative_art_museum"
+    },
+    {
+      "url": "https://artsandculture.google.com/",
+      "label": "allow",
+      "category": "hard_negative_art_museum"
+    },
+    {
+      "url": "https://www.victoria-albert.museum/",
+      "label": "allow",
+      "category": "hard_negative_art_museum"
+    },
+    {
+      "url": "https://www.victoriassecret.com/",
+      "label": "allow",
+      "category": "hard_negative_lingerie_ecommerce"
+    },
+    {
+      "url": "https://www.victoriassecret.com/us/vs/lingerie",
+      "label": "allow",
+      "category": "hard_negative_lingerie_ecommerce"
+    },
+    {
+      "url": "https://www.aerie.com/",
+      "label": "allow",
+      "category": "hard_negative_lingerie_ecommerce"
+    },
+    {
+      "url": "https://www.calvinklein.us/en/women/lingerie",
+      "label": "allow",
+      "category": "hard_negative_lingerie_ecommerce"
+    },
+    {
+      "url": "https://www.triumph.com/",
+      "label": "allow",
+      "category": "hard_negative_lingerie_ecommerce"
+    },
+    {
+      "url": "https://www.uniqlo.com/us/en/women/innerwear",
+      "label": "allow",
+      "category": "hard_negative_lingerie_ecommerce"
+    },
+    {
+      "url": "https://www.amazon.com/s?k=lingerie",
+      "label": "allow",
+      "category": "hard_negative_lingerie_ecommerce",
+      "notes": "Mainstream retail search"
+    },
+    {
+      "url": "https://www.anime-news.network/",
+      "label": "allow",
+      "category": "hard_negative_anime_news"
+    },
+    {
+      "url": "https://www.animenewsnetwork.com/",
+      "label": "allow",
+      "category": "hard_negative_anime_news"
+    },
+    {
+      "url": "https://www.crunchyroll.com/news",
+      "label": "allow",
+      "category": "hard_negative_anime_news"
+    },
+    {
+      "url": "https://www.mangasplaining.com/",
+      "label": "allow",
+      "category": "hard_negative_anime_news"
+    },
+    {
+      "url": "https://www.animenewsnetwork.com/encyclopedia/manga.php?id=1",
+      "label": "allow",
+      "category": "hard_negative_anime_news"
+    },
+    {
+      "url": "https://myanimelist.net/",
+      "label": "allow",
+      "category": "hard_negative_anime_news"
+    },
+    {
+      "url": "https://www.viz.com/",
+      "label": "allow",
+      "category": "hard_negative_anime_news"
+    },
+    {
+      "url": "https://www.nytimes.com/",
+      "label": "allow",
+      "category": "hard_negative_news"
+    },
+    {
+      "url": "https://www.bbc.com/news",
+      "label": "allow",
+      "category": "hard_negative_news"
+    },
+    {
+      "url": "https://www.reuters.com/",
+      "label": "allow",
+      "category": "hard_negative_news"
+    },
+    {
+      "url": "https://www.theguardian.com/",
+      "label": "allow",
+      "category": "hard_negative_news"
+    },
+    {
+      "url": "https://www.cnn.com/",
+      "label": "allow",
+      "category": "hard_negative_news"
+    },
+    {
+      "url": "https://www.nhk.or.jp/news/",
+      "label": "allow",
+      "category": "hard_negative_news"
+    },
+    {
+      "url": "https://www.asahi.com/",
+      "label": "allow",
+      "category": "hard_negative_news"
+    },
+    {
+      "url": "https://www.lemonde.fr/",
+      "label": "allow",
+      "category": "hard_negative_news"
+    },
+    {
+      "url": "https://github.com/",
+      "label": "allow",
+      "category": "hard_negative_dev"
+    },
+    {
+      "url": "https://github.com/torvalds/linux",
+      "label": "allow",
+      "category": "hard_negative_dev"
+    },
+    {
+      "url": "https://gitlab.com/",
+      "label": "allow",
+      "category": "hard_negative_dev"
+    },
+    {
+      "url": "https://stackoverflow.com/",
+      "label": "allow",
+      "category": "hard_negative_dev"
+    },
+    {
+      "url": "https://www.google.com/",
+      "label": "allow",
+      "category": "hard_negative_search"
+    },
+    {
+      "url": "https://www.google.com/search?q=sex+education",
+      "label": "allow",
+      "category": "hard_negative_search",
+      "notes": "Search itself not a domain block"
+    },
+    {
+      "url": "https://www.google.co.jp/",
+      "label": "allow",
+      "category": "hard_negative_search"
+    },
+    {
+      "url": "https://duckduckgo.com/",
+      "label": "allow",
+      "category": "hard_negative_search"
+    },
+    {
+      "url": "https://www.bing.com/",
+      "label": "allow",
+      "category": "hard_negative_search"
+    },
+    {
+      "url": "https://www.khanacademy.org/",
+      "label": "allow",
+      "category": "hard_negative_education"
+    },
+    {
+      "url": "https://www.britannica.com/topic/human-sexuality",
+      "label": "allow",
+      "category": "hard_negative_education"
+    },
+    {
+      "url": "https://www.coursera.org/",
+      "label": "allow",
+      "category": "hard_negative_education"
+    },
+    {
+      "url": "https://scholar.google.com/",
+      "label": "allow",
+      "category": "hard_negative_education"
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/",
+      "label": "allow",
+      "category": "hard_negative_medical"
+    },
+    {
+      "url": "https://www.etsy.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.apple.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.microsoft.com/",
+      "label": "allow",
+      "category": "hard_negative_dev"
+    },
+    {
+      "url": "https://developer.mozilla.org/",
+      "label": "allow",
+      "category": "hard_negative_dev"
+    },
+    {
+      "url": "https://www.reddit.com/r/AskScience/",
+      "label": "allow",
+      "category": "hard_negative_community",
+      "notes": "Not adult domain match (Focus Mode separate)"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "label": "allow",
+      "category": "hard_negative_video",
+      "notes": "Not adult domain match"
+    },
+    {
+      "url": "https://www.twitch.tv/",
+      "label": "allow",
+      "category": "hard_negative_video"
+    },
+    {
+      "url": "https://www.netflix.com/",
+      "label": "allow",
+      "category": "hard_negative_video"
+    },
+    {
+      "url": "https://www.imdb.com/",
+      "label": "allow",
+      "category": "hard_negative_entertainment"
+    },
+    {
+      "url": "https://www.rottentomatoes.com/",
+      "label": "allow",
+      "category": "hard_negative_entertainment"
+    },
+    {
+      "url": "https://store.steampowered.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.nintendo.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.sony.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.spotify.com/",
+      "label": "allow",
+      "category": "hard_negative_entertainment"
+    },
+    {
+      "url": "https://open.spotify.com/",
+      "label": "allow",
+      "category": "hard_negative_entertainment"
+    },
+    {
+      "url": "https://www.linkedin.com/",
+      "label": "allow",
+      "category": "hard_negative_work"
+    },
+    {
+      "url": "https://www.notion.so/",
+      "label": "allow",
+      "category": "hard_negative_work"
+    },
+    {
+      "url": "https://slack.com/",
+      "label": "allow",
+      "category": "hard_negative_work"
+    },
+    {
+      "url": "https://www.figma.com/",
+      "label": "allow",
+      "category": "hard_negative_work"
+    },
+    {
+      "url": "https://mail.google.com/",
+      "label": "allow",
+      "category": "hard_negative_work"
+    },
+    {
+      "url": "https://outlook.live.com/",
+      "label": "allow",
+      "category": "hard_negative_work"
+    },
+    {
+      "url": "https://translate.google.com/",
+      "label": "allow",
+      "category": "hard_negative_search"
+    },
+    {
+      "url": "https://maps.google.com/",
+      "label": "allow",
+      "category": "hard_negative_search"
+    },
+    {
+      "url": "https://www.tripadvisor.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.booking.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.airbnb.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.ikea.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.target.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.walmart.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.nike.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.adidas.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.zara.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.hm.com/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.gap.com/",
+      "label": "allow",
+      "category": "hard_negative_lingerie_ecommerce",
+      "notes": "Fashion — not adult site"
+    },
+    {
+      "url": "https://www.japan-guide.com/",
+      "label": "allow",
+      "category": "hard_negative_travel"
+    },
+    {
+      "url": "https://www.jnto.go.jp/",
+      "label": "allow",
+      "category": "hard_negative_travel"
+    },
+    {
+      "url": "https://www.jrpass.com/",
+      "label": "allow",
+      "category": "hard_negative_travel"
+    },
+    {
+      "url": "https://www.tokyo-metro.jp/",
+      "label": "allow",
+      "category": "hard_negative_travel"
+    },
+    {
+      "url": "https://www.rakuten.co.jp/",
+      "label": "allow",
+      "category": "hard_negative_ecommerce"
+    },
+    {
+      "url": "https://www.yahoo.co.jp/",
+      "label": "allow",
+      "category": "hard_negative_search"
+    },
+    {
+      "url": "https://www.nicovideo.jp/",
+      "label": "allow",
+      "category": "hard_negative_video",
+      "notes": "Nico Nico — not adult-only"
+    },
+    {
+      "url": "https://www.pixiv.net/",
+      "label": "block",
+      "category": "policy_edge_dnr",
+      "notes": "pixiv.net is in static DNR today (aggressive adult-adjacent)"
+    },
+    {
+      "url": "https://exoclick.com/",
+      "label": "block",
+      "category": "structural_ad_network",
+      "notes": "Adult ad network host — structural signal + seed"
+    },
+    {
+      "url": "https://juicyads.com/",
+      "label": "block",
+      "category": "structural_ad_network",
+      "notes": "Adult ad network host — structural signal + seed"
+    },
+    {
+      "url": "https://trafficjunky.com/",
+      "label": "block",
+      "category": "structural_ad_network",
+      "notes": "Adult ad network host — structural signal + seed"
+    },
+    {
+      "url": "https://unknown-tube-mirror.test/",
+      "label": "allow",
+      "category": "structural_self_improve_pending",
+      "notes": "Not yet in seed — would become candidate via ≥K adult outbound links in-browser; domain-only stack allows until promote"
+    },
+    {
+      "url": "https://www.plannedparenthood.org/",
+      "label": "allow",
+      "category": "hard_negative_structural",
+      "notes": "Must never FP from structural/keyword spill"
+    },
+    {
+      "url": "https://fantia.jp/",
+      "label": "allow",
+      "category": "policy_sensitive_allow",
+      "notes": "Mixed SFW/NSFW creator platform — prefer content analysis — domain-only eval expects allow"
+    },
+    {
+      "url": "https://ci-en.net/",
+      "label": "allow",
+      "category": "policy_sensitive_allow",
+      "notes": "Mixed creator platform — prefer content analysis — domain-only eval expects allow"
+    },
+    {
+      "url": "https://ci-en.jp/",
+      "label": "allow",
+      "category": "policy_sensitive_allow",
+      "notes": "Mixed creator platform — prefer content analysis — domain-only eval expects allow"
+    },
+    {
+      "url": "https://booth.pm/",
+      "label": "allow",
+      "category": "policy_sensitive_allow",
+      "notes": "Mixed marketplace — prefer content analysis — domain-only eval expects allow"
+    },
+    {
+      "url": "https://fanbox.cc/",
+      "label": "allow",
+      "category": "policy_sensitive_allow",
+      "notes": "Mixed creator platform — prefer content analysis — domain-only eval expects allow"
+    },
+    {
+      "url": "https://patreon.com/",
+      "label": "allow",
+      "category": "policy_sensitive_allow",
+      "notes": "Mixed creator platform — prefer content analysis — domain-only eval expects allow"
+    }
+  ]
+}

@@ -18233,6 +18233,1986 @@
     }
   },
   {
+    "id": 1526,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "adult.contents.fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11526,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "adult.contents.fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1527,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "adult.dmm.co.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11527,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "adult.dmm.co.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1528,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "adult.fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11528,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "adult.fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1529,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "asmhentai.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11529,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "asmhentai.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1530,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "blog.fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11530,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "blog.fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1531,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "book.dmm.co.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11531,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "book.dmm.co.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1532,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "camster.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11532,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "camster.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1533,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "comic.acgn.cc"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11533,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "comic.acgn.cc"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1534,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "content.fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11534,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "content.fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1535,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "daftsex.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11535,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "daftsex.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1536,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "dic.fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11536,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "dic.fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1537,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "digiket.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11537,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "digiket.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1538,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "doujinantena.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11538,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "doujinantena.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1539,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "doujinantena.top"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11539,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "doujinantena.top"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1540,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "dxlive.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11540,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "dxlive.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1541,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2blog.us"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11541,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2blog.us"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1542,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2id.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11542,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2id.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1543,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2live.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11543,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2live.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1544,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2live.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11544,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2live.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1545,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppv.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11545,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppv.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1546,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppv.org"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11546,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppv.org"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1547,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppv.site"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11547,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppv.site"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1548,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppv.tv"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11548,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppv.tv"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1549,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppvdb.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11549,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppvdb.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1550,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppvdb.org"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11550,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2ppvdb.org"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1551,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2web.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11551,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fc2web.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1552,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "hbrowse.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11552,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "hbrowse.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1553,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "hentainexus.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11553,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "hentainexus.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1554,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "imhentai.xxx"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11554,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "imhentai.xxx"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1555,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "iwank.tv"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11555,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "iwank.tv"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1556,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "live.fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11556,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "live.fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1557,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "missav123.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11557,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "missav123.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1558,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "missav123.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11558,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "missav123.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1559,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "missav456.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11559,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "missav456.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1560,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "nyahentai.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11560,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "nyahentai.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1561,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "nyahentai.re"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11561,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "nyahentai.re"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1562,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "pay.fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11562,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "pay.fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1563,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "pcolle.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11563,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "pcolle.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1564,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "ranking.fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11564,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "ranking.fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1565,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "saymoviefc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11565,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "saymoviefc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1566,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "secure.id.fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11566,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "secure.id.fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1567,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "showybeauty.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11567,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "showybeauty.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1568,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "stripchat.global"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11568,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "stripchat.global"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1569,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "video.dmm.co.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11569,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "video.dmm.co.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1570,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "video.fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11570,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "video.fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1571,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "video2.fc2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11571,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "video2.fc2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1572,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "wnacg.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11572,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "wnacg.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1573,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "wnacg.org"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11573,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "wnacg.org"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1574,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "xcolle.jp"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11574,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "xcolle.jp"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1575,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "xhamster3.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11575,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "xhamster3.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1576,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "xliveweb.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11576,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "xliveweb.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1577,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "xvideos2.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11577,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "xvideos2.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1578,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "xvideos3.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11578,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "xvideos3.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1579,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "ero-advertising.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11579,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "ero-advertising.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1580,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "exoclick.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11580,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "exoclick.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1581,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "juicyads.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11581,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "juicyads.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1582,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "popads.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11582,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "popads.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1583,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "trafficjunky.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11583,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "trafficjunky.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1584,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "trafficjunky.net"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11584,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "trafficjunky.net"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 1585,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "tsyndicate.com"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 11585,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "tsyndicate.com"
+      ],
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
     "id": 12000,
     "priority": 3,
     "action": {
@@ -18243,7 +20223,9 @@
     },
     "condition": {
       "regexFilter": "^https?://[^/]*(missav|pornhub|xvideos|xhamster|xnxx|onlyfans|chaturbate|brazzers|redtube|youporn|stripchat|fansly)",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -18254,7 +20236,9 @@
     },
     "condition": {
       "regexFilter": "^https?://[^/]*(missav|pornhub|xvideos|xhamster|xnxx|onlyfans|chaturbate|brazzers|redtube|youporn|stripchat|fansly)",
-      "resourceTypes": ["sub_frame"]
+      "resourceTypes": [
+        "sub_frame"
+      ]
     }
   },
   {
@@ -18267,8 +20251,10 @@
       }
     },
     "condition": {
-      "regexFilter": "^https?://[^/]*(fanza|javdb|javbus|avgle|njav|jable|netflav|hpjav|7mmtv|erovideo|fc2ppv|sukebei)",
-      "resourceTypes": ["main_frame"]
+      "regexFilter": "^https?://[^/]*(fanza|nyahentai|fc2live|digiket|pcolle|xcolle|javdb|javbus|avgle|njav|jable|netflav|hpjav|7mmtv|erovideo|fc2ppv|sukebei)",
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -18278,8 +20264,10 @@
       "type": "block"
     },
     "condition": {
-      "regexFilter": "^https?://[^/]*(fanza|javdb|javbus|avgle|njav|jable|netflav|hpjav|7mmtv|erovideo|fc2ppv|sukebei)",
-      "resourceTypes": ["sub_frame"]
+      "regexFilter": "^https?://[^/]*(fanza|nyahentai|fc2live|digiket|pcolle|xcolle|javdb|javbus|avgle|njav|jable|netflav|hpjav|7mmtv|erovideo|fc2ppv|sukebei)",
+      "resourceTypes": [
+        "sub_frame"
+      ]
     }
   },
   {
@@ -18293,7 +20281,9 @@
     },
     "condition": {
       "regexFilter": "^https?://[^/]*(tokyohot|tokyo-hot|1pondo|caribbeancom|heyzo|mgstage|eroterest|sokmil|dxlive|xcity)",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -18304,7 +20294,9 @@
     },
     "condition": {
       "regexFilter": "^https?://[^/]*(tokyohot|tokyo-hot|1pondo|caribbeancom|heyzo|mgstage|eroterest|sokmil|dxlive|xcity)",
-      "resourceTypes": ["sub_frame"]
+      "resourceTypes": [
+        "sub_frame"
+      ]
     }
   }
 ]

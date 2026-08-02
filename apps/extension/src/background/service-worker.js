@@ -3,11 +3,13 @@
  * Main logic for the extension
  */
 import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL, isOwnExtensionUrl } from '../shared/constants';
-import { extractDomain, matchesPattern, log } from '../shared/utils';
+import { extractDomain, matchesPattern, log, urlMatchesAdultDomainList } from '../shared/utils';
 import { extractSearchQuery, isSearchEngine, extractRedirectDestination, isEmailTrackingUrl, incrementBlockedSearches, getBlockedSearchesToday } from './search-filter';
 import { analyzeSearch, shouldAnalyzeSearch, getHeightenedMode, getDailyStats, updateBadge, getSearchSession } from './search-intelligence';
 import { requestHistoryPermission, importHistory, recordVisit, getCollectionStatus, calculateHistoryStats, recategorizeHistory } from './history-collector';
 import { connectToDesktopApp, isDesktopAppConnected, getConnectionStatus, sendNavigationEvent, sendHistorySync, sendAoiPreferencesUpdate } from './native-messaging';
+import { ensureBundledAdultBlocklistSeed, getAdultBlocklistDomains } from './adult-blocklist';
+import { recordAdultBlockCandidate } from './adult-candidates';
 // NOTE: Supabase sync temporarily disabled
 // Supabase client is not compatible with Chrome extension service workers
 // TODO: Use fetch-based API calls instead of Supabase client
@@ -31,6 +33,7 @@ chrome.runtime.onInstalled.addListener(async () => {
     };
     await chrome.storage.local.set(defaultData);
     log('Default storage initialized', defaultData);
+    await ensureBundledAdultBlocklistSeed();
     // Restore badge state if heightened mode is active
     await restoreBadgeState();
     // Try to connect to desktop app (with delay to avoid startup issues)
@@ -48,6 +51,7 @@ chrome.runtime.onInstalled.addListener(async () => {
 // On startup, try to connect to desktop app
 chrome.runtime.onStartup.addListener(async () => {
     log('Extension started');
+    await ensureBundledAdultBlocklistSeed();
     // Restore badge state if heightened mode is active
     await restoreBadgeState();
     setTimeout(async () => {
@@ -259,6 +263,11 @@ async function shouldBlock(url, tabId) {
     if (!storage.isActive) {
         return { shouldBlock: false };
     }
+    // System adult list (bundled seed ∪ desktop sync) — additive with static DNR
+    const adultDomains = await getAdultBlocklistDomains();
+    if (urlMatchesAdultDomainList(url, adultDomains)) {
+        return { shouldBlock: true, reason: 'Adult content is blocked' };
+    }
     // Check rules (built-in + user custom from desktop sync)
     const baseRules = storage.rules || DEFAULT_BLOCKLIST;
     const custom = storage.customBlockingRules ?? [];
@@ -425,10 +434,16 @@ async function handlePageAnalysisResult(data, sender) {
     const warnThreshold = heightened?.active ? 15 : 30;
     // Determine action
     // Require 2+ signals to block to reduce false positives,
-    // UNLESS an adult-specific strong signal is present (domain heuristic, adult keyword in title)
+    // UNLESS an adult-specific strong signal is present (domain / structural / title)
     let action = 'allow';
     const signalCount = result.reasons.length;
-    const hasStrongAdultSignal = result.reasons.some(r => r.includes('Adult keyword in domain') || r.includes('Explicit keyword in title'));
+    const hasStrongAdultSignal = result.reasons.some(r => r.includes('Adult keyword in domain') ||
+        r.includes('Explicit keyword in title') ||
+        r.includes('known adult domain') ||
+        r.includes('Adult ad network') ||
+        r.includes('adult blocklist domain') ||
+        r.includes('Adult rating') ||
+        r.includes('RTA label'));
     if (result.isExplicit) {
         // Explicit flag (adult meta / high score) is enough alone
         action = 'block';
@@ -458,6 +473,12 @@ async function handlePageAnalysisResult(data, sender) {
             reason: `Content analysis (score: ${result.score}, reasons: ${result.reasons.join(', ')})`,
             action: 'blocked',
             timestamp: Date.now()
+        });
+        // Observe → learn: content/structural blocks become candidates (not DNR-only)
+        await recordAdultBlockCandidate({
+            domain,
+            score: result.score,
+            reasons: result.reasons,
         });
         await incrementContentBlockStat();
     }

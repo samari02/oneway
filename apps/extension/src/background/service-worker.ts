@@ -4,7 +4,7 @@
  */
 
 import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL, isOwnExtensionUrl } from '../shared/constants'
-import { extractDomain, matchesPattern, log } from '../shared/utils'
+import { extractDomain, matchesPattern, log, urlMatchesAdultDomainList } from '../shared/utils'
 import type { BlockRule, StorageData, NavigationEvent, BlockEvent, ProtectionStatus } from '../shared/types'
 import {
   isExplicitSearch,
@@ -40,6 +40,11 @@ import {
   sendHistorySync,
   sendAoiPreferencesUpdate
 } from './native-messaging'
+import {
+  ensureBundledAdultBlocklistSeed,
+  getAdultBlocklistDomains
+} from './adult-blocklist'
+import { recordAdultBlockCandidate } from './adult-candidates'
 
 // NOTE: Supabase sync temporarily disabled
 // Supabase client is not compatible with Chrome extension service workers
@@ -67,6 +72,8 @@ chrome.runtime.onInstalled.addListener(async () => {
   
   await chrome.storage.local.set(defaultData)
   log('Default storage initialized', defaultData)
+
+  await ensureBundledAdultBlocklistSeed()
   
   // Restore badge state if heightened mode is active
   await restoreBadgeState()
@@ -86,6 +93,8 @@ chrome.runtime.onInstalled.addListener(async () => {
 // On startup, try to connect to desktop app
 chrome.runtime.onStartup.addListener(async () => {
   log('Extension started')
+
+  await ensureBundledAdultBlocklistSeed()
   
   // Restore badge state if heightened mode is active
   await restoreBadgeState()
@@ -332,6 +341,12 @@ async function shouldBlock(url: string, tabId: number): Promise<{ shouldBlock: b
   if (!storage.isActive) {
     return { shouldBlock: false }
   }
+
+  // System adult list (bundled seed ∪ desktop sync) — additive with static DNR
+  const adultDomains = await getAdultBlocklistDomains()
+  if (urlMatchesAdultDomainList(url, adultDomains)) {
+    return { shouldBlock: true, reason: 'Adult content is blocked' }
+  }
   
   // Check rules (built-in + user custom from desktop sync)
   const baseRules = storage.rules || DEFAULT_BLOCKLIST
@@ -550,11 +565,17 @@ async function handlePageAnalysisResult(
   
   // Determine action
   // Require 2+ signals to block to reduce false positives,
-  // UNLESS an adult-specific strong signal is present (domain heuristic, adult keyword in title)
+  // UNLESS an adult-specific strong signal is present (domain / structural / title)
   let action: 'allow' | 'warn' | 'block' = 'allow'
   const signalCount = result.reasons.length
   const hasStrongAdultSignal = result.reasons.some(r =>
-    r.includes('Adult keyword in domain') || r.includes('Explicit keyword in title')
+    r.includes('Adult keyword in domain') ||
+    r.includes('Explicit keyword in title') ||
+    r.includes('known adult domain') ||
+    r.includes('Adult ad network') ||
+    r.includes('adult blocklist domain') ||
+    r.includes('Adult rating') ||
+    r.includes('RTA label')
   )
   
   if (result.isExplicit) {
@@ -586,6 +607,13 @@ async function handlePageAnalysisResult(
       reason: `Content analysis (score: ${result.score}, reasons: ${result.reasons.join(', ')})`,
       action: 'blocked',
       timestamp: Date.now()
+    })
+
+    // Observe → learn: content/structural blocks become candidates (not DNR-only)
+    await recordAdultBlockCandidate({
+      domain,
+      score: result.score,
+      reasons: result.reasons,
     })
 
     await incrementContentBlockStat()

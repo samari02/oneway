@@ -126,7 +126,12 @@ export const STORAGE_KEYS = {
   /** User rules from Boundaries → Blocking (merged with RULES in shouldBlock) */
   CUSTOM_BLOCKING_RULES: 'customBlockingRules',
   /** Lowercase substrings to block on search engines */
-  CUSTOM_SEARCH_KEYWORDS: 'customSearchKeywords'
+  CUSTOM_SEARCH_KEYWORDS: 'customSearchKeywords',
+  /** System adult domains (bundled seed ∪ desktop sync) — additive with DNR */
+  ADULT_BLOCKLIST_DOMAINS: 'adultBlocklistDomains',
+  ADULT_BLOCKLIST_VERSION: 'adultBlocklistVersion',
+  /** Observed adult domains from content/structural blocks (capped candidate list) */
+  ADULT_BLOCK_CANDIDATES: 'adultBlockCandidates'
 } as const
 
 /**

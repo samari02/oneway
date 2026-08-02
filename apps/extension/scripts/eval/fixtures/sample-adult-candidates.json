@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "updatedAt": "2026-08-02",
+  "description": "Sample candidates for promote dry-run / local testing (not real observations).",
+  "candidates": [
+    {
+      "domain": "newjavmirror.example",
+      "hits": 3,
+      "firstSeenAt": 1750000000000,
+      "lastSeenAt": 1750001000000,
+      "maxScore": 85,
+      "reasons": ["Links to ≥3 adult blocklist domains (3): pornhub.com, xvideos.com, missav.com"],
+      "source": "structural"
+    },
+    {
+      "domain": "fantia.jp",
+      "hits": 10,
+      "firstSeenAt": 1750000000000,
+      "lastSeenAt": 1750002000000,
+      "maxScore": 90,
+      "reasons": ["Explicit keyword in title: アダルト"],
+      "source": "content_analysis"
+    },
+    {
+      "domain": "lowsignal.example",
+      "hits": 1,
+      "firstSeenAt": 1750000000000,
+      "lastSeenAt": 1750000000000,
+      "maxScore": 40,
+      "reasons": ["Some suspicious links: 2"],
+      "source": "content_analysis"
+    }
+  ]
+}

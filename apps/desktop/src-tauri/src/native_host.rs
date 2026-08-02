@@ -13,6 +13,8 @@ use std::path::PathBuf;
 
 use crate::browsing_data::{self, StoredVisit};
 use crate::custom_rules_file;
+use crate::adult_blocklist_file;
+use crate::adult_candidates_file;
 
 // Alert thresholds (in milliseconds)
 const ALERT_WARNING_THRESHOLD_MS: i64 = 90_000;   // 90 seconds without heartbeat = warning
@@ -234,6 +236,9 @@ pub enum IncomingMessage {
     
     #[serde(rename = "BLOCK_EVENT")]
     BlockEvent { data: BlockEventData },
+
+    #[serde(rename = "ADULT_CANDIDATE")]
+    AdultCandidate { data: AdultCandidateData },
     
     #[serde(rename = "HISTORY_SYNC")]
     HistorySync { data: HistorySyncData },
@@ -300,6 +305,22 @@ pub struct BlockEventData {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct AdultCandidateData {
+    pub domain: String,
+    pub hits: i64,
+    #[serde(rename = "firstSeenAt")]
+    pub first_seen_at: i64,
+    #[serde(rename = "lastSeenAt")]
+    pub last_seen_at: i64,
+    #[serde(rename = "maxScore")]
+    pub max_score: i64,
+    #[serde(default)]
+    pub reasons: Vec<String>,
+    #[serde(default)]
+    pub source: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct HistorySyncData {
     pub visits: Vec<NavigationEventData>,
 }
@@ -361,6 +382,10 @@ pub struct ConfigData {
     pub custom_rules: Vec<serde_json::Value>,
     #[serde(rename = "customSearchKeywords")]
     pub custom_search_keywords: Vec<String>,
+    /// System adult domains from `~/.clarity/adult-blocklist.json` (may be empty).
+    /// Extension merges additively with bundled seed — never wipe on empty.
+    #[serde(rename = "adultDomains")]
+    pub adult_domains: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -450,6 +475,7 @@ pub fn handle_message(msg: IncomingMessage) -> OutgoingMessage {
             eprintln!("[NativeHost] Received GET_CONFIG");
             let (custom_rules, custom_search_keywords) =
                 custom_rules_file::extension_payload_from_disk();
+            let adult_domains = adult_blocklist_file::domains_from_disk();
             OutgoingMessage::ConfigUpdate {
                 data: ConfigData {
                     mode: "focus".to_string(),
@@ -457,6 +483,7 @@ pub fn handle_message(msg: IncomingMessage) -> OutgoingMessage {
                     is_active: true,
                     custom_rules,
                     custom_search_keywords,
+                    adult_domains,
                 },
             }
         }
@@ -487,6 +514,27 @@ pub fn handle_message(msg: IncomingMessage) -> OutgoingMessage {
                 data.timestamp,
             );
             
+            OutgoingMessage::Ack
+        }
+
+        IncomingMessage::AdultCandidate { data } => {
+            eprintln!(
+                "[NativeHost] Received ADULT_CANDIDATE: {} hits={} score={}",
+                data.domain, data.hits, data.max_score
+            );
+            if let Err(e) = adult_candidates_file::upsert_candidate(
+                adult_candidates_file::AdultCandidateRecord {
+                    domain: data.domain,
+                    hits: data.hits,
+                    first_seen_at: data.first_seen_at,
+                    last_seen_at: data.last_seen_at,
+                    max_score: data.max_score,
+                    reasons: data.reasons,
+                    source: data.source,
+                },
+            ) {
+                eprintln!("[NativeHost] Failed to upsert adult candidate: {}", e);
+            }
             OutgoingMessage::Ack
         }
         
@@ -597,6 +645,7 @@ mod serde_config_debug_tests {
                 is_active: true,
                 custom_rules: vec![json!({"id": "custom-1"})],
                 custom_search_keywords: vec!["foo".to_string()],
+                adult_domains: vec!["xcolle.jp".to_string()],
             },
         };
         let s = serde_json::to_string(&msg).unwrap();
@@ -608,6 +657,11 @@ mod serde_config_debug_tests {
         assert!(
             s.contains("\"customSearchKeywords\""),
             "expected customSearchKeywords in JSON, got: {}",
+            s
+        );
+        assert!(
+            s.contains("\"adultDomains\""),
+            "expected adultDomains in JSON, got: {}",
             s
         );
     }

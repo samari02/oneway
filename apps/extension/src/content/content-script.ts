@@ -1507,6 +1507,20 @@ let hasAnalyzed = false
 let pageAnalysisScore = 0
 let hasRedirectedToBlock = false
 
+/** System adult domains from storage (self-reinforcing structural link signals). */
+async function loadKnownAdultDomains(): Promise<string[]> {
+  try {
+    const stored = await chrome.storage.local.get('adultBlocklistDomains')
+    const domains = stored.adultBlocklistDomains
+    if (Array.isArray(domains) && domains.length) {
+      return domains as string[]
+    }
+  } catch {
+    /* storage unavailable */
+  }
+  return []
+}
+
 /**
  * Immediate opaque overlay so content isn't visible while redirecting
  */
@@ -1550,7 +1564,8 @@ async function runPageAnalysis(isRecheck: boolean = false): Promise<void> {
   if (hasRedirectedToBlock) return
   
   try {
-    const result = analyzePage()
+    const knownAdultDomains = await loadKnownAdultDomains()
+    const result = analyzePage({ knownAdultDomains })
     pageAnalysisScore = result.score
     
     // Only send to background if score is significant

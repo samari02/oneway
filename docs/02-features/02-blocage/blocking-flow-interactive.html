@@ -555,6 +555,281 @@
     gap: 0.55rem;
   }
 
+  .road-chapter {
+    margin-top: 1.75rem;
+  }
+
+  .road-chapter:first-of-type {
+    margin-top: 0;
+  }
+
+  .road-chapter-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .road-chapter-title {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 500;
+  }
+
+  .road-chapter-meta {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .road-chapter.shipped .road-chapter-meta { color: var(--pass); }
+  .road-chapter.next {
+    margin-top: 2rem;
+    padding: 1.15rem 1.1rem 1.2rem;
+    background:
+      linear-gradient(135deg, rgba(212, 165, 116, 0.07), transparent 55%),
+      var(--panel);
+    border: 1px solid rgba(212, 165, 116, 0.28);
+    border-radius: calc(var(--radius) + 4px);
+    box-shadow: 0 0 0 1px rgba(212, 165, 116, 0.06), inset 0 1px 0 rgba(212, 165, 116, 0.08);
+  }
+
+  .road-chapter.next .road-chapter-head {
+    border-bottom-color: rgba(212, 165, 116, 0.22);
+  }
+
+  .road-chapter.next .road-chapter-title { color: var(--accent); }
+  .road-chapter.next .road-chapter-meta { color: var(--accent); }
+
+  .road-chapter-lede {
+    font-size: 0.84rem;
+    color: var(--muted);
+    margin: -0.15rem 0 0.95rem;
+    max-width: 42rem;
+  }
+
+  .road-path {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--faint);
+  }
+
+  .road-path .path-step {
+    padding: 0.22rem 0.45rem;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+
+  .road-path .path-arrow {
+    color: var(--accent);
+    opacity: 0.7;
+  }
+
+  /* ── Self-improving loop ── */
+  .loop-board {
+    margin-bottom: 1.15rem;
+    padding: 1rem 1rem 1.05rem;
+    background: rgba(10, 12, 16, 0.4);
+    border: 1px solid rgba(212, 165, 116, 0.2);
+    border-radius: var(--radius);
+  }
+
+  .loop-board-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.85rem;
+  }
+
+  .loop-board-label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .loop-board-meta {
+    font-size: 0.78rem;
+    color: var(--faint);
+  }
+
+  .loop-ring {
+    display: flex;
+    align-items: stretch;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.85rem;
+  }
+
+  .loop-node {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.03);
+    color: var(--muted);
+    font: inherit;
+    text-align: left;
+    flex: 1 1 7.5rem;
+    min-width: 7.2rem;
+    padding: 0.65rem 0.7rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s var(--ease), background 0.2s var(--ease), color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  }
+
+  .loop-node:hover {
+    border-color: var(--line-strong);
+    color: var(--text);
+  }
+
+  .loop-node[aria-current="step"] {
+    border-color: rgba(212, 165, 116, 0.45);
+    background: var(--accent-dim);
+    color: var(--text);
+    box-shadow: 0 0 0 1px rgba(212, 165, 116, 0.12), inset 0 1px 0 rgba(212, 165, 116, 0.1);
+  }
+
+  .loop-node-idx {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 0.2rem;
+  }
+
+  .loop-node[aria-current="step"] .loop-node-idx { color: var(--accent); }
+
+  .loop-node-name {
+    display: block;
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .loop-arrow {
+    display: none;
+    align-self: center;
+    color: var(--accent);
+    opacity: 0.55;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 0 0.05rem;
+  }
+
+  @media (min-width: 860px) {
+    .loop-ring { flex-wrap: nowrap; }
+    .loop-arrow { display: block; }
+    .loop-node { flex: 1 1 0; min-width: 0; }
+  }
+
+  .loop-stage {
+    display: none;
+    padding: 0.85rem 0.9rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    animation: fadeUp 0.3s var(--ease);
+  }
+
+  .loop-stage.active { display: block; }
+
+  .loop-stage h4 {
+    font-family: var(--serif);
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.35rem;
+  }
+
+  .loop-stage p {
+    font-size: 0.84rem;
+    color: var(--muted);
+    max-width: 40rem;
+  }
+
+  .loop-stage ul {
+    margin: 0.5rem 0 0 1.05rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .loop-controls {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+  }
+
+  .prio-list {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .prio-list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.65rem;
+    align-items: start;
+    padding: 0.55rem 0.7rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .prio-list strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .prio-num {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-radius: 5px;
+    padding: 0.18rem 0.4rem;
+    margin-top: 0.1rem;
+  }
+
+  .road-later {
+    margin-top: 1.35rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--line);
+  }
+
+  .road-later-label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 0.65rem;
+  }
+
   .road-item {
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -568,10 +843,23 @@
     transition: border-color 0.2s, background 0.2s;
   }
 
+  .road-chapter.next .road-item {
+    background: rgba(10, 12, 16, 0.45);
+  }
+
   .road-item:hover { border-color: var(--line-strong); }
   .road-item[aria-expanded="true"] {
     border-color: rgba(212, 165, 116, 0.35);
     background: var(--panel-2);
+  }
+
+  .road-item.done {
+    opacity: 0.72;
+  }
+
+  .road-item.done:hover,
+  .road-item.done[aria-expanded="true"] {
+    opacity: 1;
   }
 
   .prio {
@@ -587,9 +875,46 @@
   .prio.p0 { background: var(--fail-dim); color: var(--fail); }
   .prio.p1 { background: var(--warn-dim); color: var(--warn); }
   .prio.p2 { background: var(--accent-dim); color: var(--accent); }
+  .prio.s1 { background: var(--accent-dim); color: var(--accent); }
+  .prio.s2 { background: rgba(90, 140, 160, 0.18); color: #7eb0c4; }
+  .prio.s3 { background: rgba(140, 120, 180, 0.16); color: #b5a4d4; }
+  .prio.s4 { background: var(--warn-dim); color: var(--warn); }
+
+  .road-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
 
   .road-title { font-weight: 600; font-size: 0.92rem; }
   .road-blurb { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+
+  .status-pill {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.18rem 0.42rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .status-pill.done {
+    background: var(--pass-dim);
+    color: var(--pass);
+  }
+
+  .status-pill.next {
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .status-pill.gated {
+    background: rgba(255,255,255,0.05);
+    color: var(--faint);
+  }
 
   .road-detail {
     display: none;
@@ -602,6 +927,12 @@
   }
 
   .road-item[aria-expanded="true"] .road-detail { display: block; }
+
+  .road-detail ul {
+    margin: 0.45rem 0 0 1.05rem;
+    display: grid;
+    gap: 0.28rem;
+  }
 
   .chev {
     color: var(--faint);
@@ -945,92 +1276,386 @@
 
     <!-- ═══════ ROADMAP ═══════ -->
     <section class="panel" id="panel-roadmap" role="tabpanel" aria-labelledby="tab-roadmap">
-      <p class="section-label">Robustesse</p>
-      <h2>Améliorations — du bug au filet</h2>
-      <p class="hint">Clique chaque item. Ordre de priorité issu du plan post-missav.</p>
+      <p class="section-label">Roadmap</p>
+      <h2>Du bug missav à la boucle qui s’améliore</h2>
+      <p class="hint">
+        P0–P2 : robustesse post-fuite (livré). Ensuite : une boucle
+        Observe → candidats → promote → éval → deploy — avant DNS ou classifieur.
+      </p>
 
-      <div class="roadmap" id="roadmap">
-        <button class="road-item" type="button" aria-expanded="false">
-          <span class="prio p0">P0</span>
-          <div>
-            <div class="road-title">Fix redirect isExplicit</div>
-            <div class="road-blurb">Toute décision block doit tabs.update → monk</div>
-            <div class="road-detail">
-              Unifier les branches dans <code>handlePageAnalysisResult</code> :
-              log event + increment stats + redirect, que le trigger soit
-              <code>isExplicit</code> ou score + signaux. Sans ça, le reste est cosmétique.
-            </div>
-          </div>
-          <span class="chev" aria-hidden="true">›</span>
-        </button>
+      <!-- Chapter 1: shipped -->
+      <div class="road-chapter shipped">
+        <div class="road-chapter-head">
+          <h3 class="road-chapter-title">Chapitre 1 — Robustesse P0–P2</h3>
+          <span class="road-chapter-meta">Livré · post-missav</span>
+        </div>
+        <p class="road-chapter-lede">
+          Fermer le trou « détecté ≠ redirigé », matching CJK, DNR mirrors, self-apply,
+          signaux hors-langue, fixtures. Clique un item pour le détail.
+        </p>
 
-        <button class="road-item" type="button" aria-expanded="false">
-          <span class="prio p0">P0</span>
-          <div>
-            <div class="road-title">Fix matching CJK</div>
-            <div class="road-blurb">Plus de \b sur scripts sans espaces</div>
-            <div class="road-detail">
-              Matching script-aware : includes / règles CJK pour JP &amp; ZH ;
-              garder <code>\b</code> seulement pour mots courts ASCII (ex. « nu »).
-              Aligner avec la logique déjà présente dans <code>shared/keywords/multilang.ts</code>.
+        <div class="roadmap" id="roadmap-shipped">
+          <button class="road-item done" type="button" aria-expanded="false">
+            <span class="prio p0">P0</span>
+            <div>
+              <div class="road-title-row">
+                <div class="road-title">Fix redirect isExplicit</div>
+                <span class="status-pill done">livré</span>
+              </div>
+              <div class="road-blurb">Toute décision block doit tabs.update → monk</div>
+              <div class="road-detail">
+                Unifier les branches dans <code>handlePageAnalysisResult</code> :
+                log event + increment stats + redirect, que le trigger soit
+                <code>isExplicit</code> ou score + signaux. Sans ça, le reste est cosmétique.
+              </div>
             </div>
-          </div>
-          <span class="chev" aria-hidden="true">›</span>
-        </button>
+            <span class="chev" aria-hidden="true">›</span>
+          </button>
 
-        <button class="road-item" type="button" aria-expanded="false">
-          <span class="prio p1">P1</span>
-          <div>
-            <div class="road-title">Patterns DNR plus précoces</div>
-            <div class="road-blurb">Mirrors missav* / familles avant le HTML</div>
-            <div class="road-detail">
-              Étendre <code>rules.json</code> (et/ou règles dynamiques) pour couvrir
-              variantes numérotées et TLDs courants. Coupe l’affichage avant paint.
+          <button class="road-item done" type="button" aria-expanded="false">
+            <span class="prio p0">P0</span>
+            <div>
+              <div class="road-title-row">
+                <div class="road-title">Fix matching CJK</div>
+                <span class="status-pill done">livré</span>
+              </div>
+              <div class="road-blurb">Plus de \b sur scripts sans espaces</div>
+              <div class="road-detail">
+                Matching script-aware : includes / règles CJK pour JP &amp; ZH ;
+                garder <code>\b</code> seulement pour mots courts ASCII (ex. « nu »).
+                Aligner avec la logique déjà présente dans <code>shared/keywords/multilang.ts</code>.
+              </div>
             </div>
-          </div>
-          <span class="chev" aria-hidden="true">›</span>
-        </button>
+            <span class="chev" aria-hidden="true">›</span>
+          </button>
 
-        <button class="road-item" type="button" aria-expanded="false">
-          <span class="prio p1">P1</span>
-          <div>
-            <div class="road-title">Content-script self-apply</div>
-            <div class="road-blurb">Si SW dit block, appliquer aussi côté page</div>
-            <div class="road-detail">
-              Filet de secours : si la réponse runtime est <code>block</code> et que le
-              redirect SW échoue / est trop lent, le content script navigue lui-même
-              vers le block-screen (ou overlay opaque immédiat).
+          <button class="road-item done" type="button" aria-expanded="false">
+            <span class="prio p1">P1</span>
+            <div>
+              <div class="road-title-row">
+                <div class="road-title">Patterns DNR plus précoces</div>
+                <span class="status-pill done">livré</span>
+              </div>
+              <div class="road-blurb">Mirrors missav* / familles avant le HTML</div>
+              <div class="road-detail">
+                Étendre <code>rules.json</code> (et/ou règles dynamiques) pour couvrir
+                variantes numérotées et TLDs courants. Coupe l’affichage avant paint.
+              </div>
             </div>
-          </div>
-          <span class="chev" aria-hidden="true">›</span>
-        </button>
+            <span class="chev" aria-hidden="true">›</span>
+          </button>
 
-        <button class="road-item" type="button" aria-expanded="false">
-          <span class="prio p2">P2</span>
-          <div>
-            <div class="road-title">Signaux language-independent</div>
-            <div class="road-blurb">Meta RTA, structure page, moins de dépendance lexicale</div>
-            <div class="road-detail">
-              Renforcer meta rating / age gates, patterns structurels (player + thumb grid),
-              et signaux hors-langue pour sites « clean brand » au hostname neutre.
+          <button class="road-item done" type="button" aria-expanded="false">
+            <span class="prio p1">P1</span>
+            <div>
+              <div class="road-title-row">
+                <div class="road-title">Content-script self-apply</div>
+                <span class="status-pill done">livré</span>
+              </div>
+              <div class="road-blurb">Si SW dit block, appliquer aussi côté page</div>
+              <div class="road-detail">
+                Filet de secours : si la réponse runtime est <code>block</code> et que le
+                redirect SW échoue / est trop lent, le content script navigue lui-même
+                vers le block-screen (ou overlay opaque immédiat).
+              </div>
             </div>
-          </div>
-          <span class="chev" aria-hidden="true">›</span>
-        </button>
+            <span class="chev" aria-hidden="true">›</span>
+          </button>
 
-        <button class="road-item" type="button" aria-expanded="false">
-          <span class="prio p2">P2</span>
-          <div>
-            <div class="road-title">Observabilité &amp; tests</div>
-            <div class="road-blurb">Fixtures URL + assert couche + assert redirect</div>
-            <div class="road-detail">
-              Jeu de fixtures (connu DNR / mirror / news JP / clean-brand adult) ;
-              tests unitaires matching CJK ; smoke « isExplicit ⇒ redirect ».
-              Logs structurés couche-par-couche pour le debug panel.
+          <button class="road-item done" type="button" aria-expanded="false">
+            <span class="prio p2">P2</span>
+            <div>
+              <div class="road-title-row">
+                <div class="road-title">Signaux language-independent</div>
+                <span class="status-pill done">livré</span>
+              </div>
+              <div class="road-blurb">Meta RTA, structure page, moins de dépendance lexicale</div>
+              <div class="road-detail">
+                Renforcer meta rating / age gates, patterns structurels (player + thumb grid),
+                et signaux hors-langue pour sites « clean brand » au hostname neutre.
+                Socle de la boucle : les signaux structurels battent les listes de mots.
+              </div>
             </div>
+            <span class="chev" aria-hidden="true">›</span>
+          </button>
+
+          <button class="road-item done" type="button" aria-expanded="false">
+            <span class="prio p2">P2</span>
+            <div>
+              <div class="road-title-row">
+                <div class="road-title">Observabilité &amp; tests</div>
+                <span class="status-pill done">livré</span>
+              </div>
+              <div class="road-blurb">Fixtures URL + assert couche + assert redirect</div>
+              <div class="road-detail">
+                Jeu de fixtures (connu DNR / mirror / news JP / clean-brand adult) ;
+                tests unitaires matching CJK ; smoke « isExplicit ⇒ redirect ».
+                Logs structurés couche-par-couche pour le debug panel.
+              </div>
+            </div>
+            <span class="chev" aria-hidden="true">›</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Chapter 2: strategic next — self-improving loop -->
+      <div class="road-chapter next" id="suite-strategique">
+        <div class="road-chapter-head">
+          <h3 class="road-chapter-title">Suite stratégique — boucle auto-améliorante</h3>
+          <span class="road-chapter-meta">Organising principle · ordre contraint</span>
+        </div>
+        <p class="road-chapter-lede">
+          Le produit ne « ajoute plus de mots ». Il observe les blocs et la structure des
+          pages, propose des domaines candidats, les promeut dans une liste sync, les
+          passe par une porte d’éval, puis les déploie dans l’extension — en boucle.
+        </p>
+
+        <div class="loop-board" id="loop-board" aria-label="Boucle auto-améliorante">
+          <div class="loop-board-head">
+            <span class="loop-board-label">Boucle · step through</span>
+            <span class="loop-board-meta" id="loop-step-meta">1 / 5 — Observe</span>
           </div>
-          <span class="chev" aria-hidden="true">›</span>
-        </button>
+
+          <div class="loop-ring" role="tablist" aria-label="Étapes de la boucle">
+            <button class="loop-node" type="button" role="tab" data-loop="0" aria-selected="true" aria-current="step" id="loop-tab-0">
+              <span class="loop-node-idx">01</span>
+              <span class="loop-node-name">Observe</span>
+            </button>
+            <span class="loop-arrow" aria-hidden="true">→</span>
+            <button class="loop-node" type="button" role="tab" data-loop="1" aria-selected="false" id="loop-tab-1">
+              <span class="loop-node-idx">02</span>
+              <span class="loop-node-name">Candidats</span>
+            </button>
+            <span class="loop-arrow" aria-hidden="true">→</span>
+            <button class="loop-node" type="button" role="tab" data-loop="2" aria-selected="false" id="loop-tab-2">
+              <span class="loop-node-idx">03</span>
+              <span class="loop-node-name">Promote</span>
+            </button>
+            <span class="loop-arrow" aria-hidden="true">→</span>
+            <button class="loop-node" type="button" role="tab" data-loop="3" aria-selected="false" id="loop-tab-3">
+              <span class="loop-node-idx">04</span>
+              <span class="loop-node-name">Éval</span>
+            </button>
+            <span class="loop-arrow" aria-hidden="true">→</span>
+            <button class="loop-node" type="button" role="tab" data-loop="4" aria-selected="false" id="loop-tab-4">
+              <span class="loop-node-idx">05</span>
+              <span class="loop-node-name">Deploy</span>
+            </button>
+          </div>
+
+          <div class="loop-stage active" id="loop-stage-0" role="tabpanel" aria-labelledby="loop-tab-0">
+            <h4>Observe — blocs + signaux structurels</h4>
+            <p>
+              Ce qu’on voit déjà : redirects monk, hits DNR, et surtout la structure
+              de page (meta RTA, age-gate, player + grille de thumbs) — pas la langue
+              des mots-clés.
+            </p>
+            <ul>
+              <li>Priorité : signaux structurels ≫ listes lexicales multilangues</li>
+              <li>Chaque block / near-miss alimente la boucle, pas seulement un log</li>
+              <li>Hostname neutre + page « adult-shaped » = signal fort</li>
+            </ul>
+          </div>
+
+          <div class="loop-stage" id="loop-stage-1" role="tabpanel" aria-labelledby="loop-tab-1" hidden>
+            <h4>Candidats — domaines à examiner</h4>
+            <p>
+              À partir des observations (et de contributions communauté), une file de
+              domaines candidats — mirrors, TLDs, clean-brands — sans promotion automatique.
+            </p>
+            <ul>
+              <li>Sources : observations locales + seed communauté</li>
+              <li>Pas encore dans <code>rules.json</code> ni la sync distante</li>
+              <li>Dédup / familles (missav*, FC2, doujin markets…)</li>
+            </ul>
+          </div>
+
+          <div class="loop-stage" id="loop-stage-2" role="tabpanel" aria-labelledby="loop-tab-2" hidden>
+            <h4>Promote — liste remote / sync</h4>
+            <p>
+              Les candidats retenus rejoignent la liste distante (desktop / Supabase /
+              fichier <code>~/.clarity</code>) — complément des règles embarquées, pas un
+              remplacement.
+            </p>
+            <ul>
+              <li>Liste qui grandit : communauté + candidats observés</li>
+              <li>Mise à jour sans republier l’extension</li>
+              <li>Canal existant : native host / <code>GET_CONFIG</code></li>
+            </ul>
+          </div>
+
+          <div class="loop-stage" id="loop-stage-3" role="tabpanel" aria-labelledby="loop-tab-3" hidden>
+            <h4>Éval — porte avant ship</h4>
+            <p>
+              Rien ne part en prod sans passer le corpus : vrais positifs <em>et</em>
+              négatifs difficiles. L’éval est une <strong>porte</strong>, pas un dashboard
+              cosmétique.
+            </p>
+            <ul>
+              <li>Labels : block / allow / borderline + couche attendue</li>
+              <li>Hard negatives : éducation, médical, art, lingerie retail, Wikipedia</li>
+              <li>Précision / rappel — pas seulement « ça bloque missav »</li>
+            </ul>
+          </div>
+
+          <div class="loop-stage" id="loop-stage-4" role="tabpanel" aria-labelledby="loop-tab-4" hidden>
+            <h4>Deploy — extension</h4>
+            <p>
+              Sync → DNR dynamique / blocklist adulte côté extension. Puis on
+              observe à nouveau : la boucle se referme.
+            </p>
+            <ul>
+              <li>Couverture large sans hardcode-only</li>
+              <li>Chaque deploy est gaté par l’éval</li>
+              <li>Retour à Observe : nouveaux mirrors, nouveaux candidats</li>
+            </ul>
+          </div>
+
+          <div class="loop-controls">
+            <button class="ctrl primary" id="loop-next" type="button">Suivant →</button>
+            <button class="ctrl" id="loop-prev" type="button">← Précédent</button>
+            <button class="ctrl" id="loop-reset" type="button">Revenir à Observe</button>
+          </div>
+        </div>
+
+        <p class="road-chapter-lede" style="margin-top:0.25rem">
+          Priorités visibles — dans cet ordre :
+        </p>
+        <ol class="prio-list">
+          <li>
+            <span class="prio-num">1</span>
+            <span><strong>Signaux structurels</strong> avant langues / keywords — la boucle observe la forme, pas le dictionnaire.</span>
+          </li>
+          <li>
+            <span class="prio-num">2</span>
+            <span><strong>Liste auto-croissante</strong> — communauté + candidats observés, sync remote.</span>
+          </li>
+          <li>
+            <span class="prio-num">3</span>
+            <span><strong>Éval comme porte</strong> — aucun promote/deploy sans corpus (y compris hard negatives).</span>
+          </li>
+          <li>
+            <span class="prio-num">4</span>
+            <span><strong>DNS / friction anti-désactivation</strong> — chapitre plus tard (S3), une fois la boucle saine.</span>
+          </li>
+          <li>
+            <span class="prio-num">5</span>
+            <span><strong>Classifieur</strong> — seulement après (S4), sur features déjà là ; pas avant la boucle.</span>
+          </li>
+        </ol>
+
+        <div class="roadmap" id="roadmap-next">
+          <button class="road-item" type="button" aria-expanded="false">
+            <span class="prio s1">S1</span>
+            <div>
+              <div class="road-title-row">
+                <div class="road-title">Signaux structurels &gt; keywords</div>
+                <span class="status-pill next">cœur de Observe</span>
+              </div>
+              <div class="road-blurb">Meta RTA, age-gate, layout adult — moins de dette lexicale</div>
+              <div class="road-detail">
+                Renforcer et instrumenter les signaux hors-langue déjà amorcés en P2 :
+                ce sont eux qui alimentent les candidats, pas une nouvelle langue de mots.
+                <ul>
+                  <li>Structure page (player + thumbs, paywall age) comme feature de 1<sup>re</sup> classe</li>
+                  <li>Keywords = filet secondaire, pas le moteur de croissance</li>
+                  <li>Chaque signal fort → domaine candidat potentiel</li>
+                </ul>
+              </div>
+            </div>
+            <span class="chev" aria-hidden="true">›</span>
+          </button>
+
+          <button class="road-item" type="button" aria-expanded="false">
+            <span class="prio s2">S2</span>
+            <div>
+              <div class="road-title-row">
+                <div class="road-title">Liste auto-croissante + sync</div>
+                <span class="status-pill next">Promote → Deploy</span>
+              </div>
+              <div class="road-blurb">Communauté + candidats observés → remote/sync → extension</div>
+              <div class="road-detail">
+                Remplacer le hardcode-only par une liste qui grandit : seed communauté,
+                candidats issus d’observations, push via desktop / Supabase /
+                <code>~/.clarity</code> sans republier l’extension.
+                <ul>
+                  <li>Complément des règles système actuelles</li>
+                  <li>Pipeline : candidat → review → promote → sync</li>
+                  <li>Variantes JP / mirrors / TLDs / clean-brands</li>
+                </ul>
+              </div>
+            </div>
+            <span class="chev" aria-hidden="true">›</span>
+          </button>
+
+          <button class="road-item" type="button" aria-expanded="false">
+            <span class="prio s1">GATE</span>
+            <div>
+              <div class="road-title-row">
+                <div class="road-title">Éval comme porte</div>
+                <span class="status-pill next">bloque le ship</span>
+              </div>
+              <div class="road-blurb">Corpus labellisé + hard negatives avant tout promote/deploy</div>
+              <div class="road-detail">
+                Sans porte d’éval, élargir la liste est une opinion. Le corpus mesure
+                précision / rappel ; un candidat qui casse les négatifs difficiles
+                ne passe pas.
+                <ul>
+                  <li>Labels : block / allow / borderline + couche attendue</li>
+                  <li>Hard negatives : éducation, médical, art, retail, Wikipedia</li>
+                  <li>Gate pour S2 deploy — et plus tard pour S4</li>
+                </ul>
+              </div>
+            </div>
+            <span class="chev" aria-hidden="true">›</span>
+          </button>
+        </div>
+
+        <div class="road-later">
+          <p class="road-later-label">Chapitres plus tard — après boucle saine</p>
+          <div class="roadmap" id="roadmap-later">
+            <button class="road-item" type="button" aria-expanded="false">
+              <span class="prio s3">S3</span>
+              <div>
+                <div class="road-title-row">
+                  <div class="road-title">DNS / friction anti-désactivation</div>
+                  <span class="status-pill gated">après boucle</span>
+                </div>
+                <div class="road-blurb">Filet machine + coût à désactiver l’extension — pas maintenant</div>
+                <div class="road-detail">
+                  L’extension ne voit pas tout : autre navigateur, mode invité, disable.
+                  DNS desktop (ou équivalent) + friction de désactivation ferment ces
+                  fuites — <strong>complément</strong> une fois que la boucle liste/éval
+                  est fiable. Pas un raccourci pour compenser une liste morte.
+                </div>
+              </div>
+              <span class="chev" aria-hidden="true">›</span>
+            </button>
+
+            <button class="road-item" type="button" aria-expanded="false">
+              <span class="prio s4">S4</span>
+              <div>
+                <div class="road-title-row">
+                  <div class="road-title">Petit classifieur sur features</div>
+                  <span class="status-pill gated">boucle saine d’abord</span>
+                </div>
+                <div class="road-blurb">Léger, sur signaux existants — pas un LLM lourd</div>
+                <div class="road-detail">
+                  Seulement quand Observe → candidats → promote → éval → deploy tourne
+                  et mesure correctement. Classifieur léger sur features
+                  <code>page-analyzer</code> / search-intelligence — pas d’appel LLM
+                  à la navigation.
+                  <ul>
+                    <li>Gaté par l’éval : sans labels, on ne sait pas si on améliore</li>
+                    <li>Gaté par la liste sync : le gros du volume reste list-based</li>
+                    <li>Rôle : borderline / clean-brand résiduels</li>
+                  </ul>
+                </div>
+              </div>
+              <span class="chev" aria-hidden="true">›</span>
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1324,6 +1949,50 @@
       item.setAttribute('aria-expanded', String(open));
     });
   });
+
+  /* ── Self-improving loop stepper ── */
+  const LOOP_LABELS = [
+    'Observe',
+    'Candidats',
+    'Promote',
+    'Éval',
+    'Deploy',
+  ];
+  const loopNodes = Array.from(document.querySelectorAll('.loop-node'));
+  const loopStages = Array.from(document.querySelectorAll('.loop-stage'));
+  const loopMeta = document.getElementById('loop-step-meta');
+  const loopNext = document.getElementById('loop-next');
+  const loopPrev = document.getElementById('loop-prev');
+  const loopReset = document.getElementById('loop-reset');
+  let loopIdx = 0;
+
+  function setLoopStep(idx) {
+    loopIdx = ((idx % LOOP_LABELS.length) + LOOP_LABELS.length) % LOOP_LABELS.length;
+    loopNodes.forEach((node, i) => {
+      const on = i === loopIdx;
+      node.setAttribute('aria-selected', String(on));
+      if (on) node.setAttribute('aria-current', 'step');
+      else node.removeAttribute('aria-current');
+    });
+    loopStages.forEach((stage, i) => {
+      const on = i === loopIdx;
+      stage.classList.toggle('active', on);
+      stage.hidden = !on;
+    });
+    if (loopMeta) {
+      loopMeta.textContent = `${loopIdx + 1} / ${LOOP_LABELS.length} — ${LOOP_LABELS[loopIdx]}`;
+    }
+  }
+
+  loopNodes.forEach((node) => {
+    node.addEventListener('click', () => {
+      setLoopStep(Number(node.dataset.loop));
+    });
+  });
+  if (loopNext) loopNext.addEventListener('click', () => setLoopStep(loopIdx + 1));
+  if (loopPrev) loopPrev.addEventListener('click', () => setLoopStep(loopIdx - 1));
+  if (loopReset) loopReset.addEventListener('click', () => setLoopStep(0));
+  setLoopStep(0);
 })();
 </script>
 </body>
