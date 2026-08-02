@@ -1,6 +1,8 @@
 # Blocking System — Clarity
 
 > Documentation de l'architecture du système de blocage et protection.
+>
+> **Viz interactive :** [blocking-flow-interactive.html](./blocking-flow-interactive.html) — couches, simulation d’URL, post-mortem missav, roadmap.
 
 ---
 

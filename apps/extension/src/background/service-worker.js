@@ -430,28 +430,12 @@ async function handlePageAnalysisResult(data, sender) {
     const signalCount = result.reasons.length;
     const hasStrongAdultSignal = result.reasons.some(r => r.includes('Adult keyword in domain') || r.includes('Explicit keyword in title'));
     if (result.isExplicit) {
-        // Meta tag "adult" is a strong enough signal alone
+        // Explicit flag (adult meta / high score) is enough alone
         action = 'block';
-        log(`🛑 [ContentAnalysis] BLOCKING ${domain} — Explicit meta tag detected`);
     }
     else if (result.score >= blockThreshold && (signalCount >= 2 || hasStrongAdultSignal)) {
         // Multiple signals + high score = block, OR a single strong adult signal is enough
         action = 'block';
-        log(`🛑 [ContentAnalysis] BLOCKING ${domain} — Score: ${result.score}, Signals: ${signalCount}, Reasons: ${result.reasons.join(', ')}`);
-        // Redirect to block screen
-        const reason = result.reasons[0] || 'Explicit content detected';
-        const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(url)}&reason=${encodeURIComponent(reason)}&tabId=${tabId}&type=content`;
-        chrome.tabs.update(tabId, { url: blockUrl });
-        // Log block event
-        await logBlockEvent({
-            url,
-            domain,
-            reason: `Content analysis (score: ${result.score}, reasons: ${result.reasons.join(', ')})`,
-            action: 'blocked',
-            timestamp: Date.now()
-        });
-        // Update daily stats
-        await incrementContentBlockStat();
     }
     else if (result.score >= blockThreshold && signalCount === 1 && !hasStrongAdultSignal) {
         // High score but only one weak signal = warn (could be false positive)
@@ -461,6 +445,21 @@ async function handlePageAnalysisResult(data, sender) {
     else if (result.score >= warnThreshold) {
         action = 'warn';
         log(`⚠️ [ContentAnalysis] WARNING for ${domain} — Score: ${result.score}`);
+    }
+    // Any block decision: redirect, log event, increment stats (isExplicit path was previously missing this)
+    if (action === 'block') {
+        const reason = result.reasons[0] || 'Explicit content detected';
+        const blockUrl = `${BLOCK_SCREEN_URL}?url=${encodeURIComponent(url)}&reason=${encodeURIComponent(reason)}&tabId=${tabId}&type=content`;
+        chrome.tabs.update(tabId, { url: blockUrl });
+        log(`🛑 [ContentAnalysis] REDIRECT issued for ${domain} via tabs.update — score=${result.score}, explicit=${result.isExplicit}, reason=${reason}`);
+        await logBlockEvent({
+            url,
+            domain,
+            reason: `Content analysis (score: ${result.score}, reasons: ${result.reasons.join(', ')})`,
+            action: 'blocked',
+            timestamp: Date.now()
+        });
+        await incrementContentBlockStat();
     }
     return { action };
 }

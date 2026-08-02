@@ -18231,5 +18231,80 @@
         "sub_frame"
       ]
     }
+  },
+  {
+    "id": 12000,
+    "priority": 3,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "regexFilter": "^https?://[^/]*(missav|pornhub|xvideos|xhamster|xnxx|onlyfans|chaturbate|brazzers|redtube|youporn|stripchat|fansly)",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 12001,
+    "priority": 3,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "regexFilter": "^https?://[^/]*(missav|pornhub|xvideos|xhamster|xnxx|onlyfans|chaturbate|brazzers|redtube|youporn|stripchat|fansly)",
+      "resourceTypes": ["sub_frame"]
+    }
+  },
+  {
+    "id": 12002,
+    "priority": 3,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "regexFilter": "^https?://[^/]*(fanza|javdb|javbus|avgle|njav|jable|netflav|hpjav|7mmtv|erovideo|fc2ppv|sukebei)",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 12003,
+    "priority": 3,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "regexFilter": "^https?://[^/]*(fanza|javdb|javbus|avgle|njav|jable|netflav|hpjav|7mmtv|erovideo|fc2ppv|sukebei)",
+      "resourceTypes": ["sub_frame"]
+    }
+  },
+  {
+    "id": 12004,
+    "priority": 3,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "regexFilter": "^https?://[^/]*(tokyohot|tokyo-hot|1pondo|caribbeancom|heyzo|mgstage|eroterest|sokmil|dxlive|xcity)",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 12005,
+    "priority": 3,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "regexFilter": "^https?://[^/]*(tokyohot|tokyo-hot|1pondo|caribbeancom|heyzo|mgstage|eroterest|sokmil|dxlive|xcity)",
+      "resourceTypes": ["sub_frame"]
+    }
   }
 ]

@@ -58,6 +58,24 @@ const DOMAIN_ADULT_PATTERNS = [
   'エロ', 'アダルト', '風俗', 'エロ動画', '無修正',
 ] as const
 
+/** Compact allowlist of known adult registrable domains (link / host signals) */
+const KNOWN_ADULT_DOMAINS = [
+  'pornhub.com', 'xvideos.com', 'xnxx.com', 'xhamster.com',
+  'redtube.com', 'youporn.com', 'brazzers.com', 'onlyfans.com',
+  'chaturbate.com', 'stripchat.com', 'fansly.com',
+  'missav.com', 'missav.ws', 'javdb.com', 'javbus.com', 'avgle.com',
+  'jable.tv', 'netflav.com', 'hpjav.tv', 'supjav.com',
+  'fanza.co.jp', 'tokyomotion.net',
+  'spankbang.com', 'hqporner.com', 'rule34.xxx',
+] as const
+
+/** Curated adult ad / affiliate network hosts */
+const ADULT_AD_NETWORKS = [
+  'exoclick.com', 'juicyads.com', 'trafficjunky.net', 'trafficjunky.com',
+  'popads.net', 'adsterra.com', 'tsyndicate.com', 'ero-advertising.com',
+  'plugrush.com', 'clickadu.com', 'adcash.com', 'hilltopads.com',
+] as const
+
 const SAFE_CONTEXT_INDICATORS = [
   'wikipedia', 'education', 'educational', 'medical', 'health',
   'research', 'documentary', 'news', 'article', 'study', 'academic',
@@ -186,14 +204,28 @@ export function analyzePage(): ContentAnalysisResult {
     reasons.push(...urlResult.reasons)
   }
   
-  // 7. Check links
+  // 7. Check links (keyword + known adult domains)
   const linkResult = analyzeLinkHrefs()
   score += linkResult.score
   if (linkResult.score > 0) {
     reasons.push(linkResult.reason)
   }
+
+  // 8. Known adult domain links (language-independent)
+  const adultLinkResult = analyzeAdultDomainLinks()
+  score += adultLinkResult.score
+  if (adultLinkResult.score > 0) {
+    reasons.push(adultLinkResult.reason)
+  }
+
+  // 9. Adult ad-network hosts in scripts/iframes/links
+  const adNetworkResult = analyzeAdultAdNetworks()
+  score += adNetworkResult.score
+  if (adNetworkResult.score > 0) {
+    reasons.push(adNetworkResult.reason)
+  }
   
-  // 8. Check safe context (reduces score)
+  // 10. Check safe context (reduces score)
   const hasSafeContext = checkSafeContext(domain)
   if (hasSafeContext && score > 0) {
     const originalScore = score
@@ -242,8 +274,11 @@ function analyzeMetaTags(): { score: number; reasons: string[]; detected: string
   const reasons: string[] = []
   const detected: string[] = []
   
-  // Check rating meta tag
-  const ratingMeta = document.querySelector('meta[name="rating"]')
+  // Check rating meta tag (case-insensitive name)
+  const ratingMeta =
+    document.querySelector('meta[name="rating" i]') ||
+    document.querySelector('meta[name="Rating"]') ||
+    document.querySelector('meta[name="RATING"]')
   const ratingContent = ratingMeta?.getAttribute('content')?.toLowerCase() || ''
   
   if (ratingContent === 'adult' || ratingContent.includes('rta-5042')) {
@@ -254,6 +289,14 @@ function analyzeMetaTags(): { score: number; reasons: string[]; detected: string
     score += 50
     reasons.push('Mature rating meta tag detected')
     detected.push(`rating=${ratingContent}`)
+  }
+
+  // RTA label link (common age-gate signal)
+  const rtaLink = document.querySelector('a[href*="rtalabel.org"], link[href*="rtalabel.org"]')
+  if (rtaLink && score < 100) {
+    score += 80
+    reasons.push('RTA label link detected')
+    detected.push('rtalabel.org')
   }
   
   // Check Open Graph age restriction
@@ -297,18 +340,39 @@ function analyzeTitle(): { score: number; reasons: string[] } {
 }
 
 /**
- * Check if keyword matches with word boundary awareness for short words
+ * True for CJK (Hiragana/Katakana/Han) — `\b` word boundaries do not work for these scripts.
  */
-function keywordMatchesInText(text: string, keyword: string): boolean {
+function isCjkKeyword(keyword: string): boolean {
+  return /[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f]/.test(keyword)
+}
+
+/**
+ * True when keyword is short Latin (ASCII letters/digits) where `\b` avoids false positives
+ * (e.g. "ass" in "class", "sex" in "sexton").
+ */
+function isShortLatinToken(keyword: string): boolean {
+  return keyword.length <= 3 && /^[a-z0-9]+$/i.test(keyword)
+}
+
+/**
+ * Script-aware keyword match:
+ * - CJK / non-Latin: substring includes (no word boundaries)
+ * - Short Latin tokens: `\b` boundaries to limit false positives
+ * - Longer Latin / multi-word: substring includes
+ */
+export function keywordMatchesInText(text: string, keyword: string): boolean {
   const keywordLower = keyword.toLowerCase()
-  
-  // Short keywords (<=3 chars): require word boundaries
-  if (keywordLower.length <= 3) {
-    const regex = new RegExp(`\\b${keywordLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
-    return regex.test(text)
+
+  if (isCjkKeyword(keyword) || !/^[\x00-\x7F]*$/.test(keyword)) {
+    // CJK and accented/non-ASCII keywords: includes (boundaries break JP/CJK)
+    return text.includes(keywordLower)
   }
-  
-  // Longer keywords: substring match is fine
+
+  if (isShortLatinToken(keywordLower)) {
+    const escaped = keywordLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return new RegExp(`\\b${escaped}\\b`, 'i').test(text)
+  }
+
   return text.includes(keywordLower)
 }
 
@@ -461,7 +525,7 @@ function analyzeLinkHrefs(): { score: number; reason: string } {
     
     // Check if link contains explicit keywords
     for (const keyword of EXPLICIT_KEYWORDS.slice(0, 15)) {
-      if (href.includes(keyword) || text.includes(keyword)) {
+      if (keywordMatchesInText(href, keyword) || keywordMatchesInText(text, keyword)) {
         suspiciousCount++
         break
       }
@@ -483,6 +547,90 @@ function analyzeLinkHrefs(): { score: number; reason: string } {
   }
   
   return { score, reason }
+}
+
+function hostFromHref(href: string): string | null {
+  try {
+    if (!href || href.startsWith('#') || href.startsWith('javascript:')) return null
+    const absolute = href.startsWith('http') ? href : new URL(href, window.location.href).href
+    return new URL(absolute).hostname.replace(/^www\./, '').toLowerCase()
+  } catch {
+    return null
+  }
+}
+
+function hostMatchesKnownAdult(host: string): boolean {
+  return KNOWN_ADULT_DOMAINS.some(d => host === d || host.endsWith('.' + d))
+}
+
+/**
+ * Count outbound links to known adult registrable domains (language-independent signal)
+ */
+function analyzeAdultDomainLinks(): { score: number; reason: string } {
+  const links = Array.from(document.querySelectorAll('a[href]')).slice(0, 150)
+  let adultLinkCount = 0
+  const samples: string[] = []
+
+  for (const link of links) {
+    const host = hostFromHref(link.getAttribute('href') || '')
+    if (!host) continue
+    if (hostMatchesKnownAdult(host)) {
+      adultLinkCount++
+      if (samples.length < 3) samples.push(host)
+    }
+  }
+
+  if (adultLinkCount >= 5) {
+    return {
+      score: 40,
+      reason: `Many links to known adult domains (${adultLinkCount}): ${samples.join(', ')}`
+    }
+  }
+  if (adultLinkCount >= 2) {
+    return {
+      score: 25,
+      reason: `Links to known adult domains (${adultLinkCount}): ${samples.join(', ')}`
+    }
+  }
+  if (adultLinkCount === 1) {
+    return {
+      score: 10,
+      reason: `Link to known adult domain: ${samples[0]}`
+    }
+  }
+  return { score: 0, reason: '' }
+}
+
+/**
+ * Detect known adult ad-network hosts in scripts, iframes, and links
+ */
+function analyzeAdultAdNetworks(): { score: number; reason: string } {
+  const hosts = new Set<string>()
+
+  const attrs = [
+    ...Array.from(document.querySelectorAll('script[src]')).map(el => el.getAttribute('src') || ''),
+    ...Array.from(document.querySelectorAll('iframe[src]')).map(el => el.getAttribute('src') || ''),
+    ...Array.from(document.querySelectorAll('img[src]')).slice(0, 80).map(el => el.getAttribute('src') || ''),
+    ...Array.from(document.querySelectorAll('a[href]')).slice(0, 80).map(el => el.getAttribute('href') || ''),
+  ]
+
+  for (const raw of attrs) {
+    const host = hostFromHref(raw)
+    if (!host) continue
+    for (const network of ADULT_AD_NETWORKS) {
+      if (host === network || host.endsWith('.' + network)) {
+        hosts.add(network)
+      }
+    }
+  }
+
+  if (hosts.size === 0) return { score: 0, reason: '' }
+
+  const list = Array.from(hosts).slice(0, 3).join(', ')
+  if (hosts.size >= 2) {
+    return { score: 45, reason: `Adult ad networks detected: ${list}` }
+  }
+  return { score: 30, reason: `Adult ad network detected: ${list}` }
 }
 
 /**

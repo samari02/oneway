@@ -1420,8 +1420,38 @@ if (shouldInject()) {
 }
 const ANALYSIS_DELAY_MS = 500; // Wait for initial render
 const SPA_RECHECK_DELAY_MS = 1500; // Recheck for SPAs
+const LOCAL_BLOCK_SCORE = 70; // Client-side block threshold (heightened handled by SW)
 let hasAnalyzed = false;
 let pageAnalysisScore = 0;
+let hasRedirectedToBlock = false;
+/**
+ * Immediate opaque overlay so content isn't visible while redirecting
+ */
+function applyBlockOverlay() {
+    if (document.getElementById('clarity-block-overlay'))
+        return;
+    const overlay = document.createElement('div');
+    overlay.id = 'clarity-block-overlay';
+    overlay.setAttribute('role', 'presentation');
+    overlay.style.cssText =
+        'position:fixed;inset:0;z-index:2147483647;background:#0a0a0a;pointer-events:all;';
+    (document.documentElement || document.body).appendChild(overlay);
+}
+/**
+ * Navigate to extension block screen (content-script redundancy for SW redirect)
+ */
+function redirectToBlockScreen(reason) {
+    if (hasRedirectedToBlock)
+        return;
+    hasRedirectedToBlock = true;
+    applyBlockOverlay();
+    const blockUrl = chrome.runtime.getURL('block-screen.html') +
+        `?url=${encodeURIComponent(window.location.href)}` +
+        `&reason=${encodeURIComponent(reason)}` +
+        `&type=content`;
+    log(`[PageAnalysis] REDIRECT issued via content-script navigation — ${reason}`);
+    window.location.replace(blockUrl);
+}
 /**
  * Run page analysis and send results to background
  */
@@ -1430,12 +1460,20 @@ async function runPageAnalysis(isRecheck = false) {
     if (hasAnalyzed && pageAnalysisScore >= 70 && !isRecheck) {
         return;
     }
+    if (hasRedirectedToBlock)
+        return;
     try {
         const result = analyzePage();
         pageAnalysisScore = result.score;
         // Only send to background if score is significant
         if (result.score >= 10 || result.isExplicit) {
             log(`[PageAnalysis] Score: ${result.score}, Explicit: ${result.isExplicit}, Reasons: ${result.reasons.join(', ')}`);
+            const reason = result.reasons[0] || 'Explicit content detected';
+            // Do not fire-and-forget: apply verdict locally when clearly blocking
+            const shouldBlockLocally = result.isExplicit || result.score >= LOCAL_BLOCK_SCORE;
+            if (shouldBlockLocally) {
+                redirectToBlockScreen(reason);
+            }
             chrome.runtime.sendMessage({
                 type: 'PAGE_ANALYSIS_RESULT',
                 data: {
@@ -1445,11 +1483,17 @@ async function runPageAnalysis(isRecheck = false) {
                     timestamp: Date.now(),
                     isRecheck
                 }
+            }, (response) => {
+                if (chrome.runtime.lastError)
+                    return;
+                if (response?.action === 'block') {
+                    redirectToBlockScreen(reason);
+                }
             });
         }
         hasAnalyzed = true;
         // If this was initial analysis and looks like SPA, schedule recheck
-        if (!isRecheck && isSPALikely() && result.score < 70) {
+        if (!isRecheck && isSPALikely() && result.score < 70 && !hasRedirectedToBlock) {
             log('[PageAnalysis] SPA detected, scheduling recheck...');
             setTimeout(() => runPageAnalysis(true), SPA_RECHECK_DELAY_MS);
         }
