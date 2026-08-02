@@ -267,6 +267,13 @@ document.getElementById('btn-settings')!.addEventListener('click', () => {
   alert('Settings coming soon!')
 })
 
+// Tab Manager module (independent; on/off toggle lives on the manager page)
+document.getElementById('btn-tab-manager')?.addEventListener('click', () => {
+  const url = chrome.runtime.getURL('tab-manager.html')
+  chrome.tabs.create({ url })
+  window.close()
+})
+
 // Check sync status and show sync section
 chrome.runtime.sendMessage({ type: 'GET_SYNC_STATUS' }, (status) => {
   console.log('[Clarity Popup] Sync status:', status)

@@ -11,7 +11,8 @@ export default defineConfig({
       input: {
         'service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
         'block-screen': resolve(__dirname, 'src/ui/block-screen/block-screen.ts'),
-        'popup': resolve(__dirname, 'src/ui/popup/popup.ts')
+        'popup': resolve(__dirname, 'src/ui/popup/popup.ts'),
+        'tab-manager': resolve(__dirname, 'src/modules/tab-manager/tab-manager.ts'),
       },
       output: {
         entryFileNames: '[name].js',

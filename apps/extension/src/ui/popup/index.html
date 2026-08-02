@@ -113,6 +113,17 @@
       background: rgba(255, 255, 255, 0.3);
     }
 
+    .btn-tabs {
+      background: rgba(255, 255, 255, 0.92);
+      color: #5f4fd6;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-tabs:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
     .popup__history {
       background: rgba(255, 255, 255, 0.15);
       border: 2px dashed rgba(255, 255, 255, 0.3);
@@ -541,6 +552,7 @@
     </div>
     
     <div class="popup__actions">
+      <button class="btn-tabs" id="btn-tab-manager" type="button">Manage Tabs</button>
       <button class="btn-primary" id="btn-toggle">End Focus Mode</button>
       <button class="btn-secondary" id="btn-settings">Settings</button>
     </div>
