@@ -415,19 +415,30 @@ L'extension envoie un heartbeat toutes les 60 secondes.
 - Bouton "Setup" ouvre modal avec instructions
 - Warning aussi dans popup de l'extension
 
-#### DNS-Level Blocking (À faire)
-Protection au niveau réseau, fonctionne même sans extension Chrome.
+#### DNS-Level Blocking (macOS v1 hosts ✅)
 
-**Options** :
-- **Hosts file** : Modifier `/etc/hosts` pour bloquer les domaines
-- **DNS custom** : Pi-hole, NextDNS, ou Cloudflare Family
-- **Avantage** : Fonctionne sur tous les navigateurs et apps
+Protection au niveau OS, complémentaire à l’extension Chrome (pas un remplacement).
+
+**Livré (Option A — `/etc/hosts`)** :
+- Section managée `# BEGIN CLARITY ADULT BLOCK` … `# END CLARITY ADULT BLOCK`
+- Domaines lus depuis `~/.clarity/adult-blocklist.json` (même seed que la sync extension)
+- Backup avant écriture ; refus d’appliquer une liste vide
+- Settings → **System adult block** (enable / disable / refresh)
+- Doc : [`hosts_adult_blocking_v1.md`](./hosts_adult_blocking_v1.md)
+
+**Caveat DoH** : Chrome Secure DNS peut contourner `/etc/hosts` — garder l’extension ; désactiver Secure DNS ou utiliser le DNS OS pour une couverture hosts complète.
+
+**Plus tard** :
+- Friction PIN/délai à la désactivation
+- Parité Windows/Linux
+- DNS proxy / Pi-hole / NextDNS (Option B)
 
 ```
-# Exemple hosts file
-127.0.0.1 pornhub.com
-127.0.0.1 xvideos.com
-...
+# Exemple hosts file (section Clarity)
+# BEGIN CLARITY ADULT BLOCK
+0.0.0.0 pornhub.com
+0.0.0.0 www.pornhub.com
+# END CLARITY ADULT BLOCK
 ```
 
 ### Phase 3 — Modes de Strictness

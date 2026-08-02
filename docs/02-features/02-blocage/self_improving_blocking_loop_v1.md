@@ -33,7 +33,7 @@ Structural signals use grown blocklist (self-reinforcing link graph)
 | 1 | Structural signals (adult links ≥K, ad networks, age-gate/RTA) | In `page-analyzer.ts` |
 | 2 | Syncable list that can grow | Seed + `~/.clarity` + candidates file |
 | 3 | Eval as the gate | `eval:adult-blocking` (+ structural HTML corpus) |
-| 4 | Friction / DNS (S3) | Deferred — stub only below |
+| 4 | Friction / DNS (S3) | Hosts v1 shipped (macOS); disable friction later |
 | 5 | Keyword languages capped EN/FR/JP (+ light CN) | CN light set only |
 
 ## A. Observe → candidates
@@ -86,9 +86,14 @@ Those blocks also create candidates (A).
 
 Small high-signal Chinese terms in `page-analyzer` EXPLICIT_KEYWORDS (CJK substring path). No expansion into more languages.
 
-## F. Friction / DNS (later — stub)
+## F. Friction / DNS (S3)
 
-Future S3: OS/DNS resolver or system proxy for hard network deny outside Chrome. Not implemented in v1. Candidates + syncable list are the prerequisite so DNS deny lists can reuse the same promoted seed.
+**DNS / hosts v1 (shipped, macOS):** managed `/etc/hosts` section from
+`~/.clarity/adult-blocklist.json`. See [`hosts_adult_blocking_v1.md`](./hosts_adult_blocking_v1.md).
+Additive to the extension; DoH caveat applies.
+
+**Still later:** PIN/delay friction on disable; Windows/Linux; local DNS proxy.
+Not a substitute for a healthy Observe → promote → eval loop.
 
 ## Maintainer / reload
 

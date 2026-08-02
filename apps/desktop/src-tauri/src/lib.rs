@@ -4,6 +4,7 @@ mod native_host;
 mod custom_rules_file;
 mod adult_blocklist_file;
 mod adult_candidates_file;
+mod hosts_blocking;
 mod app_data;
 mod app_monitor;
 mod supabase_sync;
@@ -275,9 +276,40 @@ fn write_custom_rules_to_disk(rules: serde_json::Value) -> Result<(), String> {
 }
 
 /// Persist system adult domain blocklist for native host GET_CONFIG → extension.
+/// When system hosts blocking is enabled, refreshes the managed `/etc/hosts` section.
 #[tauri::command]
 fn write_adult_blocklist_to_disk(payload: serde_json::Value) -> Result<(), String> {
-    adult_blocklist_file::write_adult_blocklist_json(payload)
+    adult_blocklist_file::write_adult_blocklist_json(payload)?;
+    // Best-effort: if user has system adult block on, re-apply from the new list.
+    // Privilege prompt may appear; failures are logged but do not fail the write.
+    if let Err(e) = hosts_blocking::refresh_if_enabled() {
+        eprintln!("[AdultBlocklist] hosts refresh after write skipped: {}", e);
+    }
+    Ok(())
+}
+
+// ============================================================================
+// System adult blocking (/etc/hosts) — macOS v1
+// ============================================================================
+
+#[tauri::command]
+fn get_hosts_blocking_status() -> hosts_blocking::HostsBlockingStatus {
+    hosts_blocking::get_status()
+}
+
+#[tauri::command]
+fn enable_hosts_adult_blocking() -> Result<hosts_blocking::HostsBlockingStatus, String> {
+    hosts_blocking::enable()
+}
+
+#[tauri::command]
+fn disable_hosts_adult_blocking() -> Result<hosts_blocking::HostsBlockingStatus, String> {
+    hosts_blocking::disable()
+}
+
+#[tauri::command]
+fn refresh_hosts_adult_blocking() -> Result<hosts_blocking::HostsBlockingStatus, String> {
+    hosts_blocking::refresh()
 }
 
 // --- Blocking list lock (local password + timed unlock) ---
@@ -364,6 +396,10 @@ pub fn run() {
             save_aoi_preferences,
             write_custom_rules_to_disk,
             write_adult_blocklist_to_disk,
+            get_hosts_blocking_status,
+            enable_hosts_adult_blocking,
+            disable_hosts_adult_blocking,
+            refresh_hosts_adult_blocking,
             blocking_lock_get_status,
             blocking_lock_set_password,
             blocking_lock_verify_unlock,

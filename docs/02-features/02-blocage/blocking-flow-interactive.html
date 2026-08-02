@@ -1536,7 +1536,7 @@
           </li>
           <li>
             <span class="prio-num">4</span>
-            <span><strong>DNS / friction anti-désactivation</strong> — chapitre plus tard (S3), une fois la boucle saine.</span>
+            <span><strong>DNS / friction anti-désactivation</strong> — hosts macOS v1 livré ; friction PIN plus tard (S3).</span>
           </li>
           <li>
             <span class="prio-num">5</span>
@@ -1614,19 +1614,20 @@
         <div class="road-later">
           <p class="road-later-label">Chapitres plus tard — après boucle saine</p>
           <div class="roadmap" id="roadmap-later">
-            <button class="road-item" type="button" aria-expanded="false">
+            <button class="road-item done" type="button" aria-expanded="false">
               <span class="prio s3">S3</span>
               <div>
                 <div class="road-title-row">
                   <div class="road-title">DNS / friction anti-désactivation</div>
-                  <span class="status-pill gated">après boucle</span>
+                  <span class="status-pill done">hosts v1 macOS</span>
                 </div>
-                <div class="road-blurb">Filet machine + coût à désactiver l’extension — pas maintenant</div>
+                <div class="road-blurb">Filet machine via /etc/hosts — friction PIN encore à venir</div>
                 <div class="road-detail">
                   L’extension ne voit pas tout : autre navigateur, mode invité, disable.
-                  DNS desktop (ou équivalent) + friction de désactivation ferment ces
-                  fuites — <strong>complément</strong> une fois que la boucle liste/éval
-                  est fiable. Pas un raccourci pour compenser une liste morte.
+                  <strong>Hosts desktop v1</strong> (section managée dans /etc/hosts depuis
+                  adult-blocklist.json) est le filet machine — <strong>complément</strong>,
+                  pas un remplacement. Caveat DoH (Chrome Secure DNS). Friction de
+                  désactivation (PIN/délai) reste un chapitre suivant.
                 </div>
               </div>
               <span class="chev" aria-hidden="true">›</span>

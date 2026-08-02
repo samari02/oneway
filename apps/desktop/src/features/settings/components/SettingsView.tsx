@@ -8,6 +8,7 @@ import { setApiKey, removeApiKey, hasApiKey, getMaskedApiKey } from '@/lib/opena
 type ApiKeySaveState = 'idle' | 'saving' | 'saved' | 'error'
 import { SiteClassificationModal, type SiteCategory } from '@/features/stats/components/SiteClassificationModal'
 import { useAoiPreferences } from '@/features/settings/hooks/useAoiPreferences'
+import { useHostsBlocking } from '@/features/settings/hooks/useHostsBlocking'
 import { DeleteSiteDomainPicker } from '@/features/settings/components/DeleteSiteDomainPicker'
 import { useFocusAreaStore } from '@/features/clarity-home/hooks/useFocusAreaStore'
 import { FocusAreaManager } from '@/features/clarity-home/components/FocusAreaManager'
@@ -39,6 +40,15 @@ export function SettingsView({ onNavigateToView }: SettingsViewProps) {
   const { user, signOut } = useAuth()
   const { preferences: aoiPrefs, isLoading: aoiLoading, updatePreferences: updateAoiPrefs } =
     useAoiPreferences()
+  const {
+    status: hostsStatus,
+    loading: hostsLoading,
+    busy: hostsBusy,
+    error: hostsError,
+    enable: enableHostsBlocking,
+    disable: disableHostsBlocking,
+    refresh: refreshHostsBlocking,
+  } = useHostsBlocking()
   const {
     activeAreas,
     archivedAreas,
@@ -241,13 +251,104 @@ export function SettingsView({ onNavigateToView }: SettingsViewProps) {
         <UserContextInput />
       </section>
 
+      {/* System adult block — /etc/hosts (macOS v1) */}
+      <section className="settings-section">
+        <h2 className="settings-section__title">
+          System adult block
+          <span className="settings-badge">macOS v1</span>
+        </h2>
+
+        <p className="settings-section__description">
+          Map adult domains from your Clarity blocklist into a managed section of{' '}
+          <code>/etc/hosts</code>. Complements the Chrome extension (apps and other browsers).
+          macOS will ask for an administrator password when enabling or disabling.
+        </p>
+
+        {hostsLoading ? (
+          <p className="settings-section__hint">Loading…</p>
+        ) : (
+          <>
+            <label className="settings-item settings-item--row">
+              <input
+                type="checkbox"
+                checked={Boolean(hostsStatus?.enabled)}
+                disabled={hostsBusy || hostsStatus?.supported === false}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    void enableHostsBlocking()
+                  } else {
+                    void disableHostsBlocking()
+                  }
+                }}
+              />
+              <span className="settings-item__label">Enable system adult block</span>
+            </label>
+
+            <div className="settings-item">
+              <div className="settings-item__info">
+                <span className="settings-item__label">Blocklist on disk</span>
+                <span className="settings-item__value">
+                  {(hostsStatus?.domainCount ?? 0).toLocaleString()} domains
+                </span>
+              </div>
+            </div>
+
+            <div className="settings-item">
+              <div className="settings-item__info">
+                <span className="settings-item__label">Hosts section</span>
+                <span className="settings-item__value">
+                  {hostsStatus?.hostsSectionPresent
+                    ? `present (${(hostsStatus.appliedDomainCount ?? 0).toLocaleString()} lines)`
+                    : 'not applied'}
+                </span>
+              </div>
+            </div>
+
+            {hostsStatus?.lastAppliedAt && (
+              <div className="settings-item">
+                <div className="settings-item__info">
+                  <span className="settings-item__label">Last change</span>
+                  <span className="settings-item__value">{hostsStatus.lastAppliedAt}</span>
+                </div>
+              </div>
+            )}
+
+            {hostsStatus?.enabled && (
+              <div className="settings-section__actions">
+                <button
+                  type="button"
+                  className="settings-button settings-button--secondary settings-button--small"
+                  disabled={hostsBusy}
+                  onClick={() => void refreshHostsBlocking()}
+                >
+                  Refresh from blocklist
+                </button>
+              </div>
+            )}
+
+            {hostsError && (
+              <p className="settings-section__hint" role="alert">
+                {hostsError}
+              </p>
+            )}
+
+            <p className="settings-section__hint">
+              {hostsStatus?.note ||
+                'Chrome Secure DNS (DoH) can bypass /etc/hosts. Prefer OS DNS or disable Secure DNS for full coverage.'}
+              {' '}
+              Disable friction (PIN/delay) is not in this v1 — coming later.
+            </p>
+          </>
+        )}
+      </section>
+
       {/* Strictness Section (Coming Soon) */}
       <section className="settings-section settings-section--disabled">
         <h2 className="settings-section__title">
           Strictness
           <span className="settings-badge">Coming Soon</span>
         </h2>
-        
+
         <div className="settings-item">
           <div className="settings-item__info">
             <span className="settings-item__label">Blocking Mode</span>
