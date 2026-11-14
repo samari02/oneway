@@ -1,12 +1,13 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-02",
+  "updatedAt": "2026-11-14",
   "source": "clarity-system",
   "description": "System adult domain list (JP curated seed ∪ promoted ∪ public NSFW complement). Merged into static DNR at build; synced via ~/.clarity/adult-blocklist.json + GET_CONFIG (additive).",
   "domains": [
     "0xxx.ws",
     "1000fapvids.com",
     "1000porno.net",
+    "101japanese.com",
     "10musume.com",
     "123av.com",
     "141jav.com",
@@ -453,6 +454,7 @@
     "chinaporn.tv",
     "chinapornmovie.com",
     "chinav.sex",
+    "chinesemix.com",
     "chineseporn.tube",
     "chudaiporn.com",
     "cicisex.net",
@@ -1651,6 +1653,7 @@
     "meinsex.video",
     "meinyouporn.com",
     "melonbooks.co.jp",
+    "meoriental.com",
     "mesubuta.net",
     "metaporn.com",
     "metart.com",
@@ -1907,6 +1910,7 @@
     "omg.sexy",
     "omg.xxx",
     "on-xxx.com",
+    "onejapanese.com",
     "onejav.com",
     "onlyfans.com",
     "ooojav.com",
@@ -2099,7 +2103,7 @@
   ],
   "sources": {
     "curatedExpansion": true,
-    "promoted": 0,
+    "promoted": 4,
     "importedPublic": 1500
   },
   "hostnameSubstrings": [

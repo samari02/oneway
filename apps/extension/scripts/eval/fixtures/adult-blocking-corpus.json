@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-02",
+  "updatedAt": "2026-11-14",
   "description": "Offline adult-blocking eval corpus. label=block|allow. Runner scores DNR + adult-blocklist + hostname heuristics (no Chrome).",
   "fixtures": [
     {

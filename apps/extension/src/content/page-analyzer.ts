@@ -688,12 +688,34 @@ function analyzeAdultAdNetworks(): { score: number; reason: string } {
 }
 
 /**
+ * Tube / cam sites abuse fake category labels (`?category=medical`, `/medical/`)
+ * so content looks "educational" and safe-context would cut the score ÷3.
+ * Never treat that URL shape as safe unless the host is already a SAFE_DOMAIN.
+ */
+function urlLooksLikeFakeSafeCategory(): boolean {
+  try {
+    const u = new URL(location.href)
+    const path = (u.pathname || '').toLowerCase()
+    const q = (u.search || '').toLowerCase()
+    if (q.includes('category=medical') || path.includes('/medical')) return true
+    if (q.includes('category=health') || path.includes('/health/')) return true
+    return false
+  } catch {
+    return false
+  }
+}
+
+/**
  * Check if page has safe context (medical, educational, etc.)
  */
 function checkSafeContext(domain: string): boolean {
   // Check if domain is known safe
   if (SAFE_DOMAINS.some(d => domain.includes(d))) {
     return true
+  }
+
+  if (urlLooksLikeFakeSafeCategory()) {
+    return false
   }
   
   // Check content for safe context indicators
