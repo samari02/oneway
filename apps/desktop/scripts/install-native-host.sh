@@ -6,15 +6,37 @@
 # when given --native-host. This script writes a small runner that adds that flag.
 #
 # Usage:
-#   ./install-native-host.sh <extension_id> [path_to_clarity_binary]
+#   ./install-native-host.sh <extension_id> [<extension_id2> ...] [--] [path_to_clarity_binary]
+#
+# Multiple IDs: daily unpacked profile + legacy dev profile (Chrome policy may pin a stable ID later).
 #
 # Dev example (after `cargo build` or `pnpm dev` once):
-#   ./install-native-host.sh abcdefghijklmnop /path/to/oneway/apps/desktop/src-tauri/target/debug/appsdesktop
+#   ./install-native-host.sh abcdefghijklmnop ./src-tauri/target/debug/appsdesktop
 
 set -e
 
-EXTENSION_ID="${1:-}"
-APP_PATH="${2:-/Applications/Clarity.app/Contents/MacOS/Clarity}"
+EXTENSION_IDS=()
+APP_PATH="/Applications/Clarity.app/Contents/MacOS/Clarity"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --)
+      shift
+      if [[ $# -gt 0 ]]; then
+        APP_PATH="$1"
+      fi
+      break
+      ;;
+    *)
+      if [[ "$1" == /* ]] || [[ "$1" == *".app"* ]] || [[ -f "$1" ]]; then
+        APP_PATH="$1"
+        break
+      fi
+      EXTENSION_IDS+=("$1")
+      shift
+      ;;
+  esac
+done
 
 # Chrome Native Messaging Hosts directory
 CHROME_DIR="$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts"
@@ -25,21 +47,20 @@ RUNNER_PATH="$CLARITY_CONFIG_DIR/clarity-native-host-runner.sh"
 mkdir -p "$CHROME_DIR"
 mkdir -p "$CLARITY_CONFIG_DIR"
 
-# If no extension ID provided, use a placeholder
-if [ -z "$EXTENSION_ID" ]; then
+if [[ ${#EXTENSION_IDS[@]} -eq 0 ]]; then
     echo "⚠️  Warning: No extension ID provided."
-    echo "   Usage: $0 <extension_id> [app_path]"
+    echo "   Usage: $0 <extension_id> [<extension_id2> ...] [--] [app_path]"
     echo ""
     echo "   You can find the extension ID at chrome://extensions"
     echo "   (Enable Developer mode to see the ID)"
     echo ""
     echo "   Using placeholder for now. You'll need to update the manifest later."
-    EXTENSION_ID="YOUR_EXTENSION_ID_HERE"
+    EXTENSION_IDS=("YOUR_EXTENSION_ID_HERE")
 fi
 
 # Resolve to absolute path (required by Chrome manifest)
 if [[ "$APP_PATH" != /* ]]; then
-    APP_PATH="$(cd "$(dirname "$APP_PATH")" && pwd)/$(basename "$APP_PATH")"
+    APP_PATH="$(cd "$(dirname "$APP_PATH")" 2>/dev/null && pwd)/$(basename "$APP_PATH")" || true
 fi
 
 if [ ! -f "$APP_PATH" ] || [ ! -x "$APP_PATH" ]; then
@@ -58,30 +79,38 @@ chmod +x "$RUNNER_PATH"
 MANIFEST_PATH="$CHROME_DIR/com.clarity.app.json"
 
 # Manifest points at the RUNNER, not the .app binary directly
-cat > "$MANIFEST_PATH" << EOF
 {
-  "name": "com.clarity.app",
-  "description": "Clarity Desktop App - Native Messaging Host for Chrome Extension",
-  "path": "$RUNNER_PATH",
-  "type": "stdio",
-  "allowed_origins": [
-    "chrome-extension://$EXTENSION_ID/"
-  ]
-}
-EOF
+  echo '{'
+  echo '  "name": "com.clarity.app",'
+  echo '  "description": "Clarity Desktop App - Native Messaging Host for Chrome Extension",'
+  echo "  \"path\": \"$RUNNER_PATH\","
+  echo '  "type": "stdio",'
+  echo '  "allowed_origins": ['
+  last_idx=$((${#EXTENSION_IDS[@]} - 1))
+  for i in "${!EXTENSION_IDS[@]}"; do
+  id="${EXTENSION_IDS[$i]}"
+  comma=","
+  [[ "$i" -eq "$last_idx" ]] && comma=""
+  echo "    \"chrome-extension://${id}/\"${comma}"
+  done
+  echo '  ]'
+  echo '}'
+} > "$MANIFEST_PATH"
 
 echo "✅ Native messaging runner installed"
 echo "   Runner: $RUNNER_PATH"
-echo "   → exec: $APP_PATH --native-host"
+echo "   → exec: $APP_PATH"
 echo ""
 echo "✅ Manifest installed at:"
 echo "   $MANIFEST_PATH"
+echo "   Extension IDs: ${EXTENSION_IDS[*]}"
 echo ""
 echo "📋 Manifest contents:"
 cat "$MANIFEST_PATH"
 echo ""
 echo ""
 echo "🔧 Next steps:"
-echo "   1. If you used a placeholder extension ID, re-run: $0 <real_id> <same_binary_path>"
-echo "   2. Reload the extension in chrome://extensions"
-echo "   3. Heartbeats should appear in ~/.clarity/extension-status.json within ~1 min"
+echo "   1. If you used a placeholder extension ID, re-run with real ID(s)"
+echo "   2. Optional: apps/desktop/scripts/apply-chrome-managed-policy.sh apply --extension-id <ID>"
+echo "   3. Reload the extension in chrome://extensions"
+echo "   4. Heartbeats should appear in ~/.clarity/extension-status.json within ~1 min"

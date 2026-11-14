@@ -88,6 +88,10 @@ If Clarity is installed as **`/Applications/Clarity.app`**, you can omit the sec
 
 `chrome://extensions` → **Reload** on Clarity. Otherwise Chrome may keep a stale native connection.
 
+## 5. Optional: Chrome managed policy (anti-Incognito / pin)
+
+See [chrome_managed_policy_macos_2026-11-14.md](./chrome_managed_policy_macos_2026-11-14.md) — run `apps/desktop/scripts/apply-chrome-managed-policy.sh` after you know your extension ID.
+
 ---
 
 ## 5. Quick verification
