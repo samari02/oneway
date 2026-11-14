@@ -195,6 +195,13 @@ export function analyzePage(options: AnalyzePageOptions = {}): ContentAnalysisRe
   if (adNetworkResult.score > 0) {
     reasons.push(adNetworkResult.reason)
   }
+
+  // 9b. Structural tube-site signals (before safe-context reduction)
+  const tubeResult = analyzeTubeSiteStructure(domain)
+  score += tubeResult.score
+  if (tubeResult.score > 0) {
+    reasons.push(...tubeResult.reasons)
+  }
   
   // 10. Check safe context (reduces score)
   const hasSafeContext = checkSafeContext(domain)
@@ -685,6 +692,89 @@ function analyzeAdultAdNetworks(): { score: number; reason: string } {
     return { score: 45, reason: `Adult ad networks detected: ${list}` }
   }
   return { score: 30, reason: `Adult ad network detected: ${list}` }
+}
+
+/** Hosts where dense video grids / duration labels are expected (skip tube heuristics). */
+function isTubeHeuristicExemptHost(domain: string): boolean {
+  const d = domain.toLowerCase()
+  return (
+    SAFE_DOMAINS.some((safe) => d === safe || d.endsWith('.' + safe)) ||
+    WHITELISTED_DOMAINS.some((safe) => d === safe || d.endsWith('.' + safe))
+  )
+}
+
+const TUBE_URL_PATTERN_SCORE = 18
+const TUBE_GRID_STRONG_SCORE = 35
+const TUBE_GRID_MODERATE_SCORE = 22
+const TUBE_VIDEO_LINK_GRID_SCORE = 20
+
+/**
+ * Structural heuristics for tube-style sites (thumbnail grids, duration badges, watch URLs).
+ * Runs before safe-context reduction so fake "medical" categories cannot wash scores.
+ */
+function analyzeTubeSiteStructure(domain: string): { score: number; reasons: string[] } {
+  if (isTubeHeuristicExemptHost(domain)) {
+    return { score: 0, reasons: [] }
+  }
+
+  let score = 0
+  const reasons: string[] = []
+
+  try {
+    const path = window.location.pathname.toLowerCase()
+    const search = window.location.search.toLowerCase()
+
+    let urlSignalCount = 0
+    if (search.includes('viewkey=')) urlSignalCount++
+    if (/\/videos?\//.test(path)) urlSignalCount++
+    if (urlLooksLikeFakeSafeCategory()) urlSignalCount++
+
+    if (urlSignalCount > 0) {
+      const urlScore = Math.min(urlSignalCount * TUBE_URL_PATTERN_SCORE, 45)
+      score += urlScore
+      if (search.includes('viewkey=')) reasons.push('Tube URL pattern: viewkey=')
+      if (/\/videos?\//.test(path)) reasons.push('Tube URL pattern: /video path')
+      if (urlLooksLikeFakeSafeCategory()) {
+        reasons.push('Tube evasion: medical/health category in URL')
+      }
+    }
+
+    const bodySample = document.body?.innerText?.slice(0, 12_000) || ''
+    const durationLabels = bodySample.match(/\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b/g) ?? []
+    const durationCount = durationLabels.length
+
+    const imgNodes = Array.from(document.querySelectorAll('img')).slice(0, 160)
+    let thumbLike = 0
+    for (const img of imgNodes) {
+      const src = (img.getAttribute('src') || img.getAttribute('data-src') || '').toLowerCase()
+      if (!src || /logo|icon|avatar|sprite|favicon|badge/.test(src)) continue
+      const cls = (img.className || '').toString()
+      const w = img.naturalWidth || Number(img.getAttribute('width')) || 0
+      const h = img.naturalHeight || Number(img.getAttribute('height')) || 0
+      if (/thumb|preview|poster|video|cover|tile|card/.test(cls + src) || (w >= 120 && h >= 80)) {
+        thumbLike++
+      }
+    }
+
+    if (thumbLike >= 14 && durationCount >= 10) {
+      score += TUBE_GRID_STRONG_SCORE
+      reasons.push(`Tube grid: ${thumbLike} thumbnails, ${durationCount} duration labels`)
+    } else if (thumbLike >= 9 && durationCount >= 6) {
+      score += TUBE_GRID_MODERATE_SCORE
+      reasons.push(`Tube-like grid: ${thumbLike} thumbnails, ${durationCount} durations`)
+    }
+
+    const videoLinks = document.querySelectorAll(
+      'a[href*="/video"], a[href*="viewkey"], a[href*="/watch"], a[href*="watch?"]'
+    ).length
+    if (videoLinks >= 24) {
+      score += TUBE_VIDEO_LINK_GRID_SCORE
+      reasons.push(`Dense video link grid (${videoLinks} watch links)`)
+    }
+  } catch {
+  }
+
+  return { score: Math.min(score, 65), reasons }
 }
 
 /**
