@@ -94,3 +94,22 @@ export async function getGroupByMode(): Promise<StoredGroupBy> {
 export async function setGroupByMode(mode: StoredGroupBy): Promise<void> {
   await chrome.storage.local.set({ [TAB_MANAGER_GROUP_BY_KEY]: mode })
 }
+
+/** OpenAI API key for Suggest groups (extension-local; never synced). */
+export const TAB_MANAGER_OPENAI_KEY = 'tabManager.openaiApiKey'
+
+export async function getOpenAiApiKey(): Promise<string | null> {
+  const result = await chrome.storage.local.get(TAB_MANAGER_OPENAI_KEY)
+  const value = result[TAB_MANAGER_OPENAI_KEY]
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+export async function setOpenAiApiKey(key: string | null): Promise<void> {
+  if (!key || !key.trim()) {
+    await chrome.storage.local.remove(TAB_MANAGER_OPENAI_KEY)
+    return
+  }
+  await chrome.storage.local.set({ [TAB_MANAGER_OPENAI_KEY]: key.trim() })
+}

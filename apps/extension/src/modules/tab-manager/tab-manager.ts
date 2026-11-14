@@ -9,6 +9,7 @@ import {
   GroupByMode,
   GROUP_BY_LABELS,
   hostnameOf,
+  TabGroupColor,
 } from './grouping'
 import { countDuplicateClosures, pickDuplicateTabIds, refreshTabManagerBadge } from './hygiene'
 import {
@@ -17,16 +18,25 @@ import {
   getAutoCloseDuplicates,
   getGroupByMode,
   getModuleEnabled,
+  getOpenAiApiKey,
   getParkedTabs,
   getUndoParkBatch,
   ParkedTab,
   setAutoCloseDuplicates,
   setGroupByMode,
   setModuleEnabled,
+  setOpenAiApiKey,
   setParkedTabs,
   setUndoParkBatch,
 } from './storage'
 import {
+  SuggestGroupsError,
+  SuggestedGroup,
+  suggestGroups,
+  tabsToSuggestInput,
+} from './suggest-groups'
+import {
+  applySuggestedUserGroups,
   assignHostToGroup,
   createUserGroup,
   deleteUserGroup,
@@ -70,6 +80,9 @@ let autoDupes = true
 let query = ''
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 let booted = false
+let suggestDraft: SuggestedGroup[] = []
+let suggestUngrouped: number[] = []
+let suggestLoading = false
 
 const els = {
   toggle: document.getElementById('btn-toggle') as HTMLButtonElement,
@@ -90,6 +103,7 @@ const els = {
   parkIdleMain: document.getElementById('btn-park-idle-main') as HTMLButtonElement,
   applyGroups: document.getElementById('btn-apply-groups') as HTMLButtonElement,
   newGroup: document.getElementById('btn-new-group') as HTMLButtonElement,
+  suggestGroups: document.getElementById('btn-suggest-groups') as HTMLButtonElement,
   clearGroups: document.getElementById('btn-clear-groups') as HTMLButtonElement,
   closeDupes: document.getElementById('btn-close-dupes') as HTMLButtonElement,
   restore: document.getElementById('btn-restore') as HTMLButtonElement,
@@ -97,11 +111,26 @@ const els = {
   idleNudge: document.getElementById('idle-nudge') as HTMLElement,
   idleNudgeText: document.getElementById('idle-nudge-text')!,
   autoDupes: document.getElementById('auto-dupes') as HTMLInputElement,
+  openaiKey: document.getElementById('openai-key') as HTMLInputElement,
+  saveKey: document.getElementById('btn-save-key') as HTMLButtonElement,
+  clearKey: document.getElementById('btn-clear-key') as HTMLButtonElement,
+  openaiKeyStatus: document.getElementById('openai-key-status')!,
   scopeCurrent: document.getElementById('scope-current') as HTMLButtonElement,
   scopeAll: document.getElementById('scope-all') as HTMLButtonElement,
   toast: document.getElementById('toast')!,
   toastText: document.getElementById('toast-text')!,
   toastUndo: document.getElementById('toast-undo') as HTMLButtonElement,
+  dialog: document.getElementById('dialog')!,
+  dialogTitle: document.getElementById('dialog-title')!,
+  dialogBody: document.getElementById('dialog-body')!,
+  dialogInput: document.getElementById('dialog-input') as HTMLInputElement,
+  dialogCancel: document.getElementById('dialog-cancel') as HTMLButtonElement,
+  dialogOk: document.getElementById('dialog-ok') as HTMLButtonElement,
+  suggestDialog: document.getElementById('suggest-dialog')!,
+  suggestPreview: document.getElementById('suggest-preview')!,
+  suggestCancel: document.getElementById('suggest-cancel') as HTMLButtonElement,
+  suggestApply: document.getElementById('suggest-apply') as HTMLButtonElement,
+  suggestAlsoChrome: document.getElementById('suggest-also-chrome') as HTMLInputElement,
 }
 
 function isEditableMode(): boolean {
@@ -116,6 +145,68 @@ function showToast(message: string, withUndo = false): void {
   toastTimer = setTimeout(() => {
     els.toast.classList.remove('is-visible')
   }, withUndo ? 8000 : 2600)
+}
+
+type DialogMode = 'confirm' | 'prompt'
+
+interface DialogOptions {
+  title: string
+  body: string
+  mode?: DialogMode
+  defaultValue?: string
+  okLabel?: string
+  danger?: boolean
+}
+
+function openDialog(options: DialogOptions): Promise<string | null> {
+  const mode = options.mode ?? 'confirm'
+  els.dialogTitle.textContent = options.title
+  els.dialogBody.textContent = options.body
+  els.dialogOk.textContent = options.okLabel ?? (mode === 'prompt' ? 'Save' : 'OK')
+  els.dialogOk.classList.toggle('tm__dialog-btn--danger', Boolean(options.danger))
+  els.dialogOk.classList.toggle('tm__dialog-btn--primary', !options.danger)
+  els.dialogInput.hidden = mode !== 'prompt'
+  els.dialogInput.value = options.defaultValue ?? ''
+  els.dialog.hidden = false
+
+  return new Promise((resolve) => {
+    const finish = (value: string | null) => {
+      els.dialog.hidden = true
+      els.dialogCancel.removeEventListener('click', onCancel)
+      els.dialogOk.removeEventListener('click', onOk)
+      els.dialog.removeEventListener('keydown', onKey)
+      els.dialog.removeEventListener('click', onBackdrop)
+      resolve(value)
+    }
+    const onCancel = () => finish(null)
+    const onOk = () => {
+      if (mode === 'prompt') {
+        const value = els.dialogInput.value.trim()
+        finish(value ? value : null)
+        return
+      }
+      finish('ok')
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onCancel()
+      if (event.key === 'Enter') onOk()
+    }
+    const onBackdrop = (event: MouseEvent) => {
+      if (event.target === els.dialog) onCancel()
+    }
+    els.dialogCancel.addEventListener('click', onCancel)
+    els.dialogOk.addEventListener('click', onOk)
+    els.dialog.addEventListener('keydown', onKey)
+    els.dialog.addEventListener('click', onBackdrop)
+    if (mode === 'prompt') {
+      queueMicrotask(() => {
+        els.dialogInput.focus()
+        els.dialogInput.select()
+      })
+    } else {
+      queueMicrotask(() => els.dialogOk.focus())
+    }
+  })
 }
 
 function isManagerTab(tab: { url?: string }): boolean {
@@ -172,6 +263,7 @@ async function loadState(): Promise<void> {
   userGroups = await getUserGroups()
   hasUndo = Boolean(await getUndoParkBatch())
   els.autoDupes.checked = autoDupes
+  void refreshApiKeyStatus()
 
   const [currentWin, tabs] = await Promise.all([
     chrome.windows.getCurrent(),
@@ -266,13 +358,14 @@ function renderBoard(tabs: TabRow[]): void {
         const actions =
           editable && col.editable
             ? `<div class="tm__col-actions">
-                <button type="button" class="tm__col-btn" data-action="rename-group" data-col-id="${escapeAttr(col.id)}" title="Rename">R</button>
-                <button type="button" class="tm__col-btn" data-action="delete-group" data-col-id="${escapeAttr(col.id)}" title="Delete">X</button>
+                <button type="button" class="tm__col-btn" data-action="rename-group" data-col-id="${escapeAttr(col.id)}" aria-label="Rename group">R</button>
+                <button type="button" class="tm__col-btn" data-action="delete-group" data-col-id="${escapeAttr(col.id)}" aria-label="Delete group">X</button>
               </div>`
             : `<span class="tm__col-badge">${col.tabIds.length}</span>`
 
+        const emptyClass = col.tabIds.length === 0 ? ' tm__col--empty' : ''
         return `
-          <section class="tm__col${col.collapsed ? ' tm__col--collapsed-hint' : ''}" data-col-id="${escapeAttr(col.id)}" data-drop-col="1">
+          <section class="tm__col${col.collapsed ? ' tm__col--collapsed-hint' : ''}${emptyClass}" data-col-id="${escapeAttr(col.id)}" data-drop-col="1">
             <div class="tm__col-head">
               <div>
                 <div class="tm__col-title">${escapeHtml(col.title)}</div>
@@ -471,6 +564,266 @@ async function clearGroups(): Promise<void> {
   await loadState()
 }
 
+async function refreshApiKeyStatus(): Promise<void> {
+  const key = await getOpenAiApiKey()
+  els.openaiKeyStatus.textContent = key ? 'Key saved for this browser' : 'No key set'
+  if (!els.openaiKey.value) {
+    els.openaiKey.placeholder = key ? '•••••••• (saved)' : 'sk-…'
+  }
+}
+
+const SUGGEST_DROP_UNGROUPED = 'ungrouped'
+
+function closeSuggestDialog(): void {
+  els.suggestDialog.hidden = true
+  suggestDraft = []
+  suggestUngrouped = []
+}
+
+function suggestTabRowHtml(
+  tab: TabRow,
+  from: string,
+  opts: { removable: boolean; groupIndex?: number }
+): string {
+  const host = hostnameOf(tab.url)
+  const remove =
+    opts.removable && opts.groupIndex != null
+      ? `<button type="button" class="tm__suggest-remove" data-suggest-remove="${tab.id}" data-suggest-from="${opts.groupIndex}" title="Move to Ungrouped" aria-label="Move to Ungrouped">×</button>`
+      : ''
+  return `
+    <div class="tm__suggest-tab" draggable="true" data-suggest-tab="${tab.id}" data-suggest-from="${escapeAttr(from)}">
+      ${faviconHtml(tab.favIconUrl, host)}
+      <span class="tm__suggest-tab-title">${escapeHtml(tab.title)}</span>
+      <span class="tm__suggest-tab-host">${escapeHtml(host)}</span>
+      ${remove}
+    </div>
+  `
+}
+
+function clearSuggestDropTargets(): void {
+  els.suggestPreview.querySelectorAll('.tm__suggest-group.is-drop-target').forEach((el) => {
+    el.classList.remove('is-drop-target')
+  })
+}
+
+/** Move a preview tab into a named group index or Ungrouped. Returns whether state changed. */
+function moveSuggestTab(tabId: number, to: string): boolean {
+  const fromGroupIdx = suggestDraft.findIndex((g) => g.tabIds.includes(tabId))
+  const fromUngrouped = suggestUngrouped.includes(tabId)
+  if (fromGroupIdx < 0 && !fromUngrouped) return false
+
+  const fromKey = fromUngrouped ? SUGGEST_DROP_UNGROUPED : String(fromGroupIdx)
+  if (fromKey === to) return false
+
+  if (fromUngrouped) {
+    suggestUngrouped = suggestUngrouped.filter((id) => id !== tabId)
+  } else {
+    const g = suggestDraft[fromGroupIdx]
+    if (!g) return false
+    g.tabIds = g.tabIds.filter((id) => id !== tabId)
+  }
+
+  if (to === SUGGEST_DROP_UNGROUPED) {
+    if (!suggestUngrouped.includes(tabId)) suggestUngrouped.push(tabId)
+  } else {
+    const toIdx = Number(to)
+    if (!Number.isFinite(toIdx) || !suggestDraft[toIdx]) {
+      // Restore if destination vanished
+      if (fromUngrouped) suggestUngrouped.push(tabId)
+      else suggestDraft[fromGroupIdx]?.tabIds.push(tabId)
+      return false
+    }
+    if (!suggestDraft[toIdx]!.tabIds.includes(tabId)) {
+      suggestDraft[toIdx]!.tabIds.push(tabId)
+    }
+  }
+
+  return true
+}
+
+function renderSuggestPreview(): void {
+  const byId = new Map(allTabs.map((t) => [t.id, t]))
+  const blocks: string[] = []
+
+  suggestDraft.forEach((group, groupIndex) => {
+    const rows = group.tabIds
+      .map((id) => {
+        const tab = byId.get(id)
+        if (!tab) return ''
+        return suggestTabRowHtml(tab, String(groupIndex), { removable: true, groupIndex })
+      })
+      .join('')
+
+    blocks.push(`
+      <div class="tm__suggest-group" data-suggest-group="${groupIndex}" data-suggest-drop="${groupIndex}">
+        <div class="tm__suggest-group-head">
+          <input class="tm__suggest-title-input" type="text" value="${escapeAttr(group.title)}" data-suggest-title="${groupIndex}" maxlength="40" aria-label="Rename group" title="Click to rename" />
+          <span class="tm__suggest-count">${group.tabIds.length}</span>
+        </div>
+        <div class="tm__suggest-tabs">${rows || '<div class="tm__suggest-empty">Drop tabs here</div>'}</div>
+      </div>
+    `)
+  })
+
+  // Always show Ungrouped as a drop target while the preview is open
+  const ungroupedRows = suggestUngrouped
+    .map((id) => {
+      const tab = byId.get(id)
+      if (!tab) return ''
+      return suggestTabRowHtml(tab, SUGGEST_DROP_UNGROUPED, { removable: false })
+    })
+    .join('')
+
+  blocks.push(`
+    <div class="tm__suggest-group tm__suggest-group--ungrouped" data-suggest-drop="${SUGGEST_DROP_UNGROUPED}">
+      <div class="tm__suggest-group-head">
+        <div class="tm__suggest-title-static">Ungrouped</div>
+        <span class="tm__suggest-count">${suggestUngrouped.length}</span>
+      </div>
+      <div class="tm__suggest-tabs">${ungroupedRows || '<div class="tm__suggest-empty">Drop tabs here</div>'}</div>
+    </div>
+  `)
+
+  els.suggestPreview.innerHTML = blocks.join('') || '<div class="tm__suggest-empty">No groups proposed</div>'
+}
+
+function openSuggestPreview(groups: SuggestedGroup[], ungroupedTabIds: number[]): void {
+  suggestDraft = groups.map((g) => ({ title: g.title, tabIds: [...g.tabIds] }))
+  suggestUngrouped = [...ungroupedTabIds]
+  renderSuggestPreview()
+  els.suggestDialog.hidden = false
+  queueMicrotask(() => els.suggestApply.focus())
+}
+
+function syncSuggestTitlesFromDom(): void {
+  els.suggestPreview.querySelectorAll('[data-suggest-title]').forEach((el) => {
+    const input = el as HTMLInputElement
+    const index = Number(input.dataset.suggestTitle)
+    if (!Number.isFinite(index) || !suggestDraft[index]) return
+    const next = input.value.trim().slice(0, 40)
+    if (next) suggestDraft[index]!.title = next
+  })
+}
+
+async function ensureApiKey(): Promise<string | null> {
+  let key = await getOpenAiApiKey()
+  if (key) return key
+
+  const entered = await openDialog({
+    title: 'OpenAI API key',
+    body: 'Suggest groups needs an OpenAI key. Only tab titles and hostnames are sent — never page content. Key stays in this browser.',
+    mode: 'prompt',
+    okLabel: 'Save & continue',
+  })
+  if (!entered) return null
+  await setOpenAiApiKey(entered)
+  await refreshApiKeyStatus()
+  key = await getOpenAiApiKey()
+  return key
+}
+
+async function runSuggestGroups(): Promise<void> {
+  if (suggestLoading) return
+  const tabs = scopedTabs().filter((t) => t.url && !t.url.startsWith('chrome://') && !t.url.startsWith('chrome-extension://'))
+  if (tabs.length === 0) {
+    showToast('No tabs to suggest groups for')
+    return
+  }
+
+  const key = await ensureApiKey()
+  if (!key) return
+
+  const { inputs, truncated } = tabsToSuggestInput(tabs)
+  suggestLoading = true
+  els.suggestGroups.classList.add('is-loading')
+  els.suggestGroups.textContent = 'Suggesting…'
+  els.suggestGroups.disabled = true
+
+  try {
+    const result = await suggestGroups(inputs, key)
+    if (truncated) {
+      showToast(`Using first ${inputs.length} tabs`)
+    }
+    openSuggestPreview(result.groups, result.ungroupedTabIds)
+  } catch (err) {
+    console.error('[Tab Manager] suggest groups failed', err)
+    if (err instanceof SuggestGroupsError && err.code === 'NO_API_KEY') {
+      showToast('Add an OpenAI API key first')
+    } else if (err instanceof SuggestGroupsError) {
+      showToast(err.message)
+    } else {
+      showToast('Could not suggest groups')
+    }
+  } finally {
+    suggestLoading = false
+    els.suggestGroups.classList.remove('is-loading')
+    els.suggestGroups.textContent = 'Suggest groups'
+    els.suggestGroups.disabled = false
+  }
+}
+
+async function applySuggestPreview(): Promise<void> {
+  syncSuggestTitlesFromDom()
+  const draft = suggestDraft.filter((g) => g.title.trim() && g.tabIds.length > 0)
+  if (draft.length === 0) {
+    showToast('Nothing to apply')
+    return
+  }
+
+  const tabById = new Map(allTabs.map((t) => [t.id, t]))
+  const payload = draft.map((g) => ({
+    title: g.title.trim(),
+    hosts: g.tabIds
+      .map((id) => tabById.get(id))
+      .filter((t): t is TabRow => Boolean(t))
+      .map((t) => hostnameOf(t.url)),
+  }))
+
+  const { groups, rememberedHosts, skippedConflictHosts } = await applySuggestedUserGroups(payload)
+  userGroups = groups
+  groupBy = 'custom'
+  await setGroupByMode('custom')
+
+  const alsoChrome = els.suggestAlsoChrome.checked
+  if (alsoChrome) {
+    const colors: TabGroupColor[] = ['purple', 'blue', 'orange', 'yellow', 'red', 'green', 'pink', 'cyan']
+    const columns = draft.map((g, i) => ({
+      id: `suggest_${i}`,
+      title: g.title,
+      collapsed: false,
+      color: colors[i % colors.length]!,
+      tabIds: g.tabIds,
+      editable: true,
+    }))
+    const tabs = scopedTabs()
+    const windowIds =
+      scope === 'all'
+        ? [...new Set(tabs.map((t) => t.windowId))]
+        : currentWindowId != null
+          ? [currentWindowId]
+          : []
+    try {
+      await applyColumnsAsChromeGroups('custom', columns, tabs, windowIds)
+    } catch (err) {
+      console.error('[Tab Manager] suggest chrome apply failed', err)
+      showToast('Custom groups saved; Chrome apply failed')
+      closeSuggestDialog()
+      render()
+      return
+    }
+  }
+
+  closeSuggestDialog()
+  const conflictNote =
+    skippedConflictHosts > 0 ? ` · ${skippedConflictHosts} shared hosts skipped` : ''
+  showToast(
+    alsoChrome
+      ? `Applied ${draft.length} groups · ${rememberedHosts} hosts remembered${conflictNote}`
+      : `Saved ${draft.length} custom groups · ${rememberedHosts} hosts${conflictNote}`
+  )
+  await loadState()
+}
+
 async function onDropHost(host: string, colId: string): Promise<void> {
   if (!isEditableMode()) return
   const target = colId === 'ungrouped' ? null : colId
@@ -566,21 +919,136 @@ function wireEvents(): void {
   els.parkIdleMain.addEventListener('click', parkIdle)
   els.applyGroups.addEventListener('click', () => void applyGroups())
   els.clearGroups.addEventListener('click', () => void clearGroups())
+  els.suggestGroups.addEventListener('click', () => void runSuggestGroups())
   els.closeDupes.addEventListener('click', () => void closeDuplicates())
   els.restore.addEventListener('click', () => void restoreAll())
   els.undo.addEventListener('click', () => void undoLastPark())
   els.toastUndo.addEventListener('click', () => void undoLastPark())
 
-  els.newGroup.addEventListener('click', () => {
-    const title = prompt('New group name')
-    if (!title?.trim()) return
+  els.saveKey.addEventListener('click', () => {
     void (async () => {
+      const value = els.openaiKey.value.trim()
+      if (!value) {
+        showToast('Enter a key or use Clear')
+        return
+      }
+      await setOpenAiApiKey(value)
+      els.openaiKey.value = ''
+      await refreshApiKeyStatus()
+      showToast('OpenAI key saved')
+    })()
+  })
+  els.clearKey.addEventListener('click', () => {
+    void (async () => {
+      await setOpenAiApiKey(null)
+      els.openaiKey.value = ''
+      await refreshApiKeyStatus()
+      showToast('OpenAI key cleared')
+    })()
+  })
+
+  els.suggestCancel.addEventListener('click', () => closeSuggestDialog())
+  els.suggestApply.addEventListener('click', () => void applySuggestPreview())
+  els.suggestDialog.addEventListener('click', (event) => {
+    if (event.target === els.suggestDialog) closeSuggestDialog()
+  })
+  els.suggestDialog.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeSuggestDialog()
+  })
+  els.suggestPreview.addEventListener('click', (event) => {
+    const btn = (event.target as HTMLElement).closest('[data-suggest-remove]') as HTMLElement | null
+    if (!btn) return
+    const tabId = Number(btn.dataset.suggestRemove)
+    if (!Number.isFinite(tabId)) return
+    syncSuggestTitlesFromDom()
+    if (moveSuggestTab(tabId, SUGGEST_DROP_UNGROUPED)) {
+      renderSuggestPreview()
+    }
+  })
+  els.suggestPreview.addEventListener('input', (event) => {
+    const input = event.target as HTMLInputElement
+    if (!input.dataset.suggestTitle) return
+    const index = Number(input.dataset.suggestTitle)
+    if (!Number.isFinite(index) || !suggestDraft[index]) return
+    const next = input.value.trim().slice(0, 40)
+    if (next) suggestDraft[index]!.title = next
+  })
+  els.suggestPreview.addEventListener('change', (event) => {
+    const input = event.target as HTMLInputElement
+    if (!input.dataset.suggestTitle) return
+    const index = Number(input.dataset.suggestTitle)
+    if (!Number.isFinite(index) || !suggestDraft[index]) return
+    const next = input.value.trim().slice(0, 40)
+    if (next) suggestDraft[index]!.title = next
+  })
+
+  els.suggestPreview.addEventListener('dragstart', (event) => {
+    const row = (event.target as HTMLElement).closest('.tm__suggest-tab') as HTMLElement | null
+    if (!row || !row.draggable || !event.dataTransfer) return
+    // Don't start a drag from the remove button
+    if ((event.target as HTMLElement).closest('[data-suggest-remove]')) {
+      event.preventDefault()
+      return
+    }
+    const tabId = row.dataset.suggestTab
+    if (!tabId) return
+    event.dataTransfer.setData('text/clarity-suggest-tab', tabId)
+    event.dataTransfer.effectAllowed = 'move'
+    row.classList.add('is-dragging')
+  })
+
+  els.suggestPreview.addEventListener('dragend', (event) => {
+    const row = (event.target as HTMLElement).closest('.tm__suggest-tab')
+    row?.classList.remove('is-dragging')
+    clearSuggestDropTargets()
+  })
+
+  els.suggestPreview.addEventListener('dragover', (event) => {
+    const group = (event.target as HTMLElement).closest('[data-suggest-drop]') as HTMLElement | null
+    if (!group) return
+    event.preventDefault()
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+    clearSuggestDropTargets()
+    group.classList.add('is-drop-target')
+  })
+
+  els.suggestPreview.addEventListener('dragleave', (event) => {
+    const group = (event.target as HTMLElement).closest('[data-suggest-drop]') as HTMLElement | null
+    if (!group) return
+    const related = event.relatedTarget as Node | null
+    if (related && group.contains(related)) return
+    group.classList.remove('is-drop-target')
+  })
+
+  els.suggestPreview.addEventListener('drop', (event) => {
+    const group = (event.target as HTMLElement).closest('[data-suggest-drop]') as HTMLElement | null
+    if (!group || !event.dataTransfer) return
+    event.preventDefault()
+    const tabId = Number(event.dataTransfer.getData('text/clarity-suggest-tab'))
+    const to = group.dataset.suggestDrop
+    group.classList.remove('is-drop-target')
+    if (!Number.isFinite(tabId) || !to) return
+    syncSuggestTitlesFromDom()
+    if (moveSuggestTab(tabId, to)) {
+      renderSuggestPreview()
+    }
+  })
+
+  els.newGroup.addEventListener('click', () => {
+    void (async () => {
+      const title = await openDialog({
+        title: 'New group',
+        body: 'Name this group. Domains you drop here will stick.',
+        mode: 'prompt',
+        okLabel: 'Create',
+      })
+      if (!title) return
       userGroups = await createUserGroup(title)
       if (groupBy !== 'custom' && groupBy !== 'theme') {
         groupBy = 'custom'
         await setGroupByMode('custom')
       }
-      showToast(`Created "${title.trim()}"`)
+      showToast(`Created "${title}"`)
       render()
     })()
   })
@@ -603,8 +1071,14 @@ function wireEvents(): void {
       const id = renameBtn.dataset.colId
       if (!id) return
       const current = userGroups.find((g) => g.id === id)
-      const next = prompt('Rename group', current?.title ?? '')
-      if (!next?.trim()) return
+      const next = await openDialog({
+        title: 'Rename group',
+        body: 'Update the group name.',
+        mode: 'prompt',
+        defaultValue: current?.title ?? '',
+        okLabel: 'Rename',
+      })
+      if (!next) return
       userGroups = await renameUserGroup(id, next)
       showToast('Group renamed')
       render()
@@ -616,7 +1090,13 @@ function wireEvents(): void {
       const id = deleteBtn.dataset.colId
       if (!id) return
       const current = userGroups.find((g) => g.id === id)
-      if (!confirm(`Delete group "${current?.title ?? id}"? Domains become ungrouped.`)) return
+      const ok = await openDialog({
+        title: 'Delete group?',
+        body: `"${current?.title ?? id}" will be removed. Domains become ungrouped.`,
+        okLabel: 'Delete',
+        danger: true,
+      })
+      if (!ok) return
       userGroups = await deleteUserGroup(id)
       showToast('Group deleted')
       render()

@@ -77,7 +77,7 @@ At any moment **t**, the user has too many tabs open. The tab bar is polluted; f
 - [x] Time: Active open · Today collapsed · Idle collapsed
 - [x] **Custom groups**: create / rename / delete · drag tab → remember domain
 - [ ] Optional quiet tidy / notifications without opening manager
-- [ ] Cheap agent “Suggest groups” (preview → edit → apply)
+- [x] Cheap agent “Suggest groups” (preview → edit → apply)
 
 ### Phase 3 — Clarity coupling (optional)
 
@@ -93,8 +93,17 @@ apps/extension/src/modules/tab-manager/
 ├── tab-manager.ts      # UI
 ├── buckets.ts          # Active / Today / Idle thresholds
 ├── hygiene.ts          # duplicate pickers + snapshot helpers
-├── storage.ts          # enabled, parked, undo, settings
+├── storage.ts          # enabled, parked, undo, settings, OpenAI key
+├── suggest-groups.ts   # gpt-4o-mini titles-only Suggest groups
 └── index.ts
 ```
 
 Build: Vite entry `tab-manager`; `copy-files` copies HTML/CSS to `dist/`. Permission: `tabs`, `tabGroups`.
+
+### Suggest groups (v1)
+
+- Button **Suggest groups** → `gpt-4o-mini` with `{tabId, title, hostname}` only (capped ~50 tabs in current scope).
+- Prompt prefers **thematic / intent** labels (not tool buckets like “AI Chats”); same-host tabs with different titles are split; light local title-prefix seeds when clean.
+- Preview modal: rename groups inline, drag tabs between groups / Ungrouped, remove tabs → **Apply** creates/updates Custom groups (unique hosts remembered) and optionally Chrome groups.
+- **Limitation:** Custom membership is host-based; same-host multi-theme tabs (e.g. ChatGPT) may not stick as domain rules — Chrome apply still uses current tabIds.
+- OpenAI key: More actions → save/clear in `chrome.storage.local` (`tabManager.openaiApiKey`).

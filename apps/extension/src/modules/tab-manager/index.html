@@ -67,6 +67,7 @@
       <div class="tm__board-actions">
         <button class="tm__chip tm__chip--primary" id="btn-apply-groups" type="button">Apply as Chrome groups</button>
         <button class="tm__chip" id="btn-new-group" type="button" hidden>New group</button>
+        <button class="tm__chip" id="btn-suggest-groups" type="button">Suggest groups</button>
         <button class="tm__chip" id="btn-clear-groups" type="button">Clear Clarity groups</button>
         <button class="tm__chip" id="btn-park-idle-main" type="button">Park idle</button>
         <button class="tm__chip" id="btn-close-dupes" type="button">Close duplicates</button>
@@ -89,6 +90,16 @@
             <input type="checkbox" id="auto-dupes" checked />
             <span>Auto-close exact duplicates when opening this page</span>
           </label>
+          <div class="tm__api-key">
+            <div class="tm__api-key-label">OpenAI API key (Suggest groups)</div>
+            <p class="tm__api-key-hint">Only tab titles and hostnames are sent — never page content. Stored in this browser only.</p>
+            <div class="tm__api-key-row">
+              <input class="tm__api-key-input" id="openai-key" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" />
+              <button class="tm__chip" id="btn-save-key" type="button">Save key</button>
+              <button class="tm__chip" id="btn-clear-key" type="button">Clear</button>
+            </div>
+            <p class="tm__api-key-status" id="openai-key-status"></p>
+          </div>
         </div>
         <section class="tm__section" id="parked-section">
           <div class="tm__section-head">
@@ -105,6 +116,35 @@
     <span id="toast-text"></span>
     <button type="button" id="toast-undo" hidden>Undo</button>
   </div>
+
+  <div class="tm__dialog" id="dialog" hidden>
+    <div class="tm__dialog-card" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+      <div class="tm__dialog-title" id="dialog-title">Confirm</div>
+      <div class="tm__dialog-body" id="dialog-body"></div>
+      <input class="tm__dialog-input" id="dialog-input" type="text" hidden />
+      <div class="tm__dialog-actions">
+        <button type="button" class="tm__dialog-btn" id="dialog-cancel">Cancel</button>
+        <button type="button" class="tm__dialog-btn tm__dialog-btn--primary" id="dialog-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tm__dialog" id="suggest-dialog" hidden>
+    <div class="tm__dialog-card tm__dialog-card--wide" role="dialog" aria-modal="true" aria-labelledby="suggest-title">
+      <div class="tm__dialog-title" id="suggest-title">Suggested groups</div>
+      <p class="tm__dialog-body tm__suggest-privacy">Titles &amp; hostnames only were sent. Rename groups, drag tabs between them (or into Ungrouped), then Apply — nothing is applied until you confirm.</p>
+      <div class="tm__suggest-preview" id="suggest-preview"></div>
+      <label class="tm__setting tm__suggest-chrome">
+        <input type="checkbox" id="suggest-also-chrome" checked />
+        <span>Also apply as Chrome groups</span>
+      </label>
+      <div class="tm__dialog-actions">
+        <button type="button" class="tm__dialog-btn" id="suggest-cancel">Cancel</button>
+        <button type="button" class="tm__dialog-btn tm__dialog-btn--primary" id="suggest-apply">Apply</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="tab-manager.js"></script>
 </body>
 </html>

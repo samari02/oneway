@@ -152,3 +152,76 @@ export function findGroupIdForHost(groups: UserGroup[], host: string): string | 
   }
   return null
 }
+
+export interface SuggestedGroupApply {
+  title: string
+  /** Hostnames from tabs in this suggestion (may conflict across groups). */
+  hosts: string[]
+}
+
+/**
+ * Create/reuse Custom groups from AI suggestions and assign unique hosts.
+ *
+ * Limitation: membership is host-based. When the same host appears in multiple
+ * suggested themes (common for chatgpt.com), we skip remembering that host so
+ * we don't collapse themes — current-tab Chrome grouping still uses tabIds.
+ */
+export async function applySuggestedUserGroups(
+  suggestions: SuggestedGroupApply[]
+): Promise<{ groups: UserGroup[]; rememberedHosts: number; skippedConflictHosts: number }> {
+  let groups = await getUserGroups()
+  const planned: { groupId: string; hosts: string[] }[] = []
+
+  for (const sug of suggestions) {
+    const title = sug.title.trim().slice(0, 40)
+    if (!title || /^ungrouped$/i.test(title)) continue
+
+    let match = groups.find((g) => g.title.toLowerCase() === title.toLowerCase())
+    if (!match) {
+      groups = await createUserGroup(title)
+      match = groups.find((g) => g.title.toLowerCase() === title.toLowerCase()) ?? groups[groups.length - 1]
+    }
+    if (!match) continue
+
+    const hosts = [
+      ...new Set(
+        sug.hosts
+          .map((h) => h.replace(/^www\./, '').toLowerCase())
+          .filter((h) => h && h !== 'other')
+      ),
+    ]
+    planned.push({ groupId: match.id, hosts })
+  }
+
+  const hostHits = new Map<string, number>()
+  for (const p of planned) {
+    for (const h of p.hosts) {
+      hostHits.set(h, (hostHits.get(h) ?? 0) + 1)
+    }
+  }
+
+  let rememberedHosts = 0
+  let skippedConflictHosts = 0
+  const next = groups.map((g) => ({ ...g, hosts: [...g.hosts] }))
+
+  for (const p of planned) {
+    const target = next.find((g) => g.id === p.groupId)
+    if (!target) continue
+    for (const host of p.hosts) {
+      if ((hostHits.get(host) ?? 0) > 1) {
+        skippedConflictHosts += 1
+        continue
+      }
+      for (const g of next) {
+        g.hosts = g.hosts.filter((h) => h.toLowerCase() !== host)
+      }
+      if (!target.hosts.some((h) => h.toLowerCase() === host)) {
+        target.hosts.push(host)
+      }
+      rememberedHosts += 1
+    }
+  }
+
+  await setUserGroups(next)
+  return { groups: next, rememberedHosts, skippedConflictHosts }
+}
