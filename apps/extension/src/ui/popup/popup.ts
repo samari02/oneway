@@ -160,31 +160,58 @@ function closeFriction(): void {
   phraseEl.value = ''
 }
 
-function applyStatusToUi(response: { isActive: boolean; mode: string; blocksToday: number }): void {
+function applyStatusToUi(response: {
+  isActive: boolean
+  mode: string
+  blocksToday: number
+  protectionCompromised?: boolean
+  pauseRejected?: boolean
+}): void {
   protectionIsActive = Boolean(response.isActive)
   const modeEl = $('mode')
   const activeEl = $('active-until')
   const blocksEl = $('blocks-today')
   const toggleBtn = document.getElementById('btn-toggle') as HTMLButtonElement
+  const compromisedEl = document.getElementById('compromised-warning')
+
+  const compromised = Boolean(response.protectionCompromised)
+  if (compromisedEl) {
+    compromisedEl.style.display = compromised ? 'flex' : 'none'
+  }
 
   const modeIcon = protectionIsActive ? '🟢' : '⚪️'
   const modeName = response.mode.charAt(0).toUpperCase() + response.mode.slice(1)
   modeEl.textContent = `${modeIcon} ${modeName} Mode`
-  activeEl.textContent = protectionIsActive ? 'Active' : 'Paused'
+  activeEl.textContent = compromised
+    ? 'Active (desktop link down)'
+    : protectionIsActive
+      ? 'Active'
+      : 'Paused'
   blocksEl.textContent = response.blocksToday.toString()
   toggleBtn.textContent = protectionIsActive ? 'Pause Mode' : 'Resume Mode'
-  toggleBtn.disabled = frictionOpen
+  const pauseBlocked = compromised && protectionIsActive
+  toggleBtn.disabled = frictionOpen || pauseBlocked
+  if (response.pauseRejected && !frictionOpen) {
+    toggleBtn.disabled = pauseBlocked
+  }
 }
 
-function setActive(isActive: boolean): void {
-  chrome.runtime.sendMessage({ type: 'SET_IS_ACTIVE', data: { isActive } }, (response) => {
+function setActive(isActive: boolean, disableFrictionPhrase = ''): void {
+  chrome.runtime.sendMessage(
+    { type: 'SET_IS_ACTIVE', data: { isActive, disableFrictionPhrase } },
+    (response) => {
     if (response) {
+      if (response.pauseRejected) {
+        updateFrictionUi()
+        return
+      }
       closeFriction()
       applyStatusToUi(response)
     } else {
       window.location.reload()
     }
-  })
+  }
+  )
 }
 
 // Get status from background
@@ -225,7 +252,7 @@ document.getElementById('btn-friction-confirm')?.addEventListener('click', () =>
   const phraseEl = document.getElementById('friction-phrase') as HTMLInputElement
   if (frictionRemaining > 0) return
   if (phraseEl.value.trim().toUpperCase() !== DISABLE_CONFIRM_PHRASE) return
-  setActive(false)
+  setActive(false, phraseEl.value.trim().toUpperCase())
 })
 
 // Toggle button — pause requires friction; resume is instant

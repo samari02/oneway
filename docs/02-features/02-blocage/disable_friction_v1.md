@@ -34,7 +34,7 @@ Preferences are **local per surface** in v1 (not synced across desktop ↔ exten
 ## Files
 
 - Desktop: `DisableFrictionModal`, `useDisableFrictionPrefs`, Settings hosts section
-- Extension: popup friction panel; `SET_IS_ACTIVE` / friction prefs messages in service worker
+- Extension: popup friction panel; service worker rejects `SET_IS_ACTIVE(false)` without phrase `DISABLE`; `TOGGLE_MODE` cannot pause without friction
 
 ## Manual check
 
