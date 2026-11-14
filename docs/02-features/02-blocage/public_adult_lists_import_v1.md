@@ -2,7 +2,7 @@
 
 Additive import of community **NSFW-tagged** host lists into Clarity’s adult seed pipeline. Public lists are a **second source** — they never replace the JP-heavy curated expansion in `generate-adult-blocklist.mjs`.
 
-Related: [adult_blocklist_sync_v1.md](./adult_blocklist_sync_v1.md), [self_improving_blocking_loop_v1.md](./self_improving_blocking_loop_v1.md).
+Related: [adult_blocklist_sync_v1.md](./adult_blocklist_sync_v1.md), [self_improving_blocking_loop_v1.md](./self_improving_blocking_loop_v1.md), [versioned_nsfw_lists_v1.md](./versioned_nsfw_lists_v1.md).
 
 ## Sources
 
@@ -15,7 +15,7 @@ Full oisd NSFW (~500k) is intentionally **not** ingested raw.
 
 ## Cap (DNR / extension size)
 
-Default **`--cap 1500`** new complement domains written to:
+Default **`--cap 2500`** new complement domains written to:
 
 `apps/extension/scripts/lib/imported-public-adult-domains.json`
 

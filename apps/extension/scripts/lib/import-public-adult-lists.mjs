@@ -40,8 +40,11 @@ const CORPUS_PATH = path.join(
   'scripts/eval/fixtures/adult-blocking-corpus.json'
 )
 
-/** Default max *new* complement domains written to the sidecar (DNR grows ~2 rules each). */
-export const DEFAULT_IMPORT_CAP = 1500
+/**
+ * Default max *new* complement domains written to the sidecar (DNR grows ~2 rules each).
+ * ~2500 ≈ +5k static rules — still within conservative MV3 DNR budgets with curated seed.
+ */
+export const DEFAULT_IMPORT_CAP = 2500
 
 const SOURCES = [
   {
