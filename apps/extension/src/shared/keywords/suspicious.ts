@@ -17,8 +17,10 @@ export const SUSPICIOUS_MODIFIERS = [
   'hot', 'sexy', 'beautiful', 'gorgeous', 'stunning',
   'young', 'teen', 'mature', 'old',
   'asian', 'latina', 'ebony', 'blonde', 'brunette', 'redhead',
+  'jap', 'japanese', 'jk',
   'amateur', 'homemade', 'real',
   'big', 'small', 'huge', 'tiny',
+  'closeup', 'close-up',
   
   // Relationship/role
   'step', 'stepmom', 'stepdad', 'stepsis', 'stepbro',
@@ -59,6 +61,8 @@ export const SUSPICIOUS_SUFFIXES = [
   // Foreign terms often used
   'ero', 'ecchi',
   'xxx', 'xx',
+  // JP tube / "collection" slang used on regional SERPs (yandex.by backdoor)
+  'colle', 'pcolle', 'xcolle',
   
   // Actions
   'leaked', 'leak',
@@ -66,11 +70,14 @@ export const SUSPICIOUS_SUFFIXES = [
   'free', 'download',
 ] as const
 
-/** Context words that make combinations safe */
+/**
+ * Context words that make combinations safe.
+ * NOTE: Do NOT include `medical` / `doctor` / `hospital` here — those are common
+ * fetish-cover tokens ("medical check jap video") and also conflict with role modifiers.
+ */
 export const SAFE_CONTEXT_WORDS = [
-  // Medical/Health
-  'cancer', 'medical', 'health', 'doctor', 'hospital',
-  'disease', 'treatment', 'symptoms', 'diagnosis',
+  // Medical/Health (specific illnesses / clinical — not "medical check" cover)
+  'cancer', 'disease', 'treatment', 'symptoms', 'diagnosis',
   'pregnancy', 'pregnant', 'birth', 'baby',
   
   // Academic/Educational

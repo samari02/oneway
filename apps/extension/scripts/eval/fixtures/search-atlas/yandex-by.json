@@ -36,6 +36,12 @@
       "url": "https://example.com/",
       "isSearchEngine": false,
       "query": null
+    },
+    {
+      "url": "https://yandex.by/search?text=JK%E3%81%AE%E5%8F%8D%E5%BF%9C%E6%A4%9C%E6%9F%BB+video",
+      "isSearchEngine": true,
+      "query": "JKの反応検査 video",
+      "notes": "Real Chrome history shape (/search?text= without trailing slash); soft JP query must extract"
     }
   ]
 }

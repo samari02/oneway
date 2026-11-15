@@ -36,9 +36,13 @@ export const JAPANESE_KEYWORDS = [
   '美乳',        // beautiful breasts
   '潮吹き',      // squirting
   '乱交',        // orgy
+  // Adult genres often searched via yandex.by / regional SERPs (coded, not "porn")
+  '反応検査',    // "reaction exam" fetish genre
+  '身体検査',    // body-examination fetish
   
-  // Romaji (romanized Japanese)
+  // Romaji (romanized Japanese) + tube/site slang used as search queries
   'ero', 'ecchi', 'hentai', 'oppai', 'paizuri',
+  'pcolle', 'xcolle', 'tokyomotion', 'eroterest', 'digiket',
 ] as const
 
 /** Chinese explicit terms (Simplified + Traditional) */

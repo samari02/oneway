@@ -29,6 +29,7 @@
     "expand:search-atlas": "node scripts/lib/expand-search-engine-atlas.mjs",
     "sync:search-atlas-dnr": "node scripts/lib/expand-search-engine-atlas.mjs --sync-dnr",
     "test:search-atlas": "node scripts/test-search-engine-atlas.mjs",
+    "test:layer2-yandex": "node scripts/test-layer2-yandex-queries.mjs",
     "judge:misses": "node scripts/lib/judge-analyzer-misses.mjs",
     "review:candidates": "node scripts/lib/review-candidates.mjs"
   },
