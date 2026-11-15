@@ -68,13 +68,44 @@ Environment: `CLARITY_CHROME_EXT_ID`, `CLARITY_CHROME_UPDATE_URL`.
 
 Unpacked **load** changes the extension ID unless the manifest has a fixed **`key`**. The native host manifest allows one origin per ID.
 
+| Slot | ID |
+|------|----|
+| **Current (daily)** | `pjdboibemcgajdjnppgfnffmajcokbmf` |
+| **Legacy (dev)** | `pocdhgbmmooabipboifieikkigmaanok` |
+
 `install-native-host.sh` accepts **multiple IDs** (e.g. dev unpacked vs future pinned ID):
 
 ```bash
-./apps/desktop/scripts/install-native-host.sh ID_DAILY ID_LEGACY -- /path/to/Clarity/binary
+# Single (current daily ID):
+./apps/desktop/scripts/install-native-host.sh pjdboibemcgajdjnppgfnffmajcokbmf -- /path/to/Clarity/binary
+
+# Both IDs (safe to register both):
+./apps/desktop/scripts/install-native-host.sh \
+  pjdboibemcgajdjnppgfnffmajcokbmf \
+  pocdhgbmmooabipboifieikkigmaanok \
+  -- /path/to/Clarity/binary
 ```
 
 Re-run when the ID changes. See [native_host_chrome_setup_2026-03-29.md](./native_host_chrome_setup_2026-03-29.md).
+
+## Hardening scripts (quick reference)
+
+| Script | What it does |
+|--------|-------------|
+| `apply-chrome-hardening.sh` | Baseline: Incognito disabled + no random new installs; `--hardcore` adds `chrome://extensions` block |
+| `revert-chrome-hardening.sh` | Removes all Clarity-managed policy keys |
+| `apply-chrome-managed-policy.sh` | Full-featured version with `apply/remove/status` subcommands |
+
+```bash
+# Baseline (recommended daily):
+./apps/desktop/scripts/apply-chrome-hardening.sh --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
+
+# Hardcore (also blocks chrome://extensions — harder to undo):
+./apps/desktop/scripts/apply-chrome-hardening.sh --hardcore --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
+
+# Revert everything:
+./apps/desktop/scripts/revert-chrome-hardening.sh
+```
 
 ## Tomorrow checklist (browser unlock)
 

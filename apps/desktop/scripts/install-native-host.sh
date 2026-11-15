@@ -10,8 +10,15 @@
 #
 # Multiple IDs: daily unpacked profile + legacy dev profile (Chrome policy may pin a stable ID later).
 #
+# Known Clarity extension IDs:
+#   Current (daily):  pjdboibemcgajdjnppgfnffmajcokbmf
+#   Legacy  (dev):    pocdhgbmmooabipboifieikkigmaanok
+#   Re-run this script whenever the ID changes (e.g. new unpacked load without manifest `key`).
+#
 # Dev example (after `cargo build` or `pnpm dev` once):
-#   ./install-native-host.sh abcdefghijklmnop ./src-tauri/target/debug/appsdesktop
+#   ./install-native-host.sh pjdboibemcgajdjnppgfnffmajcokbmf ./src-tauri/target/debug/appsdesktop
+#   # or both IDs:
+#   ./install-native-host.sh pjdboibemcgajdjnppgfnffmajcokbmf pocdhgbmmooabipboifieikkigmaanok -- ./src-tauri/target/debug/appsdesktop
 
 set -e
 
