@@ -23,7 +23,15 @@
 set -e
 
 EXTENSION_IDS=()
-APP_PATH="/Applications/Clarity.app/Contents/MacOS/Clarity"
+APP_PATH="/Applications/Clarity.app/Contents/MacOS/appsdesktop"
+
+# Chromium-family browsers that read the same manifest format (macOS).
+NMH_BASE_DIRS=(
+  "$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts"
+  "$HOME/Library/Application Support/Chromium/NativeMessagingHosts"
+  "$HOME/Library/Application Support/BraveSoftware/Brave-Browser/NativeMessagingHosts"
+  "$HOME/Library/Application Support/Microsoft Edge/NativeMessagingHosts"
+)
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -45,14 +53,13 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Chrome Native Messaging Hosts directory
-CHROME_DIR="$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts"
 CLARITY_CONFIG_DIR="$HOME/.clarity"
 RUNNER_PATH="$CLARITY_CONFIG_DIR/clarity-native-host-runner.sh"
 
-# Create directories
-mkdir -p "$CHROME_DIR"
 mkdir -p "$CLARITY_CONFIG_DIR"
+for dir in "${NMH_BASE_DIRS[@]}"; do
+  mkdir -p "$dir"
+done
 
 if [[ ${#EXTENSION_IDS[@]} -eq 0 ]]; then
     echo "⚠️  Warning: No extension ID provided."
@@ -83,7 +90,8 @@ exec "$APP_PATH" --native-host
 EOF
 chmod +x "$RUNNER_PATH"
 
-MANIFEST_PATH="$CHROME_DIR/com.clarity.app.json"
+MANIFEST_FILE="$(mktemp)"
+trap 'rm -f "$MANIFEST_FILE"' EXIT
 
 # Manifest points at the RUNNER, not the .app binary directly
 {
@@ -102,18 +110,27 @@ MANIFEST_PATH="$CHROME_DIR/com.clarity.app.json"
   done
   echo '  ]'
   echo '}'
-} > "$MANIFEST_PATH"
+} > "$MANIFEST_FILE"
+
+MANIFEST_PATHS=()
+for dir in "${NMH_BASE_DIRS[@]}"; do
+  dest="$dir/com.clarity.app.json"
+  cp "$MANIFEST_FILE" "$dest"
+  MANIFEST_PATHS+=("$dest")
+done
 
 echo "✅ Native messaging runner installed"
 echo "   Runner: $RUNNER_PATH"
 echo "   → exec: $APP_PATH"
 echo ""
-echo "✅ Manifest installed at:"
-echo "   $MANIFEST_PATH"
+echo "✅ Manifest installed (${#MANIFEST_PATHS[@]} browser(s)):"
+for p in "${MANIFEST_PATHS[@]}"; do
+  echo "   $p"
+done
 echo "   Extension IDs: ${EXTENSION_IDS[*]}"
 echo ""
 echo "📋 Manifest contents:"
-cat "$MANIFEST_PATH"
+cat "$MANIFEST_FILE"
 echo ""
 echo ""
 echo "🔧 Next steps:"
