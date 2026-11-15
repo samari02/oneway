@@ -15,6 +15,7 @@ import {
   incrementBlockedSearches,
   getBlockedSearchesToday
 } from './search-filter'
+import { isAtlasSearchHost } from '../shared/search-engine-atlas'
 import {
   analyzeSearch,
   shouldAnalyzeSearch,
@@ -1055,8 +1056,8 @@ async function getPageAnalysisData(data: { url: string; domain: string }): Promi
     }
     
     // === LAYER 2: Search Intelligence ===
-    const searchEngines = ['google.com', 'bing.com', 'duckduckgo.com', 'yahoo.com', 'ecosia.org', 'qwant.com', 'startpage.com', 'brave.com', 'yandex.']
-    const isSearchEngineSite = searchEngines.some(se => domain.includes(se))
+    // Atlas covers ccTLDs (yandex.by, …) + AI search portals
+    const isSearchEngineSite = isAtlasSearchHost(domain)
     
     const lastSearch = searchSession.searches.length > 0 
       ? searchSession.searches[searchSession.searches.length - 1]

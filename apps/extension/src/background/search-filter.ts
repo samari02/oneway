@@ -4,6 +4,11 @@
  */
 
 import { log } from '../shared/utils'
+import {
+  isAtlasSearchHost,
+  matchEngineByHostname,
+  type SearchEngineEntry,
+} from '../shared/search-engine-atlas'
 
 // Keywords that indicate explicit search intent
 // Note: This list is intentionally broad to catch variations
@@ -58,60 +63,28 @@ export function isExplicitSearch(query: string): { isExplicit: boolean; matchedT
   return { isExplicit: false }
 }
 
+function pathAllowsQuery(engine: SearchEngineEntry, pathname: string): boolean {
+  if (!engine.pathIncludes.length) return true
+  const path = pathname.toLowerCase()
+  return engine.pathIncludes.some((p) => path.includes(p.toLowerCase()))
+}
+
 /**
- * Extract search query from URL
- * Supports all major search engines
+ * Extract search query from URL using the search-engine atlas.
+ * Supports major engines, regional/ccTLD hosts (e.g. yandex.by), and AI search portals.
  */
 export function extractSearchQuery(url: string): string | null {
   try {
     const urlObj = new URL(url)
     const hostname = urlObj.hostname.toLowerCase()
-    
-    // Google (all TLDs)
-    if (hostname.includes('google.')) {
-      return urlObj.searchParams.get('q')
+    const engine = matchEngineByHostname(hostname)
+    if (!engine) return null
+    if (!pathAllowsQuery(engine, urlObj.pathname)) return null
+
+    for (const param of engine.queryParams) {
+      const value = urlObj.searchParams.get(param)
+      if (value && value.trim()) return value
     }
-    
-    // Bing
-    if (hostname.includes('bing.com')) {
-      return urlObj.searchParams.get('q')
-    }
-    
-    // DuckDuckGo
-    if (hostname.includes('duckduckgo.com')) {
-      return urlObj.searchParams.get('q')
-    }
-    
-    // Yahoo
-    if (hostname.includes('yahoo.com') && urlObj.pathname.includes('search')) {
-      return urlObj.searchParams.get('p')
-    }
-    
-    // Ecosia
-    if (hostname.includes('ecosia.org')) {
-      return urlObj.searchParams.get('q')
-    }
-    
-    // Qwant
-    if (hostname.includes('qwant.com')) {
-      return urlObj.searchParams.get('q')
-    }
-    
-    // Brave Search
-    if (hostname.includes('search.brave.com')) {
-      return urlObj.searchParams.get('q')
-    }
-    
-    // Yandex
-    if (hostname.includes('yandex.com') || hostname.includes('yandex.ru')) {
-      return urlObj.searchParams.get('text')
-    }
-    
-    // StartPage
-    if (hostname.includes('startpage.com')) {
-      return urlObj.searchParams.get('query')
-    }
-    
     return null
   } catch {
     return null
@@ -134,22 +107,11 @@ export function isSearchEngine(url: string): boolean {
     }
     
     // Bing redirect URLs
-    if (hostname.includes('bing.com') && pathname.startsWith('/ck/')) {
+    if ((hostname === 'bing.com' || hostname.endsWith('.bing.com')) && pathname.startsWith('/ck/')) {
       return false
     }
     
-    return (
-      hostname.includes('google.') ||
-      hostname.includes('bing.com') ||
-      hostname.includes('duckduckgo.com') ||
-      hostname.includes('yahoo.com') ||
-      hostname.includes('ecosia.org') ||
-      hostname.includes('qwant.com') ||
-      hostname.includes('search.brave.com') ||
-      hostname.includes('yandex.com') ||
-      hostname.includes('yandex.ru') ||
-      hostname.includes('startpage.com')
-    )
+    return isAtlasSearchHost(hostname)
   } catch {
     return false
   }
@@ -174,7 +136,7 @@ export function extractRedirectDestination(url: string): string | null {
     }
     
     // Bing redirect: bing.com/ck/a?...&u=<encoded_destination>
-    if (hostname.includes('bing.com') && pathname.startsWith('/ck/')) {
+    if ((hostname === 'bing.com' || hostname.endsWith('.bing.com')) && pathname.startsWith('/ck/')) {
       const encoded = urlObj.searchParams.get('u')
       if (encoded) {
         // Bing uses a custom encoding, try to decode

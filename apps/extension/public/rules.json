@@ -68,7 +68,7 @@
       }
     },
     "condition": {
-      "urlFilter": "||google.co.uk/search*",
+      "urlFilter": "||google.de/search*",
       "resourceTypes": [
         "main_frame"
       ]
@@ -93,7 +93,7 @@
       }
     },
     "condition": {
-      "urlFilter": "||google.de/search*",
+      "urlFilter": "||google.co.uk/search*",
       "resourceTypes": [
         "main_frame"
       ]
@@ -575,6 +575,81 @@
     }
   },
   {
+    "id": 103,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "adlt",
+                "value": "strict"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||cn.bing.com/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 104,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "adlt",
+                "value": "strict"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||cn.bing.com/images/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 105,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "adlt",
+                "value": "strict"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||cn.bing.com/videos/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
     "id": 200,
     "priority": 1,
     "action": {
@@ -594,6 +669,106 @@
     },
     "condition": {
       "urlFilter": "||duckduckgo.com/*q=*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 201,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "kp",
+                "value": "1"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||start.duckduckgo.com/*q=*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 202,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "kp",
+                "value": "1"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||html.duckduckgo.com/*q=*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 203,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "kp",
+                "value": "1"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||safe.duckduckgo.com/*q=*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 204,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "kp",
+                "value": "1"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||duck.com/*q=*",
       "resourceTypes": [
         "main_frame"
       ]
@@ -651,6 +826,131 @@
   },
   {
     "id": 302,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "vm",
+                "value": "r"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||uk.search.yahoo.com/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 303,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "vm",
+                "value": "r"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||de.search.yahoo.com/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 304,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "vm",
+                "value": "r"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||es.search.yahoo.com/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 305,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "vm",
+                "value": "r"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||it.search.yahoo.com/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 306,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "vm",
+                "value": "r"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||ca.search.yahoo.com/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 307,
     "priority": 1,
     "action": {
       "type": "redirect",
@@ -843,7 +1143,7 @@
       }
     },
     "condition": {
-      "urlFilter": "||yandex.ru/search*",
+      "urlFilter": "||yandex.com/images*",
       "resourceTypes": [
         "main_frame"
       ]
@@ -868,7 +1168,3457 @@
       }
     },
     "condition": {
-      "urlFilter": "||yandex.com/images*",
+      "urlFilter": "||yandex.com/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 703,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ru/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 704,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ru/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 705,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ru/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 706,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.by/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 707,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.by/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 708,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.by/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 709,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.kz/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 710,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.kz/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 711,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.kz/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 712,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ua/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 713,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ua/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 714,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ua/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 715,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.uz/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 716,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.uz/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 717,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.uz/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 718,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.az/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 719,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.az/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 720,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.az/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 721,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.tr/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 722,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.tr/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 723,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.tr/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 724,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.ge/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 725,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.ge/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 726,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.ge/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 727,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.am/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 728,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.am/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 729,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.am/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 730,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ee/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 731,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ee/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 732,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ee/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 733,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.lt/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 734,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.lt/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 735,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.lt/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 736,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.lv/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 737,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.lv/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 738,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.lv/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 739,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.md/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 740,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.md/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 741,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.md/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 742,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.tj/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 743,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.tj/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 744,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.tj/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 745,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.tm/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 746,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.tm/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 747,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.tm/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 748,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.fr/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 749,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.fr/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 750,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.fr/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 751,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.eu/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 752,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.eu/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 753,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.eu/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 754,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||ya.ru/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 755,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||ya.ru/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 756,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||ya.ru/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 757,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.am/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 758,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.am/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 759,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.am/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 760,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ge/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 761,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ge/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 762,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ge/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 763,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.kg/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 764,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.kg/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 765,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.kg/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 766,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.pl/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 767,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.pl/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 768,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.pl/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 769,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.de/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 770,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.de/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 771,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.de/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 772,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.it/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 773,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.it/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 774,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.it/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 775,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.es/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 776,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.es/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 777,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.es/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 778,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.nl/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 779,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.nl/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 780,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.nl/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 781,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.be/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 782,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.be/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 783,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.be/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 784,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ch/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 785,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ch/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 786,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.ch/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 787,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.at/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 788,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.at/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 789,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.at/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 790,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.pt/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 791,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.pt/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 792,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.pt/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 793,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.uk/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 794,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.uk/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 795,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.uk/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 796,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.ua/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 797,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.ua/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 798,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.ua/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 799,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.jp/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 800,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.jp/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 801,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.jp/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 802,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.br/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 803,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.br/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 804,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.br/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 805,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.mx/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 806,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.mx/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 807,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.mx/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 808,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.in/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 809,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.in/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 810,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.in/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 811,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.au/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 812,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.au/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 813,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.com.au/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 814,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.kr/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 815,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.kr/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 816,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.co.kr/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 817,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.jp/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 818,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.jp/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 819,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.jp/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 820,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.cn/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 821,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.cn/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 822,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.cn/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 823,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.tw/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 824,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.tw/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 825,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.tw/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 826,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.hk/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 827,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.hk/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 828,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.hk/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 829,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.sg/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 830,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.sg/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 831,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.sg/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 832,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.in/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 833,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.in/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 834,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.in/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 835,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.net/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 836,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.net/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 837,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.net/video*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 838,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.org/search*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 839,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.org/images*",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 840,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "queryTransform": {
+            "addOrReplaceParams": [
+              {
+                "key": "family",
+                "value": "yes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||yandex.org/video*",
       "resourceTypes": [
         "main_frame"
       ]

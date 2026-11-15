@@ -347,9 +347,13 @@ const SAFE_DOMAINS = [
 ] as const
 
 const WHITELISTED_DOMAINS = [
-  // Search engines (handled by Layer 2)
-  'google.com', 'bing.com', 'duckduckgo.com', 'yahoo.com',
-  'ecosia.org', 'qwant.com', 'startpage.com',
+  // Search engines (handled by Layer 2 / search-engine atlas — incl. ccTLDs + AI)
+  'google.com', 'google.', 'bing.com', 'duckduckgo.com', 'duck.com', 'yahoo.com', 'yahoo.',
+  'ecosia.org', 'qwant.com', 'startpage.com', 'search.brave.com', 'brave.com',
+  'yandex.', 'ya.ru', 'baidu.com', 'naver.com', 'seznam.cz',
+  'meta.ua', 'ukr.net', 'bigmir.net', 'i.ua',
+  'perplexity.ai', 'you.com', 'phind.com', 'komo.ai', 'andisearch.com',
+  'chatgpt.com', 'chat.openai.com', 'gemini.google.com', 'copilot.microsoft.com',
   // Social (may have explicit content but handled separately)
   'twitter.com', 'x.com', 'facebook.com', 'instagram.com',
   'reddit.com', 'tiktok.com', 'linkedin.com',

@@ -1,0 +1,377 @@
+{
+  "version": 1,
+  "updated": "2026-11-15",
+  "description": "Curated search-engine atlas for Clarity Layer 2 + SafeSearch DNR. Cheap inventory (no open crawler). Google keeps existing SafeSearch/Layer2 behavior; expand coverage for non-google.ccTLD engines + AI search portals.",
+  "policy": {
+    "defaultMode": "safesearch+filter",
+    "notes": [
+      "Traditional SERP engines: DNR SafeSearch rewrite (when param known) + Layer 2 query intelligence (same path as yandex.com).",
+      "AI search portals: Layer 2 filter-only (no reliable SafeSearch param) — explicit queries blocked like other engines; NOT hard-blocked as adult sites.",
+      "Hard adult-block path stays on adult-blocklist/DNR requestDomains — do not put search engines there.",
+      "Optional future: NRD/CT watch for new yandex.* / brand.* — stub only (see expand script --ct-stub)."
+    ]
+  },
+  "commonCctlds": [
+    "com", "ru", "by", "kz", "ua", "uz", "az", "am", "ge", "kg", "tj", "tm", "md",
+    "ee", "lt", "lv", "pl", "fr", "de", "it", "es", "nl", "be", "ch", "at", "pt",
+    "co.uk", "com.tr", "com.ua", "co.jp", "com.br", "com.mx", "co.in", "com.au",
+    "co.kr", "jp", "cn", "tw", "hk", "sg", "in", "eu", "net", "org"
+  ],
+  "engines": [
+    {
+      "id": "google",
+      "brand": "Google",
+      "mode": "google-special",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": [
+        "google.com", "google.fr", "google.de", "google.co.uk", "google.es",
+        "google.it", "google.ca", "google.com.au", "google.ch", "google.be",
+        "google.nl", "google.pt", "google.com.br", "google.com.mx", "google.co.in",
+        "google.co.jp", "google.co.kr", "google.ru", "google.pl", "google.at"
+      ],
+      "hostPrefix": "google.",
+      "safeSearch": {
+        "param": "safe",
+        "value": "active",
+        "urlFilters": ["/search*"]
+      },
+      "notes": "Preserve existing Layer2 + SafeSearch; hostPrefix covers other google.* TLDs at runtime."
+    },
+    {
+      "id": "bing",
+      "brand": "Bing",
+      "mode": "safesearch+filter",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["bing.com", "www.bing.com", "cn.bing.com"],
+      "safeSearch": {
+        "param": "adlt",
+        "value": "strict",
+        "urlFilters": ["/search*", "/images/search*", "/videos/search*"]
+      }
+    },
+    {
+      "id": "duckduckgo",
+      "brand": "DuckDuckGo",
+      "mode": "safesearch+filter",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": [
+        "duckduckgo.com",
+        "www.duckduckgo.com",
+        "start.duckduckgo.com",
+        "html.duckduckgo.com",
+        "safe.duckduckgo.com",
+        "duck.com"
+      ],
+      "safeSearch": {
+        "param": "kp",
+        "value": "1",
+        "urlFilters": ["/*q=*"]
+      }
+    },
+    {
+      "id": "yahoo",
+      "brand": "Yahoo",
+      "mode": "safesearch+filter",
+      "queryParams": ["p", "q"],
+      "pathIncludes": ["search"],
+      "hosts": [
+        "search.yahoo.com",
+        "fr.search.yahoo.com",
+        "uk.search.yahoo.com",
+        "de.search.yahoo.com",
+        "es.search.yahoo.com",
+        "it.search.yahoo.com",
+        "ca.search.yahoo.com",
+        "images.search.yahoo.com",
+        "yahoo.com",
+        "yahoo.co.jp",
+        "yahoo.co.uk",
+        "yahoo.fr",
+        "yahoo.de",
+        "yahoo.es",
+        "yahoo.it",
+        "yahoo.ca",
+        "yahoo.com.br",
+        "yahoo.com.mx",
+        "yahoo.com.tw",
+        "yahoo.com.sg",
+        "yahoo.com.hk",
+        "yahoo.com.au",
+        "yahoo.co.in"
+      ],
+      "safeSearch": {
+        "param": "vm",
+        "value": "r",
+        "urlFilters": ["/search*"],
+        "hostFilters": [
+          "search.yahoo.com",
+          "fr.search.yahoo.com",
+          "uk.search.yahoo.com",
+          "de.search.yahoo.com",
+          "es.search.yahoo.com",
+          "it.search.yahoo.com",
+          "ca.search.yahoo.com",
+          "images.search.yahoo.com"
+        ]
+      }
+    },
+    {
+      "id": "ecosia",
+      "brand": "Ecosia",
+      "mode": "safesearch+filter",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["ecosia.org", "www.ecosia.org"],
+      "safeSearch": {
+        "param": "safeSearch",
+        "value": "strict",
+        "urlFilters": ["/search*"]
+      }
+    },
+    {
+      "id": "qwant",
+      "brand": "Qwant",
+      "mode": "safesearch+filter",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["qwant.com", "www.qwant.com"],
+      "safeSearch": {
+        "param": "safesearch",
+        "value": "2",
+        "urlFilters": ["/*q=*"]
+      }
+    },
+    {
+      "id": "brave",
+      "brand": "Brave Search",
+      "mode": "safesearch+filter",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["search.brave.com"],
+      "safeSearch": {
+        "param": "safesearch",
+        "value": "strict",
+        "urlFilters": ["/search*", "/images*", "/videos*"]
+      }
+    },
+    {
+      "id": "startpage",
+      "brand": "Startpage",
+      "mode": "filter-only",
+      "queryParams": ["query", "q"],
+      "pathIncludes": [],
+      "hosts": ["startpage.com", "www.startpage.com"],
+      "notes": "No DNR SafeSearch rule historically; Layer 2 query filter only."
+    },
+    {
+      "id": "yandex",
+      "brand": "Yandex",
+      "mode": "safesearch+filter",
+      "queryParams": ["text", "q"],
+      "pathIncludes": [],
+      "hosts": [
+        "yandex.com",
+        "yandex.ru",
+        "yandex.by",
+        "yandex.kz",
+        "yandex.ua",
+        "yandex.uz",
+        "yandex.az",
+        "yandex.com.tr",
+        "yandex.com.ge",
+        "yandex.com.am",
+        "yandex.ee",
+        "yandex.lt",
+        "yandex.lv",
+        "yandex.md",
+        "yandex.tj",
+        "yandex.tm",
+        "yandex.fr",
+        "yandex.eu",
+        "ya.ru",
+        "www.yandex.com",
+        "www.yandex.ru",
+        "www.yandex.by",
+        "www.yandex.kz",
+        "www.ya.ru"
+      ],
+      "hostPrefix": "yandex.",
+      "expandCctlds": true,
+      "safeSearch": {
+        "param": "family",
+        "value": "yes",
+        "urlFilters": ["/search*", "/images*", "/video*"]
+      },
+      "notes": "Regression: yandex.by was missing from Layer2 + DNR (only .com/.ru)."
+    },
+    {
+      "id": "baidu",
+      "brand": "Baidu",
+      "mode": "filter-only",
+      "queryParams": ["wd", "word", "q"],
+      "pathIncludes": [],
+      "hosts": ["baidu.com", "www.baidu.com", "m.baidu.com"]
+    },
+    {
+      "id": "naver",
+      "brand": "Naver",
+      "mode": "filter-only",
+      "queryParams": ["query", "q"],
+      "pathIncludes": ["search"],
+      "hosts": ["naver.com", "www.naver.com", "search.naver.com", "m.search.naver.com"]
+    },
+    {
+      "id": "seznam",
+      "brand": "Seznam",
+      "mode": "filter-only",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["seznam.cz", "www.seznam.cz", "search.seznam.cz"]
+    },
+    {
+      "id": "ukrainian",
+      "brand": "Ukrainian regional search",
+      "mode": "filter-only",
+      "queryParams": ["q", "text", "query", "search"],
+      "pathIncludes": [],
+      "hosts": [
+        "meta.ua",
+        "www.meta.ua",
+        "search.ukr.net",
+        "ukr.net",
+        "www.ukr.net",
+        "bigmir.net",
+        "www.bigmir.net",
+        "i.ua",
+        "www.i.ua"
+      ],
+      "notes": "Regional UA portals used as search backdoors."
+    },
+    {
+      "id": "aol",
+      "brand": "AOL",
+      "mode": "filter-only",
+      "queryParams": ["q"],
+      "pathIncludes": ["search"],
+      "hosts": ["search.aol.com", "aol.com"]
+    },
+    {
+      "id": "ask",
+      "brand": "Ask",
+      "mode": "filter-only",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["ask.com", "www.ask.com"]
+    },
+    {
+      "id": "swisscows",
+      "brand": "Swisscows",
+      "mode": "filter-only",
+      "queryParams": ["query", "q"],
+      "pathIncludes": [],
+      "hosts": ["swisscows.com", "www.swisscows.com"]
+    },
+    {
+      "id": "gigablast",
+      "brand": "Gigablast",
+      "mode": "filter-only",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["gigablast.com"]
+    },
+    {
+      "id": "mojeek",
+      "brand": "Mojeek",
+      "mode": "filter-only",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["mojeek.com", "www.mojeek.com"]
+    },
+    {
+      "id": "yep",
+      "brand": "Yep",
+      "mode": "filter-only",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["yep.com", "www.yep.com"]
+    },
+    {
+      "id": "perplexity",
+      "brand": "Perplexity",
+      "mode": "filter-only",
+      "category": "ai-search",
+      "queryParams": ["q", "query"],
+      "pathIncludes": [],
+      "hosts": ["perplexity.ai", "www.perplexity.ai"]
+    },
+    {
+      "id": "you",
+      "brand": "You.com",
+      "mode": "filter-only",
+      "category": "ai-search",
+      "queryParams": ["q"],
+      "pathIncludes": ["search"],
+      "hosts": ["you.com", "www.you.com"]
+    },
+    {
+      "id": "phind",
+      "brand": "Phind",
+      "mode": "filter-only",
+      "category": "ai-search",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["phind.com", "www.phind.com"]
+    },
+    {
+      "id": "komo",
+      "brand": "Komo",
+      "mode": "filter-only",
+      "category": "ai-search",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["komo.ai", "www.komo.ai"]
+    },
+    {
+      "id": "andi",
+      "brand": "Andi",
+      "mode": "filter-only",
+      "category": "ai-search",
+      "queryParams": ["q"],
+      "pathIncludes": [],
+      "hosts": ["andisearch.com", "www.andisearch.com"]
+    },
+    {
+      "id": "copilot",
+      "brand": "Microsoft Copilot",
+      "mode": "filter-only",
+      "category": "ai-search",
+      "queryParams": ["q", "query"],
+      "pathIncludes": [],
+      "hosts": ["copilot.microsoft.com", "www.bing.com"],
+      "notes": "Bing host already covered; Copilot portal is filter-only."
+    },
+    {
+      "id": "chatgpt-search",
+      "brand": "ChatGPT search surfaces",
+      "mode": "filter-only",
+      "category": "ai-search",
+      "queryParams": ["q", "query", "prompt"],
+      "pathIncludes": ["search"],
+      "hosts": ["chatgpt.com", "chat.openai.com"],
+      "notes": "Only URL-patternable search surfaces; in-chat prompts are not visible to extension navigation hooks."
+    },
+    {
+      "id": "gemini",
+      "brand": "Google Gemini / AI Mode hosts",
+      "mode": "google-special",
+      "category": "ai-search",
+      "queryParams": ["q", "query"],
+      "pathIncludes": [],
+      "hosts": ["gemini.google.com", "bard.google.com"],
+      "notes": "Distinct from google.com SERP; still under Google Layer2 special-case (not hard-blocked)."
+    }
+  ]
+}

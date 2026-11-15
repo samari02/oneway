@@ -1,0 +1,41 @@
+{
+  "name": "yandex.by Layer2 regression",
+  "description": "User blocked yandex but not yandex.by — regional ccTLD must hit the same Layer2 + SafeSearch path as yandex.com",
+  "cases": [
+    {
+      "url": "https://yandex.by/search/?text=weather",
+      "isSearchEngine": true,
+      "query": "weather"
+    },
+    {
+      "url": "https://www.yandex.by/search/?text=porn",
+      "isSearchEngine": true,
+      "query": "porn"
+    },
+    {
+      "url": "https://yandex.by/images/search?text=cats",
+      "isSearchEngine": true,
+      "query": "cats"
+    },
+    {
+      "url": "https://yandex.com/search/?text=ok",
+      "isSearchEngine": true,
+      "query": "ok"
+    },
+    {
+      "url": "https://yandex.ru/search/?text=ok",
+      "isSearchEngine": true,
+      "query": "ok"
+    },
+    {
+      "url": "https://yandex.kz/search/?text=ok",
+      "isSearchEngine": true,
+      "query": "ok"
+    },
+    {
+      "url": "https://example.com/",
+      "isSearchEngine": false,
+      "query": null
+    }
+  ]
+}

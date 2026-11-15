@@ -183,9 +183,10 @@ Fichier : `apps/extension/public/rules.json`
 - search.brave.com/search, /images, /videos
 - Paramètre : `safesearch=strict`
 
-**Yandex** :
-- yandex.com, yandex.ru, /images
+**Yandex** (atlas ccTLD — pas seulement .com/.ru) :
+- yandex.com, yandex.ru, **yandex.by**, yandex.kz, ya.ru, …
 - Paramètre : `family=yes`
+- Voir [search_engine_atlas_v1.md](./search_engine_atlas_v1.md)
 
 ### Comment ça marche
 
