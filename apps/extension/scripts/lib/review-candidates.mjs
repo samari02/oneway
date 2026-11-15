@@ -10,10 +10,13 @@
  *
  * Usage:
  *   pnpm --filter @clarity/extension review:candidates -- --list
+ *   pnpm --filter @clarity/extension review:candidates -- --list --include-fixtures
  *   pnpm --filter @clarity/extension review:candidates -- --approve globalinnovationdesign.org,pigav.com
  *   pnpm --filter @clarity/extension review:candidates -- --reject avx-skin.example
  *   pnpm --filter @clarity/extension review:candidates -- --board
  *   pnpm --filter @clarity/extension review:candidates -- --serve   # 127.0.0.1 only
+ *
+ * Default --list / board hide *.example fixture hosts (use --include-fixtures to show).
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -42,6 +45,7 @@ function parseArgs(argv) {
     reject: [],
     from: null,
     judge: null,
+    includeFixtures: false,
   }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
@@ -50,6 +54,7 @@ function parseArgs(argv) {
     else if (a === '--board') out.board = true
     else if (a === '--serve') out.serve = true
     else if (a === '--port') out.port = Number(argv[++i]) || 8765
+    else if (a === '--include-fixtures') out.includeFixtures = true
     else if (a === '--approve') {
       out.approve = String(argv[++i] || '')
         .split(',')
@@ -65,6 +70,14 @@ function parseArgs(argv) {
     else if (a === '--help' || a === '-h') out.help = true
   }
   return out
+}
+
+function isFixtureHost(domain) {
+  return typeof domain === 'string' && domain.toLowerCase().endsWith('.example')
+}
+
+function isFixtureRow(row) {
+  return isFixtureHost(row.domain) || row.status === 'review_fixture'
 }
 
 function loadJson(p) {
@@ -252,7 +265,8 @@ async function main() {
   const args = parseArgs(process.argv.slice(2))
   if (args.help) {
     console.log(`Usage: review-candidates [--list] [--approve a,b] [--reject c] [--board] [--serve]
-  --from discovery-report.json  --judge judge-results.json`)
+  --from discovery-report.json  --judge judge-results.json
+  --include-fixtures   Show *.example / review_fixture rows (hidden by default)`)
     process.exit(0)
   }
 
@@ -285,6 +299,8 @@ async function main() {
   if (changed) saveState(state)
 
   const rows = mergeRows(discovery, judge, state)
+  const fixtureRows = rows.filter(isFixtureRow)
+  const visibleRows = args.includeFixtures ? rows : rows.filter((r) => !isFixtureRow(r))
   const payload = buildApprovedPayload(rows)
   fs.mkdirSync(OUT_DIR, { recursive: true })
   fs.writeFileSync(APPROVED_PAYLOAD, JSON.stringify(payload, null, 2) + '\n')
@@ -293,9 +309,19 @@ async function main() {
     console.log(`Discovery: ${discoveryPath}`)
     if (judgePath) console.log(`Judge: ${judgePath}`)
     console.log(`State: ${STATE_PATH}`)
-    for (const r of rows) {
+    if (!args.includeFixtures && fixtureRows.length) {
+      console.log(
+        `Hidden ${fixtureRows.length} fixture host(s) (*.example) — pass --include-fixtures to show`
+      )
+    }
+    const pendingVisible = visibleRows.filter((r) => r.decision === 'pending')
+    if (pendingVisible.length === 0 && !args.includeFixtures) {
+      console.log('Pending (real): 0')
+    }
+    for (const r of visibleRows) {
       const j = r.judge ? ` judge=${r.judge.label}` : ''
-      console.log(`  [${r.decision}] ${r.domain} (${r.status})${j}`)
+      const fix = isFixtureRow(r) ? ' [fixture]' : ''
+      console.log(`  [${r.decision}] ${r.domain} (${r.status})${fix}${j}`)
     }
     console.log(
       `Approved payload domains=${payload.domains.length} adHosts=${payload.adHosts.length} → ${APPROVED_PAYLOAD}`
@@ -303,11 +329,13 @@ async function main() {
     console.log('Gate: run eval:page-analyzer + eval:adult-blocking before sign:adult-list')
   }
 
-  const boardPath = writeBoard(rows, {
+  const boardPath = writeBoard(visibleRows, {
     discoveryPath,
     judgePath,
-    approvedCount: rows.filter((r) => r.decision === 'approved').length,
-    rejectedCount: rows.filter((r) => r.decision === 'rejected').length,
+    includeFixtures: args.includeFixtures,
+    fixtureHiddenCount: args.includeFixtures ? 0 : fixtureRows.length,
+    approvedCount: visibleRows.filter((r) => r.decision === 'approved').length,
+    rejectedCount: visibleRows.filter((r) => r.decision === 'rejected').length,
   })
   ensureUiHtml()
   if (args.board || args.serve) {

@@ -7,10 +7,14 @@
  * Emits 2–4 KB snapshots + discovery-compatible JSON/CSV for `review:candidates`.
  * Never auto-ships / never signs. No secrets.
  *
+ * Default = **real hostnames only** (skips `*.example` fixtures). Does not pad the
+ * review queue with smoke placeholders. Fixture CI path is `--smoke` (no review wire).
+ *
  * Usage:
  *   pnpm --filter @clarity/extension collect:adult-leads
  *   pnpm --filter @clarity/extension collect:adult-leads -- --max 80
  *   pnpm --filter @clarity/extension collect:adult-leads -- --playwright
+ *   pnpm --filter @clarity/extension collect:adult-leads -- --smoke   # CI fixtures only
  *   # manual only:
  *   # pnpm --filter @clarity/extension collect:adult-leads -- --live --max-probe 5
  *   # pnpm --filter @clarity/extension collect:adult-leads -- --search-live
@@ -74,10 +78,11 @@ function parseArgs(argv) {
     live: false,
     playwright: false,
     searchLive: false,
-    wireReview: true,
+    smoke: false,
+    wireReview: null, // resolved after flags: default true unless --smoke
     maxProbe: 5,
     outDir: DEFAULT_OUT_DIR,
-    publicSeed: PUBLIC_SEED_SAMPLE,
+    publicSeed: null, // resolved: smoke → fixture sample; default → same but fixtures filtered
     help: false,
   }
   for (let i = 0; i < argv.length; i++) {
@@ -87,13 +92,24 @@ function parseArgs(argv) {
     else if (a === '--live') out.live = true
     else if (a === '--playwright') out.playwright = true
     else if (a === '--search-live') out.searchLive = true
+    else if (a === '--smoke') out.smoke = true
     else if (a === '--no-wire-review') out.wireReview = false
+    else if (a === '--wire-review') out.wireReview = true
     else if (a === '--max-probe') out.maxProbe = Number(argv[++i]) || 5
     else if (a === '--out') out.outDir = path.resolve(argv[++i])
     else if (a === '--public-seed') out.publicSeed = path.resolve(argv[++i])
     else if (a === '--help' || a === '-h') out.help = true
   }
+  if (out.publicSeed == null) out.publicSeed = PUBLIC_SEED_SAMPLE
+  // Smoke must not pollute human review unless explicitly --wire-review
+  if (out.wireReview == null) out.wireReview = !out.smoke
   return out
+}
+
+/** RFC 2606 / fixture-only hosts — never default into human review. */
+function isFixtureHost(host) {
+  const h = normalizeHost(host)
+  return Boolean(h && h.endsWith('.example'))
 }
 
 function sleep(ms) {
@@ -293,9 +309,10 @@ function hostsFromFollowing(json) {
   return out
 }
 
-function upsertLead(map, host, patch) {
+function upsertLead(map, host, patch, { allowFixtures = false } = {}) {
   const d = normalizeHost(host)
-  if (!d) return
+  if (!d) return false
+  if (!allowFixtures && isFixtureHost(d)) return false
   const cur = map.get(d) || {
     domain: d,
     sources: [],
@@ -312,6 +329,7 @@ function upsertLead(map, host, patch) {
     if (!cur.urls.includes(u)) cur.urls.push(u)
   }
   map.set(d, cur)
+  return true
 }
 
 function classifyLead(c, blocklist) {
@@ -384,28 +402,31 @@ async function main() {
   const args = parseArgs(process.argv.slice(2))
   if (args.help) {
     console.log(`Usage: collect-adult-leads [options]
-  Default = offline fixtures (bounded). Caps ~50–100 URLs via --max (default ${DEFAULT_MAX_URLS}).
+  Default = real hostnames only (skips *.example). Caps via --max (default ${DEFAULT_MAX_URLS}).
+  Fixture / CI path = --smoke (asserts offline pipeline; does NOT wire human review).
 
   Sources:
-    1) Diff public seed sample vs Clarity adult-blocklist (new hostnames only)
-    2) 1-hop partner/outbound links from gold HTML fixtures
+    1) Diff public seed vs Clarity adult-blocklist (new hostnames only)
+    2) 1-hop partner/outbound links from gold HTML
     3) Curated search query→URL list (offline); --search-live optional / not CI
-    4) PeerTube following: fixtures default; --live manual only
+    4) PeerTube following: fixtures offline; --live manual only
 
   Options:
     --max N            Cap candidate URLs/hosts (default ${DEFAULT_MAX_URLS})
+    --smoke            Include *.example fixtures + CI assertions; no review wire
     --playwright       Optional ~5s hydrate per URL without offline HTML
     --live             Manual PeerTube following live (short timeout; not CI)
     --search-live      Attempt live search (stubbed; may captcha — not required)
     --no-wire-review   Do not copy report into discovery-report / ~/.clarity
-    --public-seed PATH Alternate public seed file for diff
+    --wire-review      Force wire even under --smoke (not recommended)
+    --public-seed PATH Public seed file for diff (default sample is mostly *.example for smoke)
     --out DIR          Output directory
     --max-probe N      Live PeerTube host probe cap (default 5)`)
     process.exit(0)
   }
 
   if (args.live) {
-    console.warn('[warn] --live is MANUAL/OPTIONAL — not used in CI. Prefer fixtures.')
+    console.warn('[warn] --live is MANUAL/OPTIONAL — not used in CI. Prefer fixtures / --smoke.')
   }
   if (args.searchLive) {
     console.warn('[warn] --search-live is OPTIONAL — curated offline seeds are the supported path.')
@@ -417,25 +438,56 @@ async function main() {
   const runLog = []
   const snapshotDir = path.join(args.outDir, 'snapshots')
   fs.mkdirSync(snapshotDir, { recursive: true })
+  const allowFixtures = Boolean(args.smoke)
+  let fixturesSkipped = 0
 
   const max = args.max || seedsDoc.maxUrlsDefault || DEFAULT_MAX_URLS
-  console.log(`Collector Étape 6 — max=${max} mode=${args.live ? 'live+offline' : 'offline'} playwright=${args.playwright}`)
+  console.log(
+    `Collector Étape 6 — max=${max} mode=${args.smoke ? 'smoke(fixtures)' : args.live ? 'live+offline' : 'real-only'} playwright=${args.playwright} wireReview=${args.wireReview}`
+  )
 
   // --- Source 1: public seed diff (new hostnames only) ---
   const publicHosts = loadPublicSeedHosts(args.publicSeed)
+  const publicFixtureCount = publicHosts.filter(isFixtureHost).length
+  const publicRealCount = publicHosts.length - publicFixtureCount
+  if (!args.smoke && publicFixtureCount > publicRealCount) {
+    console.warn(
+      `[warn] public seed is mostly *.example placeholders (${publicFixtureCount}/${publicHosts.length}). ` +
+        `Default path skips fixtures — expect few/zero real candidates. ` +
+        `Use --smoke for CI, or --public-seed PATH with a real hostname list.`
+    )
+  }
   let newFromDiff = 0
   for (const h of publicHosts) {
-    if (blocklist.has(h)) {
+    if (isFixtureHost(h) && !allowFixtures) {
+      fixturesSkipped++
+      continue
+    }
+    // Real hosts already on Clarity blocklist are not re-queued; fixtures may pass under --smoke
+    if (blocklist.has(h) && !(allowFixtures && isFixtureHost(h))) {
       runLog.push({ source: 'public_diff', host: h, result: 'already_blocked' })
       continue
     }
-    upsertLead(leadMap, h, {
-      sources: ['public_seed_diff'],
-      urls: [`https://${h}/`],
-    })
-    newFromDiff++
+    if (
+      upsertLead(
+        leadMap,
+        h,
+        {
+          sources: ['public_seed_diff'],
+          urls: [`https://${h}/`],
+        },
+        { allowFixtures }
+      )
+    ) {
+      newFromDiff++
+    } else {
+      fixturesSkipped++
+    }
   }
-  console.log(`  public_seed_diff: ${publicHosts.length} seeds → ${newFromDiff} new vs Clarity blocklist`)
+  console.log(
+    `  public_seed_diff: ${publicHosts.length} seeds (${publicRealCount} real / ${publicFixtureCount} fixture) → ${newFromDiff} new` +
+      (fixturesSkipped ? ` (${fixturesSkipped} fixtures skipped)` : '')
+  )
 
   // --- Source 2: 1-hop partner/outbound from gold HTML ---
   const partnerHtmlPaths = [PARTNER_GOLD]
@@ -452,29 +504,61 @@ async function main() {
     const html = fs.readFileSync(htmlPath, 'utf8')
     const hosts = extractOutboundHosts(html)
     for (const h of hosts) {
-      if (blocklist.has(h) && !h.endsWith('.example')) continue
-      upsertLead(leadMap, h, {
-        sources: [`partner_outbound:${path.basename(htmlPath)}`],
-        urls: [`https://${h}/`],
-      })
-      partnerAdds++
+      if (isFixtureHost(h) && !allowFixtures) {
+        fixturesSkipped++
+        continue
+      }
+      if (blocklist.has(h) && !isFixtureHost(h)) continue
+      if (
+        upsertLead(
+          leadMap,
+          h,
+          {
+            sources: [`partner_outbound:${path.basename(htmlPath)}`],
+            urls: [`https://${h}/`],
+          },
+          { allowFixtures }
+        )
+      ) {
+        partnerAdds++
+      } else {
+        fixturesSkipped++
+      }
     }
   }
   console.log(`  partner_outbound: scanned ${partnerHtmlPaths.length} HTML → ${partnerAdds} host refs`)
 
   // --- Source 3: curated search seeds (offline) ---
   let searchAdds = 0
-  for (const entry of seedsDoc.searchSeeds || []) {
+  const searchEntries = [
+    ...(seedsDoc.searchSeeds || []),
+    ...(allowFixtures ? seedsDoc.smokeSearchSeeds || [] : []),
+  ]
+  for (const entry of searchEntries) {
     const q = entry.query || ''
     for (const url of entry.urls || []) {
       const h = normalizeHost(url)
       if (!h) continue
-      upsertLead(leadMap, h, {
-        sources: [`search_seed:${q}`],
-        urls: [url],
-        signals: { searchQuery: q },
-      })
-      searchAdds++
+      if (isFixtureHost(h) && !allowFixtures) {
+        fixturesSkipped++
+        continue
+      }
+      if (
+        upsertLead(
+          leadMap,
+          h,
+          {
+            sources: [`search_seed:${q}`],
+            urls: [url],
+            signals: { searchQuery: q },
+          },
+          { allowFixtures }
+        )
+      ) {
+        searchAdds++
+      } else {
+        fixturesSkipped++
+      }
     }
   }
   if (args.searchLive) {
@@ -495,10 +579,23 @@ async function main() {
       graph = await loadPeerTubeFollowingLive(seed)
       if (!graph.ok) {
         console.warn(`  ! peertube live ${seed}:`, graph.reason)
-        graph = loadPeerTubeFollowingFixture(seed)
+        if (allowFixtures) graph = loadPeerTubeFollowingFixture(seed)
       }
-    } else {
+    } else if (allowFixtures) {
       graph = loadPeerTubeFollowingFixture(seed)
+    } else {
+      // Real-only offline: PeerTube fixture graph is almost all *.example — skip unless --live
+      runLog.push({
+        source: 'peertube_following',
+        seed,
+        ok: false,
+        via: 'skipped',
+        reason: 'offline_fixture_graph_skipped_use_live_or_smoke',
+      })
+      console.log(
+        `  peertube_following ${seed}: skipped offline fixture graph (use --live or --smoke)`
+      )
+      continue
     }
     runLog.push({ source: 'peertube_following', seed, ok: graph.ok, via: graph.source, reason: graph.reason })
     if (!graph.ok) {
@@ -506,19 +603,38 @@ async function main() {
       continue
     }
     const hosts = hostsFromFollowing(graph.json).slice(0, args.maxProbe)
-    console.log(`  peertube_following ${seed}: ${hosts.length} hosts (${graph.source})`)
+    let added = 0
     for (const h of hosts) {
-      upsertLead(leadMap, h, {
-        sources: [`peertube_following:${seed}:${graph.source}`],
-        urls: [`https://${h}/`],
-      })
+      if (isFixtureHost(h) && !allowFixtures) {
+        fixturesSkipped++
+        continue
+      }
+      if (
+        upsertLead(
+          leadMap,
+          h,
+          {
+            sources: [`peertube_following:${seed}:${graph.source}`],
+            urls: [`https://${h}/`],
+          },
+          { allowFixtures }
+        )
+      ) {
+        added++
+      } else {
+        fixturesSkipped++
+      }
     }
+    console.log(
+      `  peertube_following ${seed}: ${hosts.length} hosts (${graph.source}) → ${added} kept`
+    )
   }
 
   // Cap hosts — prefer richer leads (offline HTML, multi-source, partner/search) over bulk public-diff stubs
   function leadPriority(host) {
     const c = leadMap.get(host)
     let score = 0
+    if (isFixtureHost(host)) score -= 200 // real path should not have these; smoke still deprioritizes batches
     if (findOfflineHtml(host)) score += 100
     if ((c?.sources || []).some((s) => String(s).startsWith('partner_outbound'))) score += 40
     if ((c?.sources || []).some((s) => String(s).startsWith('search_seed'))) score += 30
@@ -604,8 +720,15 @@ async function main() {
   let candidates = hosts.map((h) => classifyLead(leadMap.get(h), blocklist))
   candidates.sort((a, b) => a.domain.localeCompare(b.domain))
 
+  const realCandidates = candidates.filter((c) => !isFixtureHost(c.domain))
+  const fixtureCandidates = candidates.filter((c) => isFixtureHost(c.domain))
+  const pendingReal = realCandidates.filter((c) =>
+    ['review', 'candidate_block'].includes(c.status)
+  )
+
   const meta = {
-    mode: args.live ? 'live+offline' : 'offline',
+    mode: args.smoke ? 'smoke' : args.live ? 'live+offline' : 'real-only',
+    smoke: args.smoke,
     playwright: args.playwright,
     searchLive: args.searchLive,
     max,
@@ -613,11 +736,21 @@ async function main() {
     publicSeedFile: path.relative(EXT_ROOT, args.publicSeed),
     playwrightNote: playwrightNote.slice(0, 5),
     caps: { maxUrls: max, maxProbe: args.maxProbe },
-    note: 'Bounded collector. No auto-prod. Feed review:candidates then human approve + FP gate + sign.',
+    fixturesSkipped,
+    realCandidateCount: realCandidates.length,
+    fixtureCandidateCount: fixtureCandidates.length,
+    pendingRealCount: pendingReal.length,
+    note: args.smoke
+      ? 'Smoke/CI fixtures only. Not wired to human review by default.'
+      : 'Real hostnames only (*.example excluded). No auto-prod. Feed review:candidates then human approve + FP gate + sign.',
   }
 
   const report = buildDiscoveryCompatible(candidates, meta)
   report.runLog = runLog
+  report.counts.fixturesSkipped = fixturesSkipped
+  report.counts.real = realCandidates.length
+  report.counts.fixture = fixtureCandidates.length
+  report.counts.pending_real = pendingReal.length
 
   fs.mkdirSync(args.outDir, { recursive: true })
   const jsonPath = path.join(args.outDir, 'collector-report.json')
@@ -627,18 +760,37 @@ async function main() {
   console.log(`\nWrote ${jsonPath}`)
   console.log(`Wrote ${csvPath}`)
   console.log('Counts:', report.counts)
-
-  if (args.wireReview) {
-    fs.mkdirSync(path.dirname(DISCOVERY_OUT), { recursive: true })
-    fs.writeFileSync(DISCOVERY_OUT, JSON.stringify(report, null, 2) + '\n')
-    fs.mkdirSync(path.dirname(CLARITY_DISCOVERY), { recursive: true })
-    fs.writeFileSync(CLARITY_DISCOVERY, JSON.stringify(report, null, 2) + '\n')
-    console.log(`Wired review: ${DISCOVERY_OUT}`)
-    console.log(`Wired review: ${CLARITY_DISCOVERY}`)
+  if (!args.smoke && pendingReal.length === 0) {
+    console.log(
+      'Honest result: 0 real candidates pending review (no *.example padding). ' +
+        'Pass a real --public-seed, curated real searchSeeds, or --live PeerTube.'
+    )
   }
 
-  // Offline smoke (default path)
-  if (!args.live && !args.searchLive) {
+  if (args.wireReview) {
+    // Never wire fixture hosts into the human review queue
+    const reviewReport = args.smoke
+      ? buildDiscoveryCompatible(realCandidates, { ...meta, note: 'Smoke run forced --wire-review; fixtures stripped from wire.' })
+      : report
+    if (args.smoke) {
+      reviewReport.runLog = runLog
+      reviewReport.counts.fixturesSkipped = fixturesSkipped
+      reviewReport.counts.real = realCandidates.length
+      reviewReport.counts.fixture = 0
+      reviewReport.counts.pending_real = pendingReal.length
+    }
+    fs.mkdirSync(path.dirname(DISCOVERY_OUT), { recursive: true })
+    fs.writeFileSync(DISCOVERY_OUT, JSON.stringify(reviewReport, null, 2) + '\n')
+    fs.mkdirSync(path.dirname(CLARITY_DISCOVERY), { recursive: true })
+    fs.writeFileSync(CLARITY_DISCOVERY, JSON.stringify(reviewReport, null, 2) + '\n')
+    console.log(`Wired review: ${DISCOVERY_OUT}`)
+    console.log(`Wired review: ${CLARITY_DISCOVERY}`)
+  } else if (args.smoke) {
+    console.log('Smoke mode: review queue NOT wired (pass --wire-review to force, still strips *.example).')
+  }
+
+  // Offline smoke assertions — --smoke only (never on default real path)
+  if (args.smoke) {
     const okDiff = newFromDiff >= 1
     const okPartner = partnerAdds >= 1
     const okSnap = offlineSnaps + pwSnaps + emptySnaps >= 1

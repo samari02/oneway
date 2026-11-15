@@ -1,7 +1,9 @@
 # Offline sample of "public adult list" hostnames for diff vs Clarity blocklist.
-# Includes some already-blocked hosts and intentional NEW leads (*.example + a few review hosts).
-# Not a live crawl — CI / default collect uses this file.
-# Sized so --max 80 can exercise a ~50–100 host run offline.
+# MOSTLY *.example placeholders — intended for `collect:adult-leads -- --smoke` (CI).
+# Default (real-only) collect SKIPS *.example and will honestly report ~0 new real
+# candidates when this file is the seed. Pass --public-seed PATH with real hosts
+# (or rely on curated searchSeeds / --live PeerTube) for human review leads.
+# Not a live crawl. Sized so --smoke --max 80 can exercise a ~50–100 host run offline.
 0xxx.ws
 pornhub.com
 xvideos.com

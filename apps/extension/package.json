@@ -25,6 +25,7 @@
     "verify:adult-list": "node scripts/lib/sign-dynamic-adult-list.mjs --verify",
     "discover:adult-leads": "node scripts/lib/discover-adult-leads.mjs",
     "collect:adult-leads": "node scripts/lib/collect-adult-leads.mjs",
+    "collect:adult-leads:smoke": "node scripts/lib/collect-adult-leads.mjs --smoke",
     "expand:search-atlas": "node scripts/lib/expand-search-engine-atlas.mjs",
     "sync:search-atlas-dnr": "node scripts/lib/expand-search-engine-atlas.mjs --sync-dnr",
     "test:search-atlas": "node scripts/test-search-engine-atlas.mjs",

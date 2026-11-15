@@ -1,9 +1,18 @@
 {
   "version": 1,
-  "description": "Bounded seeds for collect:adult-leads (Étape 6). Offline-first; live/search/playwright are optional flags only.",
+  "description": "Bounded seeds for collect:adult-leads (Étape 6). Default path uses real URLs only; *.example live under smokeSearchSeeds for --smoke / CI.",
   "maxUrlsDefault": 80,
   "peertubeSeeds": ["pigav.com"],
   "searchSeeds": [
+    {
+      "query": "fappening celebrity photos",
+      "urls": [
+        "https://globalinnovationdesign.org/"
+      ],
+      "note": "Real curated seed (may already be blocked/approved). No *.example here."
+    }
+  ],
+  "smokeSearchSeeds": [
     {
       "query": "fc2 peertube nsfw",
       "urls": [
@@ -21,10 +30,9 @@
     {
       "query": "fappening celebrity photos",
       "urls": [
-        "https://globalinnovationdesign.org/",
         "https://collector-search-cloak.example/"
       ]
     }
   ],
-  "notes": "Search URLs are curated (offline). --search-live is NOT required for CI and may hit captchas."
+  "notes": "Default collect skips *.example. --smoke merges smokeSearchSeeds. --search-live is NOT required for CI and may hit captchas. For new real leads, pass --public-seed with a real hostname list or --live PeerTube."
 }

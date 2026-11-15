@@ -17,29 +17,41 @@ réseau = flags manuels optionnels, jamais requis pour CI.
 
 1. **Diff public seeds vs Clarity blocklist** — new hostnames only  
    Default seed file: `scripts/eval/fixtures/collector/public-seed-sample.txt`  
-   Override with `--public-seed` (e.g. a larger offline export).
-2. **1-hop partner / outbound links** from gold HTML fixtures  
-   (`partner-outbound-gold.html` + non-safe page-analyzer HTML).
+   (**mostly `*.example` placeholders for `--smoke`**). Default collect skips those
+   and reports honestly if there are **0 real candidates**. Override with
+   `--public-seed PATH` for a real hostname list.
+2. **1-hop partner / outbound links** from gold HTML  
+   (`partner-outbound-gold.html` + non-safe page-analyzer HTML). Fixture hosts skipped unless `--smoke`.
 3. **Curated search query → URL list** (`collector-seeds.json`)  
-   Offline-first. `--search-live` is stubbed (captcha-heavy) and **not** CI.
-4. **PeerTube following** — fixtures by default; `--live` manual only (short timeouts).
+   Real URLs in `searchSeeds`; fixture URLs in `smokeSearchSeeds` (`--smoke` only).  
+   `--search-live` is stubbed (captcha-heavy) and **not** CI.
+4. **PeerTube following** — offline fixture graph is smoke-only; `--live` for real hosts (manual).
 5. **Snapshots 2–4 KB** — offline HTML preferred; optional `--playwright` (~5 s hydrate).  
    If Playwright is not installed → graceful degrade + console note.
-6. **Review wire** — writes discovery-compatible JSON/CSV and (by default) copies into
-   `discovery-report.json` + `~/.clarity/discovery-candidates.json` for `review:candidates`.
+6. **Review wire** — default writes **real-only** discovery JSON into
+   `discovery-report.json` + `~/.clarity/discovery-candidates.json`.  
+   `--smoke` does **not** wire the human review queue.
 
-## Run (supported / CI = offline)
+## Run (human review = real-only default)
 
 ```bash
-# ~50–100 hosts (default --max 80)
+# Real hostnames only (skips *.example). May honestly print 0 pending real candidates
+# when the default seed is mostly placeholders — pass --public-seed or --live for new leads.
 pnpm --filter @clarity/extension collect:adult-leads
 pnpm --filter @clarity/extension collect:adult-leads -- --max 100
+# pnpm --filter @clarity/extension collect:adult-leads -- --public-seed /path/to/real-hosts.txt
 
 # Then existing loop:
 pnpm --filter @clarity/extension judge:misses
 pnpm --filter @clarity/extension review:candidates -- --list
-# or explicit:
-# pnpm --filter @clarity/extension review:candidates -- --from apps/extension/scripts/eval/out/collector/collector-report.json
+# Fixtures hidden by default; show with --include-fixtures
+```
+
+## CI / fixture smoke (does not pollute review)
+
+```bash
+pnpm --filter @clarity/extension collect:adult-leads:smoke
+# equivalent: collect:adult-leads -- --smoke
 ```
 
 ## Optional flags (manual only)
@@ -69,7 +81,8 @@ pnpm --filter @clarity/extension collect:adult-leads -- --no-wire-review
 
 - No auto-prod, no auto-sign, no secrets committed
 - Do not break UNLOCK / STRICT / extension runtime
-- Skip fragile long live network smokes (use fixtures)
+- Default path never pads review with `*.example` / `collector-batch-N.example`
+- Skip fragile long live network smokes (use `--smoke` fixtures)
 - Playwright is **optional** — never a hard dependency of `@clarity/extension`
 
 ## Caps / sources (defaults)

@@ -20,6 +20,8 @@ Related: [cheap_agent_scanner_mvp.md](./cheap_agent_scanner_mvp.md), [targeted_d
 pnpm --filter @clarity/extension discover:adult-leads
 pnpm --filter @clarity/extension judge:misses
 pnpm --filter @clarity/extension review:candidates -- --list
+# fixture hosts (*.example) hidden by default:
+# pnpm --filter @clarity/extension review:candidates -- --list --include-fixtures
 pnpm --filter @clarity/extension review:candidates -- --approve globalinnovationdesign.org,pigav.com
 pnpm --filter @clarity/extension review:candidates -- --board
 # optional local UI:

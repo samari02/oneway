@@ -34,8 +34,10 @@ Companion to the canvas tab **Scanner / immune** in the managed Cursor file
 pnpm --filter @clarity/extension eval:page-analyzer
 pnpm --filter @clarity/extension discover:adult-leads
 pnpm --filter @clarity/extension collect:adult-leads
+# CI fixtures only (does not pad review): collect:adult-leads:smoke
 pnpm --filter @clarity/extension judge:misses
 pnpm --filter @clarity/extension review:candidates -- --list
+# *.example hidden by default; --include-fixtures to show
 pnpm --filter @clarity/extension sign:adult-list:install
 pnpm --filter @clarity/extension verify:adult-list
 pnpm --filter @clarity/extension test:search-atlas

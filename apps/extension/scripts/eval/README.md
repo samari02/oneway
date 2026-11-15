@@ -83,18 +83,23 @@ pnpm --filter @clarity/extension review:candidates -- --board
 
 ## Bounded collector (Étape 6)
 
-Offline-first; caps ~50–100 URLs/run. Optional `--playwright` / `--live` (manual only).
+Default = **real hostnames only** (skips `*.example`). Caps ~50–100 URLs/run.
+Fixture CI = `--smoke` / `collect:adult-leads:smoke` (does **not** wire human review).
+Optional `--playwright` / `--live` (manual only).
 
 ```bash
 pnpm --filter @clarity/extension collect:adult-leads
 pnpm --filter @clarity/extension collect:adult-leads -- --max 100
+# CI fixtures (no review pollution):
+pnpm --filter @clarity/extension collect:adult-leads:smoke
 # optional: --playwright  (degrades if Playwright not installed)
 pnpm --filter @clarity/extension review:candidates -- --list
+# show *.example rows: review:candidates -- --list --include-fixtures
 ```
 
-- Seeds: [`../lib/collector-seeds.json`](../lib/collector-seeds.json)
-- Fixtures: [`fixtures/collector/`](./fixtures/collector/)
-- Output: `scripts/eval/out/collector/` (gitignored) + wires `discovery-report.json` by default
+- Seeds: [`../lib/collector-seeds.json`](../lib/collector-seeds.json) (`searchSeeds` real; `smokeSearchSeeds` for `--smoke`)
+- Fixtures: [`fixtures/collector/`](./fixtures/collector/) — `public-seed-sample.txt` is mostly placeholders for smoke
+- Output: `scripts/eval/out/collector/` (gitignored) + wires real-only `discovery-report.json` by default
 - Doc: [`targeted_collector_playwright_v1.md`](../../../../docs/02-features/02-blocage/targeted_collector_playwright_v1.md)
 
 ## Related
