@@ -1,27 +1,39 @@
-# Search-engine atlas (ccTLD + AI) v1
+# Search-engine atlas v2 (hard-block + allowlist)
 
-Cheap inventory for Clarity Layer 2 + SafeSearch DNR. **Not** an open web crawler.
+Cheap inventory for Clarity. **Not** an open web crawler.
 
-## Why
+## Policy (v2)
 
-Users could block `yandex.com` / get Layer 2 on `.com`/`.ru` while **`yandex.by`** (and other regional/ccTLD engines) stayed a backdoor to adult SERPs. Same class of miss: Ukrainian portals, Yahoo locals, AI search.
+**Hard-block** every atlas search host **except** an explicit allowlist. Navigating to yandex.by, bing, duckduckgo, perplexity, etc. shows the Clarity block screen (DNR `requestDomains`), same path as adult domains.
+
+### Allowlist (Layer 2 + navigation allowed)
+
+| Host | Behavior |
+|------|----------|
+| `google.com` / `www.google.com` | SafeSearch DNR (`safe=active`) + Layer 2 query intelligence |
+| `gemini.google.com` / `bard.google.com` | Allowed (Gemini); Layer 2 on URL-visible queries |
+| `chatgpt.com` / `chat.openai.com` | Allowed (ChatGPT); Layer 2 on URL-patternable search surfaces |
+
+### Hard-blocked (examples)
+
+yandex.* (incl. **yandex.by**), bing, duckduckgo, yahoo, ecosia, qwant, brave, startpage, baidu, naver, regional UA engines, perplexity, you.com, phind, komo, andi, copilot, **google.ccTLDs** (`google.fr`, `google.co.jp`, …).
+
+> Tradeoff (intentional): user asked for **sauf google.com** — country Google TLDs are blocked; use `google.com`.
 
 ## Design
 
 | Path | What |
 |------|------|
-| **Layer 2 filter-SERP** | `search-filter.ts` uses atlas host match + query params → same intelligence as `yandex.com` |
-| **SafeSearch DNR** | Engines with known params (`family=yes`, `kp=1`, …) → `rules.json` id &lt; 1000 |
-| **Hard adult block** | Still adult-blocklist / DNR `requestDomains` — **search engines are not hard-blocked** |
-| **Google** | `mode: google-special` — existing SafeSearch + Layer 2 preserved |
-
-AI search (Perplexity, You.com, Phind, …): **filter-only** (no reliable SafeSearch param). In-chat prompts (ChatGPT) are not visible to `webNavigation` — URL-patternable surfaces only.
+| **DNR hard-block** | Atlas hosts ∉ allowlist → `rules.json` id 22000–22999 (`requestDomains` → block-screen) |
+| **SafeSearch DNR** | **google.com only** (id &lt; 1000) |
+| **Layer 2 filter** | Allowlisted hosts only (`search-filter.ts`) |
+| **Adult blocklist** | Unchanged — separate from search hard-block band |
 
 ## Source of truth
 
-- `apps/extension/src/shared/data/search-engine-atlas.json` — curated seed (~128 hosts, 27 engines)
-- `apps/extension/src/shared/search-engine-atlas.ts` — match helpers
-- Expand (bounded ccTLDs, no Playwright): `pnpm --filter @clarity/extension expand:search-atlas`
+- `apps/extension/src/shared/data/search-engine-atlas.json` — curated seed + `policy.allowlistHosts`
+- `apps/extension/src/shared/search-engine-atlas.ts` — match / allowlist helpers
+- Expand (bounded ccTLDs): `pnpm --filter @clarity/extension expand:search-atlas`
 - Sync DNR: `pnpm --filter @clarity/extension sync:search-atlas-dnr`
 - Tests: `pnpm --filter @clarity/extension test:search-atlas`
 

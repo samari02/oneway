@@ -1,47 +1,98 @@
 {
-  "name": "yandex.by Layer2 regression",
-  "description": "User blocked yandex but not yandex.by — regional ccTLD must hit the same Layer2 + SafeSearch path as yandex.com",
+  "name": "yandex.by hard-block regression",
+  "description": "Non-allowlisted engines (yandex.by, …) must be DNR hard-blocked — not SafeSearch family=yes / Layer2-only. Layer2 isSearchEngine applies only to google.com / Gemini / ChatGPT.",
   "cases": [
     {
       "url": "https://yandex.by/search/?text=weather",
-      "isSearchEngine": true,
-      "query": "weather"
+      "isSearchEngine": false,
+      "query": null,
+      "hardBlock": true
     },
     {
       "url": "https://www.yandex.by/search/?text=porn",
-      "isSearchEngine": true,
-      "query": "porn"
+      "isSearchEngine": false,
+      "query": null,
+      "hardBlock": true
     },
     {
       "url": "https://yandex.by/images/search?text=cats",
-      "isSearchEngine": true,
-      "query": "cats"
+      "isSearchEngine": false,
+      "query": null,
+      "hardBlock": true
     },
     {
       "url": "https://yandex.com/search/?text=ok",
-      "isSearchEngine": true,
-      "query": "ok"
+      "isSearchEngine": false,
+      "query": null,
+      "hardBlock": true
     },
     {
       "url": "https://yandex.ru/search/?text=ok",
-      "isSearchEngine": true,
-      "query": "ok"
+      "isSearchEngine": false,
+      "query": null,
+      "hardBlock": true
     },
     {
       "url": "https://yandex.kz/search/?text=ok",
-      "isSearchEngine": true,
-      "query": "ok"
+      "isSearchEngine": false,
+      "query": null,
+      "hardBlock": true
     },
     {
       "url": "https://example.com/",
       "isSearchEngine": false,
-      "query": null
+      "query": null,
+      "hardBlock": false
     },
     {
       "url": "https://yandex.by/search?text=JK%E3%81%AE%E5%8F%8D%E5%BF%9C%E6%A4%9C%E6%9F%BB+video",
+      "isSearchEngine": false,
+      "query": null,
+      "hardBlock": true,
+      "notes": "Real Chrome history shape; must hard-block (not Layer2 filter)"
+    },
+    {
+      "url": "https://www.google.com/search?q=weather",
       "isSearchEngine": true,
-      "query": "JKの反応検査 video",
-      "notes": "Real Chrome history shape (/search?text= without trailing slash); soft JP query must extract"
+      "query": "weather",
+      "hardBlock": false
+    },
+    {
+      "url": "https://google.com/search?q=porn",
+      "isSearchEngine": true,
+      "query": "porn",
+      "hardBlock": false
+    },
+    {
+      "url": "https://google.fr/search?q=test",
+      "isSearchEngine": false,
+      "query": null,
+      "hardBlock": true,
+      "notes": "google.ccTLD hard-blocked (allowlist is google.com only)"
+    },
+    {
+      "url": "https://gemini.google.com/app",
+      "isSearchEngine": true,
+      "query": null,
+      "hardBlock": false
+    },
+    {
+      "url": "https://chatgpt.com/",
+      "isSearchEngine": true,
+      "query": null,
+      "hardBlock": false
+    },
+    {
+      "url": "https://www.perplexity.ai/?q=hello",
+      "isSearchEngine": false,
+      "query": null,
+      "hardBlock": true
+    },
+    {
+      "url": "https://www.bing.com/search?q=test",
+      "isSearchEngine": false,
+      "query": null,
+      "hardBlock": true
     }
   ]
 }

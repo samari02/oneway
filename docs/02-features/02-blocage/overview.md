@@ -151,41 +151,16 @@ Fichier : `apps/extension/public/rules.json`
 }
 ```
 
-### Domaines couverts
+### Domaines couverts (policy v2)
 
-**Google** (20 TLDs) :
-- google.com, google.fr, google.de, google.co.uk, google.es
-- google.it, google.ca, google.com.au, google.ch, google.be
-- google.nl, google.pt, google.com.br, google.com.mx, google.co.in
-- google.co.jp, google.co.kr, google.ru, google.pl, google.at
+**Allowlist (navigation autorisée)** :
+- `google.com` / `www.google.com` — SafeSearch `safe=active` + Layer 2
+- `gemini.google.com` / `bard.google.com` — Gemini
+- `chatgpt.com` / `chat.openai.com` — ChatGPT
 
-**Bing** :
-- bing.com/search, bing.com/images, bing.com/videos
-- Paramètre : `adlt=strict`
-
-**DuckDuckGo** :
-- duckduckgo.com
-- Paramètre : `kp=1`
-
-**Yahoo** :
-- search.yahoo.com, fr.search.yahoo.com, images.search.yahoo.com
-- Paramètre : `vm=r`
-
-**Ecosia** :
-- ecosia.org/search
-- Paramètre : `safeSearch=strict`
-
-**Qwant** :
-- qwant.com
-- Paramètre : `safesearch=2`
-
-**Brave Search** :
-- search.brave.com/search, /images, /videos
-- Paramètre : `safesearch=strict`
-
-**Yandex** (atlas ccTLD — pas seulement .com/.ru) :
-- yandex.com, yandex.ru, **yandex.by**, yandex.kz, ya.ru, …
-- Paramètre : `family=yes`
+**Hard-block DNR** (écran Clarity, comme domaines adult) pour tout le reste de l’atlas :
+- yandex.* (**yandex.by** inclus), bing, duckduckgo, yahoo, ecosia, qwant, brave, baidu, perplexity, you.com, moteurs régionaux, autres AI search
+- **google.ccTLD** (`google.fr`, `google.co.jp`, …) — volontairement bloqués (sauf `google.com`)
 - Voir [search_engine_atlas_v1.md](./search_engine_atlas_v1.md)
 
 ### Comment ça marche
@@ -371,7 +346,7 @@ const incognitoEnabled = await chrome.extension.isAllowedIncognitoAccess()
 
 | Fichier | Rôle |
 |---------|------|
-| `apps/extension/public/rules.json` | Rules declarativeNetRequest (SafeSearch) |
+| `apps/extension/public/rules.json` | DNR: SafeSearch google.com + search hard-block (atlas) + adult |
 | `apps/extension/src/background/search-filter.ts` | Détection queries explicites |
 | `apps/extension/src/background/service-worker.ts` | Orchestration blocking |
 | `apps/extension/src/background/native-messaging.ts` | Communication desktop |

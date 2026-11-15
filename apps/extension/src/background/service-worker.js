@@ -5,6 +5,7 @@
 import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL, isOwnExtensionUrl, DEFAULT_DISABLE_FRICTION_SECS, DISABLE_FRICTION_OPTIONS, DISABLE_CONFIRM_PHRASE } from '../shared/constants';
 import { extractDomain, matchesPattern, log, urlMatchesAdultDomainList } from '../shared/utils';
 import { extractSearchQuery, isSearchEngine, extractRedirectDestination, isEmailTrackingUrl, incrementBlockedSearches, getBlockedSearchesToday } from './search-filter';
+import { isAllowlistedSearchHost } from '../shared/search-engine-atlas';
 import { analyzeSearch, shouldAnalyzeSearch, getHeightenedMode, getDailyStats, updateBadge, getSearchSession } from './search-intelligence';
 import { requestHistoryPermission, importHistory, recordVisit, getCollectionStatus, calculateHistoryStats, recategorizeHistory } from './history-collector';
 import { connectToDesktopApp, isDesktopAppConnected, getConnectionStatus, sendNavigationEvent, sendHistorySync, sendAoiPreferencesUpdate } from './native-messaging';
@@ -817,8 +818,8 @@ async function getPageAnalysisData(data) {
             matchedRule
         };
         // === LAYER 2: Search Intelligence ===
-        const searchEngines = ['google.com', 'bing.com', 'duckduckgo.com', 'yahoo.com', 'ecosia.org', 'qwant.com', 'startpage.com', 'brave.com', 'yandex.'];
-        const isSearchEngineSite = searchEngines.some(se => domain.includes(se));
+        // Allowlist only: google.com + Gemini + ChatGPT (other atlas engines are DNR hard-blocked)
+        const isSearchEngineSite = isAllowlistedSearchHost(domain);
         const lastSearch = searchSession.searches.length > 0
             ? searchSession.searches[searchSession.searches.length - 1]
             : null;

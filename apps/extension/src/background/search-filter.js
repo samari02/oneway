@@ -3,6 +3,7 @@
  * Detects and blocks searches for explicit content
  */
 import { log } from '../shared/utils';
+import { isAllowlistedSearchHost, matchEngineByHostname, } from '../shared/search-engine-atlas';
 // Keywords that indicate explicit search intent
 // Note: This list is intentionally broad to catch variations
 const EXPLICIT_KEYWORDS = [
@@ -19,6 +20,8 @@ const EXPLICIT_KEYWORDS = [
     'livejasmin', 'stripchat', 'bongacams', 'cam girl', 'camgirl',
     // JP/TW adult video search intent (engines + shared with Layer 3 lexicon)
     'jav', 'fc2ppv', 'missav', '無碼', '无码', '無修正', 'エロ動画', 'AV線上',
+    // Soft/coded SERP queries common on yandex.by (not hard "porn")
+    'pcolle', 'xcolle', '反応検査', '身体検査', 'tokyomotion', 'eroterest',
 ];
 // Note: bare "fc2" is scored in Layer 3 in-site search (page-analyzer) with
 // word boundaries + video/PeerTube corroboration — not here (too many benign hits).
@@ -49,49 +52,31 @@ export function isExplicitSearch(query) {
     }
     return { isExplicit: false };
 }
+function pathAllowsQuery(engine, pathname) {
+    if (!engine.pathIncludes.length)
+        return true;
+    const path = pathname.toLowerCase();
+    return engine.pathIncludes.some((p) => path.includes(p.toLowerCase()));
+}
 /**
- * Extract search query from URL
- * Supports all major search engines
+ * Extract search query from URL — Layer 2 allowlist only
+ * (google.com / Gemini / ChatGPT). Other atlas engines are DNR hard-blocked.
  */
 export function extractSearchQuery(url) {
     try {
         const urlObj = new URL(url);
         const hostname = urlObj.hostname.toLowerCase();
-        // Google (all TLDs)
-        if (hostname.includes('google.')) {
-            return urlObj.searchParams.get('q');
-        }
-        // Bing
-        if (hostname.includes('bing.com')) {
-            return urlObj.searchParams.get('q');
-        }
-        // DuckDuckGo
-        if (hostname.includes('duckduckgo.com')) {
-            return urlObj.searchParams.get('q');
-        }
-        // Yahoo
-        if (hostname.includes('yahoo.com') && urlObj.pathname.includes('search')) {
-            return urlObj.searchParams.get('p');
-        }
-        // Ecosia
-        if (hostname.includes('ecosia.org')) {
-            return urlObj.searchParams.get('q');
-        }
-        // Qwant
-        if (hostname.includes('qwant.com')) {
-            return urlObj.searchParams.get('q');
-        }
-        // Brave Search
-        if (hostname.includes('search.brave.com')) {
-            return urlObj.searchParams.get('q');
-        }
-        // Yandex
-        if (hostname.includes('yandex.com') || hostname.includes('yandex.ru')) {
-            return urlObj.searchParams.get('text');
-        }
-        // StartPage
-        if (hostname.includes('startpage.com')) {
-            return urlObj.searchParams.get('query');
+        if (!isAllowlistedSearchHost(hostname))
+            return null;
+        const engine = matchEngineByHostname(hostname);
+        if (!engine)
+            return null;
+        if (!pathAllowsQuery(engine, urlObj.pathname))
+            return null;
+        for (const param of engine.queryParams) {
+            const value = urlObj.searchParams.get(param);
+            if (value && value.trim())
+                return value;
         }
         return null;
     }
@@ -100,7 +85,8 @@ export function extractSearchQuery(url) {
     }
 }
 /**
- * Check if URL is a search engine results page (NOT a redirect)
+ * Check if URL is an allowlisted search engine results page (NOT a redirect).
+ * Non-allowlisted engines (yandex, bing, …) are hard-blocked via DNR — not Layer 2.
  */
 export function isSearchEngine(url) {
     try {
@@ -112,20 +98,11 @@ export function isSearchEngine(url) {
         if (hostname.includes('google.') && pathname === '/url') {
             return false;
         }
-        // Bing redirect URLs
-        if (hostname.includes('bing.com') && pathname.startsWith('/ck/')) {
+        // Bing redirect URLs (bing itself is hard-blocked; keep exclusion for safety)
+        if ((hostname === 'bing.com' || hostname.endsWith('.bing.com')) && pathname.startsWith('/ck/')) {
             return false;
         }
-        return (hostname.includes('google.') ||
-            hostname.includes('bing.com') ||
-            hostname.includes('duckduckgo.com') ||
-            hostname.includes('yahoo.com') ||
-            hostname.includes('ecosia.org') ||
-            hostname.includes('qwant.com') ||
-            hostname.includes('search.brave.com') ||
-            hostname.includes('yandex.com') ||
-            hostname.includes('yandex.ru') ||
-            hostname.includes('startpage.com'));
+        return isAllowlistedSearchHost(hostname);
     }
     catch {
         return false;
@@ -148,7 +125,7 @@ export function extractRedirectDestination(url) {
             }
         }
         // Bing redirect: bing.com/ck/a?...&u=<encoded_destination>
-        if (hostname.includes('bing.com') && pathname.startsWith('/ck/')) {
+        if ((hostname === 'bing.com' || hostname.endsWith('.bing.com')) && pathname.startsWith('/ck/')) {
             const encoded = urlObj.searchParams.get('u');
             if (encoded) {
                 // Bing uses a custom encoding, try to decode

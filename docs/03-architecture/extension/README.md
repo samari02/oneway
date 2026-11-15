@@ -64,7 +64,7 @@ apps/extension/
 
 ```
 Layer 1: declarativeNetRequest (rules.json)
-         └─ SafeSearch enforcement (Google, Bing, etc.)
+         └─ SafeSearch on google.com; other engines DNR hard-blocked (atlas allowlist)
          └─ Site blocking (Twitter, Reddit, etc.)
 
 Layer 2: webNavigation.onBeforeNavigate

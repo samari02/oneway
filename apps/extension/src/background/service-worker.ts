@@ -15,7 +15,7 @@ import {
   incrementBlockedSearches,
   getBlockedSearchesToday
 } from './search-filter'
-import { isAtlasSearchHost } from '../shared/search-engine-atlas'
+import { isAllowlistedSearchHost } from '../shared/search-engine-atlas'
 import {
   analyzeSearch,
   shouldAnalyzeSearch,
@@ -1056,8 +1056,8 @@ async function getPageAnalysisData(data: { url: string; domain: string }): Promi
     }
     
     // === LAYER 2: Search Intelligence ===
-    // Atlas covers ccTLDs (yandex.by, …) + AI search portals
-    const isSearchEngineSite = isAtlasSearchHost(domain)
+    // Allowlist only: google.com + Gemini + ChatGPT (other atlas engines are DNR hard-blocked)
+    const isSearchEngineSite = isAllowlistedSearchHost(domain)
     
     const lastSearch = searchSession.searches.length > 0 
       ? searchSession.searches[searchSession.searches.length - 1]

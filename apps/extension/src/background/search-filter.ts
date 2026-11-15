@@ -5,7 +5,7 @@
 
 import { log } from '../shared/utils'
 import {
-  isAtlasSearchHost,
+  isAllowlistedSearchHost,
   matchEngineByHostname,
   type SearchEngineEntry,
 } from '../shared/search-engine-atlas'
@@ -72,13 +72,14 @@ function pathAllowsQuery(engine: SearchEngineEntry, pathname: string): boolean {
 }
 
 /**
- * Extract search query from URL using the search-engine atlas.
- * Supports major engines, regional/ccTLD hosts (e.g. yandex.by), and AI search portals.
+ * Extract search query from URL — Layer 2 allowlist only
+ * (google.com / Gemini / ChatGPT). Other atlas engines are DNR hard-blocked.
  */
 export function extractSearchQuery(url: string): string | null {
   try {
     const urlObj = new URL(url)
     const hostname = urlObj.hostname.toLowerCase()
+    if (!isAllowlistedSearchHost(hostname)) return null
     const engine = matchEngineByHostname(hostname)
     if (!engine) return null
     if (!pathAllowsQuery(engine, urlObj.pathname)) return null
@@ -94,7 +95,8 @@ export function extractSearchQuery(url: string): string | null {
 }
 
 /**
- * Check if URL is a search engine results page (NOT a redirect)
+ * Check if URL is an allowlisted search engine results page (NOT a redirect).
+ * Non-allowlisted engines (yandex, bing, …) are hard-blocked via DNR — not Layer 2.
  */
 export function isSearchEngine(url: string): boolean {
   try {
@@ -108,12 +110,12 @@ export function isSearchEngine(url: string): boolean {
       return false
     }
     
-    // Bing redirect URLs
+    // Bing redirect URLs (bing itself is hard-blocked; keep exclusion for safety)
     if ((hostname === 'bing.com' || hostname.endsWith('.bing.com')) && pathname.startsWith('/ck/')) {
       return false
     }
     
-    return isAtlasSearchHost(hostname)
+    return isAllowlistedSearchHost(hostname)
   } catch {
     return false
   }

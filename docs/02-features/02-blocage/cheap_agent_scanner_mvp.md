@@ -26,7 +26,7 @@ Companion to the canvas tab **Scanner / immune** in the managed Cursor file
 | 4 | fait | Targeted discovery (fixtures) | [targeted_discovery_v1.md](./targeted_discovery_v1.md) |
 | 5 | fait | Cheap judge on misses + review CLI/UI | [cheap_llm_judge_review_v1.md](./cheap_llm_judge_review_v1.md) |
 | 6 | fait | Bounded collector (+ optional Playwright) | [targeted_collector_playwright_v1.md](./targeted_collector_playwright_v1.md) |
-| 6b | fait | Search-engine atlas (ccTLD + AI) | [search_engine_atlas_v1.md](./search_engine_atlas_v1.md) — Layer2 + SafeSearch; `yandex.by` regression; no open crawler |
+| 6b | fait | Search-engine atlas (ccTLD + AI) | [search_engine_atlas_v1.md](./search_engine_atlas_v1.md) — v2 hard-block sauf allowlist `google.com` + Gemini + ChatGPT; `yandex.by` DNR block |
 
 ## Commands
 
