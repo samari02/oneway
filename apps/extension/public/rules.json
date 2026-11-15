@@ -69883,7 +69883,7 @@
       }
     },
     "condition": {
-      "regexFilter": "^https?://[^/]*(fanza|nyahentai|fc2live|digiket|pcolle|xcolle|javdb|javbus|avgle|njav|jable|netflav|hpjav|7mmtv|erovideo|fc2ppv|sukebei)",
+      "regexFilter": "^https?://[^/]*(?:fanza|nyahentai|fc2live|digiket|pcolle|xcolle|javdb|javbus)",
       "resourceTypes": [
         "main_frame"
       ]
@@ -69896,7 +69896,36 @@
       "type": "block"
     },
     "condition": {
-      "regexFilter": "^https?://[^/]*(fanza|nyahentai|fc2live|digiket|pcolle|xcolle|javdb|javbus|avgle|njav|jable|netflav|hpjav|7mmtv|erovideo|fc2ppv|sukebei)",
+      "regexFilter": "^https?://[^/]*(?:fanza|nyahentai|fc2live|digiket|pcolle|xcolle|javdb|javbus)",
+      "resourceTypes": [
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 12006,
+    "priority": 3,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/block-screen.html?reason=Adult%20content%20is%20blocked&type=content"
+      }
+    },
+    "condition": {
+      "regexFilter": "^https?://[^/]*(?:avgle|njav|jable|netflav|hpjav|7mmtv|erovideo|fc2ppv|sukebei)",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 12007,
+    "priority": 3,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "regexFilter": "^https?://[^/]*(?:avgle|njav|jable|netflav|hpjav|7mmtv|erovideo|fc2ppv|sukebei)",
       "resourceTypes": [
         "sub_frame"
       ]

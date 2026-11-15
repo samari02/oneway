@@ -23,6 +23,80 @@ const IMPORTED_PUBLIC_PATH = path.join(__dirname, 'imported-public-adult-domains
 const BLOCK_REDIRECT =
   '/block-screen.html?reason=Adult%20content%20is%20blocked&type=content'
 
+/**
+ * JAV / doujin hostname substring regex families (ids 12002–12003, 12006–12007).
+ * Chrome DNR compiles regexFilter with a ~2KB RE2 limit; `[^/]*` + long `(?:a|b|…)` alternations
+ * exceed it ("more complex regex than allowed"). Split tokens across two rule pairs.
+ */
+const JAV_HOST_SUBSTRINGS_A = [
+  'fanza',
+  'nyahentai',
+  'fc2live',
+  'digiket',
+  'pcolle',
+  'xcolle',
+  'javdb',
+  'javbus',
+]
+const JAV_HOST_SUBSTRINGS_B = [
+  'avgle',
+  'njav',
+  'jable',
+  'netflav',
+  'hpjav',
+  '7mmtv',
+  'erovideo',
+  'fc2ppv',
+  'sukebei',
+]
+
+function hostSubstringRegexFilter(tokens) {
+  return `^https?://[^/]*(?:${tokens.join('|')})`
+}
+
+function upsertRegexPair(rules, { mainId, subId, tokens }) {
+  const regexFilter = hostSubstringRegexFilter(tokens)
+  const byId = new Map(rules.map((r) => [r.id, r]))
+
+  const ensure = (id, actionType, resourceType) => {
+    let rule = byId.get(id)
+    if (!rule) {
+      rule = { id, priority: 3, action: { type: actionType }, condition: { resourceTypes: [resourceType] } }
+      if (actionType === 'redirect') {
+        rule.action.redirect = { extensionPath: BLOCK_REDIRECT }
+      }
+      rules.push(rule)
+      byId.set(id, rule)
+    }
+    rule.condition.regexFilter = regexFilter
+    rule.condition.resourceTypes = [resourceType]
+    rule.priority = 3
+    rule.action.type = actionType
+    if (actionType === 'redirect') {
+      rule.action.redirect = { extensionPath: BLOCK_REDIRECT }
+      delete rule.action.block
+    } else {
+      delete rule.action.redirect
+    }
+  }
+
+  ensure(mainId, 'redirect', 'main_frame')
+  ensure(subId, 'block', 'sub_frame')
+}
+
+function syncJavRegexFamilies(rules) {
+  upsertRegexPair(rules, {
+    mainId: 12002,
+    subId: 12003,
+    tokens: JAV_HOST_SUBSTRINGS_A,
+  })
+  upsertRegexPair(rules, {
+    mainId: 12006,
+    subId: 12007,
+    tokens: JAV_HOST_SUBSTRINGS_B,
+  })
+}
+
 /** High-value / uncommon JP + global adult hosts to ensure coverage (additive). */
 const EXPANSION_DOMAINS = [
   // Doujin / fan-market adult-only (not Fantia/ci-en/booth — policy-sensitive)
@@ -925,23 +999,9 @@ function main() {
     console.log('  sample:', added.slice(0, 20).join(', '), added.length > 20 ? '...' : '')
   }
 
-  // Also enrich regex family 12002 with xcolle|pcolle|digiket|fc2live if missing
-  for (const r of rules) {
-    if (![12002, 12003].includes(r.id)) continue
-    let re = r.condition?.regexFilter
-    if (typeof re !== 'string') continue
-    for (const token of ['xcolle', 'pcolle', 'digiket', 'fc2live', 'nyahentai']) {
-      if (!re.includes(token)) {
-        re = re.replace(
-          '(fanza|',
-          `(fanza|${token}|`
-        )
-      }
-    }
-    r.condition.regexFilter = re
-  }
+  syncJavRegexFamilies(rules)
   fs.writeFileSync(RULES_PATH, JSON.stringify(rules, null, 2) + '\n')
-  console.log('Updated DNR regex families 12002/12003 with doujin/fc2live tokens')
+  console.log('Synced split JAV DNR regex families 12002/12003 and 12006/12007')
 
   const corpus = {
     version: 1,
