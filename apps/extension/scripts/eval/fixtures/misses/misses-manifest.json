@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "description": "Analyzer-miss snapshots for Étape 5 judge (2–4 KB). Offline by default.",
+  "fixtures": [
+    {
+      "id": "miss_peertube_sparse",
+      "file": "miss-peertube-sparse.html",
+      "url": "https://sparse-tube.example/search?search=fc2",
+      "expectedOfflineLabel": "adult_likely",
+      "notes": "Sparse PeerTube/AVX shell + magsrv — typical SPA miss before config hydrate"
+    },
+    {
+      "id": "miss_ambiguous_blog",
+      "file": "miss-ambiguous-blog.html",
+      "url": "https://health-edu.example/anatomy",
+      "expectedOfflineLabel": "safe_likely",
+      "notes": "Educational sexuality — judge should not recommend block"
+    }
+  ]
+}

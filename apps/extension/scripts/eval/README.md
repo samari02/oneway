@@ -67,6 +67,20 @@ pnpm --filter @clarity/extension discover:adult-leads -- --emit-sign-payload
 - Fixtures: [`fixtures/discovery/`](./fixtures/discovery/)
 - Output: `scripts/eval/out/discovery/` (gitignored) + `~/.clarity/discovery-candidates.json`
 
+## Miss judge + review (Étape 5)
+
+```bash
+pnpm --filter @clarity/extension judge:misses          # offline heuristic (default)
+# pnpm --filter @clarity/extension judge:misses -- --llm   # needs CLARITY_JUDGE_API_KEY
+pnpm --filter @clarity/extension review:candidates -- --list
+pnpm --filter @clarity/extension review:candidates -- --approve globalinnovationdesign.org
+pnpm --filter @clarity/extension review:candidates -- --board
+```
+
+- Miss fixtures: [`fixtures/misses/`](./fixtures/misses/)
+- Review UI: [`review/index.html`](./review/index.html) (serve via `review:candidates -- --serve`)
+- Doc: [`cheap_llm_judge_review_v1.md`](../../../../docs/02-features/02-blocage/cheap_llm_judge_review_v1.md)
+
 ## Related
 
 - Sync contract: [`docs/02-features/02-blocage/adult_blocklist_sync_v1.md`](../../../../docs/02-features/02-blocage/adult_blocklist_sync_v1.md)

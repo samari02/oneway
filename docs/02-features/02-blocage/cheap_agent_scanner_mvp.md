@@ -7,37 +7,38 @@ Companion to the canvas tab **Scanner / immune** in the managed Cursor file
 
 1. **Discovery** — hot leads only (linked PeerTube instances, shared adult ad networks, reports). Never untargeted Playwright crawl.
 2. **Analyzer offline** — run Clarity `page-analyzer` scoring on HTML fixtures / snapshots (≈90% triage, no LLM).
-3. **Cheap LLM on misses** — ~3 KB summary → engine / ad-network / signal family. Only doubtful pages.
+3. **Cheap LLM on misses** — ~3 KB summary → engine / ad-network / signal family. Only doubtful pages (optional; offline heuristic default).
 4. **FP gate** — candidate rules must pass a safe corpus (Wiki, medical, non-adult PeerTube). One hard-negative FP → reject.
-5. **Ship** — signed dynamic domain/ad list channel + code rules for structural fingerprints (`isNSFW`, `avx-*`, …).
+5. **Ship** — human-approved signed dynamic domain/ad list + code rules for structural fingerprints.
 
 ## Cost note
 
-- **Cheap:** local analyzer + LLM on short summaries.
+- **Cheap:** local analyzer + optional LLM on short summaries.
 - **Expensive (out of scope):** untargeted Playwright crawl of random URLs. We do not do that.
 
-## Plan table (update statuses as work lands)
+## Plan table
 
-| Étape | Statut  | Livrable                                                         | Notes                                                                 |
-|-------|---------|------------------------------------------------------------------|-----------------------------------------------------------------------|
-| 1     | fait    | Offline runner = Clarity page-analyzer on HTML fixtures/snapshots | `pnpm --filter @clarity/extension eval:page-analyzer`                 |
-| 2     | fait    | Safe-corpus gate (minimal)                                       | Wiki sexuality + PeerTube `isNSFW:false` smoke; hard-neg FP → exit 1  |
-| 3     | fait    | Dynamic signed domain/ad list channel                            | See [signed_dynamic_adult_list_v1.md](./signed_dynamic_adult_list_v1.md) |
-| 4     | fait    | Targeted discovery (PeerTube following + adult ad pivots)        | Fixtures-only smoke; live API optional/manual — [targeted_discovery_v1.md](./targeted_discovery_v1.md) |
-| 5     | à faire | Cheap LLM judge on misses + review UI later                      | Sketch only — not started                                             |
+| Étape | Statut | Livrable | Notes |
+|-------|--------|----------|-------|
+| 1 | fait | Offline page-analyzer on fixtures | `eval:page-analyzer` |
+| 2 | fait | Safe-corpus gate (minimal) | hard-neg FP → exit 1 |
+| 3 | fait | Signed dynamic domain/ad list | [signed_dynamic_adult_list_v1.md](./signed_dynamic_adult_list_v1.md) |
+| 4 | fait | Targeted discovery (fixtures) | [targeted_discovery_v1.md](./targeted_discovery_v1.md) |
+| 5 | fait | Cheap judge on misses + review CLI/UI | [cheap_llm_judge_review_v1.md](./cheap_llm_judge_review_v1.md) |
 
 ## Commands
 
 ```bash
 pnpm --filter @clarity/extension eval:page-analyzer
+pnpm --filter @clarity/extension discover:adult-leads
+pnpm --filter @clarity/extension judge:misses
+pnpm --filter @clarity/extension review:candidates -- --list
 pnpm --filter @clarity/extension sign:adult-list:install
 pnpm --filter @clarity/extension verify:adult-list
-pnpm --filter @clarity/extension discover:adult-leads
-pnpm --filter @clarity/extension discover:adult-leads -- --emit-sign-payload
 ```
 
 ## Constraints
 
 - Do not break UNLOCK / STRICT / extension protection.
 - No `chrome.runtime.reload`.
-- Focus: canvas tab + scanner MVP slices — not a 24/7 crawler or LLM UI yet.
+- LLM off unless `CLARITY_JUDGE_API_KEY` + `--llm`. Never commit secrets.

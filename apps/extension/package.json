@@ -23,7 +23,9 @@
     "sign:adult-list": "node scripts/lib/sign-dynamic-adult-list.mjs",
     "sign:adult-list:install": "node scripts/lib/sign-dynamic-adult-list.mjs --install",
     "verify:adult-list": "node scripts/lib/sign-dynamic-adult-list.mjs --verify",
-    "discover:adult-leads": "node scripts/lib/discover-adult-leads.mjs"
+    "discover:adult-leads": "node scripts/lib/discover-adult-leads.mjs",
+    "judge:misses": "node scripts/lib/judge-analyzer-misses.mjs",
+    "review:candidates": "node scripts/lib/review-candidates.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",

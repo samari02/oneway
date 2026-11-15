@@ -4,3 +4,4 @@ dist/
 .DS_Store
 scripts/eval/.cache/
 scripts/eval/out/
+scripts/eval/review/review-board.json
