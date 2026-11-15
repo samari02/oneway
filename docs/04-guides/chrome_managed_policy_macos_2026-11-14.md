@@ -39,6 +39,14 @@ Related layers (unchanged):
   --extension-id pjdboibemcgajdjnppgfnffmajcokbmf \
   --mobileconfig
 
+# Keep NordPass / Cold Turkey visible while * stays blocked (repeat --allow-extension)
+./apps/desktop/scripts/apply-chrome-hardening.sh \
+  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf \
+  --allow-extension eiaeiblijfjekdanodkjadfinkhbfgcd \
+  --allow-extension pganeibhckoanndahmnfggfoeofncnii \
+  --allow-extension efnolkfmdbinpkbnfigocgfglnhahldj \
+  --mobileconfig
+
 # Hardcore: also blocks chrome://extensions (prevents manual removal of extension)
 ./apps/desktop/scripts/apply-chrome-hardening.sh \
   --hardcore \
@@ -106,6 +114,7 @@ After `--hardcore`: `URLBlocklist` row will appear with `chrome://extensions`.
 |------------|----------|---------|
 | `IncognitoModeAvailability = 1` (Incognito disabled) | ✅ | ✅ |
 | `ExtensionSettings[*].installation_mode = blocked` | ✅ | ✅ |
+| `ExtensionSettings[<ID>].installation_mode = allowed` | ✅ per `--allow-extension` | ✅ |
 | `ExtensionSettings[<ID>].toolbar_pin = force_pinned` | ✅ if `--extension-id` | ✅ |
 | `URLBlocklist` → `chrome://extensions`, `chrome://settings/manageProfile` | ❌ | ✅ |
 | `URLAllowlist` → `chrome://policy`, `chrome://version` | ❌ | ✅ |

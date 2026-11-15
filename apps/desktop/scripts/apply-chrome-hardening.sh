@@ -7,7 +7,7 @@
 # Or generate a system-level .mobileconfig profile with --mobileconfig (recommended).
 #
 # Usage:
-#   ./apply-chrome-hardening.sh [--hardcore] [--extension-id ID] [--system] [--mobileconfig]
+#   ./apply-chrome-hardening.sh [--hardcore] [--extension-id ID] [--allow-extension ID]... [--system] [--mobileconfig]
 #   ./apply-chrome-hardening.sh --help
 #
 # After running: fully quit Chrome (Cmd+Q), reopen, verify at chrome://policy
@@ -26,6 +26,7 @@ HARDCORE=0
 SYSTEM=0
 MOBILECONFIG=0
 EXTENSION_ID="${CLARITY_CHROME_EXT_ID:-}"
+ALLOW_EXTENSIONS=()
 
 # Known extension IDs (for reference / quick default)
 CLARITY_ID_CURRENT="pjdboibemcgajdjnppgfnffmajcokbmf"
@@ -44,6 +45,8 @@ Options:
   --extension-id ID    Register Clarity extension in ExtensionSettings (allowed + toolbar-pinned).
                        Without a CRX update URL, Chrome cannot force-install unpacked extensions;
                        use --hardcore to block chrome://extensions as an alternative anti-bypass.
+  --allow-extension ID Allow another extension while * remains blocked (repeatable).
+                       Use for NordPass, Cold Turkey, etc. — allowed but not force-pinned.
   --system             Also write policies to /Library/Managed Preferences/ (requires sudo,
                        shows as "Mandatory" on chrome://policy).
   --mobileconfig       Generate ~/Desktop/clarity-chrome-policy.mobileconfig — double-click to
@@ -60,6 +63,7 @@ Known Clarity IDs:
 Policies applied (standard):
   IncognitoModeAvailability = 1   (Incognito disabled)
   ExtensionSettings[*].installation_mode = blocked  (block arbitrary new extension installs)
+  ExtensionSettings[<allow-id>].installation_mode = allowed  (per --allow-extension)
 
 Policies applied (--hardcore, additionally):
   URLBlocklist: chrome://extensions, chrome://settings/manageProfile
@@ -76,40 +80,41 @@ Revert: ./revert-chrome-hardening.sh  (or the full apply-chrome-managed-policy.s
 EOF
 }
 
-for arg in "$@"; do
-  case "$arg" in
-    --hardcore)    HARDCORE=1 ;;
-    --system)      SYSTEM=1 ;;
-    --mobileconfig) MOBILECONFIG=1 ;;
-    --help|-h)     usage; exit 0 ;;
-  esac
-done
-
-# Positional --extension-id parsing (after the flag scan above)
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --hardcore)       HARDCORE=1; shift ;;
+    --system)         SYSTEM=1; shift ;;
+    --mobileconfig)   MOBILECONFIG=1; shift ;;
     --extension-id)   EXTENSION_ID="${2:?--extension-id requires an argument}"; shift 2 ;;
-    --hardcore|--system|--mobileconfig|--help|-h) shift ;;
+    --allow-extension) ALLOW_EXTENSIONS+=("${2:?--allow-extension requires an argument}"); shift 2 ;;
+    --help|-h)        usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
   esac
 done
 
 if [[ $SYSTEM -eq 1 ]] && [[ $EUID -ne 0 ]]; then
   echo "Re-running with sudo for --system (/Library/Managed Preferences/)…" >&2
+  sudo_args=(--system)
+  [[ $HARDCORE -eq 1 ]]     && sudo_args+=(--hardcore)
+  [[ $MOBILECONFIG -eq 1 ]] && sudo_args+=(--mobileconfig)
+  [[ -n "$EXTENSION_ID" ]]  && sudo_args+=(--extension-id "$EXTENSION_ID")
+  for eid in "${ALLOW_EXTENSIONS[@]}"; do
+    sudo_args+=(--allow-extension "$eid")
+  done
   exec sudo -p "[sudo] Chrome policy password: " env \
     CLARITY_CHROME_EXT_ID="$EXTENSION_ID" \
-    "$0" ${HARDCORE:+--hardcore} --system \
-    ${MOBILECONFIG:+--mobileconfig} \
-    ${EXTENSION_ID:+--extension-id "$EXTENSION_ID"}
+    "$0" "${sudo_args[@]}"
 fi
 
 echo "Applying Chrome hardening → ~/Library/Managed Preferences/com.google.Chrome.plist"
 [[ $HARDCORE -eq 1 ]]     && echo "  Mode: hardcore (chrome://extensions blocked)"
 [[ -n "$EXTENSION_ID" ]]  && echo "  Extension ID: $EXTENSION_ID"
+[[ ${#ALLOW_EXTENSIONS[@]} -gt 0 ]] && echo "  Also allowed: ${ALLOW_EXTENSIONS[*]}"
 [[ $SYSTEM -eq 1 ]]       && echo "  Also writing /Library/Managed Preferences/ (sudo)"
 [[ $MOBILECONFIG -eq 1 ]] && echo "  Also generating .mobileconfig on Desktop"
 
 export SCRIPT_DIR HARDCORE SYSTEM MOBILECONFIG EXTENSION_ID CLARITY_ID_CURRENT CLARITY_ID_LEGACY
+export CHROME_ALLOW_EXTENSIONS="$(IFS=:; echo "${ALLOW_EXTENSIONS[*]}")"
 
 python3 - <<'PY'
 import os
@@ -122,34 +127,32 @@ import chrome_policy_mac as cpm
 hardcore        = os.environ["HARDCORE"]     == "1"
 system          = os.environ["SYSTEM"]       == "1"
 mobileconfig    = os.environ["MOBILECONFIG"] == "1"
-extension_id    = os.environ["EXTENSION_ID"].strip()
-clarity_current = os.environ["CLARITY_ID_CURRENT"]
-clarity_legacy  = os.environ["CLARITY_ID_LEGACY"]
+extension_id = os.environ["EXTENSION_ID"].strip()
+allowed_raw = os.environ.get("CHROME_ALLOW_EXTENSIONS", "")
+allowed_ids = [x.strip() for x in allowed_raw.split(":") if x.strip()]
 
 policy: dict = {"IncognitoModeAvailability": 1}
 
-ext_settings: dict = {
-    "*": {"installation_mode": "blocked"},
-}
-
-
-def pin_id(eid: str) -> None:
-    ext_settings[eid] = {
-        "installation_mode": "allowed",
-        "toolbar_pin": "force_pinned",
-    }
-
+ext_settings = cpm.build_extension_settings(
+    clarity_extension_id=extension_id or None,
+    clarity_pin_defaults=not extension_id,
+    allowed_extension_ids=allowed_ids,
+)
+policy["ExtensionSettings"] = ext_settings
 
 if extension_id:
-    pin_id(extension_id)
     print(f"  Pinned extension: {extension_id}")
 else:
-    pin_id(clarity_current)
-    pin_id(clarity_legacy)
-    print(f"  Pinned known IDs: {clarity_current} (current), {clarity_legacy} (legacy)")
-    print("  (Pass --extension-id to pin your specific loaded ID.)")
-
-policy["ExtensionSettings"] = ext_settings
+    known = [
+        k
+        for k in ext_settings
+        if k != "*" and ext_settings[k].get("toolbar_pin")
+    ]
+    if known:
+        print(f"  Pinned known Clarity IDs: {', '.join(known)}")
+        print("  (Pass --extension-id to pin your specific loaded ID.)")
+for eid in allowed_ids:
+    print(f"  Allowed extension: {eid}")
 
 if hardcore:
     policy["URLBlocklist"] = [

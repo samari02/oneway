@@ -49,6 +49,48 @@ CLARITY_KEYS = frozenset(
     }
 )
 
+CLARITY_EXT_ID_CURRENT = "pjdboibemcgajdjnppgfnffmajcokbmf"
+CLARITY_EXT_ID_LEGACY = "pocdhgbmmooabipboifieikkigmaanok"
+
+
+def build_extension_settings(
+    *,
+    clarity_extension_id: str | None = None,
+    clarity_pin_defaults: bool = True,
+    allowed_extension_ids: list[str] | None = None,
+    block_wildcard: bool = True,
+) -> dict[str, Any]:
+    """Build Chrome ExtensionSettings: block * by default, allow specific IDs.
+
+    Clarity (--extension-id) entries get toolbar_pin=force_pinned.
+    Additional --allow-extension IDs are allowed without forced toolbar pin.
+    """
+    ext_settings: dict[str, Any] = {}
+    if block_wildcard:
+        ext_settings["*"] = {"installation_mode": "blocked"}
+
+    def allow_id(eid: str, *, pin: bool) -> None:
+        entry: dict[str, Any] = {"installation_mode": "allowed"}
+        if pin:
+            entry["toolbar_pin"] = "force_pinned"
+        ext_settings[eid] = entry
+
+    if clarity_extension_id:
+        allow_id(clarity_extension_id, pin=True)
+    elif clarity_pin_defaults:
+        allow_id(CLARITY_EXT_ID_CURRENT, pin=True)
+        allow_id(CLARITY_EXT_ID_LEGACY, pin=True)
+
+    seen = {k for k in ext_settings if k != "*"}
+    for raw in allowed_extension_ids or []:
+        eid = raw.strip()
+        if not eid or eid in seen:
+            continue
+        seen.add(eid)
+        allow_id(eid, pin=False)
+
+    return ext_settings
+
 
 def load_plist(path: Path) -> dict[str, Any]:
     if not path.exists():
