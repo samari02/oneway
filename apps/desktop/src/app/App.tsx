@@ -8,6 +8,7 @@ import { Sidebar, type ViewType } from '@/features/navigation'
 import { StatsView } from '@/features/stats'
 import { SettingsView } from '@/features/settings'
 import { BoundariesView, ProtectionAlert, useExtensionStatus } from '@/features/boundaries'
+import { ProtectionLayersView } from '@/features/protection'
 import { ClarityHomeView, ProgressView, TasksView } from '@/features/clarity-home'
 import { GlobalAmbientMusicBar } from '@/features/clarity-home/components/GlobalAmbientMusicBar'
 import { useAmbientMusicPlayer } from '@/features/clarity-home/hooks/useAmbientMusicPlayer'
@@ -449,6 +450,8 @@ function Dashboard() {
         return <StatsView />
       case 'boundaries':
         return user ? <BoundariesView userId={user.id} /> : null
+      case 'protection':
+        return <ProtectionLayersView />
       case 'settings':
         return <SettingsView onNavigateToView={setCurrentView} />
       default:
