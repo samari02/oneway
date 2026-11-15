@@ -32,16 +32,16 @@ Related layers (unchanged):
 ```bash
 # Recommended — all policies to ~/Library/Managed Preferences/ (no sudo)
 ./apps/desktop/scripts/apply-chrome-hardening.sh \
-  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
+  --extension-id bladnadefjcnkapbdclfjpbekhmmoojb
 
 # Same + generate a .mobileconfig on ~/Desktop (strongest, no sudo, needs double-click install)
 ./apps/desktop/scripts/apply-chrome-hardening.sh \
-  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf \
+  --extension-id bladnadefjcnkapbdclfjpbekhmmoojb \
   --mobileconfig
 
 # Keep NordPass / Cold Turkey visible while * stays blocked (repeat --allow-extension)
 ./apps/desktop/scripts/apply-chrome-hardening.sh \
-  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf \
+  --extension-id bladnadefjcnkapbdclfjpbekhmmoojb \
   --allow-extension eiaeiblijfjekdanodkjadfinkhbfgcd \
   --allow-extension pganeibhckoanndahmnfggfoeofncnii \
   --allow-extension efnolkfmdbinpkbnfigocgfglnhahldj \
@@ -50,12 +50,12 @@ Related layers (unchanged):
 # Hardcore: also blocks chrome://extensions (prevents manual removal of extension)
 ./apps/desktop/scripts/apply-chrome-hardening.sh \
   --hardcore \
-  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
+  --extension-id bladnadefjcnkapbdclfjpbekhmmoojb
 
 # Machine scope (shows as Mandatory on chrome://policy — requires sudo password)
 ./apps/desktop/scripts/apply-chrome-hardening.sh \
   --system \
-  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
+  --extension-id bladnadefjcnkapbdclfjpbekhmmoojb
 
 # Revert everything (user scope + legacy cleanup):
 ./apps/desktop/scripts/revert-chrome-hardening.sh
@@ -65,14 +65,14 @@ Full-featured version with `apply/remove/status`:
 
 ```bash
 ./apps/desktop/scripts/apply-chrome-managed-policy.sh apply \
-  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
+  --extension-id bladnadefjcnkapbdclfjpbekhmmoojb
 
 ./apps/desktop/scripts/apply-chrome-managed-policy.sh status
 ./apps/desktop/scripts/apply-chrome-managed-policy.sh remove
 
 # With CRX update URL (true force-install):
 ./apps/desktop/scripts/apply-chrome-managed-policy.sh apply \
-  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf \
+  --extension-id bladnadefjcnkapbdclfjpbekhmmoojb \
   --update-url https://your.host/clarity/updates.xml
 ```
 
@@ -132,7 +132,7 @@ After `--hardcore`: `URLBlocklist` row will appear with `chrome://extensions`.
 | Pin extension to toolbar (prevent unpinning) | **Partial** — `toolbar_pin: force_pinned` works for managed/installed extensions; side-loaded unpacked extensions may still allow unpinning |
 | **Prevent uninstall** of unpacked Clarity | **Partial** — blocked only for `force_installed` extensions (needs CRX + update URL). Without that, `--hardcore` (block the page) is the practical alternative |
 | **Force-install** unpacked folder on first launch | **No** — `ExtensionInstallForcelist` requires a valid `id;update_url` pointing to a CRX + update manifest |
-| Stable extension ID across machines | Add manifest `"key"` (PEM-derived) — do not commit private PEM |
+| Stable extension ID across machines | **Done** — manifest `"key"` in repo; private PEM at `~/.clarity/extension-signing.pem` (never commit) |
 
 ### Anti-bypass alternatives when force-install is not available
 
@@ -146,16 +146,17 @@ After `--hardcore`: `URLBlocklist` row will appear with `chrome://extensions`.
 
 | Slot | ID |
 |------|----|
-| **Current (daily)** | `pjdboibemcgajdjnppgfnffmajcokbmf` |
+| **Stable (manifest `key`)** | `bladnadefjcnkapbdclfjpbekhmmoojb` |
+| **Legacy (pre-key unpack)** | `pjdboibemcgajdjnppgfnffmajcokbmf` |
 | **Legacy (dev)** | `pocdhgbmmooabipboifieikkigmaanok` |
 
 ```bash
 # Single ID:
-./apps/desktop/scripts/install-native-host.sh pjdboibemcgajdjnppgfnffmajcokbmf -- /path/to/Clarity/binary
+./apps/desktop/scripts/install-native-host.sh bladnadefjcnkapbdclfjpbekhmmoojb -- /path/to/Clarity/binary
 
 # Both IDs:
 ./apps/desktop/scripts/install-native-host.sh \
-  pjdboibemcgajdjnppgfnffmajcokbmf \
+  bladnadefjcnkapbdclfjpbekhmmoojb \
   pocdhgbmmooabipboifieikkigmaanok \
   -- /path/to/Clarity/binary
 ```
@@ -165,9 +166,9 @@ After `--hardcore`: `URLBlocklist` row will appear with `chrome://extensions`.
 ## Setup checklist
 
 1. `pnpm build` in `apps/extension` (or use existing `dist`).
-2. Chrome → Load unpacked → `apps/extension/dist` → copy extension ID.
-3. `./apps/desktop/scripts/install-native-host.sh <ID> [-- binary]`
-4. `./apps/desktop/scripts/apply-chrome-hardening.sh --extension-id <ID> --mobileconfig`
+2. Chrome → Load unpacked → `apps/extension/dist` → ID should match `pnpm check:connectivity` (`bladnadefjcnkapbdclfjpbekhmmoojb`).
+3. `./apps/desktop/scripts/install-native-host.sh bladnadefjcnkapbdclfjpbekhmmoojb [-- binary]`
+4. `./apps/desktop/scripts/apply-chrome-hardening.sh --extension-id bladnadefjcnkapbdclfjpbekhmmoojb --mobileconfig`
 5. Double-click `~/Desktop/clarity-chrome-policy.mobileconfig` → install in System Settings.
 6. Cmd+Q Chrome → reopen → `chrome://policy` → confirm:
    - `IncognitoModeAvailability = 1` (Platform, Mandatory after profile install)

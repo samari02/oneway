@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "Clarity - Focus & Flow",
   "version": "0.1.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4uNt4KktJqUSWy1KJmI1hn14tugbAfApvVviwmtoVlLtHgZgH5jte91q7e7vtFM1cKIKe83wNhevvmR0wC0fKFeYc2BaJw21/Imsq9z3+a9TSlPUj6e7PMlYplbejXL32QFcXVcBxLJwF8BjGDY3GJCUkHgbg7vdJYvio5zzRLj6U5SLyuYLjsDzi7MEJ1s1B7sCPh5OUH+CYd1pWVK690vGl+zZZJnB8s6Nm5hUAsNyqMucIZZmCxebXEWnQwPJIxi6knlZJhNkZDki8j9QshkP1Rd1xoYarYvmM1PJzbI4CHziYL2bhUbNKU91qmFPw+COzH2VxK5+K+OtdN2JfQIDAQAB",
   "description": "Intelligent distraction blocker for focused work",
 
   "incognito": "split",

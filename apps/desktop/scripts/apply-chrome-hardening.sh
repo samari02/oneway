@@ -13,8 +13,9 @@
 # After running: fully quit Chrome (Cmd+Q), reopen, verify at chrome://policy
 #
 # Known Clarity extension IDs:
-#   Current (daily):  pjdboibemcgajdjnppgfnffmajcokbmf
-#   Legacy (dev):     pocdhgbmmooabipboifieikkigmaanok
+#   Stable (manifest `key`): bladnadefjcnkapbdclfjpbekhmmoojb
+#   Legacy (pre-key unpack): pjdboibemcgajdjnppgfnffmajcokbmf
+#   Legacy (dev):            pocdhgbmmooabipboifieikkigmaanok
 #
 # See docs/04-guides/chrome_managed_policy_macos_2026-11-14.md for full details.
 
@@ -29,7 +30,7 @@ EXTENSION_ID="${CLARITY_CHROME_EXT_ID:-}"
 ALLOW_EXTENSIONS=()
 
 # Known extension IDs (for reference / quick default)
-CLARITY_ID_CURRENT="pjdboibemcgajdjnppgfnffmajcokbmf"
+CLARITY_ID_CURRENT="bladnadefjcnkapbdclfjpbekhmmoojb"
 CLARITY_ID_LEGACY="pocdhgbmmooabipboifieikkigmaanok"
 
 usage() {

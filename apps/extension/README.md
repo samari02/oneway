@@ -25,6 +25,8 @@ The extension will be built to `dist/` directory.
 
 ### Load in Chrome
 
+**Connectivity:** Do not change manifest `key`, rename the desktop binary (`appsdesktop`), `Clarity.app`, or host `com.clarity.app` without re-running `install-native-host.sh` and Chrome hardening — see `apps/desktop/README.md`. Verify with `pnpm check:connectivity` at the repo root.
+
 1. Open Chrome and go to `chrome://extensions/`
 2. Enable "Developer mode" (toggle in top right)
 3. Click "Load unpacked"

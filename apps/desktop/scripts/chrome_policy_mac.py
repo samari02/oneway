@@ -49,7 +49,7 @@ CLARITY_KEYS = frozenset(
     }
 )
 
-CLARITY_EXT_ID_CURRENT = "pjdboibemcgajdjnppgfnffmajcokbmf"
+CLARITY_EXT_ID_CURRENT = "bladnadefjcnkapbdclfjpbekhmmoojb"
 CLARITY_EXT_ID_LEGACY = "pocdhgbmmooabipboifieikkigmaanok"
 
 
