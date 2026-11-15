@@ -2,7 +2,7 @@
  * Background Service Worker
  * Main logic for the extension
  */
-import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL, isOwnExtensionUrl, DEFAULT_DISABLE_FRICTION_SECS, DISABLE_FRICTION_OPTIONS } from '../shared/constants';
+import { DEFAULT_BLOCKLIST, STORAGE_KEYS, BLOCK_SCREEN_URL, isOwnExtensionUrl, DEFAULT_DISABLE_FRICTION_SECS, DISABLE_FRICTION_OPTIONS, DISABLE_CONFIRM_PHRASE } from '../shared/constants';
 import { extractDomain, matchesPattern, log, urlMatchesAdultDomainList } from '../shared/utils';
 import { extractSearchQuery, isSearchEngine, extractRedirectDestination, isEmailTrackingUrl, incrementBlockedSearches, getBlockedSearchesToday } from './search-filter';
 import { analyzeSearch, shouldAnalyzeSearch, getHeightenedMode, getDailyStats, updateBadge, getSearchSession } from './search-intelligence';
@@ -246,6 +246,25 @@ async function checkCustomSearchKeywords(query) {
     }
     return { blocked: false };
 }
+async function readDesktopConnected() {
+    const raw = await chrome.storage.local.get('desktopAppConnected');
+    return raw.desktopAppConnected === true;
+}
+/** Fail-closed: when desktop native host is down, keep adult protection blocking. */
+async function isProtectionBlockingEnabled() {
+    const storage = await chrome.storage.local.get([
+        STORAGE_KEYS.IS_ACTIVE,
+        'desktopAppConnected',
+    ]);
+    const connected = storage.desktopAppConnected === true;
+    if (!connected) {
+        return true;
+    }
+    return storage[STORAGE_KEYS.IS_ACTIVE] !== false;
+}
+async function isProtectionCompromised() {
+    return !(await readDesktopConnected());
+}
 /**
  * Check if URL should be blocked
  */
@@ -259,8 +278,7 @@ async function shouldBlock(url, tabId) {
         STORAGE_KEYS.MODE,
         STORAGE_KEYS.IS_ACTIVE
     ]);
-    // If not active, allow everything
-    if (!storage.isActive) {
+    if (!(await isProtectionBlockingEnabled())) {
         return { shouldBlock: false };
     }
     // System adult list (bundled seed ∪ desktop sync) — additive with static DNR
@@ -394,7 +412,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
     if (message.type === 'SET_IS_ACTIVE') {
-        setIsActive(Boolean(message.data?.isActive)).then(sendResponse);
+        const phrase = String(message.data?.disableFrictionPhrase ?? '').trim().toUpperCase();
+        setIsActive(Boolean(message.data?.isActive), phrase).then(sendResponse);
         return true;
     }
     if (message.type === 'GET_DISABLE_FRICTION_SECS') {
@@ -442,6 +461,9 @@ async function handlePageAnalysisResult(data, sender) {
     if (!tabId) {
         return { action: 'allow' };
     }
+    if (!(await isProtectionBlockingEnabled())) {
+        return { action: 'allow' };
+    }
     log(`[ContentAnalysis] ${domain} — Score: ${result.score}, Explicit: ${result.isExplicit}, Recheck: ${isRecheck}`);
     // Store for debug panel
     await storePageAnalysis(domain, result);
@@ -460,7 +482,12 @@ async function handlePageAnalysisResult(data, sender) {
         r.includes('Adult ad network') ||
         r.includes('adult blocklist domain') ||
         r.includes('Adult rating') ||
-        r.includes('RTA label'));
+        r.includes('RTA label') ||
+        r.includes('Tube URL pattern') ||
+        r.includes('Tube grid') ||
+        r.includes('Tube-like grid') ||
+        r.includes('Dense video link grid') ||
+        r.includes('Tube evasion'));
     if (result.isExplicit) {
         // Explicit flag (adult meta / high score) is enough alone
         action = 'block';
@@ -546,7 +573,8 @@ async function getStatus() {
     const storage = await chrome.storage.local.get([
         STORAGE_KEYS.MODE,
         STORAGE_KEYS.IS_ACTIVE,
-        STORAGE_KEYS.STRICTNESS
+        STORAGE_KEYS.STRICTNESS,
+        'desktopAppConnected',
     ]);
     // Get block stats
     const history = await chrome.storage.local.get('blockHistory');
@@ -554,21 +582,45 @@ async function getStatus() {
     // Count blocks today
     const today = new Date().setHours(0, 0, 0, 0);
     const blocksToday = blockHistory.filter(e => e.timestamp >= today && e.action === 'blocked').length;
+    const desktopAppConnected = storage.desktopAppConnected === true;
+    const storedIsActive = storage.isActive !== false;
+    const protectionCompromised = !desktopAppConnected;
+    const effectiveIsActive = protectionCompromised ? true : storedIsActive;
     return {
         mode: storage.mode || 'free',
-        isActive: storage.isActive || false,
+        isActive: effectiveIsActive,
+        storedIsActive,
+        protectionCompromised,
+        desktopAppConnected,
         strictness: storage.strictness || 'guided',
         blocksToday
     };
 }
-async function setIsActive(isActive) {
+async function setIsActive(isActive, disableFrictionPhrase = '') {
+    if (!isActive) {
+        if (!(await readDesktopConnected())) {
+            log('Reject pause: native host disconnected (fail-closed)');
+            return { ...(await getStatus()), pauseRejected: true, pauseRejectedReason: 'desktop_disconnected' };
+        }
+        if (disableFrictionPhrase !== DISABLE_CONFIRM_PHRASE) {
+            log('Reject pause: disable friction phrase missing or invalid');
+            return { ...(await getStatus()), pauseRejected: true, pauseRejectedReason: 'friction_required' };
+        }
+    }
     await chrome.storage.local.set({ [STORAGE_KEYS.IS_ACTIVE]: isActive });
     log('isActive set to', isActive);
     return getStatus();
 }
 async function toggleIsActive() {
-    const { isActive } = await getStatus();
-    return setIsActive(!isActive);
+    const status = await getStatus();
+    if (status.isActive) {
+        return {
+            ...status,
+            pauseRejected: true,
+            pauseRejectedReason: 'friction_required',
+        };
+    }
+    return setIsActive(true);
 }
 async function getDisableFrictionSecs() {
     const raw = await chrome.storage.local.get(STORAGE_KEYS.DISABLE_FRICTION_SECS);

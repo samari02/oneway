@@ -145,17 +145,34 @@ function applyStatusToUi(response) {
     const activeEl = $('active-until');
     const blocksEl = $('blocks-today');
     const toggleBtn = document.getElementById('btn-toggle');
+    const compromisedEl = document.getElementById('compromised-warning');
+    const compromised = Boolean(response.protectionCompromised);
+    if (compromisedEl) {
+        compromisedEl.style.display = compromised ? 'flex' : 'none';
+    }
     const modeIcon = protectionIsActive ? '🟢' : '⚪️';
     const modeName = response.mode.charAt(0).toUpperCase() + response.mode.slice(1);
     modeEl.textContent = `${modeIcon} ${modeName} Mode`;
-    activeEl.textContent = protectionIsActive ? 'Active' : 'Paused';
+    activeEl.textContent = compromised
+        ? 'Active (desktop link down)'
+        : protectionIsActive
+            ? 'Active'
+            : 'Paused';
     blocksEl.textContent = response.blocksToday.toString();
     toggleBtn.textContent = protectionIsActive ? 'Pause Mode' : 'Resume Mode';
-    toggleBtn.disabled = frictionOpen;
+    const pauseBlocked = compromised && protectionIsActive;
+    toggleBtn.disabled = frictionOpen || pauseBlocked;
+    if (response.pauseRejected && !frictionOpen) {
+        toggleBtn.disabled = pauseBlocked;
+    }
 }
-function setActive(isActive) {
-    chrome.runtime.sendMessage({ type: 'SET_IS_ACTIVE', data: { isActive } }, (response) => {
+function setActive(isActive, disableFrictionPhrase = '') {
+    chrome.runtime.sendMessage({ type: 'SET_IS_ACTIVE', data: { isActive, disableFrictionPhrase } }, (response) => {
         if (response) {
+            if (response.pauseRejected) {
+                updateFrictionUi();
+                return;
+            }
             closeFriction();
             applyStatusToUi(response);
         }
@@ -204,7 +221,7 @@ document.getElementById('btn-friction-confirm')?.addEventListener('click', () =>
         return;
     if (phraseEl.value.trim().toUpperCase() !== DISABLE_CONFIRM_PHRASE)
         return;
-    setActive(false);
+    setActive(false, phraseEl.value.trim().toUpperCase());
 });
 // Toggle button — pause requires friction; resume is instant
 document.getElementById('btn-toggle').addEventListener('click', () => {

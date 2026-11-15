@@ -157,6 +157,7 @@ if extension_id:
             ext_entry = {}
         ext_entry["installation_mode"] = "force_installed"
         ext_entry["update_url"] = update_url
+        ext_entry["override_update_url"] = True
         ext_entry["toolbar_pin"] = "force_pinned"
         extension_settings[extension_id] = ext_entry
         if entry not in forcelist:

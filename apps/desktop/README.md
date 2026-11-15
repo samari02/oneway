@@ -21,19 +21,28 @@ Chrome, the native-messaging host, and the desktop app are wired together by **f
 
 After changing `key`, product name, or binary path:
 
-1. `pnpm build` in `apps/extension`, remove the old unpacked extension in Chrome, **Load unpacked** → `apps/extension/dist`.
+1. From repo root: `pnpm ext:update` (pack CRX + STRICT policy). In Chrome: chrome://extensions → **Update**.
 2. `./scripts/install-native-host.sh bladnadefjcnkapbdclfjpbekhmmoojb` (add debug binary path if needed).
-3. Re-run `apply-chrome-hardening.sh` with the new `--extension-id` if you use managed policy.
+3. Policy is refreshed by `ext:update`; re-run hardening only if you change allowlists.
 
 Verify anytime: `pnpm check:connectivity` from the repo root.
 
 ## Chrome anti-bypass hardening (macOS)
 
-After loading the Chrome extension, run the hardening script to disable Incognito and block random extension installs:
+**Preferred (Option A):** local CRX force_install — no Load unpacked for daily work:
 
 ```bash
-# Standard (recommended):
-./scripts/apply-chrome-hardening.sh --extension-id bladnadefjcnkapbdclfjpbekhmmoojb
+pnpm ext:update   # from repo root
+# then chrome://extensions → Update
+```
+
+Manual policy (same STRICT shape):
+
+```bash
+./scripts/apply-chrome-hardening.sh \
+  --extension-id bladnadefjcnkapbdclfjpbekhmmoojb \
+  --update-url http://127.0.0.1:8765/updates.xml \
+  --mobileconfig
 
 # Optional hardcore (also blocks chrome://extensions page):
 ./scripts/apply-chrome-hardening.sh --hardcore --extension-id bladnadefjcnkapbdclfjpbekhmmoojb
@@ -42,7 +51,7 @@ After loading the Chrome extension, run the hardening script to disable Incognit
 ./scripts/revert-chrome-hardening.sh
 ```
 
-Then quit Chrome completely (Cmd+Q), reopen, and verify at `chrome://policy` — you should see `ExtensionSettings` (not only Incognito). On macOS, nested policies are written to `~/Library/Preferences/com.google.Chrome.plist`; see the guide for `--system` / sudo.
+Then quit Chrome completely (Cmd+Q), reopen, and verify at `chrome://policy` — `ExtensionSettings` with `* = blocked` and Clarity `force_installed`. Off-store CRX force_install also needs MDM or Chrome Enterprise Core on macOS (manual `.mobileconfig` alone can download the CRX then skip install).
 
 **Known extension IDs:**
 - Stable (manifest `key`): `bladnadefjcnkapbdclfjpbekhmmoojb`

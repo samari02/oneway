@@ -23,7 +23,10 @@ Recommendation:
   • User-scope only (no sudo): write everything to ~/Library/Managed Preferences/ — works
     for IncognitoModeAvailability and ExtensionSettings, shows as "Recommended".
   • Machine-scope / Mandatory (requires sudo): write to /Library/Managed Preferences/.
-  • Gold standard (no sudo, strongest): install the generated .mobileconfig profile.
+  • .mobileconfig profile: strong for * blocked / Incognito / allowlists, but does NOT
+    unlock off-store force_install (Chrome needs real MDM / MCX / Enterprise Core).
+  • Personal Mac / clients: Clarity = allowed (or force_install from Chrome Web Store).
+    Localhost CRX force_install only after MDM.
 """
 
 from __future__ import annotations
@@ -51,6 +54,16 @@ CLARITY_KEYS = frozenset(
 
 CLARITY_EXT_ID_CURRENT = "bladnadefjcnkapbdclfjpbekhmmoojb"
 CLARITY_EXT_ID_LEGACY = "pocdhgbmmooabipboifieikkigmaanok"
+# Local CRX update channel (file:// is unreliable — use serve-crx-update.py)
+CLARITY_LOCAL_UPDATE_URL = "http://127.0.0.1:8765/updates.xml"
+
+# Keep visible while * stays blocked (NordPass, Cold Turkey ×2, legacy unpack ID)
+DEFAULT_ALLOW_EXTENSION_IDS = [
+    "eiaeiblijfjekdanodkjadfinkhbfgcd",  # NordPass
+    "efnolkfmdbinpkbnfigocgfglnhahldj",  # Cold Turkey
+    "pganeibhckoanndahmnfggfoeofncnii",  # Cold Turkey
+    "pjdboibemcgajdjnppgfnffmajcokbmf",  # Clarity legacy unpack
+]
 
 
 def build_extension_settings(
@@ -59,11 +72,19 @@ def build_extension_settings(
     clarity_pin_defaults: bool = True,
     allowed_extension_ids: list[str] | None = None,
     block_wildcard: bool = True,
+    clarity_update_url: str | None = None,
 ) -> dict[str, Any]:
     """Build Chrome ExtensionSettings: block * by default, allow specific IDs.
 
     Clarity (--extension-id) entries get toolbar_pin=force_pinned.
+    With clarity_update_url, Clarity is force_installed (CRX path) instead of
+    merely allowed — users cannot remove it while policy is active.
     Additional --allow-extension IDs are allowed without forced toolbar pin.
+
+    Note: block_wildcard=True makes Chrome refuse *Load unpacked* entirely
+    (developerPrivate checks BlocklistedByDefault before any per-ID allowlist).
+    With force_installed CRX that door stays closed for daily workflow.
+    Pass block_wildcard=False only for a temporary load-unpacked window.
     """
     ext_settings: dict[str, Any] = {}
     if block_wildcard:
@@ -75,11 +96,27 @@ def build_extension_settings(
             entry["toolbar_pin"] = "force_pinned"
         ext_settings[eid] = entry
 
+    def force_install_id(eid: str, update_url: str) -> None:
+        ext_settings[eid] = {
+            "installation_mode": "force_installed",
+            "update_url": update_url,
+            # Keep using policy update_url on subsequent checks (not Store).
+            "override_update_url": True,
+            "toolbar_pin": "force_pinned",
+        }
+
     if clarity_extension_id:
-        allow_id(clarity_extension_id, pin=True)
+        if clarity_update_url:
+            force_install_id(clarity_extension_id, clarity_update_url)
+        else:
+            allow_id(clarity_extension_id, pin=True)
     elif clarity_pin_defaults:
-        allow_id(CLARITY_EXT_ID_CURRENT, pin=True)
-        allow_id(CLARITY_EXT_ID_LEGACY, pin=True)
+        if clarity_update_url:
+            force_install_id(CLARITY_EXT_ID_CURRENT, clarity_update_url)
+            allow_id(CLARITY_EXT_ID_LEGACY, pin=True)
+        else:
+            allow_id(CLARITY_EXT_ID_CURRENT, pin=True)
+            allow_id(CLARITY_EXT_ID_LEGACY, pin=True)
 
     seen = {k for k in ext_settings if k != "*"}
     for raw in allowed_extension_ids or []:
@@ -90,6 +127,10 @@ def build_extension_settings(
         allow_id(eid, pin=False)
 
     return ext_settings
+
+
+def build_forcelist_entry(extension_id: str, update_url: str) -> str:
+    return f"{extension_id};{update_url}"
 
 
 def load_plist(path: Path) -> dict[str, Any]:
@@ -251,8 +292,10 @@ def generate_mobileconfig(
             }
         ],
         "PayloadDescription": (
-            "Disables Incognito mode, blocks arbitrary extension installs, "
-            "and pins the Clarity extension. Managed by Oneway."
+            "Disables Incognito mode, blocks arbitrary extension installs (*), "
+            "allows/pins Clarity (force_install only when a Web Store or MDM-backed "
+            "update_url is configured — localhost alone is not enough without MDM), "
+            "and keeps NordPass / Cold Turkey allowlisted. Managed by Oneway."
         ),
         "PayloadDisplayName": f"{org} — Chrome Policy",
         "PayloadIdentifier": profile_id,
@@ -271,6 +314,35 @@ def generate_mobileconfig(
     return output_path
 
 
+def generate_profile_pair(desktop: Path | None = None) -> tuple[Path, Path]:
+    """Write clarity-chrome-UNLOCK / -STRICT .mobileconfig files to the Desktop.
+
+    Installed profiles own /Library/Managed Preferences (managedclient rewrites it),
+    so plist writes cannot override them. Both files share one PayloadIdentifier:
+    installing either replaces the other.
+    """
+    desktop = desktop or Path.home() / "Desktop"
+    paths = []
+    for name, block in (("UNLOCK", False), ("STRICT", True)):
+        policy = {
+            "IncognitoModeAvailability": 1,
+            "ExtensionSettings": build_extension_settings(
+                allowed_extension_ids=DEFAULT_ALLOW_EXTENSION_IDS,
+                block_wildcard=block,
+            ),
+        }
+        paths.append(
+            generate_mobileconfig(
+                policy,
+                output_path=desktop / f"clarity-chrome-{name}.mobileconfig",
+            )
+        )
+    return paths[0], paths[1]
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "status":
         status()
+    elif len(sys.argv) > 1 and sys.argv[1] == "profiles":
+        for p in generate_profile_pair():
+            print(p)

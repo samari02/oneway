@@ -6,7 +6,10 @@
     "dev:extension": "pnpm --filter @oneway/extension dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "check:connectivity": "node scripts/check-connectivity.mjs"
+    "check:connectivity": "node scripts/check-connectivity.mjs",
+    "ext:update": "./apps/extension/scripts/ext-update.sh",
+    "ext:pack": "./apps/extension/scripts/pack-crx.sh",
+    "ext:serve": "./apps/extension/scripts/serve-crx-update.py --daemon"
   },
   "devDependencies": {
     "typescript": "^5.7.2"
