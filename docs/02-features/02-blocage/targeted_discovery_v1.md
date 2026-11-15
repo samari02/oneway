@@ -48,6 +48,7 @@ Outputs:
 | `scripts/eval/out/discovery/discovery-candidates.csv` | Spreadsheet review |
 | `~/.clarity/discovery-candidates.json` | Local copy for desktop/native workflows |
 
-## Étape 5 (sketch only)
+## Later steps
 
-Cheap LLM judge on analyzer **misses** only (~3 KB summaries) + a small review UI to accept/reject candidates before signing. Not in this slice.
+- **Étape 5** — [cheap_llm_judge_review_v1.md](./cheap_llm_judge_review_v1.md) (shipped)
+- **Étape 6** — [targeted_collector_playwright_v1.md](./targeted_collector_playwright_v1.md) (bounded collector + optional Playwright)

@@ -81,6 +81,22 @@ pnpm --filter @clarity/extension review:candidates -- --board
 - Review UI: [`review/index.html`](./review/index.html) (serve via `review:candidates -- --serve`)
 - Doc: [`cheap_llm_judge_review_v1.md`](../../../../docs/02-features/02-blocage/cheap_llm_judge_review_v1.md)
 
+## Bounded collector (Étape 6)
+
+Offline-first; caps ~50–100 URLs/run. Optional `--playwright` / `--live` (manual only).
+
+```bash
+pnpm --filter @clarity/extension collect:adult-leads
+pnpm --filter @clarity/extension collect:adult-leads -- --max 100
+# optional: --playwright  (degrades if Playwright not installed)
+pnpm --filter @clarity/extension review:candidates -- --list
+```
+
+- Seeds: [`../lib/collector-seeds.json`](../lib/collector-seeds.json)
+- Fixtures: [`fixtures/collector/`](./fixtures/collector/)
+- Output: `scripts/eval/out/collector/` (gitignored) + wires `discovery-report.json` by default
+- Doc: [`targeted_collector_playwright_v1.md`](../../../../docs/02-features/02-blocage/targeted_collector_playwright_v1.md)
+
 ## Related
 
 - Sync contract: [`docs/02-features/02-blocage/adult_blocklist_sync_v1.md`](../../../../docs/02-features/02-blocage/adult_blocklist_sync_v1.md)

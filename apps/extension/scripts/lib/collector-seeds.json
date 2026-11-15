@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "description": "Bounded seeds for collect:adult-leads (Étape 6). Offline-first; live/search/playwright are optional flags only.",
+  "maxUrlsDefault": 80,
+  "peertubeSeeds": ["pigav.com"],
+  "searchSeeds": [
+    {
+      "query": "fc2 peertube nsfw",
+      "urls": [
+        "https://collector-search-fc2.example/",
+        "https://avtube-sister.example/search?search=fc2"
+      ]
+    },
+    {
+      "query": "jav online mirror",
+      "urls": [
+        "https://collector-search-jav.example/",
+        "https://jav-instance.example/"
+      ]
+    },
+    {
+      "query": "fappening celebrity photos",
+      "urls": [
+        "https://globalinnovationdesign.org/",
+        "https://collector-search-cloak.example/"
+      ]
+    }
+  ],
+  "notes": "Search URLs are curated (offline). --search-live is NOT required for CI and may hit captchas."
+}

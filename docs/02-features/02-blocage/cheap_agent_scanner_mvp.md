@@ -25,12 +25,14 @@ Companion to the canvas tab **Scanner / immune** in the managed Cursor file
 | 3 | fait | Signed dynamic domain/ad list | [signed_dynamic_adult_list_v1.md](./signed_dynamic_adult_list_v1.md) |
 | 4 | fait | Targeted discovery (fixtures) | [targeted_discovery_v1.md](./targeted_discovery_v1.md) |
 | 5 | fait | Cheap judge on misses + review CLI/UI | [cheap_llm_judge_review_v1.md](./cheap_llm_judge_review_v1.md) |
+| 6 | fait | Bounded collector (+ optional Playwright) | [targeted_collector_playwright_v1.md](./targeted_collector_playwright_v1.md) |
 
 ## Commands
 
 ```bash
 pnpm --filter @clarity/extension eval:page-analyzer
 pnpm --filter @clarity/extension discover:adult-leads
+pnpm --filter @clarity/extension collect:adult-leads
 pnpm --filter @clarity/extension judge:misses
 pnpm --filter @clarity/extension review:candidates -- --list
 pnpm --filter @clarity/extension sign:adult-list:install

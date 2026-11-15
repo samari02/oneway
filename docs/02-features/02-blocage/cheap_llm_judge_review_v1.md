@@ -57,4 +57,6 @@ If the key is missing or the call fails, the tool falls back to the offline heur
 
 ## MVP loop status
 
-Étapes **1–5** form a coherent offline loop: fixtures analyzer → safe corpus → signed list channel → targeted discovery → miss judge + human review → (manual) sign. Live network discovery/LLM remain optional.
+Étapes **1–6** form a coherent offline loop: fixtures analyzer → safe corpus → signed list channel → targeted discovery → miss judge + human review → **bounded collector** → (manual) sign. Live network discovery/LLM/Playwright remain optional.
+
+See [targeted_collector_playwright_v1.md](./targeted_collector_playwright_v1.md) for Étape 6.

@@ -23,6 +23,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DEFAULT_DISCOVERY = path.join(__dirname, '../eval/out/discovery/discovery-report.json')
+const COLLECTOR_REPORT = path.join(__dirname, '../eval/out/collector/collector-report.json')
 const FALLBACK_DISCOVERY = path.join(os.homedir(), '.clarity/discovery-candidates.json')
 const DEFAULT_JUDGE = path.join(__dirname, '../eval/out/review/judge-results.json')
 const OUT_DIR = path.join(__dirname, '../eval/out/review')
@@ -73,6 +74,7 @@ function loadJson(p) {
 function resolveDiscovery(args) {
   if (args.from && fs.existsSync(args.from)) return args.from
   if (fs.existsSync(DEFAULT_DISCOVERY)) return DEFAULT_DISCOVERY
+  if (fs.existsSync(COLLECTOR_REPORT)) return COLLECTOR_REPORT
   if (fs.existsSync(FALLBACK_DISCOVERY)) return FALLBACK_DISCOVERY
   return null
 }
@@ -256,7 +258,10 @@ async function main() {
 
   const discoveryPath = resolveDiscovery(args)
   if (!discoveryPath) {
-    console.error('No discovery report. Run: pnpm --filter @clarity/extension discover:adult-leads')
+    console.error(
+      'No discovery/collector report. Run: pnpm --filter @clarity/extension collect:adult-leads\n' +
+        '  (or discover:adult-leads)'
+    )
     process.exit(2)
   }
   const discovery = loadJson(discoveryPath)
