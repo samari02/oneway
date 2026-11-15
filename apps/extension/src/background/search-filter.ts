@@ -19,7 +19,12 @@ const EXPLICIT_KEYWORDS = [
   'leaked nudes', 'leaked video',
   // Cam sites
   'livejasmin', 'stripchat', 'bongacams', 'cam girl', 'camgirl',
+  // JP/TW adult video search intent (engines + shared with Layer 3 lexicon)
+  'jav', 'fc2ppv', 'missav', '無碼', '无码', '無修正', 'エロ動画', 'AV線上',
 ]
+
+// Note: bare "fc2" is scored in Layer 3 in-site search (page-analyzer) with
+// word boundaries + video/PeerTube corroboration — not here (too many benign hits).
 
 // Regex patterns for more complex matching
 const EXPLICIT_PATTERNS = [

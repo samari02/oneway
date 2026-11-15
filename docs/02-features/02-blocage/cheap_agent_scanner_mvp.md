@@ -18,13 +18,22 @@ Companion to the canvas tab **Scanner / immune** in the managed Cursor file
 
 ## Plan table (update statuses as work lands)
 
-| Étape | Statut   | Livrable                                                         | Notes                                              |
-|-------|----------|------------------------------------------------------------------|----------------------------------------------------|
-| 1     | à faire  | Offline runner = Clarity page-analyzer on HTML fixtures/snapshots | pigav / globalinnovationdesign gold HTML           |
-| 2     | à faire  | Safe-corpus gate (minimal)                                       | Smoke hard-negatives → 0 FP                        |
-| 3     | à faire  | Dynamic signed domain/ad list channel (stub OK)                  | Feed extension without permanent rebuild           |
-| 4     | à faire  | Targeted discovery (PeerTube following + adult ad pivots) later  | Hot leads only                                     |
-| 5     | à faire  | Cheap LLM judge on misses + review UI later                      | Not on every page                                  |
+| Étape | Statut  | Livrable                                                         | Notes                                                                 |
+|-------|---------|------------------------------------------------------------------|-----------------------------------------------------------------------|
+| 1     | fait    | Offline runner = Clarity page-analyzer on HTML fixtures/snapshots | `pnpm --filter @clarity/extension eval:page-analyzer` — pigav + cloaked gold PASS |
+| 2     | fait    | Safe-corpus gate (minimal)                                       | Wiki sexuality + PeerTube `isNSFW:false` smoke; hard-neg FP → exit 1  |
+| 3     | à faire | Dynamic signed domain/ad list channel (stub OK)                  | Stub logged in runner; implement next                                 |
+| 4     | à faire | Targeted discovery (PeerTube following + adult ad pivots) later  | Hot leads only                                                        |
+| 5     | à faire | Cheap LLM judge on misses + review UI later                      | Not on every page                                                     |
+
+## Commands
+
+```bash
+pnpm --filter @clarity/extension eval:page-analyzer
+```
+
+Fixtures: `apps/extension/scripts/eval/fixtures/page-analyzer/`  
+Corpus: `apps/extension/scripts/eval/fixtures/page-analyzer-corpus.json`
 
 ## Constraints
 

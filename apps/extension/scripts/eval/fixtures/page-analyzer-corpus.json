@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-15",
+  "description": "Offline page-analyzer HTML fixtures for cheap-agent scanner MVP (Étape 1). label=block|allow. Safe corpus rows are the minimal FP gate (Étape 2 smoke).",
+  "blockThreshold": 70,
+  "fixtures": [
+    {
+      "id": "pigav_watch_peertube",
+      "file": "page-analyzer/pigav-watch-peertube.html",
+      "url": "https://pigav.com/w/abc123",
+      "label": "block",
+      "category": "peertube_nsfw_gold",
+      "notes": "PeerTube isNSFW:true + Mature JSON-LD + AVX/CJK gold signals (no domain hard-block required)"
+    },
+    {
+      "id": "globalinnovationdesign_cloaked",
+      "file": "page-analyzer/globalinnovationdesign-cloaked.html",
+      "url": "https://globalinnovationdesign.org/",
+      "label": "block",
+      "category": "cloaked_celeb_leak",
+      "notes": "Fappening meta + magsrv + porn CDN thumbs + 2257"
+    },
+    {
+      "id": "safe_wikipedia_sexuality",
+      "file": "page-analyzer/safe-wikipedia-sexuality.html",
+      "url": "https://en.wikipedia.org/wiki/Human_sexuality",
+      "label": "allow",
+      "category": "hard_negative_safe_corpus",
+      "notes": "Educational encyclopedia — must stay under block threshold"
+    },
+    {
+      "id": "safe_peertube_non_nsfw",
+      "file": "page-analyzer/safe-peertube-non-nsfw.html",
+      "url": "https://videos.example.org/w/science-talk",
+      "label": "allow",
+      "category": "hard_negative_safe_corpus",
+      "notes": "PeerTube isNSFW:false must not score as adult"
+    }
+  ]
+}

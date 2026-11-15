@@ -39,6 +39,13 @@ const KNOWN_ADULT_DOMAINS = [
 const ADULT_AD_NETWORKS = [
   'exoclick.com', 'juicyads.com', 'trafficjunky.net', 'trafficjunky.com',
   'popads.net', 'adsterra.com', 'tsyndicate.com', 'ero-advertising.com',
+  'magsrv.com', 'realsrv.com', 'cpmstar.com', 'adxpansion.com',
+]
+
+/** Mirrors page-analyzer PORN_IMAGE_CDN_HOSTS (gallery thumb density). */
+const PORN_IMAGE_CDN_HOSTS = [
+  'fpo.xxx', 'xgroovy.com', 'manyvids.com', 'blacked.com', 'jav.sb',
+  'phncdn.com', 'xhcdn.com', 'pixhost.to', 'imagetwist.com', 'erome.com',
 ]
 
 const ADULT_LINK_DOMAIN_THRESHOLD = 3
@@ -286,6 +293,64 @@ function scoreStructuralHtml(html, extraAdultDomains = []) {
   } else if (adHits.size === 1) {
     score += 30
     reasons.push(`Adult ad network: ${[...adHits][0]}`)
+  }
+
+  // Celeb-leak / fappening meta + 2257 + porn CDN density (mirrors page-analyzer)
+  const descMatch = html.match(
+    /<meta[^>]*(?:name=["']description["']|property=["']og:description["'])[^>]*content=["']([^"']+)["']/i
+  ) || html.match(
+    /content=["']([^"']+)["'][^>]*(?:name=["']description["']|property=["']og:description["'])/i
+  )
+  const desc = (descMatch?.[1] || '').toLowerCase()
+  const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
+  const title = (titleMatch?.[1] || '').toLowerCase()
+  const textBlob = `${title} ${desc} ${html}`.toLowerCase()
+
+  const celebPhrases = [
+    'fappening', 'leaked nude', 'nude leak', 'celeb leak', 'celebrity leak',
+    'onlyfans leak', 'leaked celebs', 'celebrity nude',
+  ]
+  const phraseHits = celebPhrases.filter((p) => desc.includes(p) || title.includes(p))
+  if (phraseHits.length >= 2) {
+    score += 50
+    reasons.push(`Celeb-leak phrases: ${phraseHits.slice(0, 3).join(', ')}`)
+  } else if (phraseHits.length === 1) {
+    score += 35
+    reasons.push(`Celeb-leak phrase: ${phraseHits[0]}`)
+  }
+
+  if (
+    /18\s*u\.?\s*s\.?\s*c\.?\s*\.?\s*§?\s*2257/.test(textBlob) ||
+    /18usc2257/.test(textBlob)
+  ) {
+    score += 35
+    reasons.push('18 U.S.C. 2257 marker')
+  }
+
+  const imgHosts = [...html.matchAll(/<img[^>]+(?:src|data-src)\s*=\s*["'](https?:\/\/[^"']+)["']/gi)]
+    .map((m) => {
+      try {
+        return new URL(m[1]).hostname.replace(/^www\./, '').toLowerCase()
+      } catch {
+        return null
+      }
+    })
+    .filter(Boolean)
+  const cdnHits = new Set()
+  for (const host of imgHosts) {
+    for (const cdn of PORN_IMAGE_CDN_HOSTS) {
+      if (host === cdn || host.endsWith('.' + cdn)) {
+        cdnHits.add(cdn)
+        break
+      }
+    }
+  }
+  if (cdnHits.size >= 3) {
+    score += 45
+    reasons.push(`Porn image CDN density (${cdnHits.size})`)
+  } else if (cdnHits.size >= 2) {
+    score += 25
+    reasons.push(`Porn image CDNs (${cdnHits.size})`)
   }
 
   return {

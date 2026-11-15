@@ -37,6 +37,20 @@
       "category": "policy_sensitive_structural",
       "notes": "Fantia alone is dual-use — structural scorer should not treat host as known adult seed",
       "html": "<html><body><a href=\"https://fantia.jp/posts/1\">fan</a><p>creator page</p></body></html>"
+    },
+    {
+      "id": "structural_cloaked_fappening_gallery",
+      "label": "block",
+      "category": "structural_celeb_leak",
+      "notes": "Cloaked vanity .org celeb-leak: fappening meta + 2257 + magsrv + multi porn CDN thumbs",
+      "html": "<html><head><title>globalinnovationdesign.org Fappening Celebrity Photos</title><meta name=\"description\" content=\"biggest fappening collection of celebs leaked nude photos and videos\"></head><body><nav><a href=\"/dating\">Sex dating</a><a href=\"/games\">Adult games</a><a href=\"/cams\">Live cams</a></nav><img src=\"https://cdn.fpo.xxx/t1.jpg\"><img src=\"https://img.xgroovy.com/t2.jpg\"><img src=\"https://thumbs.manyvids.com/t3.jpg\"><img src=\"https://www.blacked.com/t4.jpg\"><script src=\"https://a.magsrv.com/ad-provider.js\"></script><footer><a href=\"/18usc2257\">18usc2257</a> DMCA</footer></body></html>"
+    },
+    {
+      "id": "structural_benign_org_no_adult",
+      "label": "allow",
+      "category": "hard_negative_structural",
+      "notes": "Random .org must not trip celeb-leak / CDN / 2257 heuristics",
+      "html": "<html><head><title>Global Innovation Design Lab</title><meta name=\"description\" content=\"Design research and product innovation for nonprofits\"></head><body><nav><a href=\"/about\">About</a><a href=\"/work\">Work</a></nav><img src=\"https://cdn.example.com/hero.jpg\"><p>We study inclusive design.</p><footer>Contact · Privacy</footer></body></html>"
     }
   ]
 }

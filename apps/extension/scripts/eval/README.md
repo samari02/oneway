@@ -41,6 +41,18 @@ node apps/extension/scripts/lib/generate-adult-blocklist.mjs
 - **False positives**: labeled `allow` but matched — hard-negative FPs fail the script (`exit 1`)
 - `policy_sensitive_allow` (Fantia / ci-en / booth / Fanbox): domain-only stack should **allow**; content analysis may still block NSFW pages in-browser
 
+## Page-analyzer offline (cheap-agent scanner MVP)
+
+Runs the real `src/content/page-analyzer.ts` against local HTML fixtures (linkedom + esbuild bundle). Includes a minimal safe-corpus smoke gate (hard-negative FPs → exit 1).
+
+```bash
+pnpm --filter @clarity/extension eval:page-analyzer
+```
+
+- Corpus: [`fixtures/page-analyzer-corpus.json`](./fixtures/page-analyzer-corpus.json)
+- HTML: [`fixtures/page-analyzer/`](./fixtures/page-analyzer/)
+- Plan: [`docs/02-features/02-blocage/cheap_agent_scanner_mvp.md`](../../../../docs/02-features/02-blocage/cheap_agent_scanner_mvp.md)
+
 ## Related
 
 - Sync contract: [`docs/02-features/02-blocage/adult_blocklist_sync_v1.md`](../../../../docs/02-features/02-blocage/adult_blocklist_sync_v1.md)

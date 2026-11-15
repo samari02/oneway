@@ -1489,7 +1489,7 @@ if (shouldInject()) {
 // Analyzes page content for explicit material
 // ============================================================================
 
-import { analyzePage, isSPALikely } from './page-analyzer'
+import { analyzePage, isSPALikely, needsExtendedSpaRecheck } from './page-analyzer'
 import { initGoogleImagesHide } from './google-images-hide'
 
 // ============================================================================
@@ -1502,10 +1502,13 @@ if (shouldInject()) {
 
 const ANALYSIS_DELAY_MS = 500        // Wait for initial render
 const SPA_RECHECK_DELAY_MS = 1500    // Recheck for SPAs
+const SPA_EXTENDED_RECHECK_MS = 3500 // Angular PeerTube / Cloudflare hydrate
 const LOCAL_BLOCK_SCORE = 70         // Client-side block threshold (heightened handled by SW)
 let hasAnalyzed = false
 let pageAnalysisScore = 0
 let hasRedirectedToBlock = false
+let spaObserver: MutationObserver | null = null
+let spaObserverDone = false
 
 /** System adult domains from storage (self-reinforcing structural link signals). */
 async function loadKnownAdultDomains(): Promise<string[]> {
@@ -1603,13 +1606,63 @@ async function runPageAnalysis(isRecheck: boolean = false): Promise<void> {
     
     // If this was initial analysis and looks like SPA, schedule recheck
     if (!isRecheck && isSPALikely() && result.score < 70 && !hasRedirectedToBlock) {
-      log('[PageAnalysis] SPA detected, scheduling recheck...')
-      setTimeout(() => runPageAnalysis(true), SPA_RECHECK_DELAY_MS)
+      const delay = needsExtendedSpaRecheck()
+        ? SPA_EXTENDED_RECHECK_MS
+        : SPA_RECHECK_DELAY_MS
+      log(`[PageAnalysis] SPA detected, scheduling recheck in ${delay}ms...`)
+      setTimeout(() => runPageAnalysis(true), delay)
+      scheduleSpaMutationRecheck()
     }
     
   } catch (error) {
     log('[PageAnalysis] Error:', error)
   }
+}
+
+/**
+ * MutationObserver recheck after Cloudflare/Angular hydrate empties into real DOM.
+ * Stops after first meaningful re-analysis or block.
+ */
+function scheduleSpaMutationRecheck(): void {
+  if (spaObserver || spaObserverDone || hasRedirectedToBlock) return
+  if (!needsExtendedSpaRecheck() && !isSPALikely()) return
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null
+  const root = document.documentElement || document.body
+  if (!root) return
+
+  spaObserver = new MutationObserver(() => {
+    if (hasRedirectedToBlock || spaObserverDone || pageAnalysisScore >= 70) {
+      spaObserver?.disconnect()
+      spaObserver = null
+      return
+    }
+    // Wait until PeerTube shell or cards appear / body grows past challenge shell
+    const hydrated = !!(
+      document.querySelector(
+        '.peertube-container, my-app, .pt-av-card, [data-pt-theme], #avx-navigation'
+      ) || (document.body?.innerText?.length || 0) > 800
+    )
+    if (!hydrated) return
+
+    if (debounceTimer) clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => {
+      if (hasRedirectedToBlock || pageAnalysisScore >= 70) return
+      spaObserverDone = true
+      spaObserver?.disconnect()
+      spaObserver = null
+      log('[PageAnalysis] SPA hydration mutation — recheck')
+      void runPageAnalysis(true)
+    }, 400)
+  })
+
+  spaObserver.observe(root, { childList: true, subtree: true })
+  // Safety: stop observing after 12s
+  setTimeout(() => {
+    spaObserverDone = true
+    spaObserver?.disconnect()
+    spaObserver = null
+  }, 12_000)
 }
 
 // Run analysis when page is ready

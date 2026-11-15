@@ -2,11 +2,13 @@ import { defineConfig } from 'vite'
 import { resolve } from 'path'
 
 // Build config for extension
-// Note: Content scripts need IIFE format, service worker needs ES modules
-export default defineConfig({
+// Note: Content scripts need IIFE format, service worker needs ES modules.
+// In development watch, keep emptyOutDir false so concurrent esbuild content-script
+// output and copy-files artifacts in dist/ are not wiped on each Vite rebuild.
+export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
-    emptyOutDir: true,
+    emptyOutDir: mode !== 'development',
     rollupOptions: {
       input: {
         'service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
@@ -20,4 +22,4 @@ export default defineConfig({
       }
     }
   }
-})
+}))

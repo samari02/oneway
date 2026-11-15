@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev:desktop": "pnpm --filter @oneway/desktop dev",
-    "dev:extension": "pnpm --filter @oneway/extension dev",
+    "dev:extension": "pnpm --filter @clarity/extension dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "check:connectivity": "node scripts/check-connectivity.mjs",

@@ -1,198 +1,143 @@
-/**
- * Content Script - Aoi Widget
- *
- * Injects Aoi mascot into every page as a floating companion.
- * Shows protection status, nudges, and coaching messages.
- *
- * Note: This file must be self-contained (no imports) because
- * Chrome content scripts don't support ES modules.
- */
-// Inline log function (can't import in content scripts)
 function log(...args) {
-    console.log(`[Clarity ${new Date().toISOString()}]`, ...args);
+  console.log(`[Clarity ${(/* @__PURE__ */ new Date()).toISOString()}]`, ...args);
 }
-// Don't inject on extension pages or chrome:// pages
 const EXCLUDED_URLS = [
-    'chrome://',
-    'chrome-extension://',
-    'about:',
-    'edge://',
-    'moz-extension://',
-    'file://'
+  "chrome://",
+  "chrome-extension://",
+  "about:",
+  "edge://",
+  "moz-extension://",
+  "file://"
 ];
 function shouldInject() {
-    const url = window.location.href;
-    return !EXCLUDED_URLS.some(prefix => url.startsWith(prefix));
+  const url = window.location.href;
+  return !EXCLUDED_URLS.some((prefix) => url.startsWith(prefix));
 }
-// Time tracking
 let pageLoadTime = Date.now();
 let lastStatusCheck = 0;
-const STATUS_CHECK_INTERVAL = 30000; // Check status every 30s
-// Hidden state (binary: full widget visible vs fully hidden — no minimize mode)
+const STATUS_CHECK_INTERVAL = 3e4;
 let isHidden = false;
-const HIDDEN_DOMAINS_KEY = 'clarity_hidden_domains';
-const HIDDEN_GLOBAL_KEY = 'clarity_hidden_global';
+const HIDDEN_DOMAINS_KEY = "clarity_hidden_domains";
+const HIDDEN_GLOBAL_KEY = "clarity_hidden_global";
 let shadowRootRef = null;
 let aoiHostContainer = null;
-/**
- * Get current domain
- */
 function getCurrentDomain() {
-    return window.location.hostname.replace(/^www\./, '');
+  return window.location.hostname.replace(/^www\./, "");
 }
-/**
- * Check if widget should be hidden (globally or on this domain)
- */
 async function shouldBeHidden() {
-    try {
-        const result = await chrome.storage.local.get([HIDDEN_GLOBAL_KEY, HIDDEN_DOMAINS_KEY]);
-        // Check global hide first
-        if (result[HIDDEN_GLOBAL_KEY] === true) {
-            return { hidden: true, reason: 'global' };
-        }
-        // Check domain-specific hide
-        const hiddenDomains = result[HIDDEN_DOMAINS_KEY] || [];
-        const domain = getCurrentDomain();
-        if (hiddenDomains.includes(domain)) {
-            return { hidden: true, reason: 'domain' };
-        }
-        return { hidden: false, reason: null };
+  try {
+    const result = await chrome.storage.local.get([HIDDEN_GLOBAL_KEY, HIDDEN_DOMAINS_KEY]);
+    if (result[HIDDEN_GLOBAL_KEY] === true) {
+      return { hidden: true, reason: "global" };
     }
-    catch {
-        return { hidden: false, reason: null };
-    }
-}
-/**
- * Set global hidden state
- */
-async function setGlobalHidden(hidden) {
-    try {
-        await chrome.storage.local.set({ [HIDDEN_GLOBAL_KEY]: hidden });
-        log(`Aoi ${hidden ? 'hidden' : 'shown'} globally`);
-        // Sync to desktop/Supabase
-        await syncPreferencesToDesktop();
-    }
-    catch (error) {
-        log('Error setting global hidden state:', error);
-    }
-}
-/**
- * Toggle hidden state for current domain
- */
-async function toggleHiddenOnDomain(hidden) {
+    const hiddenDomains = result[HIDDEN_DOMAINS_KEY] || [];
     const domain = getCurrentDomain();
-    try {
-        const result = await chrome.storage.local.get(HIDDEN_DOMAINS_KEY);
-        let hiddenDomains = result[HIDDEN_DOMAINS_KEY] || [];
-        if (hidden && !hiddenDomains.includes(domain)) {
-            hiddenDomains.push(domain);
-        }
-        else if (!hidden) {
-            hiddenDomains = hiddenDomains.filter(d => d !== domain);
-        }
-        await chrome.storage.local.set({ [HIDDEN_DOMAINS_KEY]: hiddenDomains });
-        log(`Aoi ${hidden ? 'hidden' : 'shown'} on ${domain}`);
-        // Sync to desktop/Supabase
-        await syncPreferencesToDesktop();
+    if (hiddenDomains.includes(domain)) {
+      return { hidden: true, reason: "domain" };
     }
-    catch (error) {
-        log('Error toggling hidden state:', error);
-    }
+    return { hidden: false, reason: null };
+  } catch {
+    return { hidden: false, reason: null };
+  }
 }
-/**
- * Sync current preferences to desktop app (for Supabase persistence)
- */
+async function setGlobalHidden(hidden) {
+  try {
+    await chrome.storage.local.set({ [HIDDEN_GLOBAL_KEY]: hidden });
+    log(`Aoi ${hidden ? "hidden" : "shown"} globally`);
+    await syncPreferencesToDesktop();
+  } catch (error) {
+    log("Error setting global hidden state:", error);
+  }
+}
+async function toggleHiddenOnDomain(hidden) {
+  const domain = getCurrentDomain();
+  try {
+    const result = await chrome.storage.local.get(HIDDEN_DOMAINS_KEY);
+    let hiddenDomains = result[HIDDEN_DOMAINS_KEY] || [];
+    if (hidden && !hiddenDomains.includes(domain)) {
+      hiddenDomains.push(domain);
+    } else if (!hidden) {
+      hiddenDomains = hiddenDomains.filter((d) => d !== domain);
+    }
+    await chrome.storage.local.set({ [HIDDEN_DOMAINS_KEY]: hiddenDomains });
+    log(`Aoi ${hidden ? "hidden" : "shown"} on ${domain}`);
+    await syncPreferencesToDesktop();
+  } catch (error) {
+    log("Error toggling hidden state:", error);
+  }
+}
 async function syncPreferencesToDesktop() {
-    try {
-        const result = await chrome.storage.local.get([HIDDEN_GLOBAL_KEY, HIDDEN_DOMAINS_KEY]);
-        const preferences = {
-            hiddenGlobal: result[HIDDEN_GLOBAL_KEY] || false,
-            hiddenDomains: result[HIDDEN_DOMAINS_KEY] || []
-        };
-        // Send to service worker → desktop app → Supabase
-        chrome.runtime.sendMessage({
-            type: 'AOI_PREFERENCES_UPDATE',
-            data: preferences
-        });
-    }
-    catch (error) {
-        log('Error syncing preferences to desktop:', error);
-    }
+  try {
+    const result = await chrome.storage.local.get([HIDDEN_GLOBAL_KEY, HIDDEN_DOMAINS_KEY]);
+    const preferences = {
+      hiddenGlobal: result[HIDDEN_GLOBAL_KEY] || false,
+      hiddenDomains: result[HIDDEN_DOMAINS_KEY] || []
+    };
+    chrome.runtime.sendMessage({
+      type: "AOI_PREFERENCES_UPDATE",
+      data: preferences
+    });
+  } catch (error) {
+    log("Error syncing preferences to desktop:", error);
+  }
 }
-/**
- * Create and inject the Aoi widget
- */
 function setHostVisibility(hidden) {
-    isHidden = hidden;
-    if (aoiHostContainer) {
-        aoiHostContainer.style.display = hidden ? 'none' : '';
-    }
-    if (!hidden && shadowRootRef) {
-        updateAoiStatus(shadowRootRef);
-    }
+  isHidden = hidden;
+  if (aoiHostContainer) {
+    aoiHostContainer.style.display = hidden ? "none" : "";
+  }
+  if (!hidden && shadowRootRef) {
+    updateAoiStatus(shadowRootRef);
+  }
 }
 async function createAoiWidget() {
-    // Create container
-    const container = document.createElement('div');
-    container.id = 'clarity-aoi-widget';
-    aoiHostContainer = container;
-    shadowRootRef = null;
-    // Use Shadow DOM to isolate styles
-    const shadow = container.attachShadow({ mode: 'closed' });
-    shadowRootRef = shadow;
-    // Inject styles
-    const styles = document.createElement('style');
-    styles.textContent = getWidgetStyles();
-    shadow.appendChild(styles);
-    // Create widget HTML
-    const widget = document.createElement('div');
-    widget.className = 'aoi-widget';
-    widget.innerHTML = getWidgetHTML();
-    shadow.appendChild(widget);
-    // Check if hidden (globally or on this domain) — entire host node hidden (no in-page restore chip)
-    const hideStatus = await shouldBeHidden();
-    if (hideStatus.hidden) {
-        log(`Aoi hidden (${hideStatus.reason}) on ${getCurrentDomain()}`);
-    }
-    setHostVisibility(hideStatus.hidden);
-    // Add to page
-    document.body.appendChild(container);
-    // Sync when extension storage changes (e.g. Clarity Settings or other tabs)
-    chrome.storage.onChanged.addListener((changes, area) => {
-        if (area !== 'local')
-            return;
-        if (!changes[HIDDEN_GLOBAL_KEY] && !changes[HIDDEN_DOMAINS_KEY])
-            return;
-        void (async () => {
-            const next = await shouldBeHidden();
-            setHostVisibility(next.hidden);
-        })();
-    });
-    // Setup event listeners
-    setupWidgetEvents(shadow);
-    // Initial status check (only if visible)
+  const container = document.createElement("div");
+  container.id = "clarity-aoi-widget";
+  aoiHostContainer = container;
+  shadowRootRef = null;
+  const shadow = container.attachShadow({ mode: "closed" });
+  shadowRootRef = shadow;
+  const styles = document.createElement("style");
+  styles.textContent = getWidgetStyles();
+  shadow.appendChild(styles);
+  const widget = document.createElement("div");
+  widget.className = "aoi-widget";
+  widget.innerHTML = getWidgetHTML();
+  shadow.appendChild(widget);
+  const hideStatus = await shouldBeHidden();
+  if (hideStatus.hidden) {
+    log(`Aoi hidden (${hideStatus.reason}) on ${getCurrentDomain()}`);
+  }
+  setHostVisibility(hideStatus.hidden);
+  document.body.appendChild(container);
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local")
+      return;
+    if (!changes[HIDDEN_GLOBAL_KEY] && !changes[HIDDEN_DOMAINS_KEY])
+      return;
+    void (async () => {
+      const next = await shouldBeHidden();
+      setHostVisibility(next.hidden);
+    })();
+  });
+  setupWidgetEvents(shadow);
+  if (!isHidden) {
+    updateAoiStatus(shadow);
+  }
+  setInterval(() => {
     if (!isHidden) {
-        updateAoiStatus(shadow);
+      updateAoiStatus(shadow);
     }
-    // Periodic status updates
-    setInterval(() => {
-        if (!isHidden) {
-            updateAoiStatus(shadow);
-        }
-    }, STATUS_CHECK_INTERVAL);
-    // Track time on page
-    setInterval(() => {
-        if (!isHidden) {
-            updateTimeOnSite(shadow);
-        }
-    }, 60000); // Every minute
-    log('Aoi widget injected');
+  }, STATUS_CHECK_INTERVAL);
+  setInterval(() => {
+    if (!isHidden) {
+      updateTimeOnSite(shadow);
+    }
+  }, 6e4);
+  log("Aoi widget injected");
 }
-/**
- * Widget CSS styles
- */
 function getWidgetStyles() {
-    return `
+  return `
     * {
       box-sizing: border-box;
       margin: 0;
@@ -925,14 +870,11 @@ function getWidgetStyles() {
       text-transform: uppercase;
     }
     
-    /* Visibility is toggled on #clarity-aoi-widget (display: none) — no minimize / no in-page restore chip */
+    /* Visibility is toggled on #clarity-aoi-widget (display: none) \u2014 no minimize / no in-page restore chip */
   `;
 }
-/**
- * Widget HTML structure
- */
 function getWidgetHTML() {
-    return `
+  return `
     <div class="aoi-bubble" data-status="ok">
       <div class="aoi-character">
         <div class="aoi-sprout"></div>
@@ -953,31 +895,31 @@ function getWidgetHTML() {
           <div class="aoi-leg"></div>
         </div>
       </div>
-      <div class="aoi-message">Protection active ✓</div>
+      <div class="aoi-message">Protection active \u2713</div>
       <div class="aoi-time-badge"></div>
     </div>
     <div class="aoi-menu">
       <div class="aoi-menu-item aoi-menu-item--analysis" data-action="show-analysis">
-        <span class="aoi-menu-item-icon">🔍</span>
+        <span class="aoi-menu-item-icon">\u{1F50D}</span>
         <span>Show analysis</span>
       </div>
       <div class="aoi-menu-divider"></div>
       <div class="aoi-menu-item aoi-menu-item--hide-domain" data-action="hide-domain">
-        <span class="aoi-menu-item-icon">📍</span>
+        <span class="aoi-menu-item-icon">\u{1F4CD}</span>
         <span>Hide on this site</span>
       </div>
       <div class="aoi-menu-item aoi-menu-item--hide-global" data-action="hide-global">
-        <span class="aoi-menu-item-icon">🌐</span>
+        <span class="aoi-menu-item-icon">\u{1F310}</span>
         <span>Hide on all sites</span>
       </div>
     </div>
     <div class="aoi-analysis-panel">
       <div class="aoi-analysis-header">
         <div class="aoi-analysis-title">
-          <span>🔍</span>
+          <span>\u{1F50D}</span>
           <span>Blocking Analysis</span>
         </div>
-        <button class="aoi-analysis-close">✕</button>
+        <button class="aoi-analysis-close">\u2715</button>
       </div>
       <div class="aoi-analysis-content">
         <div class="aoi-analysis-empty">Loading...</div>
@@ -985,132 +927,107 @@ function getWidgetHTML() {
     </div>
   `;
 }
-/**
- * Setup widget event listeners
- */
 function setupWidgetEvents(shadow) {
-    const widget = shadow.querySelector('.aoi-widget');
-    const bubble = shadow.querySelector('.aoi-bubble');
-    const menu = shadow.querySelector('.aoi-menu');
-    const hideGlobalItem = shadow.querySelector('.aoi-menu-item--hide-global');
-    const hideDomainItem = shadow.querySelector('.aoi-menu-item--hide-domain');
-    const analysisItem = shadow.querySelector('.aoi-menu-item--analysis');
-    const analysisPanel = shadow.querySelector('.aoi-analysis-panel');
-    const analysisClose = shadow.querySelector('.aoi-analysis-close');
-    if (!bubble || !widget || !menu)
-        return;
-    let menuOpen = false;
-    let analysisPanelOpen = false;
-    // Click on Aoi to toggle menu
-    bubble.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const status = bubble.dataset.status;
-        if (status === 'alert') {
-            // Open extension popup for alert issues
-            chrome.runtime.sendMessage({ type: 'OPEN_POPUP' });
-        }
-        else {
-            // Close analysis panel if open
-            if (analysisPanelOpen) {
-                analysisPanelOpen = false;
-                analysisPanel?.classList.remove('open');
-            }
-            // Toggle options menu
-            menuOpen = !menuOpen;
-            menu.classList.toggle('open', menuOpen);
-        }
-    });
-    // Click on "Show Analysis" option
-    analysisItem?.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        menuOpen = false;
-        menu.classList.remove('open');
-        // Open analysis panel
-        analysisPanelOpen = true;
-        analysisPanel?.classList.add('open');
-        // Fetch and display analysis data
-        await updateAnalysisPanel(shadow);
-    });
-    // Click on close button in analysis panel
-    analysisClose?.addEventListener('click', (e) => {
-        e.stopPropagation();
+  const widget = shadow.querySelector(".aoi-widget");
+  const bubble = shadow.querySelector(".aoi-bubble");
+  const menu = shadow.querySelector(".aoi-menu");
+  const hideGlobalItem = shadow.querySelector(".aoi-menu-item--hide-global");
+  const hideDomainItem = shadow.querySelector(".aoi-menu-item--hide-domain");
+  const analysisItem = shadow.querySelector(".aoi-menu-item--analysis");
+  const analysisPanel = shadow.querySelector(".aoi-analysis-panel");
+  const analysisClose = shadow.querySelector(".aoi-analysis-close");
+  if (!bubble || !widget || !menu)
+    return;
+  let menuOpen = false;
+  let analysisPanelOpen = false;
+  bubble.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const status = bubble.dataset.status;
+    if (status === "alert") {
+      chrome.runtime.sendMessage({ type: "OPEN_POPUP" });
+    } else {
+      if (analysisPanelOpen) {
         analysisPanelOpen = false;
-        analysisPanel?.classList.remove('open');
-    });
-    // Click on "Hide everywhere" option — widget removed from page; show again from Clarity Settings
-    hideGlobalItem?.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        menuOpen = false;
-        menu.classList.remove('open');
-        await setGlobalHidden(true);
-        setHostVisibility(true);
-    });
-    // Click on "Hide on this site" option
-    hideDomainItem?.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        menuOpen = false;
-        menu.classList.remove('open');
-        await toggleHiddenOnDomain(true);
-        setHostVisibility(true);
-    });
-    // Close menu/panel when clicking outside
-    document.addEventListener('click', () => {
-        if (menuOpen) {
-            menuOpen = false;
-            menu.classList.remove('open');
-        }
-        if (analysisPanelOpen) {
-            analysisPanelOpen = false;
-            analysisPanel?.classList.remove('open');
-        }
-    });
-    // Prevent clicks inside panel from closing it
-    analysisPanel?.addEventListener('click', (e) => {
-        e.stopPropagation();
-    });
+        analysisPanel?.classList.remove("open");
+      }
+      menuOpen = !menuOpen;
+      menu.classList.toggle("open", menuOpen);
+    }
+  });
+  analysisItem?.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    menuOpen = false;
+    menu.classList.remove("open");
+    analysisPanelOpen = true;
+    analysisPanel?.classList.add("open");
+    await updateAnalysisPanel(shadow);
+  });
+  analysisClose?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    analysisPanelOpen = false;
+    analysisPanel?.classList.remove("open");
+  });
+  hideGlobalItem?.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    menuOpen = false;
+    menu.classList.remove("open");
+    await setGlobalHidden(true);
+    setHostVisibility(true);
+  });
+  hideDomainItem?.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    menuOpen = false;
+    menu.classList.remove("open");
+    await toggleHiddenOnDomain(true);
+    setHostVisibility(true);
+  });
+  document.addEventListener("click", () => {
+    if (menuOpen) {
+      menuOpen = false;
+      menu.classList.remove("open");
+    }
+    if (analysisPanelOpen) {
+      analysisPanelOpen = false;
+      analysisPanel?.classList.remove("open");
+    }
+  });
+  analysisPanel?.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
 }
-/**
- * Fetch and update the analysis panel with current blocking data
- */
 async function updateAnalysisPanel(shadow) {
-    const contentDiv = shadow.querySelector('.aoi-analysis-content');
-    if (!contentDiv)
-        return;
-    try {
-        const response = await chrome.runtime.sendMessage({
-            type: 'GET_PAGE_ANALYSIS',
-            data: { url: window.location.href, domain: getCurrentDomain() }
-        });
-        if (!response) {
-            contentDiv.innerHTML = renderAnalysisEmpty();
-            return;
-        }
-        contentDiv.innerHTML = renderAnalysisContent(response);
+  const contentDiv = shadow.querySelector(".aoi-analysis-content");
+  if (!contentDiv)
+    return;
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "GET_PAGE_ANALYSIS",
+      data: { url: window.location.href, domain: getCurrentDomain() }
+    });
+    if (!response) {
+      contentDiv.innerHTML = renderAnalysisEmpty();
+      return;
     }
-    catch (error) {
-        log('Error fetching analysis:', error);
-        contentDiv.innerHTML = `<div class="aoi-analysis-empty">Could not load analysis</div>`;
-    }
+    contentDiv.innerHTML = renderAnalysisContent(response);
+  } catch (error) {
+    log("Error fetching analysis:", error);
+    contentDiv.innerHTML = `<div class="aoi-analysis-empty">Could not load analysis</div>`;
+  }
 }
 function renderAnalysisEmpty() {
-    return `
+  return `
     <div class="aoi-analysis-empty">Loading analysis...</div>
   `;
 }
 function renderAnalysisContent(data) {
-    const { domain, layer1, layer2, layer3, heightenedMode, thresholds, finalDecision, dailyStats } = data;
-    // Decision badge
-    const decisionClass = finalDecision === 'block' ? 'danger' : finalDecision === 'warn' ? 'warning' : '';
-    const decisionText = finalDecision === 'block' ? '✕ BLOCKED' : finalDecision === 'warn' ? '⚠ WARNING' : '✓ ALLOWED';
-    const decisionIcon = finalDecision === 'block' ? '🛑' : finalDecision === 'warn' ? '⚠️' : '✅';
-    // Mode indicator
-    const modeHtml = heightenedMode?.active
-        ? `<div class="aoi-analysis-mode heightened">🔥 Heightened Mode (${Math.ceil((heightenedMode.expiresAt - Date.now()) / 60000)}min left)</div>`
-        : `<div class="aoi-analysis-mode normal">✓ Normal Mode</div>`;
-    // === LAYER 1: Blocklist ===
-    const layer1Status = layer1.blocked ? 'fail' : 'pass';
-    const layer1Icon = layer1.blocked ? '🚫' : '✓';
-    const layer1Html = `
+  const { domain, layer1, layer2, layer3, heightenedMode, thresholds, finalDecision, dailyStats } = data;
+  const decisionClass = finalDecision === "block" ? "danger" : finalDecision === "warn" ? "warning" : "";
+  const decisionText = finalDecision === "block" ? "\u2715 BLOCKED" : finalDecision === "warn" ? "\u26A0 WARNING" : "\u2713 ALLOWED";
+  const decisionIcon = finalDecision === "block" ? "\u{1F6D1}" : finalDecision === "warn" ? "\u26A0\uFE0F" : "\u2705";
+  const modeHtml = heightenedMode?.active ? `<div class="aoi-analysis-mode heightened">\u{1F525} Heightened Mode (${Math.ceil((heightenedMode.expiresAt - Date.now()) / 6e4)}min left)</div>` : `<div class="aoi-analysis-mode normal">\u2713 Normal Mode</div>`;
+  const layer1Status = layer1.blocked ? "fail" : "pass";
+  const layer1Icon = layer1.blocked ? "\u{1F6AB}" : "\u2713";
+  const layer1Html = `
     <div class="aoi-analysis-layer">
       <div class="aoi-layer-header">
         <span class="aoi-layer-number">1</span>
@@ -1118,17 +1035,15 @@ function renderAnalysisContent(data) {
         <span class="aoi-layer-status ${layer1Status}">${layer1Icon}</span>
       </div>
       <div class="aoi-layer-content">
-        ${layer1.blocked
-        ? `<div class="aoi-analysis-item fail">
-              <div class="aoi-analysis-item-icon">🚫</div>
+        ${layer1.blocked ? `<div class="aoi-analysis-item fail">
+              <div class="aoi-analysis-item-icon">\u{1F6AB}</div>
               <div class="aoi-analysis-item-content">
                 <div class="aoi-analysis-item-label">Domain blocked</div>
-                <div class="aoi-analysis-item-value">${escapeHtml(layer1.matchedRule?.pattern || '')}</div>
-                <div class="aoi-analysis-item-value">${escapeHtml(layer1.matchedRule?.reason || '')}</div>
+                <div class="aoi-analysis-item-value">${escapeHtml(layer1.matchedRule?.pattern || "")}</div>
+                <div class="aoi-analysis-item-value">${escapeHtml(layer1.matchedRule?.reason || "")}</div>
               </div>
-            </div>`
-        : `<div class="aoi-analysis-item pass">
-              <div class="aoi-analysis-item-icon">✓</div>
+            </div>` : `<div class="aoi-analysis-item pass">
+              <div class="aoi-analysis-item-icon">\u2713</div>
               <div class="aoi-analysis-item-content">
                 <div class="aoi-analysis-item-label">Domain not on blocklist</div>
                 <div class="aoi-analysis-item-value">${escapeHtml(domain)}</div>
@@ -1137,59 +1052,51 @@ function renderAnalysisContent(data) {
       </div>
     </div>
   `;
-    // === LAYER 2: Search Intelligence ===
-    const layer2HasActivity = layer2.searchCount > 0;
-    const layer2Html = `
+  const layer2HasActivity = layer2.searchCount > 0;
+  const layer2Html = `
     <div class="aoi-analysis-layer">
       <div class="aoi-layer-header">
         <span class="aoi-layer-number">2</span>
         <span class="aoi-layer-title">Search Intelligence</span>
-        <span class="aoi-layer-status ${layer2HasActivity && layer2.sessionScore > 20 ? 'warn' : 'pass'}">
-          ${layer2.isSearchEngine ? '🔍' : '—'}
+        <span class="aoi-layer-status ${layer2HasActivity && layer2.sessionScore > 20 ? "warn" : "pass"}">
+          ${layer2.isSearchEngine ? "\u{1F50D}" : "\u2014"}
         </span>
       </div>
       <div class="aoi-layer-content">
-        ${layer2.isSearchEngine
-        ? `<div class="aoi-analysis-item">
-              <div class="aoi-analysis-item-icon">🔍</div>
+        ${layer2.isSearchEngine ? `<div class="aoi-analysis-item">
+              <div class="aoi-analysis-item-icon">\u{1F50D}</div>
               <div class="aoi-analysis-item-content">
                 <div class="aoi-analysis-item-label">Search engine detected</div>
               </div>
-            </div>`
-        : ''}
-        ${layer2.lastSearch
-        ? `<div class="aoi-analysis-item ${layer2.lastSearch.score > 30 ? 'warn' : ''}">
-              <div class="aoi-analysis-item-icon">💬</div>
+            </div>` : ""}
+        ${layer2.lastSearch ? `<div class="aoi-analysis-item ${layer2.lastSearch.score > 30 ? "warn" : ""}">
+              <div class="aoi-analysis-item-icon">\u{1F4AC}</div>
               <div class="aoi-analysis-item-content">
-                <div class="aoi-analysis-item-label">Last search: "${escapeHtml(layer2.lastSearch.query.slice(0, 25))}${layer2.lastSearch.query.length > 25 ? '...' : ''}"</div>
+                <div class="aoi-analysis-item-label">Last search: "${escapeHtml(layer2.lastSearch.query.slice(0, 25))}${layer2.lastSearch.query.length > 25 ? "..." : ""}"</div>
                 <div class="aoi-analysis-item-value">
-                  Score: ${layer2.lastSearch.score} → ${layer2.lastSearch.action.toUpperCase()}
-                  ${layer2.lastSearch.flags && layer2.lastSearch.flags.length > 0 ? `<br>Flags: ${layer2.lastSearch.flags.join(', ')}` : ''}
+                  Score: ${layer2.lastSearch.score} \u2192 ${layer2.lastSearch.action.toUpperCase()}
+                  ${layer2.lastSearch.flags && layer2.lastSearch.flags.length > 0 ? `<br>Flags: ${layer2.lastSearch.flags.join(", ")}` : ""}
                 </div>
               </div>
-              <div class="aoi-analysis-item-score ${layer2.lastSearch.score > 0 ? 'positive' : ''}">${layer2.lastSearch.score}</div>
-            </div>`
-        : `<div class="aoi-analysis-item">
-              <div class="aoi-analysis-item-icon">—</div>
+              <div class="aoi-analysis-item-score ${layer2.lastSearch.score > 0 ? "positive" : ""}">${layer2.lastSearch.score}</div>
+            </div>` : `<div class="aoi-analysis-item">
+              <div class="aoi-analysis-item-icon">\u2014</div>
               <div class="aoi-analysis-item-content">
                 <div class="aoi-analysis-item-label">No recent searches in session</div>
               </div>
             </div>`}
-        ${layer2HasActivity
-        ? `<div class="aoi-analysis-item">
-              <div class="aoi-analysis-item-icon">Σ</div>
+        ${layer2HasActivity ? `<div class="aoi-analysis-item">
+              <div class="aoi-analysis-item-icon">\u03A3</div>
               <div class="aoi-analysis-item-content">
                 <div class="aoi-analysis-item-label">Session total (${layer2.searchCount} searches)</div>
               </div>
-              <div class="aoi-analysis-item-score ${layer2.sessionScore > 20 ? 'positive' : ''}">${layer2.sessionScore}</div>
-            </div>`
-        : ''}
+              <div class="aoi-analysis-item-score ${layer2.sessionScore > 20 ? "positive" : ""}">${layer2.sessionScore}</div>
+            </div>` : ""}
       </div>
     </div>
   `;
-    // === LAYER 3: Content Analysis ===
-    const layer3Status = layer3.isExplicit ? 'fail' : layer3.totalScore >= thresholds.warn ? 'warn' : 'pass';
-    const layer3Html = `
+  const layer3Status = layer3.isExplicit ? "fail" : layer3.totalScore >= thresholds.warn ? "warn" : "pass";
+  const layer3Html = `
     <div class="aoi-analysis-layer">
       <div class="aoi-layer-header">
         <span class="aoi-layer-number">3</span>
@@ -1199,25 +1106,23 @@ function renderAnalysisContent(data) {
         </span>
       </div>
       <div class="aoi-layer-content">
-        ${!layer3.analyzed
-        ? `<div class="aoi-analysis-item">
-              <div class="aoi-analysis-item-icon">⏳</div>
+        ${!layer3.analyzed ? `<div class="aoi-analysis-item">
+              <div class="aoi-analysis-item-icon">\u23F3</div>
               <div class="aoi-analysis-item-content">
                 <div class="aoi-analysis-item-label">Analysis pending or skipped</div>
               </div>
-            </div>`
-        : layer3.checks.map((check) => `
+            </div>` : layer3.checks.map((check) => `
             <div class="aoi-analysis-item ${check.status}">
-              <div class="aoi-analysis-item-icon">${check.status === 'pass' ? '✓' : check.status === 'warn' ? '⚠' : '✕'}</div>
+              <div class="aoi-analysis-item-icon">${check.status === "pass" ? "\u2713" : check.status === "warn" ? "\u26A0" : "\u2715"}</div>
               <div class="aoi-analysis-item-content">
                 <div class="aoi-analysis-item-label">${escapeHtml(check.name)}</div>
                 <div class="aoi-analysis-item-value">${escapeHtml(check.detail)}</div>
               </div>
-              ${check.score > 0 ? `<div class="aoi-analysis-item-score positive">+${check.score}</div>` : ''}
+              ${check.score > 0 ? `<div class="aoi-analysis-item-score positive">+${check.score}</div>` : ""}
             </div>
-          `).join('')}
+          `).join("")}
         <div class="aoi-analysis-item thresholds">
-          <div class="aoi-analysis-item-icon">📊</div>
+          <div class="aoi-analysis-item-icon">\u{1F4CA}</div>
           <div class="aoi-analysis-item-content">
             <div class="aoi-analysis-item-label">Thresholds</div>
             <div class="aoi-analysis-item-value">Warn: ${thresholds.warn} | Block: ${thresholds.block}</div>
@@ -1226,8 +1131,7 @@ function renderAnalysisContent(data) {
       </div>
     </div>
   `;
-    // === Stats ===
-    const statsHtml = dailyStats ? `
+  const statsHtml = dailyStats ? `
     <div class="aoi-analysis-stats">
       <div class="aoi-stat">
         <span class="aoi-stat-value">${dailyStats.blockedSearches || 0}</span>
@@ -1242,8 +1146,8 @@ function renderAnalysisContent(data) {
         <span class="aoi-stat-label">heightened</span>
       </div>
     </div>
-  ` : '';
-    return `
+  ` : "";
+  return `
     <div class="aoi-analysis-decision ${decisionClass}">
       <span class="aoi-decision-icon">${decisionIcon}</span>
       <span class="aoi-decision-text">${decisionText}</span>
@@ -1257,270 +1161,248 @@ function renderAnalysisContent(data) {
   `;
 }
 function escapeHtml(str) {
-    if (!str)
-        return '';
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+  if (!str)
+    return "";
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
-/**
- * Update Aoi's status based on current context
- */
 async function updateAoiStatus(shadow) {
-    try {
-        // Get status from service worker
-        const response = await chrome.runtime.sendMessage({ type: 'GET_AOI_STATUS' });
-        if (!response) {
-            setAoiState(shadow, {
-                status: 'ok',
-                message: 'Protection active ✓',
-                siteCategory: 'unknown',
-                timeOnSite: Math.floor((Date.now() - pageLoadTime) / 1000),
-                isDistraction: false
-            });
-            return;
-        }
-        const timeOnSite = Math.floor((Date.now() - pageLoadTime) / 1000);
-        const timeMinutes = Math.floor(timeOnSite / 60);
-        // Determine status based on response
-        let state;
-        if (response.alertLevel === 'critical' || response.alertLevel === 'warning') {
-            // Protection issue
-            state = {
-                status: 'alert',
-                message: response.alertLevel === 'critical'
-                    ? '⚠️ Protection inactive !'
-                    : '⚠️ Connexion instable',
-                siteCategory: response.siteCategory || 'unknown',
-                timeOnSite,
-                isDistraction: false
-            };
-        }
-        else if (response.isDistraction && timeMinutes >= 10) {
-            // Nudge for time on distraction site
-            state = {
-                status: 'nudge',
-                message: `Tu es ici depuis ${timeMinutes} min...`,
-                siteCategory: response.siteCategory || 'distraction',
-                timeOnSite,
-                isDistraction: true
-            };
-        }
-        else if (response.isDistraction) {
-            // On distraction but not too long yet
-            state = {
-                status: 'ok',
-                message: 'Je garde un œil 👀',
-                siteCategory: response.siteCategory || 'distraction',
-                timeOnSite,
-                isDistraction: true
-            };
-        }
-        else {
-            // All good
-            state = {
-                status: 'ok',
-                message: getRandomOkMessage(),
-                siteCategory: response.siteCategory || 'productive',
-                timeOnSite,
-                isDistraction: false
-            };
-        }
-        setAoiState(shadow, state);
+  try {
+    const response = await chrome.runtime.sendMessage({ type: "GET_AOI_STATUS" });
+    if (!response) {
+      setAoiState(shadow, {
+        status: "ok",
+        message: "Protection active \u2713",
+        siteCategory: "unknown",
+        timeOnSite: Math.floor((Date.now() - pageLoadTime) / 1e3),
+        isDistraction: false
+      });
+      return;
     }
-    catch (error) {
-        log('Error updating Aoi status:', error);
-        // Default to OK state
-        setAoiState(shadow, {
-            status: 'ok',
-            message: 'Tout va bien ✓',
-            siteCategory: 'unknown',
-            timeOnSite: Math.floor((Date.now() - pageLoadTime) / 1000),
-            isDistraction: false
-        });
-    }
-}
-/**
- * Update time display
- */
-function updateTimeOnSite(shadow) {
-    const timeOnSite = Math.floor((Date.now() - pageLoadTime) / 1000);
+    const timeOnSite = Math.floor((Date.now() - pageLoadTime) / 1e3);
     const timeMinutes = Math.floor(timeOnSite / 60);
-    const badge = shadow.querySelector('.aoi-time-badge');
-    if (badge && timeMinutes > 0) {
-        badge.textContent = `${timeMinutes}m`;
+    let state;
+    if (response.alertLevel === "critical" || response.alertLevel === "warning") {
+      state = {
+        status: "alert",
+        message: response.alertLevel === "critical" ? "\u26A0\uFE0F Protection inactive !" : "\u26A0\uFE0F Connexion instable",
+        siteCategory: response.siteCategory || "unknown",
+        timeOnSite,
+        isDistraction: false
+      };
+    } else if (response.isDistraction && timeMinutes >= 10) {
+      state = {
+        status: "nudge",
+        message: `Tu es ici depuis ${timeMinutes} min...`,
+        siteCategory: response.siteCategory || "distraction",
+        timeOnSite,
+        isDistraction: true
+      };
+    } else if (response.isDistraction) {
+      state = {
+        status: "ok",
+        message: "Je garde un \u0153il \u{1F440}",
+        siteCategory: response.siteCategory || "distraction",
+        timeOnSite,
+        isDistraction: true
+      };
+    } else {
+      state = {
+        status: "ok",
+        message: getRandomOkMessage(),
+        siteCategory: response.siteCategory || "productive",
+        timeOnSite,
+        isDistraction: false
+      };
     }
-    // Trigger status update if we've been here a while
-    if (timeMinutes > 0 && timeMinutes % 5 === 0) {
-        updateAoiStatus(shadow);
-    }
+    setAoiState(shadow, state);
+  } catch (error) {
+    log("Error updating Aoi status:", error);
+    setAoiState(shadow, {
+      status: "ok",
+      message: "Tout va bien \u2713",
+      siteCategory: "unknown",
+      timeOnSite: Math.floor((Date.now() - pageLoadTime) / 1e3),
+      isDistraction: false
+    });
+  }
 }
-/**
- * Set Aoi's visual state
- */
+function updateTimeOnSite(shadow) {
+  const timeOnSite = Math.floor((Date.now() - pageLoadTime) / 1e3);
+  const timeMinutes = Math.floor(timeOnSite / 60);
+  const badge = shadow.querySelector(".aoi-time-badge");
+  if (badge && timeMinutes > 0) {
+    badge.textContent = `${timeMinutes}m`;
+  }
+  if (timeMinutes > 0 && timeMinutes % 5 === 0) {
+    updateAoiStatus(shadow);
+  }
+}
 function setAoiState(shadow, state) {
-    const bubble = shadow.querySelector('.aoi-bubble');
-    const face = shadow.querySelector('.aoi-face');
-    const message = shadow.querySelector('.aoi-message');
-    const badge = shadow.querySelector('.aoi-time-badge');
-    if (!bubble || !face || !message)
-        return;
-    // Update status
-    bubble.dataset.status = state.status;
-    // Update mood
-    const mood = state.status === 'ok' ? 'happy'
-        : state.status === 'nudge' ? 'concerned'
-            : 'worried';
-    face.dataset.mood = mood;
-    // Update message
-    message.textContent = state.message;
-    // Update time badge
-    const timeMinutes = Math.floor(state.timeOnSite / 60);
-    if (badge && timeMinutes > 0) {
-        badge.textContent = `${timeMinutes}m`;
-    }
+  const bubble = shadow.querySelector(".aoi-bubble");
+  const face = shadow.querySelector(".aoi-face");
+  const message = shadow.querySelector(".aoi-message");
+  const badge = shadow.querySelector(".aoi-time-badge");
+  if (!bubble || !face || !message)
+    return;
+  bubble.dataset.status = state.status;
+  const mood = state.status === "ok" ? "happy" : state.status === "nudge" ? "concerned" : "worried";
+  face.dataset.mood = mood;
+  message.textContent = state.message;
+  const timeMinutes = Math.floor(state.timeOnSite / 60);
+  if (badge && timeMinutes > 0) {
+    badge.textContent = `${timeMinutes}m`;
+  }
 }
-/**
- * Random OK messages for variety
- */
 function getRandomOkMessage() {
-    const messages = [
-        'Tout roule ! ✓',
-        'Tu es focus 💪',
-        'Protection active ✓',
-        'Continue comme ça !',
-        'Beau travail 🌱',
-        'Je veille sur toi ✓'
-    ];
-    return messages[Math.floor(Math.random() * messages.length)];
+  const messages = [
+    "Tout roule ! \u2713",
+    "Tu es focus \u{1F4AA}",
+    "Protection active \u2713",
+    "Continue comme \xE7a !",
+    "Beau travail \u{1F331}",
+    "Je veille sur toi \u2713"
+  ];
+  return messages[Math.floor(Math.random() * messages.length)];
 }
-// Initialize widget when DOM is ready
 if (shouldInject()) {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', createAoiWidget);
-    }
-    else {
-        createAoiWidget();
-    }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", createAoiWidget);
+  } else {
+    createAoiWidget();
+  }
 }
-// ============================================================================
-// PAGE CONTENT ANALYSIS — Layer 3
-// Analyzes page content for explicit material
-// ============================================================================
-import { analyzePage, isSPALikely } from './page-analyzer';
-import { initGoogleImagesHide } from './google-images-hide';
-// ============================================================================
-// GOOGLE IMAGES — hide related / "See more" endless-browse UI
-// ============================================================================
+import { analyzePage, isSPALikely, needsExtendedSpaRecheck } from "./page-analyzer";
+import { initGoogleImagesHide } from "./google-images-hide";
 if (shouldInject()) {
-    initGoogleImagesHide();
+  initGoogleImagesHide();
 }
-const ANALYSIS_DELAY_MS = 500; // Wait for initial render
-const SPA_RECHECK_DELAY_MS = 1500; // Recheck for SPAs
-const LOCAL_BLOCK_SCORE = 70; // Client-side block threshold (heightened handled by SW)
+const ANALYSIS_DELAY_MS = 500;
+const SPA_RECHECK_DELAY_MS = 1500;
+const SPA_EXTENDED_RECHECK_MS = 3500;
+const LOCAL_BLOCK_SCORE = 70;
 let hasAnalyzed = false;
 let pageAnalysisScore = 0;
 let hasRedirectedToBlock = false;
-/** System adult domains from storage (self-reinforcing structural link signals). */
+let spaObserver = null;
+let spaObserverDone = false;
 async function loadKnownAdultDomains() {
-    try {
-        const stored = await chrome.storage.local.get('adultBlocklistDomains');
-        const domains = stored.adultBlocklistDomains;
-        if (Array.isArray(domains) && domains.length) {
-            return domains;
-        }
+  try {
+    const stored = await chrome.storage.local.get("adultBlocklistDomains");
+    const domains = stored.adultBlocklistDomains;
+    if (Array.isArray(domains) && domains.length) {
+      return domains;
     }
-    catch {
-        /* storage unavailable */
-    }
-    return [];
+  } catch {
+  }
+  return [];
 }
-/**
- * Immediate opaque overlay so content isn't visible while redirecting
- */
 function applyBlockOverlay() {
-    if (document.getElementById('clarity-block-overlay'))
-        return;
-    const overlay = document.createElement('div');
-    overlay.id = 'clarity-block-overlay';
-    overlay.setAttribute('role', 'presentation');
-    overlay.style.cssText =
-        'position:fixed;inset:0;z-index:2147483647;background:#0a0a0a;pointer-events:all;';
-    (document.documentElement || document.body).appendChild(overlay);
+  if (document.getElementById("clarity-block-overlay"))
+    return;
+  const overlay = document.createElement("div");
+  overlay.id = "clarity-block-overlay";
+  overlay.setAttribute("role", "presentation");
+  overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#0a0a0a;pointer-events:all;";
+  (document.documentElement || document.body).appendChild(overlay);
 }
-/**
- * Navigate to extension block screen (content-script redundancy for SW redirect)
- */
 function redirectToBlockScreen(reason) {
-    if (hasRedirectedToBlock)
-        return;
-    hasRedirectedToBlock = true;
-    applyBlockOverlay();
-    const blockUrl = chrome.runtime.getURL('block-screen.html') +
-        `?url=${encodeURIComponent(window.location.href)}` +
-        `&reason=${encodeURIComponent(reason)}` +
-        `&type=content`;
-    log(`[PageAnalysis] REDIRECT issued via content-script navigation — ${reason}`);
-    window.location.replace(blockUrl);
+  if (hasRedirectedToBlock)
+    return;
+  hasRedirectedToBlock = true;
+  applyBlockOverlay();
+  const blockUrl = chrome.runtime.getURL("block-screen.html") + `?url=${encodeURIComponent(window.location.href)}&reason=${encodeURIComponent(reason)}&type=content`;
+  log(`[PageAnalysis] REDIRECT issued via content-script navigation \u2014 ${reason}`);
+  window.location.replace(blockUrl);
 }
-/**
- * Run page analysis and send results to background
- */
 async function runPageAnalysis(isRecheck = false) {
-    // Skip if already analyzed with high score (already sent to background)
-    if (hasAnalyzed && pageAnalysisScore >= 70 && !isRecheck) {
-        return;
-    }
-    if (hasRedirectedToBlock)
-        return;
-    try {
-        const knownAdultDomains = await loadKnownAdultDomains();
-        const result = analyzePage({ knownAdultDomains });
-        pageAnalysisScore = result.score;
-        // Only send to background if score is significant
-        if (result.score >= 10 || result.isExplicit) {
-            log(`[PageAnalysis] Score: ${result.score}, Explicit: ${result.isExplicit}, Reasons: ${result.reasons.join(', ')}`);
-            const reason = result.reasons[0] || 'Explicit content detected';
-            // Do not fire-and-forget: apply verdict locally when clearly blocking
-            const shouldBlockLocally = result.isExplicit || result.score >= LOCAL_BLOCK_SCORE;
-            if (shouldBlockLocally) {
-                redirectToBlockScreen(reason);
-            }
-            chrome.runtime.sendMessage({
-                type: 'PAGE_ANALYSIS_RESULT',
-                data: {
-                    url: window.location.href,
-                    domain: getCurrentDomain(),
-                    result,
-                    timestamp: Date.now(),
-                    isRecheck
-                }
-            }, (response) => {
-                if (chrome.runtime.lastError)
-                    return;
-                if (response?.action === 'block') {
-                    redirectToBlockScreen(reason);
-                }
-            });
+  if (hasAnalyzed && pageAnalysisScore >= 70 && !isRecheck) {
+    return;
+  }
+  if (hasRedirectedToBlock)
+    return;
+  try {
+    const knownAdultDomains = await loadKnownAdultDomains();
+    const result = analyzePage({ knownAdultDomains });
+    pageAnalysisScore = result.score;
+    if (result.score >= 10 || result.isExplicit) {
+      log(`[PageAnalysis] Score: ${result.score}, Explicit: ${result.isExplicit}, Reasons: ${result.reasons.join(", ")}`);
+      const reason = result.reasons[0] || "Explicit content detected";
+      const shouldBlockLocally = result.isExplicit || result.score >= LOCAL_BLOCK_SCORE;
+      if (shouldBlockLocally) {
+        redirectToBlockScreen(reason);
+      }
+      chrome.runtime.sendMessage(
+        {
+          type: "PAGE_ANALYSIS_RESULT",
+          data: {
+            url: window.location.href,
+            domain: getCurrentDomain(),
+            result,
+            timestamp: Date.now(),
+            isRecheck
+          }
+        },
+        (response) => {
+          if (chrome.runtime.lastError)
+            return;
+          if (response?.action === "block") {
+            redirectToBlockScreen(reason);
+          }
         }
-        hasAnalyzed = true;
-        // If this was initial analysis and looks like SPA, schedule recheck
-        if (!isRecheck && isSPALikely() && result.score < 70 && !hasRedirectedToBlock) {
-            log('[PageAnalysis] SPA detected, scheduling recheck...');
-            setTimeout(() => runPageAnalysis(true), SPA_RECHECK_DELAY_MS);
-        }
+      );
     }
-    catch (error) {
-        log('[PageAnalysis] Error:', error);
+    hasAnalyzed = true;
+    if (!isRecheck && isSPALikely() && result.score < 70 && !hasRedirectedToBlock) {
+      const delay = needsExtendedSpaRecheck() ? SPA_EXTENDED_RECHECK_MS : SPA_RECHECK_DELAY_MS;
+      log(`[PageAnalysis] SPA detected, scheduling recheck in ${delay}ms...`);
+      setTimeout(() => runPageAnalysis(true), delay);
+      scheduleSpaMutationRecheck();
     }
+  } catch (error) {
+    log("[PageAnalysis] Error:", error);
+  }
 }
-// Run analysis when page is ready
+function scheduleSpaMutationRecheck() {
+  if (spaObserver || spaObserverDone || hasRedirectedToBlock)
+    return;
+  if (!needsExtendedSpaRecheck() && !isSPALikely())
+    return;
+  let debounceTimer = null;
+  const root = document.documentElement || document.body;
+  if (!root)
+    return;
+  spaObserver = new MutationObserver(() => {
+    if (hasRedirectedToBlock || spaObserverDone || pageAnalysisScore >= 70) {
+      spaObserver?.disconnect();
+      spaObserver = null;
+      return;
+    }
+    const hydrated = !!(document.querySelector(
+      ".peertube-container, my-app, .pt-av-card, [data-pt-theme], #avx-navigation"
+    ) || (document.body?.innerText?.length || 0) > 800);
+    if (!hydrated)
+      return;
+    if (debounceTimer)
+      clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      if (hasRedirectedToBlock || pageAnalysisScore >= 70)
+        return;
+      spaObserverDone = true;
+      spaObserver?.disconnect();
+      spaObserver = null;
+      log("[PageAnalysis] SPA hydration mutation \u2014 recheck");
+      void runPageAnalysis(true);
+    }, 400);
+  });
+  spaObserver.observe(root, { childList: true, subtree: true });
+  setTimeout(() => {
+    spaObserverDone = true;
+    spaObserver?.disconnect();
+    spaObserver = null;
+  }, 12e3);
+}
 if (shouldInject()) {
-    // Wait a bit for page to render
-    setTimeout(() => {
-        runPageAnalysis(false);
-    }, ANALYSIS_DELAY_MS);
+  setTimeout(() => {
+    runPageAnalysis(false);
+  }, ANALYSIS_DELAY_MS);
 }
