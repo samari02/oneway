@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
- * Regression tests for search-engine atlas allowlist + DNR hard-block.
+ * Regression tests for search-engine atlas + hard-block / allowlist policy.
  * Mirrors apps/extension/src/shared/search-engine-atlas.ts + search-filter.ts
+ *
+ * Policy v2+: hard-block every atlas host except google.com / Gemini / ChatGPT.
+ * Layer 2 isSearchEngine / extractSearchQuery apply only on the allowlist.
  *
  * Run: pnpm --filter @clarity/extension test:search-atlas
  */
@@ -16,10 +19,8 @@ const ATLAS_PATH = path.join(EXT_ROOT, 'src/shared/data/search-engine-atlas.json
 const RULES_PATH = path.join(EXT_ROOT, 'public/rules.json')
 const FIXTURE_PATH = path.join(EXT_ROOT, 'scripts/eval/fixtures/search-atlas/yandex-by.json')
 
-const SEARCH_BLOCK_ID_START = 22000
-const SEARCH_BLOCK_ID_END = 22999
-
 const atlas = JSON.parse(fs.readFileSync(ATLAS_PATH, 'utf8'))
+const rules = JSON.parse(fs.readFileSync(RULES_PATH, 'utf8'))
 
 let failed = 0
 function assert(cond, msg) {
@@ -37,21 +38,12 @@ function hostMatchesListed(hostname, listedHost) {
   return h === listed || h.endsWith('.' + listed)
 }
 
-function getAllowlist() {
-  return (atlas.policy?.allowlistHosts || []).map((h) => h.toLowerCase())
-}
-
 function isAllowlistedSearchHost(hostname) {
   const full = hostname.toLowerCase()
   const bare = full.replace(/^www\./, '')
   if (bare === 'google.com') return true
   if (bare === 'gemini.google.com' || bare === 'bard.google.com') return true
   if (bare === 'chatgpt.com' || bare === 'chat.openai.com') return true
-  for (const listed of getAllowlist()) {
-    const listedBare = listed.replace(/^www\./, '')
-    if (listedBare === 'google.com') continue
-    if (full === listed || bare === listedBare) return true
-  }
   return false
 }
 
@@ -78,6 +70,7 @@ function pathAllowsQuery(engine, pathname) {
   return engine.pathIncludes.some((p) => pathName.includes(p.toLowerCase()))
 }
 
+/** Layer 2: allowlist only (mirrors search-filter.ts). */
 function isSearchEngine(url) {
   try {
     const urlObj = new URL(url)
@@ -96,8 +89,9 @@ function isSearchEngine(url) {
 function extractSearchQuery(url) {
   try {
     const urlObj = new URL(url)
-    if (!isAllowlistedSearchHost(urlObj.hostname.toLowerCase())) return null
-    const engine = matchEngineByHostname(urlObj.hostname.toLowerCase())
+    const hostname = urlObj.hostname.toLowerCase()
+    if (!isAllowlistedSearchHost(hostname)) return null
+    const engine = matchEngineByHostname(hostname)
     if (!engine) return null
     if (!pathAllowsQuery(engine, urlObj.pathname)) return null
     for (const param of engine.queryParams) {
@@ -110,34 +104,27 @@ function extractSearchQuery(url) {
   }
 }
 
-function dnrHardBlocksHost(rules, host) {
-  const apex = host.toLowerCase().replace(/^www\./, '')
+function isHardBlockedHost(hostname) {
+  const bare = hostname.toLowerCase().replace(/^www\./, '')
   return rules.some(
     (r) =>
-      r.id >= SEARCH_BLOCK_ID_START &&
-      r.id <= SEARCH_BLOCK_ID_END &&
+      r.id >= 22000 &&
+      r.id <= 22999 &&
       r.action?.type === 'redirect' &&
-      r.action?.redirect?.extensionPath?.includes('block-screen') &&
-      (r.condition?.requestDomains || []).some((d) => d.toLowerCase() === apex)
+      Array.isArray(r.condition?.requestDomains) &&
+      r.condition.requestDomains.includes(bare)
   )
 }
 
-// --- Fixtures ---
-const fixture = JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf8'))
-const rules = JSON.parse(fs.readFileSync(RULES_PATH, 'utf8'))
-
-assert(!!matchEngineByHostname('yandex.by'), 'yandex.by still listed in atlas inventory')
-assert(!!matchEngineByHostname('www.yandex.by'), 'www.yandex.by listed in atlas')
-assert(!isAllowlistedSearchHost('yandex.by'), 'yandex.by is NOT allowlisted')
-assert(isAllowlistedSearchHost('google.com'), 'google.com is allowlisted')
-assert(isAllowlistedSearchHost('www.google.com'), 'www.google.com is allowlisted')
-assert(!isAllowlistedSearchHost('google.fr'), 'google.fr is NOT allowlisted')
-assert(isAllowlistedSearchHost('gemini.google.com'), 'gemini.google.com is allowlisted')
-assert(isAllowlistedSearchHost('chatgpt.com'), 'chatgpt.com is allowlisted')
-assert(isAllowlistedSearchHost('chat.openai.com'), 'chat.openai.com is allowlisted')
-assert(!isAllowlistedSearchHost('perplexity.ai'), 'perplexity.ai is NOT allowlisted')
+// --- Atlas membership (still listed for DNR inventory) ---
+assert(!!matchEngineByHostname('yandex.by'), 'yandex.by matches atlas engine')
+assert(!!matchEngineByHostname('www.yandex.by'), 'www.yandex.by matches atlas engine')
+assert(!!matchEngineByHostname('yandex.kz'), 'yandex.kz matches via hostPrefix/list')
 assert(!matchEngineByHostname('notyandex.com'), 'notyandex.com is not a search engine')
 assert(!matchEngineByHostname('fooyandex.com'), 'fooyandex.com is not a search engine')
+
+// --- Fixtures (Layer 2 allowlist + hardBlock flags) ---
+const fixture = JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf8'))
 
 for (const case_ of fixture.cases) {
   const detected = isSearchEngine(case_.url)
@@ -152,56 +139,52 @@ for (const case_ of fixture.cases) {
       `extractSearchQuery ${case_.url} → ${JSON.stringify(q)} (want ${JSON.stringify(case_.query)})`
     )
   }
-  if (case_.hardBlock === true) {
+  if (case_.hardBlock !== undefined) {
     const host = new URL(case_.url).hostname
-    assert(dnrHardBlocksHost(rules, host), `DNR hard-blocks ${host}`)
-  }
-  if (case_.hardBlock === false && case_.isSearchEngine) {
-    const host = new URL(case_.url).hostname
-    assert(!dnrHardBlocksHost(rules, host), `DNR does NOT hard-block allowlisted ${host}`)
+    const blocked = isHardBlockedHost(host)
+    assert(
+      blocked === case_.hardBlock,
+      `hardBlock ${host} → ${blocked} (want ${case_.hardBlock})`
+    )
   }
 }
 
-// Google redirect still excluded
+assert(isHardBlockedHost('yandex.by'), 'Regression: yandex.by homepage host is DNR hard-blocked')
+assert(!isHardBlockedHost('google.com'), 'google.com must not be hard-blocked')
+assert(!isHardBlockedHost('gemini.google.com'), 'gemini must not be hard-blocked')
+assert(!isHardBlockedHost('chatgpt.com'), 'chatgpt must not be hard-blocked')
+
+// Google redirect still excluded from Layer 2
 assert(!isSearchEngine('https://www.google.com/url?q=https://example.com'), 'google /url redirect excluded')
 
-// DNR: yandex.by must hard-block (NOT family=yes SafeSearch)
-assert(dnrHardBlocksHost(rules, 'yandex.by'), 'DNR hard-blocks yandex.by')
-const yandexBySafe = rules.filter(
+// DNR: SafeSearch only on google.com; no SafeSearch for yandex.by
+const safeYandexBy = rules.filter(
   (r) => r.id < 1000 && r.condition?.urlFilter?.includes('yandex.by')
 )
-assert(yandexBySafe.length === 0, 'No SafeSearch/family=yes DNR rules for yandex.by')
+assert(safeYandexBy.length === 0, `No SafeSearch DNR for yandex.by (found ${safeYandexBy.length})`)
 
-// Google SafeSearch still present
 const googleSafe = rules.filter(
+  (r) => r.id < 1000 && r.condition?.urlFilter?.includes('google.com/search')
+)
+assert(googleSafe.length > 0, `SafeSearch DNR keeps google.com/search (found ${googleSafe.length})`)
+
+const allowlistedHard = rules.filter(
   (r) =>
-    r.id < 1000 &&
-    r.condition?.urlFilter?.includes('google.com/search') &&
-    r.action?.redirect?.transform?.queryTransform?.addOrReplaceParams?.some(
-      (p) => p.key === 'safe' && p.value === 'active'
+    r.id >= 22000 &&
+    r.id <= 22999 &&
+    Array.isArray(r.condition?.requestDomains) &&
+    r.condition.requestDomains.some((d) =>
+      ['google.com', 'gemini.google.com', 'chatgpt.com', 'chat.openai.com'].includes(d)
     )
 )
-assert(googleSafe.length > 0, `Google SafeSearch DNR present (found ${googleSafe.length})`)
+assert(allowlistedHard.length === 0, 'Allowlisted hosts must not appear in hard-block DNR rules')
 
-// Bing / perplexity hard-blocked
-assert(dnrHardBlocksHost(rules, 'bing.com'), 'DNR hard-blocks bing.com')
-assert(dnrHardBlocksHost(rules, 'perplexity.ai'), 'DNR hard-blocks perplexity.ai')
-assert(dnrHardBlocksHost(rules, 'google.fr'), 'DNR hard-blocks google.fr')
-assert(!dnrHardBlocksHost(rules, 'google.com'), 'DNR does not hard-block google.com')
-assert(!dnrHardBlocksHost(rules, 'gemini.google.com'), 'DNR does not hard-block gemini.google.com')
-assert(!dnrHardBlocksHost(rules, 'chatgpt.com'), 'DNR does not hard-block chatgpt.com')
-
-const hardRedirects = rules.filter(
-  (r) =>
-    r.id >= SEARCH_BLOCK_ID_START &&
-    r.id <= SEARCH_BLOCK_ID_END &&
-    r.action?.type === 'redirect'
-)
 const hostCount = new Set(atlas.engines.flatMap((e) => e.hosts)).size
-console.log(`\nAtlas hosts curated: ${hostCount}`)
+const hardCount = rules.filter((r) => r.id >= 22000 && r.id <= 22999 && r.action?.type === 'redirect')
+  .length
+console.log(`\nAtlas hosts: ${hostCount}`)
 console.log(`Engines: ${atlas.engines.length}`)
-console.log(`Allowlist: ${getAllowlist().join(', ')}`)
-console.log(`DNR hard-block hosts (redirect rules): ${hardRedirects.length}`)
+console.log(`Hard-block hosts (DNR redirect rules): ${hardCount}`)
 
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`)

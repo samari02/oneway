@@ -1,42 +1,50 @@
-# Search-engine atlas v2 (hard-block + allowlist)
+# Search-engine atlas (ccTLD + AI) v3
 
-Cheap inventory for Clarity. **Not** an open web crawler.
+Cheap inventory for Clarity Layer 2 (allowlist only) + **DNR hard-block** of every other search host. **Not** an open web crawler.
 
-## Policy (v2)
+## Why
 
-**Hard-block** every atlas search host **except** an explicit allowlist. Navigating to yandex.by, bing, duckduckgo, perplexity, etc. shows the Clarity block screen (DNR `requestDomains`), same path as adult domains.
+Users could block `yandex.com` / get Layer 2 on `.com`/`.ru` while **`yandex.by`** (and other regional/ccTLD engines) stayed a backdoor to adult SERPs. Same class of miss: Ukrainian portals, Yahoo locals, AI search, privacy meta-search.
 
-### Allowlist (Layer 2 + navigation allowed)
+## Policy (v2+)
 
-| Host | Behavior |
-|------|----------|
-| `google.com` / `www.google.com` | SafeSearch DNR (`safe=active`) + Layer 2 query intelligence |
-| `gemini.google.com` / `bard.google.com` | Allowed (Gemini); Layer 2 on URL-visible queries |
-| `chatgpt.com` / `chat.openai.com` | Allowed (ChatGPT); Layer 2 on URL-patternable search surfaces |
+| Host class | Behavior |
+|------------|----------|
+| **Allowlist** | `google.com` / `www.google.com`, `gemini.google.com` / `bard.google.com`, `chatgpt.com` / `chat.openai.com` |
+| **SafeSearch DNR** | google.com SERP only (`safe=active`) |
+| **Layer 2 filter-SERP** | Allowlisted hosts only |
+| **Everyone else in atlas** | DNR hard-block → Clarity block screen (rule ids `22000–22999`) |
 
-### Hard-blocked (examples)
+`google.fr` / `google.co.jp` / etc. are **intentionally hard-blocked** (tradeoff: use google.com).
 
-yandex.* (incl. **yandex.by**), bing, duckduckgo, yahoo, ecosia, qwant, brave, startpage, baidu, naver, regional UA engines, perplexity, you.com, phind, komo, andi, copilot, **google.ccTLDs** (`google.fr`, `google.co.jp`, …).
+Do **not** hard-block CDN/static hosts needed by allowlisted apps (e.g. ChatGPT / Gemini assets).
 
-> Tradeoff (intentional): user asked for **sauf google.com** — country Google TLDs are blocked; use `google.com`.
+## Methodology
 
-## Design
-
-| Path | What |
-|------|------|
-| **DNR hard-block** | Atlas hosts ∉ allowlist → `rules.json` id 22000–22999 (`requestDomains` → block-screen) |
-| **SafeSearch DNR** | **google.com only** (id &lt; 1000) |
-| **Layer 2 filter** | Allowlisted hosts only (`search-filter.ts`) |
-| **Adult blocklist** | Unchanged — separate from search hard-block band |
+1. **Curated seed** in `search-engine-atlas.json` — hand-maintained brand inventory by category (global, Yandex ccTLDs, RU/UA/CIS/EE, Asia, LatAm/EU/ME, AI search, meta/privacy). No Playwright / open-web crawl.
+2. **Bounded ccTLD expansion** — engines with `expandCctlds: true` + `hostPrefix` get `brand.<tld>` for each entry in `commonCctlds` via `expand-search-engine-atlas.mjs` (deduped).
+3. **DNR sync** — same script with `--sync-dnr` regenerates SafeSearch (id &lt; 1000) + search hard-blocks (22000–22999) in `public/rules.json`.
+4. **Optional CT stub** — `--ct-stub` documents a future NRD/CT watch for new `yandex.*` hosts; **not implemented**.
 
 ## Source of truth
 
-- `apps/extension/src/shared/data/search-engine-atlas.json` — curated seed + `policy.allowlistHosts`
+- `apps/extension/src/shared/data/search-engine-atlas.json` — curated + expanded hosts
 - `apps/extension/src/shared/search-engine-atlas.ts` — match / allowlist helpers
-- Expand (bounded ccTLDs): `pnpm --filter @clarity/extension expand:search-atlas`
+- Expand: `pnpm --filter @clarity/extension expand:search-atlas -- --write`
 - Sync DNR: `pnpm --filter @clarity/extension sync:search-atlas-dnr`
+- Combined: `node apps/extension/scripts/lib/expand-search-engine-atlas.mjs --write --sync-dnr`
 - Tests: `pnpm --filter @clarity/extension test:search-atlas`
 
-## Optional future
+## Categories covered
 
-`--ct-stub` on the expand script documents a NRD/CT watch for new `yandex.*` — not implemented.
+- **Global** — Bing, Yahoo, DuckDuckGo (+ lite/html), Ecosia, Startpage, Brave Search, Qwant, Swisscows, Mojeek, Yep, …
+- **Yandex** — all common ccTLDs + `ya.ru` / Dzen
+- **RU/UA/CIS/EE** — Mail.ru search, Rambler, Ukr.net, Meta.ua, Seznam, WP/Onet search, …
+- **Asia** — Baidu, Sogou, 360, Naver, Daum, Yahoo Japan, Coc Coc, Goo, …
+- **LatAm/EU/ME** — Terra, UOL, SAPO, Orange/Voila, Fireball, …
+- **AI search** — Perplexity, Phind, You.com, Andi, Komo, Copilot/Bing AI, Arc/Dia, Exa, … (**not** ChatGPT / Gemini)
+- **Meta / privacy** — Searx/SearXNG public instances, Whoogle publics, MetaGer, Kagi, Gibiru, …
+
+## Regression gate
+
+`yandex.by` (homepage and `/search`) must appear in hard-block DNR `requestDomains`, **not** SafeSearch `family=yes`.
