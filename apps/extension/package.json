@@ -22,7 +22,8 @@
     "promote:adult-candidates": "node scripts/lib/promote-adult-candidates.mjs",
     "sign:adult-list": "node scripts/lib/sign-dynamic-adult-list.mjs",
     "sign:adult-list:install": "node scripts/lib/sign-dynamic-adult-list.mjs --install",
-    "verify:adult-list": "node scripts/lib/sign-dynamic-adult-list.mjs --verify"
+    "verify:adult-list": "node scripts/lib/sign-dynamic-adult-list.mjs --verify",
+    "discover:adult-leads": "node scripts/lib/discover-adult-leads.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",

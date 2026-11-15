@@ -1,0 +1,30 @@
+{
+  "total": 3,
+  "data": [
+    {
+      "id": 1,
+      "following": {
+        "name": "peertube",
+        "host": "avtube-sister.example",
+        "url": "https://avtube-sister.example/accounts/peertube"
+      }
+    },
+    {
+      "id": 2,
+      "following": {
+        "name": "peertube",
+        "host": "jav-instance.example",
+        "url": "https://jav-instance.example/accounts/peertube"
+      }
+    },
+    {
+      "id": 3,
+      "following": {
+        "name": "peertube",
+        "host": "peertube.cpy.re",
+        "url": "https://peertube.cpy.re/accounts/peertube"
+      }
+    }
+  ],
+  "_fixtureNote": "Offline PeerTube following graph. peertube.cpy.re is a safe demo host (expect isNSFW:false when probed live). *.example hosts are placeholders for review pipeline tests."
+}

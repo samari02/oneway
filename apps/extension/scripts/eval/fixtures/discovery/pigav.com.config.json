@@ -1,0 +1,10 @@
+{
+  "instance": {
+    "name": "PIGAV",
+    "shortDescription": "AV線上看",
+    "isNSFW": true,
+    "defaultNSFWPolicy": "display"
+  },
+  "serverVersion": "6.0.0",
+  "_fixtureNote": "Synthetic/offline PeerTube config shaped like pigav gold signals (live host often CF-blocked)."
+}

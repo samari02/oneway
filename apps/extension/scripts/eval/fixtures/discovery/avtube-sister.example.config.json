@@ -1,0 +1,9 @@
+{
+  "instance": {
+    "name": "AV Tube Sister",
+    "shortDescription": "Adult PeerTube mirror",
+    "isNSFW": true,
+    "defaultNSFWPolicy": "display"
+  },
+  "_fixtureNote": "Offline config for discovered sister host."
+}

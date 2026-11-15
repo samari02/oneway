@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "description": "Hot-lead seeds for targeted discovery (Étape 4). Never open-web crawl — only PeerTube graph edges + ad/CDN pivots from known HTML.",
+  "peertubeSeeds": [
+    "pigav.com"
+  ],
+  "notes": "Default discovery is fixtures-only. Live PeerTube API (--live) is optional/manual — pigav and many adult hosts are Cloudflare-gated."
+}

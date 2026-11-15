@@ -1,0 +1,22 @@
+{
+  "total": 2,
+  "data": [
+    {
+      "id": 10,
+      "follower": {
+        "name": "peertube",
+        "host": "nsfw-mirror.example",
+        "url": "https://nsfw-mirror.example/accounts/peertube"
+      }
+    },
+    {
+      "id": 11,
+      "follower": {
+        "name": "peertube",
+        "host": "avx-skin.example",
+        "url": "https://avx-skin.example/accounts/peertube"
+      }
+    }
+  ],
+  "_fixtureNote": "Offline PeerTube followers graph for discovery MVP."
+}

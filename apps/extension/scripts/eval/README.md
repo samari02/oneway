@@ -53,6 +53,20 @@ pnpm --filter @clarity/extension eval:page-analyzer
 - HTML: [`fixtures/page-analyzer/`](./fixtures/page-analyzer/)
 - Plan: [`docs/02-features/02-blocage/cheap_agent_scanner_mvp.md`](../../../../docs/02-features/02-blocage/cheap_agent_scanner_mvp.md)
 
+## Targeted discovery (Étape 4)
+
+PeerTube following/followers **fixtures** + adult ad/CDN HTML pivots. **No open-web crawl.** Review JSON/CSV only — never auto-sign.  
+Live `--live` PeerTube HTTP is **optional/manual only** (not CI).
+
+```bash
+pnpm --filter @clarity/extension discover:adult-leads
+pnpm --filter @clarity/extension discover:adult-leads -- --emit-sign-payload
+```
+
+- Seeds: [`../lib/discovery-seeds.json`](../lib/discovery-seeds.json)
+- Fixtures: [`fixtures/discovery/`](./fixtures/discovery/)
+- Output: `scripts/eval/out/discovery/` (gitignored) + `~/.clarity/discovery-candidates.json`
+
 ## Related
 
 - Sync contract: [`docs/02-features/02-blocage/adult_blocklist_sync_v1.md`](../../../../docs/02-features/02-blocage/adult_blocklist_sync_v1.md)
