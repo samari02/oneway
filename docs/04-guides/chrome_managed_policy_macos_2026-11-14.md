@@ -14,14 +14,15 @@ Related layers (unchanged):
 
 ## Where policies live
 
-| Scope | Path |
-|--------|------|
-| User (no admin) | `~/Library/Managed Preferences/com.google.Chrome.plist` |
-| Machine | `/Library/Managed Preferences/com.google.Chrome.plist` (requires admin + MDM-style deploy) |
+| What | Path | Chrome reads it? |
+|------|------|------------------|
+| Scalars (e.g. `IncognitoModeAvailability`) | `~/Library/Managed Preferences/com.google.Chrome.plist` | Yes (user managed) |
+| Nested policies (`ExtensionSettings`, `URLBlocklist`, `ExtensionInstallForcelist`) | `~/Library/Preferences/com.google.Chrome.plist` | **Yes** — required on personal Macs without MDM |
+| All keys, machine scope (optional) | `/Library/Managed Preferences/com.google.Chrome.plist` | Yes (with `sudo`; pass `--system` to scripts) |
 
-Chrome also shows effective policy at **`chrome://policy`** after a full quit/restart.
+**Why two user paths?** On macOS, `CFPreferences` only surfaces **scalar** values from `~/Library/Managed Preferences/…` to Chrome. A nested `ExtensionSettings` dict written only to that plist is on disk but **`CFPreferencesCopyAppValue` returns NULL**, so `chrome://policy` shows “No policies set”. The apply scripts split writes automatically.
 
-This repo does **not** write `~/Library/Preferences/com.google.Chrome.plist` (normal prefs). Enterprise keys belong under **Managed Preferences**.
+Chrome also shows effective policy at **`chrome://policy`** after a full quit/restart (`Cmd+Q`, not just closing the window).
 
 ## Script
 
@@ -47,6 +48,10 @@ chmod +x apps/desktop/scripts/apply-chrome-managed-policy.sh
 
 ./apps/desktop/scripts/apply-chrome-managed-policy.sh status
 ./apps/desktop/scripts/apply-chrome-managed-policy.sh remove
+
+# Optional: machine-scope plist (sudo) in addition to user paths:
+./apps/desktop/scripts/apply-chrome-managed-policy.sh apply --system \
+  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
 ```
 
 Environment: `CLARITY_CHROME_EXT_ID`, `CLARITY_CHROME_UPDATE_URL`.
@@ -114,7 +119,7 @@ Re-run when the ID changes. See [native_host_chrome_setup_2026-03-29.md](./nativ
 3. `./apps/desktop/scripts/install-native-host.sh <ID> [-- binary]`
 4. `./apps/desktop/scripts/apply-chrome-managed-policy.sh apply --extension-id <ID>`  
    Add `--mode hardcore` only if you accept blocking `chrome://extensions`.
-5. Cmd+Q Chrome → reopen → `chrome://policy` → confirm `IncognitoModeAvailability`.
+5. Cmd+Q Chrome → reopen → `chrome://policy` → confirm `IncognitoModeAvailability` **and** `ExtensionSettings` (Clarity ID + `toolbar_pin`).
 6. Reload extension; confirm fail-closed banner clears with desktop open.
 
 ## Limitations (unpacked vs force-install)

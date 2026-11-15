@@ -21,7 +21,7 @@ After loading the Chrome extension, run the hardening script to disable Incognit
 ./scripts/revert-chrome-hardening.sh
 ```
 
-Then quit Chrome completely (Cmd+Q), reopen, and verify at `chrome://policy`.
+Then quit Chrome completely (Cmd+Q), reopen, and verify at `chrome://policy` — you should see `ExtensionSettings` (not only Incognito). On macOS, nested policies are written to `~/Library/Preferences/com.google.Chrome.plist`; see the guide for `--system` / sudo.
 
 **Known extension IDs:**
 - Current daily: `pjdboibemcgajdjnppgfnffmajcokbmf`

@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # Chrome anti-bypass hardening for macOS (user scope, no admin required).
-# Writes ~/Library/Managed Preferences/com.google.Chrome.plist
+# Scalars → ~/Library/Managed Preferences/com.google.Chrome.plist
+# ExtensionSettings / URL lists → ~/Library/Preferences/com.google.Chrome.plist
+#   (macOS does not expose nested managed prefs at user scope to Chrome;
+#   see docs/04-guides/chrome_managed_policy_macos_2026-11-14.md)
 #
 # Usage:
-#   ./apply-chrome-hardening.sh [--hardcore] [--extension-id ID]
+#   ./apply-chrome-hardening.sh [--hardcore] [--extension-id ID] [--system]
 #   ./apply-chrome-hardening.sh --help
 #
 # After running: fully quit Chrome (Cmd+Q), reopen, verify at chrome://policy
@@ -16,7 +19,10 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 HARDCORE=0
+SYSTEM=0
 EXTENSION_ID="${CLARITY_CHROME_EXT_ID:-}"
 
 # Known extension IDs (for reference / quick default)
@@ -35,6 +41,7 @@ Options:
                        (makes undoing harder — revert with revert-chrome-hardening.sh)
   --extension-id ID    Pin Clarity extension in ExtensionSettings (pin only, no force-install
                        without a CRX update URL — see note below).
+  --system             Also write policies to /Library/Managed Preferences/ (sudo, machine scope).
   --help               Show this help.
 
 Environment:
@@ -66,6 +73,7 @@ EOF
 for arg in "$@"; do
   case "$arg" in
     --hardcore) HARDCORE=1 ;;
+    --system) SYSTEM=1 ;;
     --help|-h) usage; exit 0 ;;
   esac
 done
@@ -74,96 +82,86 @@ done
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --extension-id) EXTENSION_ID="${2:?--extension-id requires an argument}"; shift 2 ;;
-    --hardcore|--help|-h) shift ;;
+    --hardcore|--system|--help|-h) shift ;;
     *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-PLIST_PATH="${HOME}/Library/Managed Preferences/com.google.Chrome.plist"
+if [[ $SYSTEM -eq 1 ]] && [[ $EUID -ne 0 ]]; then
+  echo "Re-running with sudo for --system (/Library/Managed Preferences/)…" >&2
+  exec sudo -p "[sudo] Chrome policy password: " env \
+    CLARITY_CHROME_EXT_ID="$EXTENSION_ID" \
+    "$0" ${HARDCORE:+--hardcore} --system \
+    ${EXTENSION_ID:+--extension-id "$EXTENSION_ID"}
+fi
 
-echo "Applying Chrome hardening to: $PLIST_PATH"
+echo "Applying Chrome hardening (scalars → Managed Preferences; ExtensionSettings → Preferences)"
 [[ $HARDCORE -eq 1 ]] && echo "  Mode: hardcore (chrome://extensions blocked)"
 [[ -n "$EXTENSION_ID" ]] && echo "  Extension ID pinned: $EXTENSION_ID"
+[[ $SYSTEM -eq 1 ]] && echo "  Also writing machine-scope plist (sudo)"
 
-export PLIST_PATH HARDCORE EXTENSION_ID CLARITY_ID_CURRENT CLARITY_ID_LEGACY
+export SCRIPT_DIR HARDCORE SYSTEM EXTENSION_ID CLARITY_ID_CURRENT CLARITY_ID_LEGACY
 
 python3 - <<'PY'
-import os, plistlib, sys
-from pathlib import Path
+import os
+import sys
 
-plist_path = Path(os.environ["PLIST_PATH"])
+sys.path.insert(0, os.environ["SCRIPT_DIR"])
+import chrome_policy_mac as cpm
+
 hardcore = os.environ["HARDCORE"] == "1"
+system = os.environ["SYSTEM"] == "1"
 extension_id = os.environ["EXTENSION_ID"].strip()
 clarity_current = os.environ["CLARITY_ID_CURRENT"]
-clarity_legacy  = os.environ["CLARITY_ID_LEGACY"]
+clarity_legacy = os.environ["CLARITY_ID_LEGACY"]
 
-def load():
-    if not plist_path.exists():
-        return {}
-    with plist_path.open("rb") as f:
-        return plistlib.load(f)
+policy = {"IncognitoModeAvailability": 1}
 
-def save(data):
-    plist_path.parent.mkdir(parents=True, exist_ok=True)
-    with plist_path.open("wb") as f:
-        plistlib.dump(data, f)
+ext_settings: dict = {
+    "*": {"installation_mode": "blocked"},
+}
 
-data = load()
 
-# 1. Disable Incognito (0=available, 1=disabled, 2=forced)
-data["IncognitoModeAvailability"] = 1
+def pin_id(eid: str) -> None:
+    ext_settings[eid] = {
+        "installation_mode": "allowed",
+        "toolbar_pin": "force_pinned",
+    }
 
-# 2. Block arbitrary new extension installs
-ext_settings = data.get("ExtensionSettings")
-if not isinstance(ext_settings, dict):
-    ext_settings = {}
-wildcard = ext_settings.get("*")
-if not isinstance(wildcard, dict):
-    wildcard = {}
-wildcard["installation_mode"] = "blocked"
-ext_settings["*"] = wildcard
-
-# 3. Pin the provided extension ID (or known IDs) — no force-install without update URL
-def pin_id(eid):
-    entry = ext_settings.get(eid)
-    if not isinstance(entry, dict):
-        entry = {}
-    # NOTE: without update_url, Chrome won't truly force-install;
-    # this only allows the already-loaded unpacked extension and pins toolbar.
-    entry["installation_mode"] = "allowed"
-    entry["toolbar_pin"] = "force_pinned"
-    ext_settings[eid] = entry
 
 if extension_id:
     pin_id(extension_id)
     print(f"  Pinned extension: {extension_id}")
 else:
-    # Pin both known Clarity IDs as a convenience
     pin_id(clarity_current)
     pin_id(clarity_legacy)
-    print(f"  Pinned known IDs: {clarity_current} (current), {clarity_legacy} (legacy)")
+    print(
+        f"  Pinned known IDs: {clarity_current} (current), {clarity_legacy} (legacy)"
+    )
     print("  (Pass --extension-id to override with your actual loaded ID.)")
 
-data["ExtensionSettings"] = ext_settings
+policy["ExtensionSettings"] = ext_settings
 
-# 4. Hardcore mode: block chrome://extensions page
 if hardcore:
-    data["URLBlocklist"] = [
+    policy["URLBlocklist"] = [
         "chrome://extensions",
         "chrome://settings/manageProfile",
     ]
-    data["URLAllowlist"] = [
+    policy["URLAllowlist"] = [
         "chrome://policy",
         "chrome://version",
     ]
     print("  URLBlocklist active (chrome://extensions blocked).")
-else:
-    # Remove hardcore keys if previously set
-    data.pop("URLBlocklist", None)
-    data.pop("URLAllowlist", None)
 
-save(data)
-print(f"\nWrote Chrome managed policies → {plist_path}")
+touched = cpm.apply_policy(policy, system=system)
+print("\nWrote Chrome policies:")
+for path in touched:
+    print(f"  → {path}")
+print(
+    "\nmacOS note: ExtensionSettings is stored in Preferences (or system Managed "
+    "Preferences with --system) so Chrome can read nested policy values."
+)
 print("Next: fully quit Chrome (Cmd+Q), reopen, then open chrome://policy to verify.")
+print("  Expect ExtensionSettings with your Clarity ID + toolbar_pin force_pinned.")
 print("Revert: ./revert-chrome-hardening.sh")
 PY

@@ -16,6 +16,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLIST_PATH="${HOME}/Library/Managed Preferences/com.google.Chrome.plist"
 MODE="standard"
+SYSTEM=0
 EXTENSION_ID=""
 UPDATE_URL=""
 ACTION="${1:-}"
@@ -47,6 +48,10 @@ while [[ $# -gt 0 ]]; do
       UPDATE_URL="${2:?}"
       shift 2
       ;;
+  --system)
+    SYSTEM=1
+    shift
+    ;;
     *)
       echo "Unknown option: $1" >&2
       usage
@@ -58,75 +63,54 @@ done
 EXTENSION_ID="${EXTENSION_ID:-${CLARITY_CHROME_EXT_ID:-}}"
 UPDATE_URL="${UPDATE_URL:-${CLARITY_CHROME_UPDATE_URL:-}}"
 
+if [[ "${ACTION:-}" == "apply" ]] && [[ $SYSTEM -eq 1 ]] && [[ $EUID -ne 0 ]]; then
+  echo "Re-running with sudo for --system…" >&2
+  exec sudo -p "[sudo] Chrome policy password: " env \
+    CLARITY_CHROME_EXT_ID="$EXTENSION_ID" \
+    CLARITY_CHROME_UPDATE_URL="$UPDATE_URL" \
+    "$0" apply --mode "$MODE" --system \
+    ${EXTENSION_ID:+--extension-id "$EXTENSION_ID"} \
+    ${UPDATE_URL:+--update-url "$UPDATE_URL"}
+fi
+
 run_python() {
   python3 - "$@" <<'PY'
 import os
-import plistlib
 import sys
-from pathlib import Path
+
+sys.path.insert(0, os.environ["SCRIPT_DIR"])
+import chrome_policy_mac as cpm
 
 action = sys.argv[1]
-plist_path = Path(os.environ["PLIST_PATH"])
 mode = os.environ.get("MODE", "standard")
+system = os.environ.get("SYSTEM") == "1"
 extension_id = os.environ.get("EXTENSION_ID", "").strip()
 update_url = os.environ.get("UPDATE_URL", "").strip()
 
-def load_plist():
-    if not plist_path.exists():
-        return {}
-    with plist_path.open("rb") as f:
-        return plistlib.load(f)
-
-def save_plist(data):
-    plist_path.parent.mkdir(parents=True, exist_ok=True)
-    with plist_path.open("wb") as f:
-        plistlib.dump(data, f)
-
-def clarity_policy_keys():
-    return {
-        "IncognitoModeAvailability",
-        "ExtensionInstallForcelist",
-        "ExtensionSettings",
-        "URLBlocklist",
-        "URLAllowlist",
-    }
-
 if action == "status":
-    if not plist_path.exists():
-        print(f"No managed policy file at {plist_path}")
-        sys.exit(0)
-    data = load_plist()
-    keys = sorted(k for k in data if k in clarity_policy_keys() or k.startswith("Extension"))
-    if not keys:
-        print(f"Plist exists but no Clarity keys: {plist_path}")
-        for k in sorted(data):
-            print(f"  (other) {k}")
-        sys.exit(0)
-    print(f"Managed policies: {plist_path}")
-    for k in keys:
-        print(f"  {k}: {data[k]}")
+    cpm.status()
     sys.exit(0)
 
 if action == "remove":
-    if not plist_path.exists():
-        print(f"Nothing to remove — no file at {plist_path}")
-        sys.exit(0)
-    data = load_plist()
-    for k in clarity_policy_keys():
-        data.pop(k, None)
-    if data:
-        save_plist(data)
-        print(f"Removed Clarity Chrome policy keys; other keys kept in {plist_path}")
+    touched = cpm.remove_clarity_policies()
+    if not touched:
+        print("Nothing to remove — no Clarity Chrome policy keys found.")
     else:
-        plist_path.unlink()
-        print(f"Removed {plist_path}")
+        print("Removed Clarity Chrome policy keys from:")
+        for path in touched:
+            print(f"  {path}")
+        if cpm.SYSTEM_MANAGED.exists() and not os.access(cpm.SYSTEM_MANAGED, os.W_OK):
+            print(
+                "If /Library/Managed Preferences/com.google.Chrome.plist still has keys, "
+                "re-run: sudo ./revert-chrome-hardening.sh"
+            )
     sys.exit(0)
 
 if action != "apply":
     print(f"Unknown action: {action}", file=sys.stderr)
     sys.exit(1)
 
-data = load_plist()
+data: dict = {}
 
 # 0 = available, 1 = disabled, 2 = only incognito (avoid — bypass vector)
 data["IncognitoModeAvailability"] = 1
@@ -204,13 +188,16 @@ if forcelist:
 elif "ExtensionInstallForcelist" in data and not forcelist:
     data.pop("ExtensionInstallForcelist", None)
 
-save_plist(data)
-print(f"Wrote Chrome managed policies → {plist_path}")
+clarity = {k: data[k] for k in cpm.CLARITY_KEYS if k in data}
+touched = cpm.apply_policy(clarity, system=system)
+print("Wrote Chrome policies:")
+for path in touched:
+    print(f"  → {path}")
 print("Quit Chrome completely (Cmd+Q), reopen, then open chrome://policy")
 PY
 }
 
-export PLIST_PATH MODE EXTENSION_ID UPDATE_URL
+export SCRIPT_DIR PLIST_PATH MODE SYSTEM EXTENSION_ID UPDATE_URL
 
 case "$ACTION" in
   apply)
