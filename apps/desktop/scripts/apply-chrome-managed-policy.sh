@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Apply or remove Chrome enterprise-style managed policies on macOS (user scope).
-# No admin required — writes ~/Library/Managed Preferences/com.google.Chrome.plist
+# Apply or remove Chrome enterprise-style managed policies on macOS.
+# No admin required — writes ALL policy keys (scalars AND nested ExtensionSettings)
+# to ~/Library/Managed Preferences/com.google.Chrome.plist (user scope).
+# Pass --system (sudo) for /Library/Managed Preferences/ (machine scope / Mandatory).
 #
 # Usage:
 #   ./apply-chrome-managed-policy.sh apply [--mode standard|hardcore] [--extension-id ID] [--update-url URL]

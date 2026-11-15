@@ -1,23 +1,42 @@
 """
 macOS Chrome enterprise policy I/O.
 
-CFPreferences only surfaces *scalar* keys from ~/Library/Managed Preferences/
-com.google.Chrome.plist to Chrome (e.g. IncognitoModeAvailability). Nested
-policies (ExtensionSettings, URLBlocklist, ExtensionInstallForcelist) must be
-written to ~/Library/Preferences/com.google.Chrome.plist (user, recommended
-level) or /Library/Managed Preferences/com.google.Chrome.plist (machine,
-requires sudo).
+Policy reading hierarchy (Chrome for macOS, confirmed behaviour):
+  1. /Library/Managed Preferences/com.google.Chrome.plist   — machine scope, requires sudo
+                                                               → shows as "Platform" / "Mandatory"
+  2. ~/Library/Managed Preferences/com.google.Chrome.plist  — user scope, no sudo needed
+                                                               → shows as "Platform" / "Recommended"
+  3. Configuration profiles (.mobileconfig) installed via
+     System Settings → Privacy & Security → Profiles         — machine scope, strongest
+
+NOTE — previous versions of this module incorrectly split writes:
+  scalars → ~/Library/Managed Preferences/   (works)
+  complex keys (ExtensionSettings etc.) → ~/Library/Preferences/  (WRONG — Chrome ignores
+  managed-policy keys written to the regular user Preferences plist)
+
+Chrome's macOS policy backend (RegistryDict / CFPreferences) reads BOTH scalars AND
+nested dicts/arrays from the Managed Preferences paths.  Writing ExtensionSettings
+to ~/Library/Preferences/com.google.Chrome.plist (Chrome's own data file) is not
+visible at chrome://policy and does nothing for enterprise enforcement.
+
+Recommendation:
+  • User-scope only (no sudo): write everything to ~/Library/Managed Preferences/ — works
+    for IncognitoModeAvailability and ExtensionSettings, shows as "Recommended".
+  • Machine-scope / Mandatory (requires sudo): write to /Library/Managed Preferences/.
+  • Gold standard (no sudo, strongest): install the generated .mobileconfig profile.
 """
 
 from __future__ import annotations
 
 import plistlib
 import sys
+import uuid
 from pathlib import Path
 from typing import Any
 
-MANAGED_USER = Path.home() / "Library/Managed Preferences/com.google.Chrome.plist"
-USER_PREFS = Path.home() / "Library/Preferences/com.google.Chrome.plist"
+MANAGED_USER   = Path.home() / "Library/Managed Preferences/com.google.Chrome.plist"
+# Legacy write target (plain user prefs — NOT a policy path, only kept for cleanup)
+USER_PREFS     = Path.home() / "Library/Preferences/com.google.Chrome.plist"
 SYSTEM_MANAGED = Path("/Library/Managed Preferences/com.google.Chrome.plist")
 
 CLARITY_KEYS = frozenset(
@@ -25,15 +44,6 @@ CLARITY_KEYS = frozenset(
         "IncognitoModeAvailability",
         "ExtensionInstallForcelist",
         "ExtensionSettings",
-        "URLBlocklist",
-        "URLAllowlist",
-    }
-)
-
-COMPLEX_KEYS = frozenset(
-    {
-        "ExtensionSettings",
-        "ExtensionInstallForcelist",
         "URLBlocklist",
         "URLAllowlist",
     }
@@ -57,107 +67,68 @@ def save_plist(path: Path, data: dict[str, Any]) -> None:
         plistlib.dump(data, f)
 
 
-def split_policy(policy: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
-    scalars: dict[str, Any] = {}
-    complex_: dict[str, Any] = {}
-    for key, value in policy.items():
-        if key in COMPLEX_KEYS or isinstance(value, (dict, list)):
-            complex_[key] = value
-        else:
-            scalars[key] = value
-    return scalars, complex_
-
-
-def merge_clarity_managed(data: dict[str, Any], scalars: dict[str, Any]) -> None:
-    for key in COMPLEX_KEYS:
-        data.pop(key, None)
-    for key, value in scalars.items():
-        if key in CLARITY_KEYS:
-            data[key] = value
-
-
-def merge_clarity_prefs(data: dict[str, Any], complex_: dict[str, Any]) -> None:
-    for key in CLARITY_KEYS & COMPLEX_KEYS:
-        if key in complex_:
-            data[key] = complex_[key]
-        else:
-            data.pop(key, None)
-
-
 def apply_policy(
     policy: dict[str, Any], *, system: bool = False
 ) -> list[str]:
-    """Write policy bundle to the correct macOS plists. Returns paths touched."""
-    scalars, complex_ = split_policy(policy)
+    """Write all policy keys to ~/Library/Managed Preferences/ (and optionally system path).
+
+    ALL keys — including nested dicts like ExtensionSettings — are written to the
+    Managed Preferences plist.  Chrome reads both scalars and nested values from
+    that path via CFPreferences.
+    """
     touched: list[str] = []
 
+    # --- user-scope managed prefs (no sudo) ---
     managed = load_plist(MANAGED_USER)
-    merge_clarity_managed(managed, scalars)
+    for key in CLARITY_KEYS:
+        if key in policy:
+            managed[key] = policy[key]
+        else:
+            managed.pop(key, None)
     save_plist(MANAGED_USER, managed)
     touched.append(str(MANAGED_USER))
 
-    if complex_:
+    # --- clean up legacy wrong write target (~/Library/Preferences) ---
+    if USER_PREFS.exists():
         prefs = load_plist(USER_PREFS)
-        merge_clarity_prefs(prefs, complex_)
-        save_plist(USER_PREFS, prefs)
-        touched.append(str(USER_PREFS))
+        stale_keys = [k for k in CLARITY_KEYS if k in prefs]
+        if stale_keys:
+            for k in stale_keys:
+                del prefs[k]
+            save_plist(USER_PREFS, prefs)
+            # don't add to touched (it's a cleanup, not a policy write)
 
+    # --- system/machine-scope managed prefs (sudo required) ---
     if system:
-        if not complex_ and not scalars:
-            return touched
-        system_data = load_plist(SYSTEM_MANAGED)
+        sys_data = load_plist(SYSTEM_MANAGED)
         for key in CLARITY_KEYS:
-            if key in scalars:
-                system_data[key] = scalars[key]
-            elif key in complex_:
-                system_data[key] = complex_[key]
+            if key in policy:
+                sys_data[key] = policy[key]
             else:
-                system_data.pop(key, None)
-        save_plist(SYSTEM_MANAGED, system_data)
+                sys_data.pop(key, None)
+        save_plist(SYSTEM_MANAGED, sys_data)
         touched.append(str(SYSTEM_MANAGED))
 
     return touched
 
 
 def remove_clarity_policies() -> list[str]:
-    """Remove Clarity keys from all plist locations."""
+    """Remove Clarity keys from all plist locations (including legacy user prefs)."""
     touched: list[str] = []
 
-    if MANAGED_USER.exists():
-        data = load_plist(MANAGED_USER)
+    for path in [MANAGED_USER, USER_PREFS, SYSTEM_MANAGED]:
+        if not path.exists():
+            continue
+        data = load_plist(path)
         removed = [k for k in CLARITY_KEYS if k in data]
         for k in removed:
             del data[k]
         if data:
-            save_plist(MANAGED_USER, data)
+            save_plist(path, data)
         else:
-            MANAGED_USER.unlink()
+            path.unlink()
         if removed:
-            touched.append(str(MANAGED_USER))
-
-    if USER_PREFS.exists():
-        data = load_plist(USER_PREFS)
-        removed = [k for k in CLARITY_KEYS if k in data]
-        for k in removed:
-            del data[k]
-        if data:
-            save_plist(USER_PREFS, data)
-        else:
-            USER_PREFS.unlink()
-        if removed:
-            touched.append(str(USER_PREFS))
-
-    if SYSTEM_MANAGED.exists():
-        data = load_plist(SYSTEM_MANAGED)
-        removed = [k for k in CLARITY_KEYS if k in data]
-        for k in removed:
-            del data[k]
-        if data:
-            save_plist(SYSTEM_MANAGED, data)
-        else:
-            SYSTEM_MANAGED.unlink()
-        if removed:
-            touched.append(str(SYSTEM_MANAGED))
+            touched.append(str(path))
 
     return touched
 
@@ -173,11 +144,89 @@ def status() -> None:
         if not keys:
             continue
         found = True
-        print(f"{path}:")
+        label = "(LEGACY — Chrome ignores policy keys here)" if path == USER_PREFS else ""
+        print(f"{path}: {label}")
         for k in keys:
             print(f"  {k}: {data[k]}")
     if not found:
         print("No Clarity Chrome policy keys found in managed or preference plists.")
+
+
+# ---------------------------------------------------------------------------
+# .mobileconfig generator
+# ---------------------------------------------------------------------------
+
+def generate_mobileconfig(
+    policy: dict[str, Any],
+    *,
+    org: str = "Oneway / Clarity",
+    profile_id: str = "com.oneway.clarity.chrome-policy",
+    output_path: Path | None = None,
+) -> Path:
+    """Generate a signed-free .mobileconfig that delivers Chrome managed preferences.
+
+    The profile installs as a machine-scope configuration profile (requires the user
+    to approve via System Settings → Privacy & Security → Profiles, or double-click
+    on macOS 13+).  Delivers ALL policy types including nested ExtensionSettings.
+
+    Args:
+        policy: dict of Chrome policy keys/values.
+        org: display name shown in System Settings.
+        profile_id: reverse-DNS identifier for the profile.
+        output_path: where to write the .mobileconfig.  Defaults to
+                     ~/Desktop/clarity-chrome-policy.mobileconfig.
+
+    Returns:
+        Path to the written file.
+    """
+    if output_path is None:
+        output_path = Path.home() / "Desktop" / "clarity-chrome-policy.mobileconfig"
+
+    payload_uuid = str(uuid.uuid4()).upper()
+    top_uuid = str(uuid.uuid4()).upper()
+
+    # Chrome enterprise policies via com.apple.ManagedClient.preferences payload
+    mcx_settings: dict[str, Any] = {}
+    for k, v in policy.items():
+        mcx_settings[k] = v
+
+    profile = {
+        "PayloadContent": [
+            {
+                "PayloadType": "com.apple.ManagedClient.preferences",
+                "PayloadVersion": 1,
+                "PayloadIdentifier": f"{profile_id}.prefs",
+                "PayloadUUID": payload_uuid,
+                "PayloadEnabled": True,
+                "PayloadDisplayName": "Chrome Enterprise Policies (Clarity)",
+                "PayloadContent": {
+                    "com.google.Chrome": {
+                        "Forced": [
+                            {"mcx_preference_settings": mcx_settings}
+                        ]
+                    }
+                },
+            }
+        ],
+        "PayloadDescription": (
+            "Disables Incognito mode, blocks arbitrary extension installs, "
+            "and pins the Clarity extension. Managed by Oneway."
+        ),
+        "PayloadDisplayName": f"{org} — Chrome Policy",
+        "PayloadIdentifier": profile_id,
+        "PayloadOrganization": org,
+        "PayloadRemovalDisallowed": False,
+        "PayloadScope": "System",
+        "PayloadType": "Configuration",
+        "PayloadUUID": top_uuid,
+        "PayloadVersion": 1,
+    }
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("wb") as f:
+        plistlib.dump(profile, f)
+
+    return output_path
 
 
 if __name__ == "__main__":

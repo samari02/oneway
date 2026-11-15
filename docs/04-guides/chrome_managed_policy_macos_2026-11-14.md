@@ -1,149 +1,175 @@
 # Chrome managed policy — anti-bypass (macOS)
 
-**Status:** Scripted (user-level managed prefs). Run **after** Chrome is available; prep tonight without unlocking the browser.
+**Status:** Scripted (all policies → user-managed prefs OR system profile). Run after Chrome is loaded; revert with `revert-chrome-hardening.sh`.
 
 Closes two easy bypasses for a daily Chrome profile:
 
-1. **Incognito** without extension protection (`manifest.json` uses `"incognito": "split"` — user must opt in today).
+1. **Incognito** without extension protection.
 2. **Removing or disabling** the unpacked Clarity extension on `chrome://extensions`.
 
 Related layers (unchanged):
 
-- **Hosts adult blocking** — shipped in desktop Settings → System adult block (`hosts_adult_blocking_v1.md`). Complements extension/DNR; **DoH in Chrome can bypass `/etc/hosts`** — keep extension + consider disabling Secure DNS.
-- **DNS / Cold Turkey** — still the daily backstop when Chrome policy is not applied.
+- **Hosts adult blocking** — desktop Settings → System adult block. Complements extension/DNR; **DoH in Chrome can bypass `/etc/hosts`** — keep extension + consider disabling Secure DNS.
+- **DNS / Cold Turkey** — daily backstop when Chrome policy is not applied.
 
-## Where policies live
+---
 
-| What | Path | Chrome reads it? |
-|------|------|------------------|
-| Scalars (e.g. `IncognitoModeAvailability`) | `~/Library/Managed Preferences/com.google.Chrome.plist` | Yes (user managed) |
-| Nested policies (`ExtensionSettings`, `URLBlocklist`, `ExtensionInstallForcelist`) | `~/Library/Preferences/com.google.Chrome.plist` | **Yes** — required on personal Macs without MDM |
-| All keys, machine scope (optional) | `/Library/Managed Preferences/com.google.Chrome.plist` | Yes (with `sudo`; pass `--system` to scripts) |
+## Where policies live — corrected map
 
-**Why two user paths?** On macOS, `CFPreferences` only surfaces **scalar** values from `~/Library/Managed Preferences/…` to Chrome. A nested `ExtensionSettings` dict written only to that plist is on disk but **`CFPreferencesCopyAppValue` returns NULL**, so `chrome://policy` shows “No policies set”. The apply scripts split writes automatically.
+| Path | Scope | Chrome reads it? | Notes |
+|------|-------|-----------------|-------|
+| `~/Library/Managed Preferences/com.google.Chrome.plist` | User-managed | **Yes** — scalars AND nested dicts/arrays | Shows as "Platform / Recommended" on chrome://policy |
+| `~/Library/Preferences/com.google.Chrome.plist` | User data | **NO for policy keys** | Chrome's own data file; policy keys here are silently ignored |
+| `/Library/Managed Preferences/com.google.Chrome.plist` | Machine-managed | **Yes** (requires sudo) | Shows as "Platform / Mandatory" |
+| `.mobileconfig` configuration profile | Machine | **Yes** (strongest) | Double-click + approve in System Settings → Profiles |
 
-Chrome also shows effective policy at **`chrome://policy`** after a full quit/restart (`Cmd+Q`, not just closing the window).
+> **Previous bug (fixed in this commit):** `chrome_policy_mac.py` incorrectly split writes — scalars to `~/Library/Managed Preferences/` (correct) and nested keys like `ExtensionSettings` to `~/Library/Preferences/com.google.Chrome.plist` (wrong — policy keys there are silently ignored by Chrome). The script now writes **all** policy keys to the managed path.
 
-## Script
+---
 
-From repo root:
+## Script usage
 
 ```bash
-chmod +x apps/desktop/scripts/apply-chrome-managed-policy.sh
+# Recommended — all policies to ~/Library/Managed Preferences/ (no sudo)
+./apps/desktop/scripts/apply-chrome-hardening.sh \
+  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
 
-# Baseline: disable Incognito + block installing random extensions
-./apps/desktop/scripts/apply-chrome-managed-policy.sh apply
+# Same + generate a .mobileconfig on ~/Desktop (strongest, no sudo, needs double-click install)
+./apps/desktop/scripts/apply-chrome-hardening.sh \
+  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf \
+  --mobileconfig
 
-# Same + block chrome://extensions (hard to undo — read unlock below)
-./apps/desktop/scripts/apply-chrome-managed-policy.sh apply --mode hardcore
+# Hardcore: also blocks chrome://extensions (prevents manual removal of extension)
+./apps/desktop/scripts/apply-chrome-hardening.sh \
+  --hardcore \
+  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
 
-# Register your unpacked ID (pin intent; no store CRX yet)
+# Machine scope (shows as Mandatory on chrome://policy — requires sudo password)
+./apps/desktop/scripts/apply-chrome-hardening.sh \
+  --system \
+  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
+
+# Revert everything (user scope + legacy cleanup):
+./apps/desktop/scripts/revert-chrome-hardening.sh
+```
+
+Full-featured version with `apply/remove/status`:
+
+```bash
 ./apps/desktop/scripts/apply-chrome-managed-policy.sh apply \
-  --extension-id YOUR_32_CHAR_ID
-
-# Future: stable ID + self-hosted or Web Store update URL → true force-install
-./apps/desktop/scripts/apply-chrome-managed-policy.sh apply \
-  --extension-id abcdefghijklmnopqrstuvwxyzabcdef \
-  --update-url https://your.host/clarity/updates.xml
+  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
 
 ./apps/desktop/scripts/apply-chrome-managed-policy.sh status
 ./apps/desktop/scripts/apply-chrome-managed-policy.sh remove
 
-# Optional: machine-scope plist (sudo) in addition to user paths:
-./apps/desktop/scripts/apply-chrome-managed-policy.sh apply --system \
-  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
+# With CRX update URL (true force-install):
+./apps/desktop/scripts/apply-chrome-managed-policy.sh apply \
+  --extension-id pjdboibemcgajdjnppgfnffmajcokbmf \
+  --update-url https://your.host/clarity/updates.xml
 ```
 
-Environment: `CLARITY_CHROME_EXT_ID`, `CLARITY_CHROME_UPDATE_URL`.
+---
 
-### What each mode does
+## .mobileconfig — gold-standard install
 
-| Policy key | `standard` | `hardcore` |
-|------------|------------|------------|
-| `IncognitoModeAvailability` = **1** (disabled) | yes | yes |
-| `ExtensionSettings` → `*` → `installation_mode: blocked` | yes | yes |
-| `ExtensionSettings` → Clarity ID → `toolbar_pin: force_pinned` (if `--extension-id`) | yes | yes |
-| `URLBlocklist` → `chrome://extensions`, `chrome://settings/manageProfile` | no | yes |
-| `URLAllowlist` → `chrome://policy`, `chrome://version` | no | yes |
-| `ExtensionInstallForcelist` | only if **both** `--extension-id` and `--update-url` | same |
+The `--mobileconfig` flag writes `~/Desktop/clarity-chrome-policy.mobileconfig`.
 
-**Unlock hardcore / all Clarity keys:** `./apply-chrome-managed-policy.sh remove`, then Cmd+Q Chrome.
+Install steps (macOS 13 Ventura+):
+1. Double-click the file on your Desktop.
+2. Open **System Settings → Privacy & Security → Profiles** (scroll down).
+3. Click the pending profile → **Install**.
+4. Quit Chrome fully (Cmd+Q), reopen, check `chrome://policy`.
+5. Policies will show as **"Platform / Mandatory"** (not just Recommended).
+
+The profile delivers `ExtensionSettings` and `IncognitoModeAvailability` as a `com.apple.ManagedClient.preferences` payload with `Forced` semantics — the most reliable path without an MDM server.
+
+To remove: System Settings → Privacy & Security → Profiles → select → remove.
+
+---
+
+## Verifying at chrome://policy
+
+| What you should see | Means |
+|---------------------|-------|
+| `IncognitoModeAvailability = 1` — Platform, Recommended | ✅ Managed pref write worked |
+| `ExtensionSettings` row present | ✅ Nested policy is now being read |
+| `ExtensionSettings` row **missing** | ❌ Still old code — rerun the fixed script |
+| Policies show **Mandatory** (not Recommended) | ✅ System scope or .mobileconfig installed |
+
+After `--hardcore`: `URLBlocklist` row will appear with `chrome://extensions`.
+
+---
+
+## Policy key matrix
+
+| Policy key | standard | hardcore |
+|------------|----------|---------|
+| `IncognitoModeAvailability = 1` (Incognito disabled) | ✅ | ✅ |
+| `ExtensionSettings[*].installation_mode = blocked` | ✅ | ✅ |
+| `ExtensionSettings[<ID>].toolbar_pin = force_pinned` | ✅ if `--extension-id` | ✅ |
+| `URLBlocklist` → `chrome://extensions`, `chrome://settings/manageProfile` | ❌ | ✅ |
+| `URLAllowlist` → `chrome://policy`, `chrome://version` | ❌ | ✅ |
+| `ExtensionInstallForcelist` (true force-install) | only if `--update-url` given | same |
+
+---
+
+## Honest limitations (unpacked vs force-install)
+
+| Goal | Works today? |
+|------|-------------|
+| Disable Incognito | **Yes** — `IncognitoModeAvailability` |
+| Block installing arbitrary extensions | **Yes** — `ExtensionSettings[*]` |
+| Block `chrome://extensions` page | **Yes** — `--hardcore` (careful: harder to undo) |
+| Pin extension to toolbar (prevent unpinning) | **Partial** — `toolbar_pin: force_pinned` works for managed/installed extensions; side-loaded unpacked extensions may still allow unpinning |
+| **Prevent uninstall** of unpacked Clarity | **Partial** — blocked only for `force_installed` extensions (needs CRX + update URL). Without that, `--hardcore` (block the page) is the practical alternative |
+| **Force-install** unpacked folder on first launch | **No** — `ExtensionInstallForcelist` requires a valid `id;update_url` pointing to a CRX + update manifest |
+| Stable extension ID across machines | Add manifest `"key"` (PEM-derived) — do not commit private PEM |
+
+### Anti-bypass alternatives when force-install is not available
+
+1. **`--hardcore`**: blocks `chrome://extensions` and `chrome://settings/manageProfile` via `URLBlocklist`. The user cannot navigate to the page to remove the extension. Revert with `revert-chrome-hardening.sh`.
+2. **Cold Turkey / Focus** (host-level): blocks chrome:// URLs at the browser level even if policies are bypassed.
+3. **Future CRX path**: generate a PEM-based manifest `key`, package `.crx`, host `updates.xml`, then use `--update-url` → true `force_installed`, unremovable.
+
+---
 
 ## Native messaging host (extension IDs)
-
-Unpacked **load** changes the extension ID unless the manifest has a fixed **`key`**. The native host manifest allows one origin per ID.
 
 | Slot | ID |
 |------|----|
 | **Current (daily)** | `pjdboibemcgajdjnppgfnffmajcokbmf` |
 | **Legacy (dev)** | `pocdhgbmmooabipboifieikkigmaanok` |
 
-`install-native-host.sh` accepts **multiple IDs** (e.g. dev unpacked vs future pinned ID):
-
 ```bash
-# Single (current daily ID):
+# Single ID:
 ./apps/desktop/scripts/install-native-host.sh pjdboibemcgajdjnppgfnffmajcokbmf -- /path/to/Clarity/binary
 
-# Both IDs (safe to register both):
+# Both IDs:
 ./apps/desktop/scripts/install-native-host.sh \
   pjdboibemcgajdjnppgfnffmajcokbmf \
   pocdhgbmmooabipboifieikkigmaanok \
   -- /path/to/Clarity/binary
 ```
 
-Re-run when the ID changes. See [native_host_chrome_setup_2026-03-29.md](./native_host_chrome_setup_2026-03-29.md).
+---
 
-## Hardening scripts (quick reference)
-
-| Script | What it does |
-|--------|-------------|
-| `apply-chrome-hardening.sh` | Baseline: Incognito disabled + no random new installs; `--hardcore` adds `chrome://extensions` block |
-| `revert-chrome-hardening.sh` | Removes all Clarity-managed policy keys |
-| `apply-chrome-managed-policy.sh` | Full-featured version with `apply/remove/status` subcommands |
-
-```bash
-# Baseline (recommended daily):
-./apps/desktop/scripts/apply-chrome-hardening.sh --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
-
-# Hardcore (also blocks chrome://extensions — harder to undo):
-./apps/desktop/scripts/apply-chrome-hardening.sh --hardcore --extension-id pjdboibemcgajdjnppgfnffmajcokbmf
-
-# Revert everything:
-./apps/desktop/scripts/revert-chrome-hardening.sh
-```
-
-## Tomorrow checklist (browser unlock)
+## Setup checklist
 
 1. `pnpm build` in `apps/extension` (or use existing `dist`).
 2. Chrome → Load unpacked → `apps/extension/dist` → copy extension ID.
 3. `./apps/desktop/scripts/install-native-host.sh <ID> [-- binary]`
-4. `./apps/desktop/scripts/apply-chrome-managed-policy.sh apply --extension-id <ID>`  
-   Add `--mode hardcore` only if you accept blocking `chrome://extensions`.
-5. Cmd+Q Chrome → reopen → `chrome://policy` → confirm `IncognitoModeAvailability` **and** `ExtensionSettings` (Clarity ID + `toolbar_pin`).
-6. Reload extension; confirm fail-closed banner clears with desktop open.
+4. `./apps/desktop/scripts/apply-chrome-hardening.sh --extension-id <ID> --mobileconfig`
+5. Double-click `~/Desktop/clarity-chrome-policy.mobileconfig` → install in System Settings.
+6. Cmd+Q Chrome → reopen → `chrome://policy` → confirm:
+   - `IncognitoModeAvailability = 1` (Platform, Mandatory after profile install)
+   - `ExtensionSettings` with Clarity ID + `toolbar_pin: force_pinned`
+7. Reload extension; confirm fail-closed banner clears.
 
-## Limitations (unpacked vs force-install)
-
-| Goal | Works today without Web Store / CRX? |
-|------|--------------------------------------|
-| Disable Incognito | **Yes** (`IncognitoModeAvailability`) |
-| Block installing other extensions | **Yes** (`ExtensionSettings` `*`) |
-| Block `chrome://extensions` | **Yes** (`hardcore` — use with care) |
-| **Force-install** unpacked folder on first launch | **No** — Chrome needs `ExtensionInstallForcelist` entry `id;update_url` and a valid **update manifest + CRX** (or Web Store URL). |
-| **Prevent uninstall** of unpacked Clarity | **Partial** — only reliable for extensions Chrome treats as **admin / force_installed**. Unpacked dev extensions can still be removed unless you ship CRX + update URL or publish to the store. |
-| Stable extension ID across machines | Add manifest **`key`** (PEM-derived); document ID in runbook; do not commit private PEM to the repo. |
-
-### Stable ID for future force-install
-
-1. Generate a PEM once:  
-   `openssl genrsa 2048 | openssl pkcs8 -topk8 -nocrypt -out clarity_extension.pem`  
-   Derive public key for manifest: Chrome developer docs / `chrome-extension://` tools.
-2. Add `"key": "<base64 public key>"` to `apps/extension/manifest.json` — **changes** the extension ID; update native host + policy scripts with the new ID.
-3. Package `.crx` + host `updates.xml` for `ExtensionInstallForcelist`.
-
-Until then: **Incognito off + hosts/DNS + desktop fail-closed** is the practical daily stack; policy script removes the Incognito escape hatch.
+---
 
 ## Reference
 
-- Chrome policies: [IncognitoModeAvailability](https://chromeenterprise.google/policies/#IncognitoModeAvailability), [ExtensionSettings](https://chromeenterprise.google/policies/#ExtensionSettings), [ExtensionInstallForcelist](https://chromeenterprise.google/policies/#ExtensionInstallForcelist)
-- Product note: [disable_friction_v1.md](../02-features/02-blocage/disable_friction_v1.md) (extension removal = enterprise territory)
+- [IncognitoModeAvailability](https://chromeenterprise.google/policies/#IncognitoModeAvailability)
+- [ExtensionSettings](https://chromeenterprise.google/policies/#ExtensionSettings)
+- [ExtensionInstallForcelist](https://chromeenterprise.google/policies/#ExtensionInstallForcelist)
+- [URLBlocklist](https://chromeenterprise.google/policies/#URLBlocklist)
