@@ -4,6 +4,7 @@ mod native_host;
 mod custom_rules_file;
 mod adult_blocklist_file;
 mod adult_candidates_file;
+mod signed_adult_list_file;
 mod hosts_blocking;
 mod app_data;
 mod app_monitor;

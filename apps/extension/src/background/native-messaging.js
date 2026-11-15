@@ -6,6 +6,7 @@
  */
 import { log } from '../shared/utils';
 import { mergeRemoteAdultDomains } from './adult-blocklist';
+import { ingestSignedAdultList } from './signed-adult-list';
 // Native host identifier (must match the manifest)
 const HOST_NAME = 'com.clarity.app';
 // Connection state
@@ -330,9 +331,11 @@ async function handleConfigUpdate(data) {
     const hasCustomRulesKey = 'customRules' in d || 'custom_rules' in d;
     const hasKeywordsKey = 'customSearchKeywords' in d || 'custom_search_keywords' in d;
     const hasAdultKey = 'adultDomains' in d || 'adult_domains' in d;
+    const hasSignedKey = 'signedAdultList' in d || 'signed_adult_list' in d;
     const rawRules = d.customRules ?? d.custom_rules;
     const rawKeywords = d.customSearchKeywords ?? d.custom_search_keywords;
     const rawAdult = d.adultDomains ?? d.adult_domains;
+    const rawSigned = d.signedAdultList ?? d.signed_adult_list;
     const patch = {
         mode: data.mode,
         isActive: data.isActive
@@ -343,12 +346,15 @@ async function handleConfigUpdate(data) {
     if (hasKeywordsKey) {
         patch.customSearchKeywords = Array.isArray(rawKeywords) ? rawKeywords : [];
     }
-    if (!hasCustomRulesKey && !hasKeywordsKey && !hasAdultKey) {
-        log('CONFIG_UPDATE: payload has no customRules/customSearchKeywords/adultDomains — native host may be outdated; ensure GET_CONFIG returns those fields (rebuild host) and ~/.clarity/*.json files exist.');
+    if (!hasCustomRulesKey && !hasKeywordsKey && !hasAdultKey && !hasSignedKey) {
+        log('CONFIG_UPDATE: payload has no customRules/customSearchKeywords/adultDomains/signedAdultList — native host may be outdated; ensure GET_CONFIG returns those fields (rebuild host) and ~/.clarity/*.json files exist.');
     }
     await chrome.storage.local.set(patch);
     if (hasAdultKey) {
         await mergeRemoteAdultDomains(rawAdult);
+    }
+    if (hasSignedKey && rawSigned != null) {
+        await ingestSignedAdultList(rawSigned);
     }
 }
 /**

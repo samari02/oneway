@@ -134,6 +134,12 @@ export const STORAGE_KEYS = {
   ADULT_BLOCK_CANDIDATES: 'adultBlockCandidates',
   /** Cooldown seconds before pause / disable (autodiscipline) */
   DISABLE_FRICTION_SECS: 'disableFrictionSecs',
+  /** Signed dynamic adult list (Étape 3) */
+  SIGNED_ADULT_LIST_SEQUENCE: 'signedAdultListSequence',
+  SIGNED_ADULT_LIST_UPDATED_AT: 'signedAdultListUpdatedAt',
+  SIGNED_ADULT_LIST_HOST_COUNT: 'signedAdultListHostCount',
+  /** Optional https:// URL for signed list refresh (overrides packaged bootstrap) */
+  SIGNED_ADULT_LIST_FETCH_URL: 'signedAdultListFetchUrl',
 } as const
 
 /** Confirm phrase for pause / disable friction (extension + desktop) */

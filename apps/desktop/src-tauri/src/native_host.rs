@@ -15,6 +15,7 @@ use crate::browsing_data::{self, StoredVisit};
 use crate::custom_rules_file;
 use crate::adult_blocklist_file;
 use crate::adult_candidates_file;
+use crate::signed_adult_list_file;
 
 // Alert thresholds (in milliseconds)
 const ALERT_WARNING_THRESHOLD_MS: i64 = 90_000;   // 90 seconds without heartbeat = warning
@@ -386,6 +387,10 @@ pub struct ConfigData {
     /// Extension merges additively with bundled seed — never wipe on empty.
     #[serde(rename = "adultDomains")]
     pub adult_domains: Vec<String>,
+    /// Optional signed dynamic list from `~/.clarity/signed-adult-list.json`.
+    /// Extension verifies Ed25519 before merge + dynamic DNR.
+    #[serde(rename = "signedAdultList", skip_serializing_if = "Option::is_none")]
+    pub signed_adult_list: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Serialize)]
@@ -476,6 +481,7 @@ pub fn handle_message(msg: IncomingMessage) -> OutgoingMessage {
             let (custom_rules, custom_search_keywords) =
                 custom_rules_file::extension_payload_from_disk();
             let adult_domains = adult_blocklist_file::domains_from_disk();
+            let signed_adult_list = signed_adult_list_file::signed_adult_list_from_disk();
             OutgoingMessage::ConfigUpdate {
                 data: ConfigData {
                     mode: "focus".to_string(),
@@ -484,6 +490,7 @@ pub fn handle_message(msg: IncomingMessage) -> OutgoingMessage {
                     custom_rules,
                     custom_search_keywords,
                     adult_domains,
+                    signed_adult_list,
                 },
             }
         }
@@ -646,6 +653,7 @@ mod serde_config_debug_tests {
                 custom_rules: vec![json!({"id": "custom-1"})],
                 custom_search_keywords: vec!["foo".to_string()],
                 adult_domains: vec!["xcolle.jp".to_string()],
+                signed_adult_list: Some(json!({"format": "clarity-signed-adult-list/v1"})),
             },
         };
         let s = serde_json::to_string(&msg).unwrap();
@@ -662,6 +670,11 @@ mod serde_config_debug_tests {
         assert!(
             s.contains("\"adultDomains\""),
             "expected adultDomains in JSON, got: {}",
+            s
+        );
+        assert!(
+            s.contains("\"signedAdultList\""),
+            "expected signedAdultList in JSON, got: {}",
             s
         );
     }

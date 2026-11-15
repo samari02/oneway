@@ -1,0 +1,24 @@
+{
+  "format": "clarity-signed-adult-list/v1",
+  "sequence": 1794728953599,
+  "issuedAt": "2026-11-15T07:49:13.598Z",
+  "expiresAt": "2027-11-15T07:49:13.599Z",
+  "keyId": "clarity-adult-list-2026",
+  "payload": {
+    "domains": [
+      "globalinnovationdesign.org",
+      "m.vkvideo.ru",
+      "pigav.com",
+      "vkvideo.ru"
+    ],
+    "adHosts": [
+      "exoclick.com",
+      "juicyads.com",
+      "magsrv.com",
+      "realsrv.com",
+      "trafficjunky.net",
+      "tsyndicate.com"
+    ]
+  },
+  "signature": "YOv833Ih1egSGEaVVHj/jMMILtQn/hd5tcUijZmBusGuvefjPdA2/34i4kz+Mwmqb1mcb7lSxYrkZpDdBlTfBQ=="
+}

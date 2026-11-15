@@ -92,9 +92,13 @@ Desktop can also write the file via Tauri:
 4. Optional: `pnpm --filter @clarity/extension install:adult-blocklist`, rebuild desktop/native host, confirm `GET_CONFIG` returns `adultDomains`
 5. Navigate to a seed host (e.g. `https://xcolle.jp/`) → block screen
 
-## Future (not v1)
+## Signed dynamic channel (v1 shipped)
 
-- CDN / Supabase Storage fetch with etag
-- `chrome.declarativeNetRequest.updateDynamicRules` for hot DNR without rebuild
+Ed25519-signed `domains` + `adHosts` with hot DNR (`updateDynamicRules`) — see
+[signed_dynamic_adult_list_v1.md](./signed_dynamic_adult_list_v1.md).
+
+## Future
+
+- CDN / Supabase Storage fetch with etag (URL hook already: `signedAdultListFetchUrl`)
 - UI to show system list version in Boundaries
 - Self-improving observe→promote loop: see [self_improving_blocking_loop_v1.md](./self_improving_blocking_loop_v1.md)

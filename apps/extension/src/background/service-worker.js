@@ -10,6 +10,7 @@ import { requestHistoryPermission, importHistory, recordVisit, getCollectionStat
 import { connectToDesktopApp, isDesktopAppConnected, getConnectionStatus, sendNavigationEvent, sendHistorySync, sendAoiPreferencesUpdate } from './native-messaging';
 import { ensureBundledAdultBlocklistSeed, getAdultBlocklistDomains } from './adult-blocklist';
 import { recordAdultBlockCandidate } from './adult-candidates';
+import { ensureSignedAdultListAlarm, isSignedAdultListAlarm, refreshSignedAdultList, } from './signed-adult-list';
 // NOTE: Supabase sync temporarily disabled
 // Supabase client is not compatible with Chrome extension service workers
 // TODO: Use fetch-based API calls instead of Supabase client
@@ -34,6 +35,8 @@ chrome.runtime.onInstalled.addListener(async () => {
     await chrome.storage.local.set(defaultData);
     log('Default storage initialized', defaultData);
     await ensureBundledAdultBlocklistSeed();
+    await ensureSignedAdultListAlarm();
+    await refreshSignedAdultList();
     // Restore badge state if heightened mode is active
     await restoreBadgeState();
     // Try to connect to desktop app (with delay to avoid startup issues)
@@ -52,6 +55,8 @@ chrome.runtime.onInstalled.addListener(async () => {
 chrome.runtime.onStartup.addListener(async () => {
     log('Extension started');
     await ensureBundledAdultBlocklistSeed();
+    await ensureSignedAdultListAlarm();
+    await refreshSignedAdultList();
     // Restore badge state if heightened mode is active
     await restoreBadgeState();
     setTimeout(async () => {
@@ -64,6 +69,12 @@ chrome.runtime.onStartup.addListener(async () => {
             log('Desktop app not available:', e);
         }
     }, 2000);
+});
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+    if (isSignedAdultListAlarm(alarm.name)) {
+        log('Alarm: refresh signed adult list');
+        await refreshSignedAdultList();
+    }
 });
 /**
  * Restore badge state based on heightened mode

@@ -1,11 +1,13 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-14",
+  "updatedAt": "2026-11-15",
   "description": "Domains promoted from observe→learn candidates. generate:adult-blocklist unions this additively. Empty never wipes seed.",
   "domains": [
     "101japanese.com",
     "chinesemix.com",
     "meoriental.com",
-    "onejapanese.com"
+    "onejapanese.com",
+    "pigav.com",
+    "globalinnovationdesign.org"
   ]
 }

@@ -354,6 +354,16 @@ const EXPANSION_DOMAINS = [
   'txxx.com',
   'sxyprn.com',
   'daftsex.com',
+  // VK Video adult / softcore hosts (apex + mobile; requestDomains on apex also covers subdomains)
+  'vkvideo.ru',
+  'm.vkvideo.ru',
+  'www.vkvideo.ru',
+  // Previously smart-detected; hard-seeded by request
+  'pigav.com',
+  'www.pigav.com',
+  // Cloaked celeb-leak / fappening gallery (benign vanity .org)
+  'globalinnovationdesign.org',
+  'www.globalinnovationdesign.org',
   'iwank.tv',
   'beeg.com',
   'tnaflix.com',
@@ -490,6 +500,7 @@ const HOSTNAME_SUBSTRINGS = [
   'eroterest', 'xcolle', 'pcolle', 'digiket', 'nyahentai',
   'fc2live', 'camwhores', 'bongacam', 'stripchat', 'chaturbate',
   'onlyfans', 'fansly', 'spankbang', 'pornhub', 'xvideos', 'xhamster',
+  'vkvideo', 'pigav',
   'エロ', 'アダルト', '風俗', 'エロ動画', '無修正',
 ]
 

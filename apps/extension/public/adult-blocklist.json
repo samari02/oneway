@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-14",
+  "updatedAt": "2026-11-15",
   "source": "clarity-system",
   "description": "System adult domain list (JP curated seed ∪ promoted ∪ public NSFW complement). Merged into static DNR at build; synced via ~/.clarity/adult-blocklist.json + GET_CONFIG (additive).",
   "domains": [
@@ -937,6 +937,7 @@
     "girlxxxphotos.com",
     "givemeaporn.com",
     "gizmoxxx.com",
+    "globalinnovationdesign.org",
     "gobigtitsporn.com",
     "goblackporn.com",
     "gocam.jp",
@@ -1604,6 +1605,7 @@
     "luscious.net",
     "m-porn.xxx",
     "m-xnxx.com",
+    "m.vkvideo.ru",
     "madamlive.tv",
     "madchensex.com",
     "made.porn",
@@ -1923,6 +1925,7 @@
     "pay.fc2.com",
     "pcolle.jp",
     "perfectgirls.net",
+    "pigav.com",
     "pixiv.net",
     "popads.net",
     "porn.com",
@@ -2048,6 +2051,7 @@
     "video2.fc2.com",
     "vixen.com",
     "vjav.com",
+    "vkvideo.ru",
     "voyeurhit.com",
     "vporn.com",
     "wankoz.com",
@@ -2062,7 +2066,10 @@
     "www.digiket.com",
     "www.dmm.co.jp",
     "www.fanza.co.jp",
+    "www.globalinnovationdesign.org",
     "www.pcolle.jp",
+    "www.pigav.com",
+    "www.vkvideo.ru",
     "www.xcolle.jp",
     "x-art.com",
     "xbabe.com",
@@ -2103,7 +2110,7 @@
   ],
   "sources": {
     "curatedExpansion": true,
-    "promoted": 4,
+    "promoted": 6,
     "importedPublic": 1500
   },
   "hostnameSubstrings": [
@@ -2161,6 +2168,8 @@
     "pornhub",
     "xvideos",
     "xhamster",
+    "vkvideo",
+    "pigav",
     "エロ",
     "アダルト",
     "風俗",

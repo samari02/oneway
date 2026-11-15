@@ -20,9 +20,9 @@ Companion to the canvas tab **Scanner / immune** in the managed Cursor file
 
 | Étape | Statut  | Livrable                                                         | Notes                                                                 |
 |-------|---------|------------------------------------------------------------------|-----------------------------------------------------------------------|
-| 1     | fait    | Offline runner = Clarity page-analyzer on HTML fixtures/snapshots | `pnpm --filter @clarity/extension eval:page-analyzer` — pigav + cloaked gold PASS |
+| 1     | fait    | Offline runner = Clarity page-analyzer on HTML fixtures/snapshots | `pnpm --filter @clarity/extension eval:page-analyzer`                 |
 | 2     | fait    | Safe-corpus gate (minimal)                                       | Wiki sexuality + PeerTube `isNSFW:false` smoke; hard-neg FP → exit 1  |
-| 3     | à faire | Dynamic signed domain/ad list channel (stub OK)                  | Stub logged in runner; implement next                                 |
+| 3     | fait    | Dynamic signed domain/ad list channel                            | See [signed_dynamic_adult_list_v1.md](./signed_dynamic_adult_list_v1.md) |
 | 4     | à faire | Targeted discovery (PeerTube following + adult ad pivots) later  | Hot leads only                                                        |
 | 5     | à faire | Cheap LLM judge on misses + review UI later                      | Not on every page                                                     |
 
@@ -30,10 +30,9 @@ Companion to the canvas tab **Scanner / immune** in the managed Cursor file
 
 ```bash
 pnpm --filter @clarity/extension eval:page-analyzer
+pnpm --filter @clarity/extension sign:adult-list:install
+pnpm --filter @clarity/extension verify:adult-list
 ```
-
-Fixtures: `apps/extension/scripts/eval/fixtures/page-analyzer/`  
-Corpus: `apps/extension/scripts/eval/fixtures/page-analyzer-corpus.json`
 
 ## Constraints
 

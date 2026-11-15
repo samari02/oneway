@@ -202,9 +202,8 @@ async function main() {
     `\nTP=${tp} TN=${tn} FP=${fp} FN=${fn}  precision=${precision.toFixed(3)} recall=${recall.toFixed(3)}`
   )
 
-  // Étape 3 stub marker (not implemented yet — keep visible in CI logs).
   console.log(
-    '\n[stub] dynamic signed domain/ad list channel — not implemented (Étape 3)'
+    '\n[note] Étape 3 signed dynamic list: pnpm --filter @clarity/extension verify:adult-list'
   )
 
   if (hardNegFp > 0) {

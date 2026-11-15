@@ -1,0 +1,7 @@
+{
+  "keyId": "clarity-adult-list-2026",
+  "algorithm": "Ed25519",
+  "publicKeySpkiBase64": "MCowBQYDK2VwAyEA2aeZowEhbq9W/NQoTQ6ASRYkCv5GKY2tV04CtYVM78Y=",
+  "format": "clarity-signed-adult-list/v1",
+  "notes": "Public verify key for signed dynamic adult domain/ad-host lists. Private key lives only in ~/.clarity/keys/ (never commit)."
+}
