@@ -1537,6 +1537,19 @@ function applyBlockOverlay(): void {
   ;(document.documentElement || document.body).appendChild(overlay)
 }
 
+/** Stop Chrome from fetching the blocked site's favicon / web-app manifest icons. */
+function stripSiteIconsAndManifest(): void {
+  try {
+    document
+      .querySelectorAll(
+        'link[rel~="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"], link[rel="manifest"]'
+      )
+      .forEach((el) => el.remove())
+  } catch {
+    /* best-effort */
+  }
+}
+
 /**
  * Navigate to extension block screen (content-script redundancy for SW redirect)
  */
@@ -1544,6 +1557,7 @@ function redirectToBlockScreen(reason: string): void {
   if (hasRedirectedToBlock) return
   hasRedirectedToBlock = true
 
+  stripSiteIconsAndManifest()
   applyBlockOverlay()
 
   const blockUrl =

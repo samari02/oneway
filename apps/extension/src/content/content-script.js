@@ -1305,10 +1305,23 @@ function applyBlockOverlay() {
   overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#0a0a0a;pointer-events:all;";
   (document.documentElement || document.body).appendChild(overlay);
 }
+/** Stop Chrome from fetching the blocked site's favicon / web-app manifest icons. */
+function stripSiteIconsAndManifest() {
+  try {
+    document
+      .querySelectorAll(
+        'link[rel~="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"], link[rel="manifest"]'
+      )
+      .forEach((el) => el.remove());
+  } catch {
+    /* best-effort */
+  }
+}
 function redirectToBlockScreen(reason) {
   if (hasRedirectedToBlock)
     return;
   hasRedirectedToBlock = true;
+  stripSiteIconsAndManifest();
   applyBlockOverlay();
   const blockUrl = chrome.runtime.getURL("block-screen.html") + `?url=${encodeURIComponent(window.location.href)}&reason=${encodeURIComponent(reason)}&type=content`;
   log(`[PageAnalysis] REDIRECT issued via content-script navigation \u2014 ${reason}`);

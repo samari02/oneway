@@ -1,6 +1,6 @@
 # Extension Icons
 
-Placeholder icons needed for Chrome extension.
+Packaged Clarity icons used by the extension action, notifications, and block-screen favicon.
 
 ## Required sizes
 
@@ -9,15 +9,4 @@ Placeholder icons needed for Chrome extension.
 - icon-48.png (48x48)
 - icon-128.png (128x128)
 
-## TODO
-
-Create actual icons with the Oneway branding (mint/turquoise theme).
-
-For now, you can:
-1. Use any placeholder PNG images
-2. Or generate them online at https://www.favicon-generator.org/
-3. Or use the mint circle emoji as placeholder
-
-## Temporary Fix
-
-Copy any PNG images with these names to this folder, or the extension will show a default icon.
+Do not reference remote/site favicons or web app manifest icons from blocked pages.

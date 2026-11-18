@@ -3,6 +3,20 @@
  * Block Screen UI Logic
  * No bypass: user can only go back (history).
  */
+/** Ensure tab favicon is the packaged Clarity icon (never a blocked site icon). */
+function ensureExtensionFavicon() {
+    const href = chrome.runtime.getURL('icons/icon-128.png');
+    let link = document.querySelector('link[rel="icon"][data-clarity-icon]');
+    if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/png';
+        link.dataset.clarityIcon = '1';
+        document.head.appendChild(link);
+    }
+    link.href = href;
+}
+ensureExtensionFavicon();
 const params = new URLSearchParams(window.location.search);
 const blockedUrl = params.get('url') || '';
 const reason = params.get('reason') || "This site isn't available while you're in Focus Mode";
