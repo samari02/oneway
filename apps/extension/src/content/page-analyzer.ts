@@ -144,11 +144,41 @@ const CELEB_LEAK_META_PHRASES = [
   'nude photos and videos', 'celebrity nude', 'celeb nude',
 ] as const
 
+/**
+ * Multi-word adult meta/brand phrases — vanity tubes often put these only in
+ * description while title stays soft ("Japanese") and hostname has no "porn".
+ */
+const ADULT_META_BRAND_PHRASES = [
+  'amateur porn', 'real amateur porn', 'home porn', 'new home porn',
+  'free porn', 'porn video', 'porn videos', 'adult video', 'sex video',
+  'xxx video', 'tube porn', 'porn tube', 'watch porn', 'porn like never',
+  'getting fucked', 'sensual blowjobs', 'fuck sessions',
+] as const
+
 /** Adult hub nav labels that co-occur on cloaked gallery frontends */
 const ADULT_NAV_PHRASES = [
   'sex dating', 'adult games', 'live cams', 'adult cams', 'webcam sex',
   'cam girls', 'camgirls', 'porn games',
 ] as const
+
+/**
+ * Dense tube-category nav labels (Anal / MILF / JAV / Blowjob…).
+ * Requires several distinct hits — single "Asian" alone must not score.
+ */
+const TUBE_CATEGORY_NAV_LABELS = [
+  'anal', 'milf', 'jav', 'blowjob', 'handjob', 'creampie', 'gangbang',
+  'threesome', 'bukkake', 'hentai', 'pornstar', 'amateur', 'bdsm',
+  'fetish', 'cumshot', 'deepthroat', 'deep throat', 'double penetration',
+  'lesbian', 'interracial', 'masturbation', 'orgy', 'squirt', 'squirting',
+  'teen', 'mature', 'ebony', 'latina', 'shemale', 'trans', 'fisting',
+] as const
+
+const TUBE_CATEGORY_NAV_STRONG = 8
+const TUBE_CATEGORY_NAV_MODERATE = 5
+
+/** NSFW infinite-scroll / Reddit-style gallery product signals */
+const NSFW_GALLERY_HOST_RE = /(?:^|\.)(scrolller|redgifs|erome|imagefap|sex\.com|nsfw\.xxx)(?:$|\.)/i
+const NSFW_GALLERY_PATH_RE = /\/(?:search\/)?collections?\/|\/c\/[a-z0-9_-]+|\/r\/[a-z0-9_]*nsfw/i
 
 export interface AnalyzePageOptions {
   /** Extra adult domains from system blocklist seed/sync (self-reinforcing). */
@@ -294,6 +324,20 @@ export function analyzePage(options: AnalyzePageOptions = {}): ContentAnalysisRe
   score += navResult.score
   if (navResult.score > 0) {
     reasons.push(navResult.reason)
+  }
+
+  // 9a4. Dense tube category nav (Anal / MILF / JAV / Blowjob…)
+  const tubeCatResult = analyzeTubeCategoryNav()
+  score += tubeCatResult.score
+  if (tubeCatResult.score > 0) {
+    reasons.push(tubeCatResult.reason)
+  }
+
+  // 9a5. NSFW gallery / infinite-scroller hosts (Scrolller-class)
+  const galleryResult = analyzeNsfwGallerySurface(domain)
+  score += galleryResult.score
+  if (galleryResult.score > 0) {
+    reasons.push(...galleryResult.reasons)
   }
 
   // 9b. Structural tube-site signals (before safe-context reduction)
@@ -481,6 +525,8 @@ function analyzeMetaTags(): { score: number; reasons: string[]; detected: string
     document.querySelector('meta[name="description" i]')?.getAttribute('content'),
     document.querySelector('meta[property="og:description"]')?.getAttribute('content'),
     document.querySelector('meta[name="twitter:description"]')?.getAttribute('content'),
+    document.querySelector('meta[property="og:title"]')?.getAttribute('content'),
+    document.querySelector('meta[name="application-name"]')?.getAttribute('content'),
   ]
     .filter(Boolean)
     .join(' ')
@@ -497,9 +543,88 @@ function analyzeMetaTags(): { score: number; reasons: string[]; detected: string
       reasons.push(`Celeb-leak meta phrase: ${phraseHits[0]}`)
       detected.push(`meta-desc:${phraseHits[0]}`)
     }
+
+    // Vanity adult tubes: soft title + explicit meta ("amateur porn", "home porn"…)
+    const adultMetaHits = ADULT_META_BRAND_PHRASES.filter((p) => descBlob.includes(p))
+    if (adultMetaHits.length >= 2) {
+      score += 55
+      reasons.push(`Adult meta/brand phrases: ${adultMetaHits.slice(0, 3).join(', ')}`)
+      detected.push(`meta-adult:${adultMetaHits[0]}`)
+    } else if (adultMetaHits.length === 1) {
+      score += 45
+      reasons.push(`Adult meta/brand phrase: ${adultMetaHits[0]}`)
+      detected.push(`meta-adult:${adultMetaHits[0]}`)
+    } else {
+      // Single high-signal lexicon token in meta (porn / xxx / hentai) — supporting only
+      const metaLexicon = ['porn', 'porno', 'xxx', 'hentai', 'nsfw', 'onlyfans']
+      const lexHits = metaLexicon.filter((k) => keywordMatchesInText(descBlob, k))
+      if (lexHits.length >= 2) {
+        score += 40
+        reasons.push(`Adult lexicon in meta: ${lexHits.slice(0, 3).join(', ')}`)
+        detected.push(`meta-lex:${lexHits[0]}`)
+      } else if (lexHits.length === 1) {
+        score += 25
+        reasons.push(`Adult lexicon in meta: ${lexHits[0]}`)
+        detected.push(`meta-lex:${lexHits[0]}`)
+      }
+    }
+  }
+
+  // Brand mark split across DOM nodes ("New"+"Home"+"Porn") — check concatenated brand text
+  const brandResult = analyzeSplitBrandMark()
+  score += brandResult.score
+  if (brandResult.score > 0) {
+    reasons.push(brandResult.reason)
+    detected.push(...brandResult.detected)
   }
   
   return { score, reasons, detected }
+}
+
+/**
+ * Catch brand marks that split "Porn" into sibling tags so title stays soft.
+ * e.g. <p>New</p><span>Home</span><p>Porn</p> → "NewHomePorn"
+ */
+function analyzeSplitBrandMark(): { score: number; reason: string; detected: string[] } {
+  const candidates: string[] = []
+  const roots = Array.from(
+    document.querySelectorAll('a, header, .logo, .brand, nav, [class*="logo"], [class*="brand"]')
+  ).slice(0, 40)
+  for (const el of roots) {
+    const raw = (el.textContent || '').replace(/\s+/g, ' ').trim()
+    const compact = raw.replace(/\s+/g, '')
+    if (compact.length >= 6 && compact.length <= 48) candidates.push(compact.toLowerCase())
+    if (raw.length >= 6 && raw.length <= 64) candidates.push(raw.toLowerCase())
+  }
+  // Also first heading / site name nodes
+  for (const el of Array.from(document.querySelectorAll('h1, .site-title, #logo')).slice(0, 6)) {
+    const compact = (el.textContent || '').replace(/\s+/g, '').toLowerCase()
+    if (compact.length >= 6 && compact.length <= 48) candidates.push(compact)
+  }
+
+  const brandPhrases = [
+    'homeporn', 'newhomeporn', 'home porn', 'new home porn',
+    'tubeporn', 'freeporn', 'xxxporn', 'pornxxx',
+  ]
+  for (const cand of candidates) {
+    for (const phrase of brandPhrases) {
+      if (cand.includes(phrase.replace(/\s+/g, '')) || cand.includes(phrase)) {
+        return {
+          score: 40,
+          reason: `Adult brand mark in DOM: "${phrase}"`,
+          detected: [`brand:${phrase}`],
+        }
+      }
+    }
+    if (/(?:^|[^a-z])porn(?:$|[^a-z])/i.test(cand) && /home|tube|hub|xxx|new/i.test(cand)) {
+      return {
+        score: 35,
+        reason: `Adult brand mark (split DOM): ${cand.slice(0, 32)}`,
+        detected: ['brand:porn-compound'],
+      }
+    }
+  }
+  return { score: 0, reason: '', detected: [] }
 }
 
 export interface PeerTubeConfigSignals {
@@ -1452,6 +1577,88 @@ function analyzeAdultNavCluster(): { score: number; reason: string } {
   return { score: 0, reason: '' }
 }
 
+/**
+ * Dense adult tube category navigation (Anal, MILF, JAV, Blowjob, Creampie…).
+ * Vanity CMS tubes expose this even when hostname/title are soft.
+ */
+function analyzeTubeCategoryNav(): { score: number; reason: string } {
+  const labels = Array.from(document.querySelectorAll('a, button, [role="link"]'))
+    .slice(0, 220)
+    .map((el) => (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase())
+    .filter((t) => t.length >= 3 && t.length <= 28)
+
+  if (labels.length < 8) return { score: 0, reason: '' }
+
+  const hitSet = new Set<string>()
+  for (const label of labels) {
+    for (const cat of TUBE_CATEGORY_NAV_LABELS) {
+      if (label === cat || label.startsWith(cat + ' ') || label.endsWith(' ' + cat)) {
+        hitSet.add(cat)
+      }
+    }
+  }
+
+  const hits = Array.from(hitSet)
+  if (hits.length >= TUBE_CATEGORY_NAV_STRONG) {
+    return {
+      score: 40,
+      reason: `Dense tube category nav (${hits.length}): ${hits.slice(0, 5).join(', ')}`,
+    }
+  }
+  if (hits.length >= TUBE_CATEGORY_NAV_MODERATE) {
+    return {
+      score: 28,
+      reason: `Tube category nav (${hits.length}): ${hits.slice(0, 4).join(', ')}`,
+    }
+  }
+  return { score: 0, reason: '' }
+}
+
+/**
+ * NSFW infinite-scroll / Reddit-style gallery surfaces (Scrolller-class).
+ * Combines host, path, and on-page NSFW/SFW filter chrome.
+ */
+function analyzeNsfwGallerySurface(domain: string): { score: number; reasons: string[] } {
+  const reasons: string[] = []
+  let score = 0
+  const path = (window.location.pathname || '').toLowerCase()
+  const sample = (
+    (document.title || '') +
+    ' ' +
+    (document.body?.innerText?.slice(0, 6_000) || '')
+  ).toLowerCase()
+
+  if (NSFW_GALLERY_HOST_RE.test(domain)) {
+    score += 35
+    reasons.push(`NSFW gallery host: ${domain}`)
+  }
+
+  if (NSFW_GALLERY_PATH_RE.test(path)) {
+    score += 15
+    reasons.push('NSFW gallery path (/collections/…)')
+  }
+
+  const nsfwChrome =
+    /nsfw hidden|show\s+\d+\s+nsfw|no sfw results|sfw results to show|nsfw only|enable nsfw/i.test(
+      sample
+    )
+  if (nsfwChrome) {
+    score += 30
+    reasons.push('NSFW gallery filter chrome')
+  }
+
+  // Collection title with soft ethnic fetish keywords + NSFW chrome/host
+  if (
+    (nsfwChrome || NSFW_GALLERY_HOST_RE.test(domain)) &&
+    /hotties|gonewild|nsfw|nude|porn|xxx|boobs|milf/i.test(path + ' ' + sample.slice(0, 400))
+  ) {
+    score += 15
+    reasons.push('NSFW collection intent')
+  }
+
+  return { score: Math.min(score, 75), reasons }
+}
+
 /** Hosts where dense video grids / duration labels are expected (skip tube heuristics). */
 function isTubeHeuristicExemptHost(domain: string): boolean {
   const d = domain.toLowerCase()
@@ -1511,21 +1718,62 @@ function analyzeTubeSiteStructure(
       }
     }
 
+    // Prefer layout-aware innerText; also scan a capped HTML slice because vanity
+    // tubes concatenate titles into durations ("lesbians00:40") which breaks \b.
     const bodySample = document.body?.innerText?.slice(0, 12_000) || ''
-    const durationLabels = bodySample.match(/\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b/g) ?? []
-    const durationCount = durationLabels.length
+    const htmlSample = (document.body?.innerHTML || '').slice(0, 80_000)
+    const durationFromText =
+      bodySample.match(/(?:^|[^0-9a-z])((?:\d{1,2}:)?\d{1,2}:\d{2})(?=[^0-9]|$)/gi) ?? []
+    const durationFromHtml =
+      htmlSample.match(/>(\d{1,2}:\d{2})</g) ?? []
+    const durationCount = Math.max(durationFromText.length, durationFromHtml.length)
 
     const imgNodes = Array.from(document.querySelectorAll('img')).slice(0, 160)
     let thumbLike = 0
+    const thumbHostCounts = new Map<string, number>()
     for (const img of imgNodes) {
-      const src = (img.getAttribute('src') || img.getAttribute('data-src') || '').toLowerCase()
-      if (!src || /logo|icon|avatar|sprite|favicon|badge/.test(src)) continue
+      const src = (
+        img.getAttribute('src') ||
+        img.getAttribute('data-src') ||
+        img.getAttribute('data-lazy-src') ||
+        img.getAttribute('data-original') ||
+        ''
+      ).toLowerCase()
+      if (!src || /logo|icon|avatar|sprite|favicon|badge|metrika|pixel|1x1/.test(src)) continue
       const cls = (img.className || '').toString()
       const w = img.naturalWidth || Number(img.getAttribute('width')) || 0
       const h = img.naturalHeight || Number(img.getAttribute('height')) || 0
-      if (/thumb|preview|poster|video|cover|tile|card|pt-av/.test(cls + src) || (w >= 120 && h >= 80)) {
+      // /t2/9699.jpg, /thumbs/, /preview/ — common tube CDN thumb paths without dims
+      const thumbPath =
+        /thumb|preview|poster|video|cover|tile|card|pt-av|\/t\d+\/|\/th\/|\/pics?\//.test(
+          cls + src
+        )
+      if (thumbPath || (w >= 120 && h >= 80)) {
         thumbLike++
       }
+      try {
+        const abs = src.startsWith('http') || src.startsWith('//')
+          ? new URL(src.startsWith('//') ? `https:${src}` : src)
+          : null
+        if (abs?.hostname) {
+          const host = abs.hostname.replace(/^www\./, '')
+          if (!/yandex|google|facebook|cloudflare|jquery|gstatic/.test(host)) {
+            thumbHostCounts.set(host, (thumbHostCounts.get(host) || 0) + 1)
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // Dense same-host image strip (s3.newhomep.com × N) counts as thumb grid even
+    // before naturalWidth hydrates.
+    let denseHostThumbs = 0
+    for (const n of thumbHostCounts.values()) {
+      if (n > denseHostThumbs) denseHostThumbs = n
+    }
+    if (denseHostThumbs >= 12) {
+      thumbLike = Math.max(thumbLike, denseHostThumbs)
     }
 
     if (thumbLike >= 14 && durationCount >= 10) {
@@ -1534,6 +1782,10 @@ function analyzeTubeSiteStructure(
     } else if (thumbLike >= 9 && durationCount >= 6) {
       score += TUBE_GRID_MODERATE_SCORE
       reasons.push(`Tube-like grid: ${thumbLike} thumbnails, ${durationCount} durations`)
+    } else if (thumbLike >= 14 && durationCount >= 3) {
+      // Custom CMS: many CDN thumbs but sparse/glued duration text
+      score += TUBE_GRID_MODERATE_SCORE
+      reasons.push(`Tube thumb CDN grid: ${thumbLike} thumbs (${durationCount} durations)`)
     }
 
     const videoLinks = document.querySelectorAll(

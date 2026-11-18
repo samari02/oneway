@@ -35,6 +35,22 @@
       "label": "allow",
       "category": "hard_negative_safe_corpus",
       "notes": "PeerTube isNSFW:false must not score as adult"
+    },
+    {
+      "id": "newhomep_japanese_tube",
+      "file": "page-analyzer/newhomep-japanese.html",
+      "url": "https://www.newhomep.com/?query=japanese",
+      "label": "block",
+      "category": "vanity_adult_tube",
+      "notes": "Soft title Japanese + split brand New/Home/Porn + amateur-porn meta + dense category nav + s3 thumbs (Layer3 miss class)"
+    },
+    {
+      "id": "scrolller_japanesehotties",
+      "file": "page-analyzer/scrolller-japanesehotties.html",
+      "url": "https://scrolller.com/search/collections/JapaneseHotties",
+      "label": "block",
+      "category": "nsfw_gallery_scroller",
+      "notes": "Scrolller NSFW collection search — soft host, NSFW filter chrome"
     }
   ]
 }
