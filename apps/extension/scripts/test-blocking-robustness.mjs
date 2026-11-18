@@ -62,6 +62,30 @@ assert(
 assert(!keywordMatchesInText('classical music class', 'ass'), 'short Latin "ass" does not match inside "class"')
 assert(keywordMatchesInText('hot ass video', 'ass'), 'short Latin "ass" matches as a word')
 
+// Regression: onelearn classroom / #class URLs must not score "ass" from substring
+const classroomTitle = 'OneLearn Classroom Vision — enrollments'
+const classroomUrl =
+  'https://onelearn-classroom-vision.samuchi.chatgpt.site/#class/lkgm/enrollments/2026-11-09'
+assert(
+  !keywordMatchesInText(classroomTitle.toLowerCase(), 'ass'),
+  'title with "classroom" does not match short Latin "ass"'
+)
+assert(
+  !keywordMatchesInText(classroomUrl.toLowerCase(), 'ass'),
+  'URL with classroom / #class does not match short Latin "ass"'
+)
+assert(
+  !keywordMatchesInText('assassin passage classic classroom', 'ass'),
+  'assassin/passage/classic/classroom do not match "ass"'
+)
+assert(
+  keywordMatchesInText('big ass', 'ass'),
+  'standalone word "ass" still matches'
+)
+// "sex" must not fire inside longer words; "sexual education" is benign
+assert(!keywordMatchesInText('sexual education class', 'sex'), '"sex" does not match inside "sexual"')
+assert(keywordMatchesInText('free sex video', 'sex'), 'whole-word "sex" still matches')
+
 // (b) isExplicit path would redirect
 assert(
   shouldIssueRedirect({

@@ -916,7 +916,9 @@ function analyzeTitle(): { score: number; reasons: string[] } {
   const reasons: string[] = []
   
   for (const keyword of EXPLICIT_KEYWORDS) {
-    if (title.includes(keyword.toLowerCase())) {
+    // Use script-aware matcher (word boundaries for short Latin like "ass")
+    // so "classroom" / "classic" / "assassin" do not false-positive.
+    if (keywordMatchesInText(title, keyword)) {
       score += 60
       reasons.push(`Explicit keyword in title: "${keyword}"`)
       break // One match is enough for title
@@ -1065,9 +1067,9 @@ function analyzeUrlPath(): { score: number; reasons: string[] } {
   let score = 0
   const reasons: string[] = []
   
-  // Check for explicit keywords in path
+  // Check for explicit keywords in path (word-boundary aware for short Latin)
   for (const keyword of EXPLICIT_KEYWORDS.slice(0, 10)) { // Check top 10 explicit terms
-    if (fullPath.includes(keyword.toLowerCase())) {
+    if (keywordMatchesInText(fullPath, keyword)) {
       score += 30
       reasons.push(`Explicit keyword in URL path: "${keyword}"`)
       break
